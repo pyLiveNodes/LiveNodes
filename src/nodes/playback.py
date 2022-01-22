@@ -59,7 +59,7 @@ class Playback(Node):
                 dataSet = dataFile.get("data")
                 start = 0
                 end = len(dataSet)
-                data = dataSet[:] # load into mem
+                data = dataSet[start:end] # load into mem
                 
                 for i in range(start, end, self.batch):
                     # self.add_data(np.array(data[i:i+self.batch]))
@@ -83,6 +83,7 @@ class Playback(Node):
         Starts the streaming process.
         """
         if self.feeder_process is None:
+            # TODO: figure out why the Process results in no data being plotted
             self.feeder_process = threading.Thread(target=self.sender_process)
             self.feeder_process.start()
         super().start_processing(recurse)

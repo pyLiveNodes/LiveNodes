@@ -1,0 +1,111 @@
+{
+  "class": "Playback",
+  "settings": {
+    "batch": 1,
+    "files": "./data/KneeBandageCSL2018/**/*.h5",
+    "sample_rate": 1000
+  },
+  "childs": [
+    {
+      "class": "Draw_lines",
+      "settings": {
+        "name": "Raw Data",
+        "idx": [
+          12,
+          16,
+          17,
+          18
+        ],
+        "names": [
+          "Gonio2",
+          "GyroLow1",
+          "GyroLow2",
+          "GyroLow3"
+        ],
+        "xAxisLength": 5000
+      },
+      "childs": []
+    },
+    {
+      "class": "Window",
+      "settings": {
+        "length": 100,
+        "overlap": 0,
+        "function": "rectangular"
+      },
+      "childs": [
+        {
+          "class": "Feature_avg",
+          "settings": {
+            "name": "Node"
+          },
+          "childs": [
+            {
+              "class": "Draw_lines",
+              "settings": {
+                "name": "Averaged Data",
+                "idx": [
+                  12,
+                  16,
+                  17,
+                  18
+                ],
+                "names": [
+                  "Gonio2",
+                  "GyroLow1",
+                  "GyroLow2",
+                  "GyroLow3"
+                ],
+                "xAxisLength": 50
+              },
+              "childs": []
+            },
+            {
+              "class": "Biokit_to_fs",
+              "settings": {
+                "name": "Node"
+              },
+              "childs": [
+                {
+                  "class": "Biokit_norm",
+                  "settings": {
+                    "name": "Node"
+                  },
+                  "childs": [
+                    {
+                      "class": "Biokit_from_fs",
+                      "settings": {
+                        "name": "Node"
+                      },
+                      "childs": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "class": "Draw_lines",
+              "settings": {
+                "name": "Normed Data",
+                "idx": [
+                  12,
+                  16,
+                  17,
+                  18
+                ],
+                "names": [
+                  "Gonio2",
+                  "GyroLow1",
+                  "GyroLow2",
+                  "GyroLow3"
+                ],
+                "xAxisLength": 50
+              },
+              "childs": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

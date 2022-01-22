@@ -15,7 +15,7 @@ import math
 from src.realtime_animation import RealtimeAnimation
 
 print('=== Load Pipeline ====')
-pipeline = load('pipelines/simple.json')
+pipeline = load('pipelines/recognize.json')
 
 
 print('=== Start main loops ====')

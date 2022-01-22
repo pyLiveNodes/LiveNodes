@@ -1,3 +1,6 @@
+from src.nodes.biokit_norm import Biokit_norm
+from src.nodes.biokit_to_fs import Biokit_to_fs
+from src.nodes.biokit_from_fs import Biokit_from_fs
 from src.nodes.feature_avg import Feature_avg
 from src.nodes.window import Window
 from src.nodes.playback import Playback
@@ -6,7 +9,7 @@ from src.nodes.node import load
 
 import numpy as np
 
-file = "pipelines/simple.json"
+file = "pipelines/recognize.json"
 
 print('=== Build Pipeline ====')
 
@@ -28,17 +31,30 @@ recorded_channels = [
     'GyroUp1', 'GyroUp2', 'GyroUp3',
     'GyroLow1', 'GyroLow2', 'GyroLow3']
 idx = np.isin(recorded_channels, channel_names).nonzero()[0]
-draw = Draw_lines(name='Raw Data', idx=idx, names=channel_names)
+draw = Draw_lines(name='Raw Data', idx=idx, names=channel_names, xAxisLength=5000)
 pl.add_output(draw)
 
-window = Window(100, 20)
+window = Window(100, 0)
 pl.add_output(window)
 
 avg = Feature_avg()
 window.add_output(avg)
 
-draw2 = Draw_lines(name='Averaged Data', idx=idx, names=channel_names)
+draw2 = Draw_lines(name='Averaged Data', idx=idx, names=channel_names, xAxisLength=50)
 avg.add_output(draw2)
+
+to_fs = Biokit_to_fs()
+avg.add_output(to_fs)
+
+norm = Biokit_norm()
+to_fs.add_output(norm)
+
+from_fs = Biokit_from_fs()
+norm.add_output(from_fs)
+
+draw3 = Draw_lines(name='Normed Data', idx=idx, names=channel_names, xAxisLength=50)
+avg.add_output(draw3)
+
 
 print('=== Save Pipeline ====')
 pl.save(file)
