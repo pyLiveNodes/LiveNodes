@@ -1,0 +1,41 @@
+import time
+import numpy as np
+from multiprocessing import Process
+import threading
+from .node import Node
+import glob, random
+import h5py
+import pandas as pd
+import matplotlib.pyplot as plt
+
+
+class Window(Node):
+    def __init__(self, length, overlap, function="rectangular", name = "Window", dont_time = False):
+        super().__init__(name=name, dont_time=dont_time)
+        self.length = length
+        self.overlap = overlap
+        self.function = function
+
+        if hasattr(np, function):
+            self.multiplier = getattr(np, function)(length)
+        elif function != 'rectangular':
+            raise Exception(f'Window type "{function}" does not exist in the numpy module and is not rectangular')
+        else:
+            # self.multiplier = np.ones(length)
+            self.multiplier = 1
+
+        self.buffer = []
+    
+    def _get_setup(self):
+        return {\
+            "length": self.length,
+            "overlap": self.overlap,
+            "function": self.function
+           }
+
+    def add_data(self, data_frame, data_id=0):
+        self.buffer.extend(data_frame)
+        while len(self.buffer) >= self.length:
+            # print(np.array(self.buffer[:self.length]).shape, self.multiplier.shape)
+            self.output_data(np.multiply(np.array(self.buffer[:self.length]), self.multiplier))
+            self.buffer = self.buffer[(self.length - self.overlap):]

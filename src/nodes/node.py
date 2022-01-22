@@ -39,39 +39,20 @@ class Node():
     Class names should always be the same as the python file they're in. 
     Important for saving and loading.
     """
-
-    has_inputs = True
-    has_outputs = True
-    input_classes = []
-    output_classes = []
-    frame_callbacks = []
-
-    should_draw = False
-    _draw_updates = []
-    _draw_data = []
-
-
-    def __init__(self, name = "Node", dont_time = False, **kwargs):
-        """
-        Initializes internal state.
-        Should not be needed to overwrite, all custom parameters of the child node are stored in self._setup
-        """
+    def __init__(self, name = "Node", has_inputs = True, has_outputs = True, dont_time = False):
+        """Initializes internal state."""
         self.input_is_set = False
+        self.has_inputs = has_inputs        
+        self.has_outputs = has_outputs
+        
+        self.input_classes = []
+        self.output_classes = []
+        self.frame_callbacks = []
+        
+        self.name = name
         self.timing_receiver = None
         self.have_timer = False
         self.dont_time = dont_time
-
-        # TODO: not sure how much I like this design. For usage doen'st make a difference, but writing nodes is kinda annoying... no clear acces, no proper default values ...
-        self._set_setup(name, **kwargs)
-
-    def _set_setup(self, name, **kwargs):
-        """
-        Set the Nodes setup settings.
-        Primarily used for serialization from json files.
-        No need to overwrite.
-        """
-        self.name = name
-        self._setup = kwargs
 
     def _get_setup(self):
         """
@@ -79,7 +60,7 @@ class Node():
         Primarily used for serialization from json files.
         No need to overwrite.
         """
-        return self.name, self._setup
+        return { "name": self.name}
 
     def __call__(self, input_classes):
         """
@@ -90,8 +71,9 @@ class Node():
         return self
 
     # Called in interactive mode
-    # def __repr__(self):
-    #     return "Test()"
+    def __repr__(self):
+        # consider if there is a nice way of displaying the childs as well...
+        return f"{str(self)}\n Settings:{json.dumps(self._get_setup())}"
 
     # Called on print
     def __str__(self):
@@ -205,10 +187,6 @@ class Node():
         for frame_callback in self.frame_callbacks:
             frame_callback(data_frame)
 
-        # print(self.should_draw)
-        if self.should_draw:
-            # print(self._draw_data)
-            self._draw_data.extend(data_frame)
     
     def add_data(self, data_frame, data_id=0):
         """
@@ -245,15 +223,6 @@ class Node():
             for output_class in self.output_classes:
                 output_class.stop_processing()
 
-    def draw(self, *args, **kwargs):
-        # print(self.should_draw)
-        if self.should_draw:
-            # print(self._draw_data)
-            data_frame = np.copy(self._draw_data)
-            # self._draw_data = []
-            # print(self._draw_updates)
-            return self._draw_updates[0](data_frame)
-        return []
 
     def make_dot_graph(self, scale = 0.5):
         processing_list = [self]
@@ -270,29 +239,36 @@ class Node():
 
     def save (self, path):
         res = save_add_node(self)
-        with open(f"{path}.json", 'w') as f:
-            json.dump(res, f, indent=2) 
+        with open(path, 'w') as f:
+            json.dump(res, f, indent=2, cls=NumpyEncoder) 
 
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return json.JSONEncoder.default(self, obj)
 
 # TODO: find proper places for these...
+# TODO: maybe consider a runner or so, no clue if that would be beneficial tho
 def load (path):
-    with open(f"{path}.json", 'r') as f:
-        node = json.read(f)
+    with open(path, 'r') as f:
+        node = json.load(f)
         return load_add_node(node) 
 
 def save_add_node (node):
-    name, settings = node._get_setup()
+    settings = node._get_setup()
     return { \
         "class": node.__class__.__name__,
-        "name": name,
         "settings": settings, 
-        "childs": [save_add_node(node_output) for node_output in node.output_classes]
+        "childs": [save_add_node(node_output) for node_output in node.output_classes if isinstance(node_output, Node)]
         }
 
 def load_add_node(node_setting):
-    module = importlib.import_module(node_setting['class'].lower())
-    node = getattr(module, node_setting['class'])(name=node_setting['name'], settings=node_setting['settings'])
-    node.set_inputs([load_add_node(ns) for ns in node_setting['childs']])
+    # HACK! TODO: fix this proper
+    module = importlib.import_module(f"src.nodes.{node_setting['class'].lower()}")
+    node = getattr(module, node_setting['class'])(**node_setting['settings'])
+    for ns in node_setting['childs']:
+        node.add_output(load_add_node(ns))
     return node
 
 def dot_add_node(dot, node):

@@ -1,44 +1,29 @@
-import time
+import collections
 import numpy as np
-from multiprocessing import Process
-import threading
+
+from .blit import BlitManager
 from .node import Node
-import glob, random
-import h5py
-import pandas as pd
+
+import time
 
 class Draw_lines(Node):
-    """
-    Playsback previously recorded data.
-
-    Expects the following setup variables:
-    - files (str): glob pattern for files 
-    - sample_rate (number): sample rate to simulate in frames per second
-    # - batch_size (int, default=5): number of frames that are sent at the same time -> not implemented yet
-    """
-    has_inputs = True
-    has_outputs = False
+    # TODO: consider removing the filter here and rather putting it into a filter node
+    def __init__(self, idx, names, xAxisLength=5000, name = "Draw Output Lines", dont_time = False):
+        super().__init__(name=name, has_outputs=False, dont_time=dont_time)
+        self.idx = idx
+        self.names = names
+        self.xAxisLength = xAxisLength
     
-    def start_processing(self, recurse=True):
-        """
-        Starts the streaming process.
-        """
-        if self.feeder_process is None:
-            self.feeder_process = threading.Thread(target=self.sender_process)
-            self.feeder_process.start()
-        super().start_processing(recurse)
-        
-    def stop_processing(self, recurse=True):
-        """
-        Stops the streaming process.
-        """
-        super().stop_processing(recurse)
-        if self.feeder_process is not None:
-            self.feeder_process.terminate()
-        self.feeder_process = None
+    def _get_setup(self):
+        return {\
+            "name": self.name,
+            "idx": self.idx,
+            "names": self.names,
+            "xAxisLength": self.xAxisLength
+           }
 
-    def draw_raw(self, subfig, idx, names, xAxisLength=5000):
-        n_plots = len(names)
+    def init_draw(self, subfig):
+        n_plots = len(self.names)
         axes = subfig.subplots(n_plots, 1, sharex=True)
         if n_plots <= 1:
             axes = [axes]
@@ -46,43 +31,56 @@ class Draw_lines(Node):
 
         for i, ax in enumerate(axes):
             ax.set_ylim(-1.1, 1.1)
-            ax.set_xlim(0, xAxisLength)
+            ax.set_xlim(0, self.xAxisLength)
             # ax.set_ylabel(np.array(self.recorded_channels)[self.channel_idx[i]], fontsize=10)
-            ax.set_ylabel(names[i])
+            ax.set_ylabel(self.names[i])
             ax.set_yticks([])
-            ticks = np.linspace(0, xAxisLength, 11).astype(np.int)
+            ticks = np.linspace(0, self.xAxisLength, 11).astype(np.int)
             ax.set_xticks(ticks)
-            ax.set_xticklabels(ticks - xAxisLength)
+            ax.set_xticklabels(ticks - self.xAxisLength)
             # ax.xaxis.grid(False)
 
         axes[-1].set_xlabel("Time (ms)")
 
-        xData = range(0, xAxisLength)  
-        yData = [[0] * xAxisLength] * len(names)
-        # self.yData = np.zeros((len(names), xAxisLength)
-        lines = [axes[i].plot(xData, yData[i], lw=2)[0] for i in range(len(names))]
-
-        # should be returned by draw_raw and not called by itself
-        # should return the lines it changed, in order for blit to work properly
+        xData = range(0, self.xAxisLength)  
+        # self.yData = [collections.deque([0] * self.xAxisLength, maxlen=self.xAxisLength)] * len(self.names)
+        self.yData = [[0] * self.xAxisLength] * len(self.names)
+        # self.self.yData = np.zeros((len(names), self.xAxisLength)
+        self.lines = [axes[i].plot(xData, list(self.yData[i]), lw=2, animated=True)[0] for i in range(len(self.names))]
+        self.axes = axes
+        # self.bm = BlitManager(subfig.canvas, self.lines)
+        # self.time = time.time()
+        # self.time_ctr = 1
+        # return self.lines
         
-        # this way all the draw details are hidden from everyone else
-        # TODO: design! i would prefer to pass this to FuncAnimation directly, but the perdiodData needs to be saved until processed by all (!) independent draw calls
-        def update(periodData, **kwargs):
-            nonlocal yData, lines
-            if len(periodData) > 0:
-                periodData = np.array(periodData).T
-                # print(periodData)
-                # print(idx)
-                # print(len(axes))
-                # print('-----')
-
-                for i in range(len(axes)):
-                    yData[i].extend(periodData[idx[i]])
-                    yData[i] = yData[i][-xAxisLength:]
-                    lines[i].set_ydata(yData[i])
-            return lines
-
-        self._draw_updates.append(update)
-        self.should_draw = True
+        def update (**kwargs):
+            for i in range(len(self.axes)):
+                # print(np.array(list(self.yData[i])).shape)
+                # if i ==0:
+                #     print('----')
+                    # print(list(self.yData[i]))
+                    # print(list(self.yData_ref[i]))
+                self.lines[i].set_ydata(list(self.yData[i]))
+            return self.lines
 
         return update
+
+    def add_data(self, data_frame, data_id=0):
+        periodData = np.array(data_frame).T
+        # print(periodData.shape)
+        # print(periodData)
+        # self.time_ctr += 1
+
+        for i in range(len(self.axes)):
+            # there is some weird bug in the deque, no clue why this doesn't work out correctly...
+            # self.yData[i].extend(list(periodData[self.idx[i]]))
+            self.yData[i].extend(periodData[self.idx[i]])
+            self.yData[i] = self.yData[i][-self.xAxisLength:]
+            # if i ==0:
+            #     print('----')
+            #     print(list(zip(list(self.yData_ref[i]), self.yData[i])))
+            # self.lines[i].set_ydata(self.yData[i])
+        # self.bm.update()
+        # if self.time_ctr % 50 == 0:
+            # print(f'{str(self)}: {self.time_ctr / (time.time() - self.time):.2f}fps, total frames: {self.time_ctr}')
+        # return self.lines

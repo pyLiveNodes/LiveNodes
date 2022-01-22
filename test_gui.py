@@ -1,8 +1,6 @@
 from src.nodes.playback import Playback
+from src.nodes.draw_lines import Draw_lines
 
-pl = Playback(files="./data/KneeBandageCSL2018/**/*.h5", sample_rate=1000)
-
-pl.add_output(lambda data: ())
 
 import sys
 import time
@@ -31,10 +29,6 @@ class mplWidget(FigureCanvasQTAgg):
     def __init__(self):
         super(mplWidget, self).__init__(mpl.figure.Figure(figsize=(7, 7)))
 
-        self.setupAnim()
-        self.show()
-
-    def setupAnim(self):
         channel_names = ['Gonio2', 'GyroLow1', 'GyroLow2', 'GyroLow3']
         recorded_channels = [
             'EMG1', 'EMG2', 'EMG3', 'EMG4',
@@ -46,11 +40,10 @@ class mplWidget(FigureCanvasQTAgg):
             'GyroUp1', 'GyroUp2', 'GyroUp3',
             'GyroLow1', 'GyroLow2', 'GyroLow3']
         idx = np.isin(recorded_channels, channel_names).nonzero()[0]
-        
-        pl.draw_raw(self.figure, idx, channel_names)
-        
-        self.animation = FuncAnimation(self.figure, pl.draw,
-                                       interval=10, blit=True)
+
+        self.node = Draw_lines(name='Raw Data', subfig=self.figure, idx=idx, names=channel_names)
+        self.show()
+        print('show plot initial')
 
 
 
@@ -62,7 +55,17 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(self._main)
         layout = QtWidgets.QVBoxLayout(self._main)
 
-        layout.addWidget(mplWidget())
+        draw_lines_widget = mplWidget()
+        layout.addWidget(draw_lines_widget)
+
+        self.pl = Playback(files="./data/KneeBandageCSL2018/**/*.h5", sample_rate=1000)
+        self.pl.add_output(draw_lines_widget.node)
+        # pl.add_output(lambda data: print(data))
+
+        # pipelineThread = threading.Thread(target = pl.start_processing)
+        # pipelineThread.daemon = True
+        # pipelineThread.start()
+
 
 
 
@@ -73,13 +76,12 @@ if __name__ == "__main__":
     if not qapp:
         qapp = QtWidgets.QApplication(sys.argv)
 
-    pipelineThread = threading.Thread(target = pl.start_processing)
-    pipelineThread.daemon = True
-    pipelineThread.start()
-
     app = ApplicationWindow()
     app.show()
     app.activateWindow()
     app.raise_()
     qapp.exec()
+
+    print('start processing')
+    app.pl.start_processing()
 
