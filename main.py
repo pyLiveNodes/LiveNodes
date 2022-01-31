@@ -35,7 +35,7 @@ print(draws)
 
 plt.rc('font', **font)
 
-fig = plt.figure(num=0, figsize =(16, 10))
+fig = plt.figure(num=0, figsize =(20, 5))
 # fig.suptitle("ASK", fontsize='x-large')
 fig.canvas.manager.set_window_title("ASK")
 fig.canvas.mpl_connect("close_event", pipeline.stop_processing)
@@ -44,7 +44,7 @@ if len(draws) <= 0:
     raise Exception ('Must have at least one draw function registered')
 
 n_figs = len(draws)
-cols = min(2, n_figs)
+cols = min(3, n_figs)
 rows = math.ceil(n_figs / cols) # ie max 3 columns
 
 # https://matplotlib.org/stable/gallery/subplots_axes_and_figures/subfigures.html
@@ -75,7 +75,7 @@ worker.start()
 # initial_draw_and_setup()
 timer = time.time()
 
-animationProcess = animation.FuncAnimation(fig=fig, func=draw_update, interval=5, blit=True)
+animationProcess = animation.FuncAnimation(fig=fig, func=draw_update, interval=1, blit=True)
 # plt.tight_layout()
 plt.show()
 

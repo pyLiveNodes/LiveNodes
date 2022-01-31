@@ -41,26 +41,6 @@
           },
           "childs": [
             {
-              "class": "Draw_lines",
-              "settings": {
-                "name": "Averaged Data",
-                "idx": [
-                  12,
-                  16,
-                  17,
-                  18
-                ],
-                "names": [
-                  "Gonio2",
-                  "GyroLow1",
-                  "GyroLow2",
-                  "GyroLow3"
-                ],
-                "xAxisLength": 50
-              },
-              "childs": []
-            },
-            {
               "class": "Biokit_to_fs",
               "settings": {
                 "name": "Node"
