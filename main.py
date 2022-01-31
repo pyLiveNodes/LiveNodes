@@ -12,7 +12,7 @@ import threading
 
 import math
 
-from src.realtime_animation import RealtimeAnimation
+# from src.realtime_animation import RealtimeAnimation
 
 print('=== Load Pipeline ====')
 pipeline = load('pipelines/recognize.json')

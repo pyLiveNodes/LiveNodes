@@ -107,7 +107,7 @@ class Node():
         """
         self.get_inputs = node_in.get_inputs
         self.set_inputs = node_in.set_inputs
-        self.add_data = node_in.add_data
+        self.receive_data = node_in.receive_data
         self.start_processing = node_in.start_processing
         self.stop_processing = node_in.stop_processing
         
@@ -168,7 +168,7 @@ class Node():
         
         if isinstance(new_output, Node):
             self.output_classes.append(new_output)
-            new_frame_callback_plain = new_output.add_data
+            new_frame_callback_plain = new_output.receive_data
         else:
             new_frame_callback_plain = new_output
         
@@ -179,23 +179,26 @@ class Node():
             
         self.frame_callbacks.append(new_frame_callback)
     
-    def output_data(self, data_frame):
+    def send_data(self, data_frame, **kwargs):
         """
         Send one frame of data. It should not generally be
         necessary to override this function.
         """
         for frame_callback in self.frame_callbacks:
-            frame_callback(data_frame)
+            frame_callback(data_frame, **kwargs)
 
     
-    def add_data(self, data_frame, data_id=0):
+    # TODO: figure out how to do the different data streams in **kwargs, but not needing to pass through everything that was before
+    # ie playback might output annotation, but not sure if it makes sense for all subsequent nodes to pass that through if only the last one actually needs it...
+    # probably requires some sort of sync? ie if playback is connected to "pipeline" and to "accuracy" -> accuracy gets output from playback and pipeline, but (!) they have different function calls...
+    def receive_data(self, data_frame, data_id=0, **kwargs):
         """
         Add a single frame of data, process it and call callbacks.
         
         Input/Output data should always be 2D numpy arrays with the first
         dimension being samples and the second being dimensions.
         """
-        self.output_data(data_frame)  # No-Op
+        self.send_data(data_frame)  # No-Op
         
     def start_processing(self, recurse=True):
         """

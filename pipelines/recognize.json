@@ -1,7 +1,7 @@
 {
   "class": "Playback",
   "settings": {
-    "batch": 1,
+    "batch": 20,
     "files": "./data/KneeBandageCSL2018/**/*.h5",
     "sample_rate": 1000
   },
@@ -77,31 +77,54 @@
                       "settings": {
                         "name": "Node"
                       },
-                      "childs": []
+                      "childs": [
+                        {
+                          "class": "Draw_lines",
+                          "settings": {
+                            "name": "Normed Data",
+                            "idx": [
+                              12,
+                              16,
+                              17,
+                              18
+                            ],
+                            "names": [
+                              "Gonio2",
+                              "GyroLow1",
+                              "GyroLow2",
+                              "GyroLow3"
+                            ],
+                            "xAxisLength": 50
+                          },
+                          "childs": []
+                        }
+                      ]
+                    },
+                    {
+                      "class": "Biokit_recognizer",
+                      "settings": {
+                        "token_insertion_penalty": 50,
+                        "model_path": "./models/KneeBandageCSL2018/partition-stand/sequence/"
+                      },
+                      "childs": [
+                        {
+                          "class": "Draw_recognition",
+                          "settings": {
+                            "name": "Recognition",
+                            "xAxisLength": [
+                              50,
+                              50,
+                              50,
+                              5000
+                            ]
+                          },
+                          "childs": []
+                        }
+                      ]
                     }
                   ]
                 }
               ]
-            },
-            {
-              "class": "Draw_lines",
-              "settings": {
-                "name": "Normed Data",
-                "idx": [
-                  12,
-                  16,
-                  17,
-                  18
-                ],
-                "names": [
-                  "Gonio2",
-                  "GyroLow1",
-                  "GyroLow2",
-                  "GyroLow3"
-                ],
-                "xAxisLength": 50
-              },
-              "childs": []
             }
           ]
         }

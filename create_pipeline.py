@@ -6,6 +6,8 @@ from src.nodes.window import Window
 from src.nodes.playback import Playback
 from src.nodes.draw_lines import Draw_lines
 from src.nodes.node import load
+from src.nodes.biokit_recognizer import Biokit_recognizer
+from src.nodes.draw_recognition import Draw_recognition
 
 import numpy as np
 
@@ -31,8 +33,8 @@ recorded_channels = [
     'GyroUp1', 'GyroUp2', 'GyroUp3',
     'GyroLow1', 'GyroLow2', 'GyroLow3']
 idx = np.isin(recorded_channels, channel_names).nonzero()[0]
-draw = Draw_lines(name='Raw Data', idx=idx, names=channel_names, xAxisLength=5000)
-pl.add_output(draw)
+draw_raw = Draw_lines(name='Raw Data', idx=idx, names=channel_names, xAxisLength=5000)
+pl.add_output(draw_raw)
 
 window = Window(100, 0)
 pl.add_output(window)
@@ -40,8 +42,8 @@ pl.add_output(window)
 avg = Feature_avg()
 window.add_output(avg)
 
-draw2 = Draw_lines(name='Averaged Data', idx=idx, names=channel_names, xAxisLength=50)
-avg.add_output(draw2)
+draw_avg = Draw_lines(name='Averaged Data', idx=idx, names=channel_names, xAxisLength=50)
+avg.add_output(draw_avg)
 
 to_fs = Biokit_to_fs()
 avg.add_output(to_fs)
@@ -52,8 +54,14 @@ to_fs.add_output(norm)
 from_fs = Biokit_from_fs()
 norm.add_output(from_fs)
 
-draw3 = Draw_lines(name='Normed Data', idx=idx, names=channel_names, xAxisLength=50)
-avg.add_output(draw3)
+draw_normed = Draw_lines(name='Normed Data', idx=idx, names=channel_names, xAxisLength=50)
+from_fs.add_output(draw_normed)
+
+recog = Biokit_recognizer(model_path="./models/KneeBandageCSL2018/partition-stand/sequence/", token_insertion_penalty=50)
+norm.add_output(recog)
+
+draw_recognition_path = Draw_recognition()
+recog.add_output(draw_recognition_path)
 
 
 print('=== Save Pipeline ====')

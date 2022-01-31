@@ -6,6 +6,18 @@ from .node import Node
 
 import time
 
+# The draw pattern works as follows:
+# 1. init_draw is called externally by matplotlib or qt and provides access to the subfig. 
+#   -> use this to setup axes, paths etc
+# 2. init_draw returns a update function which is also called externally and does not receive any inputs
+#   -> this should only interface the update calls on matplotlib using data stored in the attributes of the class instance
+# 3. receive_data is called by the pipeline and receives the data as well as potential meta information or other data channels
+#   -> calculate the data you will render in the update fn from draw_init
+#
+# The main advantage of this is, that the pipeline and render loops are separated and one doesn't slow down the other
+#  
+
+
 class Draw_lines(Node):
     # TODO: consider removing the filter here and rather putting it into a filter node
     def __init__(self, idx, names, xAxisLength=5000, name = "Draw Output Lines", dont_time = False):
@@ -27,7 +39,7 @@ class Draw_lines(Node):
         axes = subfig.subplots(n_plots, 1, sharex=True)
         if n_plots <= 1:
             axes = [axes]
-        subfig.suptitle("Raw Data", fontsize=14)
+        subfig.suptitle(self.name, fontsize=14)
 
         for i, ax in enumerate(axes):
             ax.set_ylim(-1.1, 1.1)
@@ -65,7 +77,7 @@ class Draw_lines(Node):
 
         return update
 
-    def add_data(self, data_frame, data_id=0):
+    def receive_data(self, data_frame, **kwargs):
         periodData = np.array(data_frame).T
         # print(periodData.shape)
         # print(periodData)

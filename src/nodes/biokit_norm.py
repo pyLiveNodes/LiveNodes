@@ -11,7 +11,7 @@ class Biokit_norm(Node):
         self.meanSubtraction.resetMeans()
 
 
-    def add_data(self, fs, data_id=0):
-        self.meanSubtraction.updateMeans(fs, 1.0, True)
-        normed = self.meanSubtraction.subtractMeans(fs, 1.0)
-        self.output_data(normed)
+    def receive_data(self, fs, **kwargs):
+        self.meanSubtraction.updateMeans([fs], 1.0, True)
+        normed = self.meanSubtraction.subtractMeans([fs], 1.0)[0] # TODO: check if the [0] here is correct...
+        self.send_data(normed)

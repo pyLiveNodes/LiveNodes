@@ -25,9 +25,9 @@ class Window(Node):
             "function": self.function
            }
 
-    def add_data(self, data_frame, data_id=0):
+    def receive_data(self, data_frame, **kwargs):
         self.buffer.extend(data_frame)
         while len(self.buffer) >= self.length:
             # print(np.array(self.buffer[:self.length]).shape, self.multiplier.shape)
-            self.output_data(np.multiply(np.array(self.buffer[:self.length]), self.multiplier))
+            self.send_data(np.multiply(np.array(self.buffer[:self.length]), self.multiplier))
             self.buffer = self.buffer[(self.length - self.overlap):]

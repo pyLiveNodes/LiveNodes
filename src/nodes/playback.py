@@ -42,7 +42,7 @@ class Playback(Node):
         """
         fs = glob.glob(self.files)
         sleep_time = 1. / (self.sample_rate / self.batch)
-        # print(sleep_time, self.sample_rate, self.batch)
+        print(sleep_time, self.sample_rate, self.batch)
 
         while(not self._stop_event.is_set()):
             f = random.choice(fs)
@@ -62,8 +62,8 @@ class Playback(Node):
                 data = dataSet[start:end] # load into mem
                 
                 for i in range(start, end, self.batch):
-                    # self.add_data(np.array(data[i:i+self.batch]))
-                    self.add_data(np.array([data[i]]))
+                    self.send_data(np.array(data[i:i+self.batch]))
+                    # self.send_data(np.array([data[i]]))
                     time.sleep(sleep_time)
 
         # TODO: look at this implementation again, seems to be the more precise one
@@ -76,7 +76,7 @@ class Playback(Node):
         #     while time.time() - time_val < (1.0 / 1000.0) * self.frame_size_ms:
         #         time.sleep(0.000001)
         #     time_val = time_val_init + sample_cnt / self.sample_rate
-        #     self.output_data(np.array(samples))
+        #     self.send_data(np.array(samples))
     
     def start_processing(self, recurse=True):
         """
