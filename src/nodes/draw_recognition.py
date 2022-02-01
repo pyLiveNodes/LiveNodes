@@ -42,8 +42,10 @@ class Draw_recognition(Node):
         super().__init__(name=name, has_outputs=False, dont_time=dont_time)
         self.xAxisLength = xAxisLength
 
-        self.verts = []
-        self.names = []
+        self.verts = [[], [], [], []]
+        self.names = [[''], [''], [''], ['']]
+
+        self._bar_colors = []
     
     def _get_setup(self):
         return {\
@@ -85,19 +87,22 @@ class Draw_recognition(Node):
 
         def update (**kwargs):
             nonlocal self, bar_objs, txt_fout_objs, txt_fin_objs
-            if len(self.verts) > 0:
+            
+            #TODO: rework this to work properly with missing streams...
+            if len(self.verts) > 0 and len(self._bar_colors) > 0:
                 for bar_obj, tx_out, tx_in, verts, names, colors in zip(bar_objs, txt_fout_objs, txt_fin_objs, self.verts, self.names, self._bar_colors):
                     bar_obj.set_verts(verts)
                     bar_obj.set_facecolor([colors[name] for name in names])
                     tx_out.set_text(names[0])
                     tx_in.set_text(names[-1])
-            return bar_objs + txt_fout_objs + txt_fin_objs
+                return bar_objs + txt_fout_objs + txt_fin_objs
+            return []
         return update
 
 
     def _init_colors(self, topology):
         c = sns.color_palette("deep", len(topology))
-        _state_colors = dict(zip(range(5), ['#b9b9b9', '#777777', '#3b3b3b'])) # bold assumption, that there are never more than 3 states
+        _state_colors = dict(zip(range(3), ['#b9b9b9', '#777777', '#3b3b3b'])) # bold assumption, that there are never more than 3 states
         _token_colors = dict(zip(topology.keys(), c))
         _atom_colors = {}
         for token, color in _token_colors.items():
@@ -105,24 +110,27 @@ class Draw_recognition(Node):
             brightness_mod = list(reversed(np.linspace(0.8, 0.2, len(token_model)))) # this way with len=1 we use 0.8 instead of 0.2
             for i, atom in enumerate(token_model):
                 _atom_colors[atom] = tuple([cc * brightness_mod[i] for cc in color])
+
+        # To be save if a stream is missing, although likely more will break in that case.
+        if '' not in _state_colors: _state_colors[''] = '#b9b9b9'
+        if '' not in _token_colors: _token_colors[''] = '#b9b9b9'
+        if '' not in _atom_colors: _atom_colors[''] = '#b9b9b9'
+
         return _token_colors, _atom_colors, _state_colors
 
-    def receive_data(self, paths, meta, **kwargs):
-        if not hasattr(self, "_token_colors"):
-            topology = meta.get('topology')
-            token_colors, atom_colors, state_colors = self._init_colors(topology)
-            self._bar_colors = [state_colors,
-                    atom_colors,
-                    token_colors,
-                    token_colors]
+    def receive_data(self, data, **kwargs):
+        states, atoms, tokens = zip(*data)
 
+        self.names[0], self.verts[0] = convert_list_pos(states[-self.xAxisLength[0]:], self.xAxisLength[0], (0, 0.7))
+        self.names[1], self.verts[1] = convert_list_pos(atoms[-self.xAxisLength[1]:], self.xAxisLength[1], (0, 0.7))
+        self.names[2], self.verts[2] = convert_list_pos(tokens[-self.xAxisLength[2]:], self.xAxisLength[2], (0, 0.7))
 
-        states, atoms, tokens = zip(*paths[-self.xAxisLength[0]:])
-
-        state_names, state_verts = convert_list_pos(states, self.xAxisLength[0], (0, 0.7))
-        atom_names, atom_verts = convert_list_pos(atoms, self.xAxisLength[1], (0, 0.7))
-        token_names, token_verts = convert_list_pos(tokens, self.xAxisLength[2], (0, 0.7))
-        ref_names, ref_verts = convert_list_pos(tokens, self.xAxisLength[2], (0, 0.7)) # TODO: this is clearly wrong :D
-
-        self.verts = [state_verts, atom_verts, token_verts, ref_verts]
-        self.names = [state_names, atom_names, token_names, ref_names]
+    def receive_meta(self, meta, **kwargs):
+        topology = meta.get('topology')
+        token_colors, atom_colors, state_colors = self._init_colors(topology)
+        self._bar_colors = [state_colors, atom_colors, token_colors, token_colors]
+    
+    def receive_annotation(self, data, **kwargs):
+        # TODO: this expects the full length of seen data, but only receives the last batch from playback atm
+        self.names[3], self.verts[3] = convert_list_pos(data[-self.xAxisLength[3]:], self.xAxisLength[3], (0, 0.7))
+            

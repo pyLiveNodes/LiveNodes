@@ -2,7 +2,7 @@ from matplotlib import animation
 from src.nodes.blit import BlitManager
 from src.nodes.playback import Playback
 from src.nodes.draw_lines import Draw_lines
-from src.nodes.node import load
+from src.nodes.node import Node
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -15,27 +15,22 @@ import math
 # from src.realtime_animation import RealtimeAnimation
 
 print('=== Load Pipeline ====')
-pipeline = load('pipelines/recognize.json')
+pipeline = Node.load('pipelines/recognize.json')
 
 
 print('=== Start main loops ====')
 
 font={'size': 6}
 
-def collect_init_draw(node):
-    res = []
-    if hasattr(node, 'init_draw'):
-        res.append(node.init_draw)
-    for n in node.output_classes:
-        res.extend(collect_init_draw(n))
-    return res
-
-draws = collect_init_draw(pipeline)
+# TODO: let nodes explizitly declare this! 
+# TODO: while we're at it: let nodes declare available/required input and output streams
+# works because the str representation of each node in a pipline must be unique
+draws = {str(n): n.init_draw for n in Node.discover_nodes(pipeline) if hasattr(n, 'init_draw')}.values()
 print(draws)
 
 plt.rc('font', **font)
 
-fig = plt.figure(num=0, figsize =(20, 5))
+fig = plt.figure(num=0, figsize =(16, 10))
 # fig.suptitle("ASK", fontsize='x-large')
 fig.canvas.manager.set_window_title("ASK")
 fig.canvas.mpl_connect("close_event", pipeline.stop_processing)
@@ -44,7 +39,7 @@ if len(draws) <= 0:
     raise Exception ('Must have at least one draw function registered')
 
 n_figs = len(draws)
-cols = min(3, n_figs)
+cols = min(2, n_figs)
 rows = math.ceil(n_figs / cols) # ie max 3 columns
 
 # https://matplotlib.org/stable/gallery/subplots_axes_and_figures/subfigures.html

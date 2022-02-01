@@ -1,3 +1,4 @@
+from ast import Return
 import collections
 from functools import partial
 
@@ -5,6 +6,7 @@ import json
 import importlib
 import numpy as np
 import queue
+from typing import DefaultDict
 
 from graphviz import Digraph
 from PIL import Image
@@ -47,7 +49,7 @@ class Node():
         
         self.input_classes = []
         self.output_classes = []
-        self.frame_callbacks = []
+        self.frame_callbacks = DefaultDict(list)
         
         self.name = name
         self.timing_receiver = None
@@ -93,7 +95,7 @@ class Node():
         
         timing_data = collections.OrderedDict([])
         timing_data[self.name] = self.timing_receiver.get_data()
-        for output_class in self.output_classes:
+        for output_class in self.get_outputs():
             child_timing_info = output_class.get_timing_info()
             for name, sequence in child_timing_info.items():
                 timing_data[self.name + "|" + name] = sequence
@@ -122,7 +124,13 @@ class Node():
     
     def get_outputs(self):
         """Gets the list of outputs."""
-        return self.output_classes
+        return [n[0] for n in self.output_classes]
+
+    def get_output_instances(self):
+        """Gets the list of outputs."""
+        # works because the str representation of each node in a pipline must be unique
+        # and therefore always the last output entry for the same class is used by overwriting the previous ones
+        return {str(n[0]):n[0] for n in self.output_classes}.values()
     
     def set_inputs(self, input_classes):
         """
@@ -143,13 +151,18 @@ class Node():
         self.input_classes = input_classes
         self.input_is_set = True
         
-    def add_output(self, new_output, data_id = None):
+    def add_output(self, new_output, data_id=None, data_stream="Data", recv_name='receive_data'):
         """
         Adds a new class that this class will output data to. Used
         internally by __call__ / set_inputs to register outputs.
 
         data_id, if provided, is passed back to the output callback as
         a parameter so that classes can keep multiple inputs apart easily.
+        used if a node has multiple inputs from different nodes, but the same type of stream.
+
+        data_stream, if provided, is used to sign up for a specific of multiple output streams.
+        output streams are defined in each node.
+        used if a node has multiple inputs from different streams (and possibly different nodes).
            
         In the base case, this also accepts arbitrary functions, which
         will be added as frame callbacks but NOT to the list of classes.
@@ -167,9 +180,14 @@ class Node():
             raise(ValueError("Module does not have outputs."))
         
         if isinstance(new_output, Node):
-            self.output_classes.append(new_output)
-            new_frame_callback_plain = new_output.receive_data
+            if hasattr(new_output, recv_name):
+                self.output_classes.append((new_output, data_id, data_stream, recv_name))
+                new_frame_callback_plain = getattr(new_output, recv_name)
+            else:
+                raise Exception('Unknown receiver function')
         else:
+            # TODO: consider if we need this feature (functionst, that are not nodes) in the future...
+            # Reason is, that these cannot be serialized and may not obey some of the other assumptions about we can make about nodes
             new_frame_callback_plain = new_output
         
         if data_id is not None:
@@ -177,21 +195,21 @@ class Node():
         else:
             new_frame_callback = new_frame_callback_plain
             
-        self.frame_callbacks.append(new_frame_callback)
+        self.frame_callbacks[data_stream].append(new_frame_callback)
     
-    def send_data(self, data_frame, **kwargs):
+    def send_data(self, data_frame, data_stream="Data", **kwargs):
         """
         Send one frame of data. It should not generally be
         necessary to override this function.
         """
-        for frame_callback in self.frame_callbacks:
-            frame_callback(data_frame, **kwargs)
+        for frame_callback in self.frame_callbacks[data_stream]:
+            frame_callback(data_frame, data_stream=data_stream, **kwargs)
 
     
     # TODO: figure out how to do the different data streams in **kwargs, but not needing to pass through everything that was before
     # ie playback might output annotation, but not sure if it makes sense for all subsequent nodes to pass that through if only the last one actually needs it...
     # probably requires some sort of sync? ie if playback is connected to "pipeline" and to "accuracy" -> accuracy gets output from playback and pipeline, but (!) they have different function calls...
-    def receive_data(self, data_frame, data_id=0, **kwargs):
+    def receive_data(self, data_frame, data_id=None, **kwargs):
         """
         Add a single frame of data, process it and call callbacks.
         
@@ -210,7 +228,7 @@ class Node():
         _first_ start processing locally and _then_ recurse.
         """
         if recurse:
-            for output_class in self.output_classes:
+            for output_class in self.get_outputs():
                 output_class.start_processing()
             
     def stop_processing(self, recurse=True):
@@ -223,62 +241,85 @@ class Node():
         _first_ recurse and _then_ stop processing locally.
         """
         if recurse:
-            for output_class in self.output_classes:
+            for output_class in self.get_outputs():
                 output_class.stop_processing()
 
 
     def make_dot_graph(self, scale = 0.5):
         processing_list = [self]
-        dot = Digraph(format = 'png', strict = True)
+        dot = Digraph(format = 'png', strict = False)
         while len(processing_list) != 0:
             node = processing_list.pop()
             dot_add_node(dot, node)
-            for node_output in node.output_classes:
+            for node_output, _, stream_name, _ in node.output_classes:
+                stream_name = 'Data' if stream_name == None else stream_name
                 dot_add_node(dot, node_output)
-                dot.edge(str(node), str(node_output))
+                dot.edge(str(node), str(node_output), label=stream_name)
                 processing_list.append(node_output)
         img = Image.open(BytesIO(dot.pipe()))
         return img.resize((int(img.width * scale), int(img.height * scale)), Image.LANCZOS)
 
+
+    @classmethod
+    def discover_nodes(self, node):
+        if len(node.output_classes) > 0:
+            childs = [n.discover_nodes(n) for n in node.get_outputs()]
+            return [node] + list(np.concatenate(childs))
+        return [node]
+
     def save (self, path):
-        res = save_add_node(self)
+        nodes = self.discover_nodes(self)
+        
+        # TODO: fix this, as we now can have two inputs with different streams :D
+        # node_names = list(map(str, nodes))
+        # node_names_unique, counts = np.unique(node_names, return_counts=True)
+        # if  len(node_names) != len(node_names_unique): # assume the str(n) is unique in a pipeline! 
+        #     raise Exception(f'Cannot save as there are nodes with the same string representation, change the name of these nodes {json.dumps(list(node_names_unique[counts > 1]))}')
+
+        nodes = {str(n): { \
+                "class": n.__class__.__name__, \
+                "settings": n._get_setup(),  \
+                "childs": [(str(node_output), output_id, data_stream, recv_name) for node_output, output_id, data_stream, recv_name in n.output_classes if isinstance(node_output, Node)] \
+            } for n in nodes}
+
         with open(path, 'w') as f:
-            json.dump(res, f, indent=2, cls=NumpyEncoder) 
+            json.dump({'start': str(self), 'nodes': nodes}, f, indent=2, cls=NumpyEncoder) 
+
+    @classmethod
+    def load (self, path):
+        with open(path, 'r') as f:
+            nodes_settings = json.load(f)
+            start_node, nodes_settings = nodes_settings.get('start'), nodes_settings.get('nodes')
+            
+            nodes = {}
+            # instantiate all nodes
+            for name, ns in nodes_settings.items():
+                # HACK! TODO: fix this proper
+                module = importlib.import_module(f"src.nodes.{ns['class'].lower()}")
+                nodes[name] = (getattr(module, ns['class'])(**ns['settings']))
+
+            # connect all inputs and outputs 
+            # cannot be done earlier, as order of instantiation is important, but not maintained during saving
+            for name, ns in nodes_settings.items():
+                for ch_name, ch_id, ch_stream, ch_fn in ns['childs']:
+                    nodes[name].add_output(nodes[ch_name], data_id=ch_id, data_stream=ch_stream, recv_name=ch_fn)
+
+            return nodes[start_node]
+
 
 class NumpyEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, np.ndarray):
             return obj.tolist()
         return json.JSONEncoder.default(self, obj)
+        
 
-# TODO: find proper places for these...
-# TODO: maybe consider a runner or so, no clue if that would be beneficial tho
-def load (path):
-    with open(path, 'r') as f:
-        node = json.load(f)
-        return load_add_node(node) 
-
-def save_add_node (node):
-    settings = node._get_setup()
-    return { \
-        "class": node.__class__.__name__,
-        "settings": settings, 
-        "childs": [save_add_node(node_output) for node_output in node.output_classes if isinstance(node_output, Node)]
-        }
-
-def load_add_node(node_setting):
-    # HACK! TODO: fix this proper
-    module = importlib.import_module(f"src.nodes.{node_setting['class'].lower()}")
-    node = getattr(module, node_setting['class'])(**node_setting['settings'])
-    for ns in node_setting['childs']:
-        node.add_output(load_add_node(ns))
-    return node
-
-def dot_add_node(dot, node):
+def dot_add_node(dot, node, name=False):
     shape = 'rect'
     if node.has_inputs == False:
         shape = 'invtrapezium'
     if node.has_outputs == False:
         shape = 'trapezium'
-    dot.node(str(node), node.name, shape = shape, style = 'rounded')
+    disp_name = node.name if name else str(node)
+    dot.node(str(node), disp_name, shape = shape, style = 'rounded')
     

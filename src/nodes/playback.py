@@ -16,13 +16,18 @@ class Playback(Node):
     - sample_rate (number): sample rate to simulate in frames per second
     # - batch_size (int, default=5): number of frames that are sent at the same time -> not implemented yet
     """
-    def __init__(self, files, sample_rate, batch=1, name="Playback", dont_time=False):
+    # TODO: consider using a file for meta data instead of dictionary...
+    def __init__(self, files, meta, batch=1, name="Playback", dont_time=False):
         super().__init__(name, has_inputs=False, dont_time=dont_time)
         self.feeder_process = None
 
-        self.sample_rate = sample_rate
+        self.meta = meta
         self.files = files
         self.batch = batch
+
+        self.sample_rate = meta.get('sample_rate')
+        self.targets = meta.get('targets')
+        self.channels = meta.get('channels')
 
         self._stop_event = threading.Event()
     
@@ -30,12 +35,12 @@ class Playback(Node):
         return {\
             "batch": self.batch,
             "files": self.files,
-            "sample_rate": self.sample_rate
+            "meta": self.meta
         }
 
     def stop(self):
         self._stop_event.set()
-        
+
     def sender_process(self):
         """
         Streams the data and calls frame callbacks for each frame.
@@ -44,17 +49,24 @@ class Playback(Node):
         sleep_time = 1. / (self.sample_rate / self.batch)
         print(sleep_time, self.sample_rate, self.batch)
 
+        target_to_id = {key: key for i, key in enumerate(self.targets)}
+
+        self.send_data(self.meta, data_stream="Meta")
+
         while(not self._stop_event.is_set()):
             f = random.choice(fs)
-            # print(f)
-            # ref = pd.read_csv(f.replace('.h5', '.csv'), names=["act", "start", "end"])
-            # targs = []
-            # j = 0
-            # for _, row in ref.iterrows():
-            #     targs += [self.target_to_id["stand"]] * (row['start'] - j)
-            #     targs += [self.target_to_id[row['act']]] * (row['end'] - row['start'] - j)
-            #     j = row['end']
+            print(f)
 
+            # Prepare framewise annotation to be send
+            ref = pd.read_csv(f.replace('.h5', '.csv'), names=["act", "start", "end"])
+            targs = []
+            j = 0
+            for _, row in ref.iterrows():
+                targs += [target_to_id["stand"]] * (row['start'] - j) # use stand as filler for unknown. #Hack! TODO: remove
+                targs += [target_to_id[row['act']]] * (row['end'] - row['start'] - j)
+                j = row['end']
+
+            # Read and send data from file
             with h5py.File(f, "r") as dataFile:
                 dataSet = dataFile.get("data")
                 start = 0
@@ -63,7 +75,7 @@ class Playback(Node):
                 
                 for i in range(start, end, self.batch):
                     self.send_data(np.array(data[i:i+self.batch]))
-                    # self.send_data(np.array([data[i]]))
+                    self.send_data(targs[i:i+self.batch], data_stream='Annotation')
                     time.sleep(sleep_time)
 
         # TODO: look at this implementation again, seems to be the more precise one

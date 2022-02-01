@@ -20,18 +20,20 @@ import time
 
 class Draw_lines(Node):
     # TODO: consider removing the filter here and rather putting it into a filter node
-    def __init__(self, idx, names, xAxisLength=5000, name = "Draw Output Lines", dont_time = False):
+    def __init__(self, idx, names, xAxisLength=5000, ylim=(-1.1, 1.1), name = "Draw Output Lines", dont_time = False):
         super().__init__(name=name, has_outputs=False, dont_time=dont_time)
         self.idx = idx
         self.names = names
         self.xAxisLength = xAxisLength
+        self.ylim = ylim
     
     def _get_setup(self):
         return {\
             "name": self.name,
             "idx": self.idx,
             "names": self.names,
-            "xAxisLength": self.xAxisLength
+            "xAxisLength": self.xAxisLength,
+            "ylim": self.ylim
            }
 
     def init_draw(self, subfig):
@@ -42,7 +44,7 @@ class Draw_lines(Node):
         subfig.suptitle(self.name, fontsize=14)
 
         for i, ax in enumerate(axes):
-            ax.set_ylim(-1.1, 1.1)
+            ax.set_ylim(*self.ylim)
             ax.set_xlim(0, self.xAxisLength)
             # ax.set_ylabel(np.array(self.recorded_channels)[self.channel_idx[i]], fontsize=10)
             ax.set_ylabel(self.names[i])
