@@ -142,15 +142,18 @@ class Node():
             raise(ValueError("Module does not have inputs."))
         if self.input_is_set:
             raise(ValueError("Module input already set."))
+        # if str(self) in list(map(str, self.discover_parents(self))):
+        #     raise(ValueError("Module name already taken by parent"))
         if not isinstance(input_classes, list):
             input_classes = [input_classes]
             
         for inputId, inputClass in enumerate(input_classes):
-            inputClass.add_output(self, inputId)
+            inputClass.add_output(self, data_id=inputId)
             
         self.input_classes = input_classes
         self.input_is_set = True
         
+    # TODO: think about api, should we rather use set_inputs instead of add_output? (i think that was the original intention, but i kinda like the current state quite a lot)
     def add_output(self, new_output, data_id=None, data_stream="Data", recv_name='receive_data'):
         """
         Adds a new class that this class will output data to. Used
@@ -251,7 +254,7 @@ class Node():
         dot = Digraph(format = 'png', strict = False)
 
         # as the str rep need to be unique we can get only the unique instances this way 
-        nodes = list({str(n):n for n in self.discover_nodes(self)}.values())
+        nodes = list({str(n):n for n in self.discover_childs(self)}.values())
 
         # First pass: create nodes
         for node in nodes:
@@ -274,14 +277,22 @@ class Node():
 
 
     @classmethod
-    def discover_nodes(self, node):
+    def discover_childs(self, node):
         if len(node.output_classes) > 0:
-            childs = [n.discover_nodes(n) for n in node.get_outputs()]
+            childs = [n.discover_childs(n) for n in node.get_outputs()]
             return [node] + list(np.concatenate(childs))
         return [node]
 
+    # TODO: doesn't currently work, as we are ignoring the set_inputs api and are using the add_output one, above is a todo to reconsider
+    @classmethod
+    def discover_parents(self, node):
+        if len(node.input_classes) > 0:
+            parents = [n.discover_parents(n) for n in node.input_classes]
+            return [node] + list(np.concatenate(parents))
+        return [node]
+
     def save (self, path):
-        nodes = self.discover_nodes(self)
+        nodes = self.discover_childs(self)
         
         # TODO: fix this, as we now can have two inputs with different streams :D
         # node_names = list(map(str, nodes))

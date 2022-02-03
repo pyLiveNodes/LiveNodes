@@ -27,8 +27,8 @@ font={'size': 6}
 
 # TODO: let nodes explizitly declare this! 
 # TODO: while we're at it: let nodes declare available/required input and output streams
-# works because the str representation of each node in a pipline must be unique
-draws = {str(n): n.init_draw for n in Node.discover_nodes(pipeline) if hasattr(n, 'init_draw')}.values()
+# the following works because the str representation of each node in a pipline must be unique
+draws = {str(n): n.init_draw for n in Node.discover_childs(pipeline) if hasattr(n, 'init_draw')}.values()
 print(draws)
 
 plt.rc('font', **font)

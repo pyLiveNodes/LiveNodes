@@ -37,6 +37,7 @@ class Draw_lines(Node):
         self.data_queue = mp.SimpleQueue()
         self.name_queue = mp.SimpleQueue()
 
+        self.names = [''] * n_plots
         self.axes = []
 
     def _get_setup(self):
@@ -54,10 +55,11 @@ class Draw_lines(Node):
         if self.n_plots <= 1:
             axes = [axes]
 
-        for ax in axes:
+        for name, ax in zip(self.names, axes):
             ax.set_ylim(*self.ylim)
             ax.set_xlim(0, self.xAxisLength)
             ax.set_yticks([])
+            ax.set_ylabel(name)
             ticks = np.linspace(0, self.xAxisLength, 11).astype(np.int)
             ax.set_xticks(ticks)
             ax.set_xticklabels(ticks - self.xAxisLength)
@@ -71,11 +73,17 @@ class Draw_lines(Node):
         def update (**kwargs):
             nonlocal self
 
+            # TODO: figure out how to update the label names once the initial draw happened!
+
             # update axis names
-            while not self.name_queue.empty():
-                names = self.name_queue.get()
+            if not self.name_queue.empty():
+                while not self.name_queue.empty():
+                    self.names = self.name_queue.get()
+                
                 for i, ax in enumerate(self.axes):
-                    ax.set_ylabel(names[i])
+                    ax.set_ylabel(self.names[i])
+                return [ax.yaxis.label for ax in self.axes]
+                # TODO: figure out if an early return messes up some of the data visualiztion, ie if some parts are thrown away. don't think so, but double check...
 
             # update axis values
             while not self.data_queue.empty():

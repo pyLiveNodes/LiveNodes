@@ -71,7 +71,7 @@ filter2 = Filter(name="Feature Filter", names=channel_names_fts)
 fts.add_output(filter2)
 fts.add_output(filter2, data_stream="Channel Names", recv_name="receive_channels")
 
-draw_fts = Draw_lines(name='Averaged Data', n_plots=len(channel_names_fts), xAxisLength=x_processed)
+draw_fts = Draw_lines(name='Features', n_plots=len(channel_names_fts), xAxisLength=x_processed)
 filter2.add_output(draw_fts)
 filter2.add_output(draw_fts, data_stream="Channel Names", recv_name="receive_channels")
 
@@ -84,8 +84,14 @@ to_fs.add_output(norm)
 from_fs = Biokit_from_fs()
 norm.add_output(from_fs)
 
-draw_normed = Draw_lines(name='Normed Data', n_plots=len(channel_names_fts), ylim=(-5, 5), xAxisLength=x_processed)
-from_fs.add_output(draw_normed)
+filter3 = Filter(name="Normed Feature Filter", names=channel_names_fts)
+from_fs.add_output(filter3)
+fts.add_output(filter3, data_stream="Channel Names", recv_name="receive_channels")
+
+draw_normed = Draw_lines(name='Normed Features', n_plots=len(channel_names_fts), ylim=(-5, 5), xAxisLength=x_processed)
+filter3.add_output(draw_normed)
+filter3.add_output(draw_normed, data_stream="Channel Names", recv_name="receive_channels")
+
 
 recog = Biokit_recognizer(model_path="./models/KneeBandageCSL2018/partition-stand/sequence/", token_insertion_penalty=50)
 norm.add_output(recog)

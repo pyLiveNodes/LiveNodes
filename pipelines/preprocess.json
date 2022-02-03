@@ -165,6 +165,12 @@
           null,
           "Data",
           "receive_data"
+        ],
+        [
+          "Normed Feature Filter [Filter]",
+          null,
+          "Channel Names",
+          "receive_channels"
         ]
       ]
     },
@@ -180,23 +186,23 @@
       },
       "childs": [
         [
-          "Averaged Data [Draw_lines]",
+          "Features [Draw_lines]",
           null,
           "Data",
           "receive_data"
         ],
         [
-          "Averaged Data [Draw_lines]",
+          "Features [Draw_lines]",
           null,
           "Channel Names",
           "receive_channels"
         ]
       ]
     },
-    "Averaged Data [Draw_lines]": {
+    "Features [Draw_lines]": {
       "class": "Draw_lines",
       "settings": {
-        "name": "Averaged Data",
+        "name": "Features",
         "n_plots": 3,
         "xAxisLength": 50,
         "ylim": [
@@ -241,17 +247,42 @@
       },
       "childs": [
         [
-          "Normed Data [Draw_lines]",
+          "Normed Feature Filter [Filter]",
           null,
           "Data",
           "receive_data"
         ]
       ]
     },
-    "Normed Data [Draw_lines]": {
+    "Normed Feature Filter [Filter]": {
+      "class": "Filter",
+      "settings": {
+        "name": "Normed Feature Filter",
+        "names": [
+          "EMG1__rms",
+          "Gonio2__calc_mean",
+          "AccLow2__calc_mean"
+        ]
+      },
+      "childs": [
+        [
+          "Normed Features [Draw_lines]",
+          null,
+          "Data",
+          "receive_data"
+        ],
+        [
+          "Normed Features [Draw_lines]",
+          null,
+          "Channel Names",
+          "receive_channels"
+        ]
+      ]
+    },
+    "Normed Features [Draw_lines]": {
       "class": "Draw_lines",
       "settings": {
-        "name": "Normed Data",
+        "name": "Normed Features",
         "n_plots": 3,
         "xAxisLength": 50,
         "ylim": [
