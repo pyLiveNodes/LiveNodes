@@ -1,5 +1,6 @@
 import collections
 from queue import Queue
+from tkinter import N
 import numpy as np
 
 from .blit import BlitManager
@@ -24,39 +25,38 @@ import time
 
 class Draw_lines(Node):
     # TODO: consider removing the filter here and rather putting it into a filter node
-    def __init__(self, idx, names, xAxisLength=5000, ylim=(-1.1, 1.1), name = "Draw Output Lines", dont_time = False):
+    def __init__(self, n_plots=4, xAxisLength=5000, ylim=(-1.1, 1.1), name = "Draw Output Lines", dont_time = False):
         super().__init__(name=name, has_outputs=False, dont_time=dont_time)
-        self.idx = idx
-        self.names = names
         self.xAxisLength = xAxisLength
         self.ylim = ylim
+        self.n_plots = n_plots
 
         # render process
-        self.yData = [[0] * self.xAxisLength] * len(self.names)
+        self.yData = [[0] * self.xAxisLength] * n_plots
         # data generation process
-        self.data_queue = [mp.SimpleQueue() for _ in range(len(self.names))]
-    
+        self.data_queue = mp.SimpleQueue()
+        self.name_queue = mp.SimpleQueue()
+
+        self.axes = []
+
     def _get_setup(self):
         return {\
             "name": self.name,
-            "idx": self.idx,
-            "names": self.names,
+            "n_plots": self.n_plots, # TODO: consider if we could make this max_plots so that the data stream might also contain less than the specified amount of plots
             "xAxisLength": self.xAxisLength,
             "ylim": self.ylim
            }
 
     def init_draw(self, subfig):
-        n_plots = len(self.names)
-        axes = subfig.subplots(n_plots, 1, sharex=True)
-        if n_plots <= 1:
-            axes = [axes]
         subfig.suptitle(self.name, fontsize=14)
 
-        for i, ax in enumerate(axes):
+        axes = subfig.subplots(self.n_plots, 1, sharex=True)
+        if self.n_plots <= 1:
+            axes = [axes]
+
+        for ax in axes:
             ax.set_ylim(*self.ylim)
             ax.set_xlim(0, self.xAxisLength)
-            # ax.set_ylabel(np.array(self.recorded_channels)[self.channel_idx[i]], fontsize=10)
-            ax.set_ylabel(self.names[i])
             ax.set_yticks([])
             ticks = np.linspace(0, self.xAxisLength, 11).astype(np.int)
             ax.set_xticks(ticks)
@@ -65,26 +65,36 @@ class Draw_lines(Node):
 
         axes[-1].set_xlabel("Time (ms)")
         xData = range(0, self.xAxisLength)  
-        self.lines = [axes[i].plot(xData, self.yData[i], lw=2, animated=True)[0] for i in range(len(self.names))]
+        self.lines = [axes[i].plot(xData, self.yData[i], lw=2, animated=True)[0] for i in range(self.n_plots)]
         self.axes = axes
 
-        
         def update (**kwargs):
             nonlocal self
 
-            for i in range(len(self.axes)):
-                while not self.data_queue[i].empty():
-                    self.yData[i].extend(list(self.data_queue[i].get()))
+            # update axis names
+            while not self.name_queue.empty():
+                names = self.name_queue.get()
+                for i, ax in enumerate(self.axes):
+                    ax.set_ylabel(names[i])
 
+            # update axis values
+            while not self.data_queue.empty():
+                data = self.data_queue.get()
+                for i in range(self.n_plots):
+                    self.yData[i].append(data[i])
+            
+            for i in range(self.n_plots):
                 # this is weird in behaviour as we need to overwrite this for some reason and cannot just use the view in the set_data part...
                 self.yData[i] = self.yData[i][-self.xAxisLength:]
                 self.lines[i].set_ydata(self.yData[i])
+
             return self.lines
 
         return update
 
-    def receive_data(self, data_frame, **kwargs):
-        periodData = np.array(data_frame).T
+    def receive_channels(self, names, **kwargs):
+        self.name_queue.put(names)
 
-        for i in range(len(self.axes)):
-            self.data_queue[i].put(periodData[self.idx[i]])
+    def receive_data(self, data_frame, **kwargs):
+        for vec in np.array(data_frame):
+            self.data_queue.put(list(vec))  

@@ -52,6 +52,7 @@ class Playback(Node):
         target_to_id = {key: key for i, key in enumerate(self.targets)}
 
         self.send_data(self.meta, data_stream="Meta")
+        self.send_data(self.channels, data_stream="Channel Names")
 
         while(not self._stop_event.is_set()):
             f = random.choice(fs)

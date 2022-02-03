@@ -27,6 +27,8 @@ class Window(Node):
 
     def receive_data(self, data_frame, **kwargs):
         self.buffer.extend(data_frame)
+        # TODO: consider if we could send mulitple frames in one send_data call or if that breaks an assumption later on
+        # benefits would be more performant feature calculation (for example), but prob. the whole pipline might see minor benefits
         while len(self.buffer) >= self.length:
             # print(np.array(self.buffer[:self.length]).shape, self.multiplier.shape)
             self.send_data(np.multiply(np.array(self.buffer[:self.length]), self.multiplier))

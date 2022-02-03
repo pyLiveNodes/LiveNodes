@@ -2,8 +2,10 @@ from src.nodes.biokit_norm import Biokit_norm
 from src.nodes.biokit_to_fs import Biokit_to_fs
 from src.nodes.biokit_from_fs import Biokit_from_fs
 from src.nodes.feature_avg import Feature_avg
+from src.nodes.feature import Feature
 from src.nodes.window import Window
 from src.nodes.memory import Memory
+from src.nodes.filter import Filter
 from src.nodes.playback import Playback
 from src.nodes.draw_lines import Draw_lines
 from src.nodes.node import Node
@@ -16,7 +18,8 @@ file = "pipelines/recognize.json"
 
 print('=== Build Pipeline ====')
 
-channel_names = ['Gonio2', 'GyroLow1', 'GyroLow2', 'GyroLow3']
+channel_names_raw = ['EMG1', 'Gonio2', 'AccLow2']
+channel_names_fts = ['EMG1__rms', 'Gonio2__calc_mean', 'AccLow2__calc_mean']
 recorded_channels = [
     'EMG1', 'EMG2', 'EMG3', 'EMG4',
     'Airborne',
@@ -41,27 +44,39 @@ x_processed = 50
 
 # TODO: currently the saving and everything else assumes we have a single node as entry, not sure if that is always true. consider multi indepdendent sensors, that are synced in the second node 
 #   -> might be solveable with "pipeline nodes" or similar, where a node acts as container for a node system -> might be good for paralellisation anyway 
-pl = Playback(files="./data/KneeBandageCSL2018/**/*.h5", meta=meta, batch=20)
+pl = Playback(files="./data/KneeBandageCSL2018/part00/01.h5", meta=meta, batch=20)
+# pl = Playback(files="./data/KneeBandageCSL2018/**/*.h5", meta=meta, batch=20)
 
 # This output will not be saved, as it cannot be reconstructed
 pl.add_output(lambda data: print(data))
 
 
-idx = np.isin(recorded_channels, channel_names).nonzero()[0]
-draw_raw = Draw_lines(name='Raw Data', idx=idx, names=channel_names, xAxisLength=x_raw)
-pl.add_output(draw_raw)
+filter1 = Filter(name="Raw Filter", names=channel_names_raw)
+pl.add_output(filter1)
+pl.add_output(filter1, data_stream="Channel Names", recv_name="receive_channels")
+
+draw_raw = Draw_lines(name='Raw Data', n_plots=len(channel_names_raw), xAxisLength=x_raw)
+filter1.add_output(draw_raw)
+filter1.add_output(draw_raw, data_stream="Channel Names", recv_name="receive_channels")
 
 window = Window(100, 0)
 pl.add_output(window)
 
-avg = Feature_avg()
-window.add_output(avg)
+fts = Feature(features=['calc_mean', 'rms'], feature_args={"samplingfrequency": meta['sample_rate']})
+window.add_output(fts)
+pl.add_output(fts, data_stream="Channel Names", recv_name="receive_channels")
 
-draw_avg = Draw_lines(name='Averaged Data', idx=idx, names=channel_names, xAxisLength=x_processed)
-avg.add_output(draw_avg)
+
+filter2 = Filter(name="Feature Filter", names=channel_names_fts)
+fts.add_output(filter2)
+fts.add_output(filter2, data_stream="Channel Names", recv_name="receive_channels")
+
+draw_fts = Draw_lines(name='Averaged Data', n_plots=len(channel_names_fts), xAxisLength=x_processed)
+filter2.add_output(draw_fts)
+filter2.add_output(draw_fts, data_stream="Channel Names", recv_name="receive_channels")
 
 to_fs = Biokit_to_fs()
-avg.add_output(to_fs)
+fts.add_output(to_fs)
 
 norm = Biokit_norm()
 to_fs.add_output(norm)
@@ -69,7 +84,7 @@ to_fs.add_output(norm)
 from_fs = Biokit_from_fs()
 norm.add_output(from_fs)
 
-draw_normed = Draw_lines(name='Normed Data', idx=idx, names=channel_names, ylim=(-5, 5), xAxisLength=x_processed)
+draw_normed = Draw_lines(name='Normed Data', n_plots=len(channel_names_fts), ylim=(-5, 5), xAxisLength=x_processed)
 from_fs.add_output(draw_normed)
 
 recog = Biokit_recognizer(model_path="./models/KneeBandageCSL2018/partition-stand/sequence/", token_insertion_penalty=50)

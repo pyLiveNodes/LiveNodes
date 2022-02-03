@@ -247,17 +247,28 @@ class Node():
                 output_class.stop_processing()
 
 
-    def make_dot_graph(self, scale = 0.5):
-        processing_list = [self]
+    def make_dot_graph(self, scale = 0.5, name=False):
         dot = Digraph(format = 'png', strict = False)
-        while len(processing_list) != 0:
-            node = processing_list.pop()
-            dot_add_node(dot, node)
+
+        # as the str rep need to be unique we can get only the unique instances this way 
+        nodes = list({str(n):n for n in self.discover_nodes(self)}.values())
+
+        # First pass: create nodes
+        for node in nodes:
+            shape = 'rect'
+            if node.has_inputs == False:
+                shape = 'invtrapezium'
+            if node.has_outputs == False:
+                shape = 'trapezium'
+            disp_name = node.name if name else str(node)
+            dot.node(str(node), disp_name, shape = shape, style = 'rounded')
+        
+        # Second pass: add edges based on output links
+        for node in nodes:
             for node_output, _, stream_name, _ in node.output_classes:
                 stream_name = 'Data' if stream_name == None else stream_name
-                dot_add_node(dot, node_output)
                 dot.edge(str(node), str(node_output), label=stream_name)
-                processing_list.append(node_output)
+
         img = Image.open(BytesIO(dot.pipe()))
         return img.resize((int(img.width * scale), int(img.height * scale)), Image.LANCZOS)
 
@@ -315,13 +326,3 @@ class NumpyEncoder(json.JSONEncoder):
             return obj.tolist()
         return json.JSONEncoder.default(self, obj)
         
-
-def dot_add_node(dot, node, name=False):
-    shape = 'rect'
-    if node.has_inputs == False:
-        shape = 'invtrapezium'
-    if node.has_outputs == False:
-        shape = 'trapezium'
-    disp_name = node.name if name else str(node)
-    dot.node(str(node), disp_name, shape = shape, style = 'rounded')
-    

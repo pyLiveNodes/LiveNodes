@@ -5,7 +5,7 @@
       "class": "Playback",
       "settings": {
         "batch": 20,
-        "files": "./data/KneeBandageCSL2018/**/*.h5",
+        "files": "./data/KneeBandageCSL2018/part00/01.h5",
         "meta": {
           "sample_rate": 1000,
           "channels": [
@@ -57,16 +57,28 @@
       },
       "childs": [
         [
-          "Raw Data [Draw_lines]",
+          "Raw Filter [Filter]",
           null,
           "Data",
           "receive_data"
+        ],
+        [
+          "Raw Filter [Filter]",
+          null,
+          "Channel Names",
+          "receive_channels"
         ],
         [
           "Window [Window]",
           null,
           "Data",
           "receive_data"
+        ],
+        [
+          "Features [Feature]",
+          null,
+          "Channel Names",
+          "receive_channels"
         ],
         [
           "Memory [Memory]",
@@ -76,22 +88,36 @@
         ]
       ]
     },
+    "Raw Filter [Filter]": {
+      "class": "Filter",
+      "settings": {
+        "name": "Raw Filter",
+        "names": [
+          "EMG1",
+          "Gonio2",
+          "AccLow2"
+        ]
+      },
+      "childs": [
+        [
+          "Raw Data [Draw_lines]",
+          null,
+          "Data",
+          "receive_data"
+        ],
+        [
+          "Raw Data [Draw_lines]",
+          null,
+          "Channel Names",
+          "receive_channels"
+        ]
+      ]
+    },
     "Raw Data [Draw_lines]": {
       "class": "Draw_lines",
       "settings": {
         "name": "Raw Data",
-        "idx": [
-          12,
-          16,
-          17,
-          18
-        ],
-        "names": [
-          "Gonio2",
-          "GyroLow1",
-          "GyroLow2",
-          "GyroLow3"
-        ],
+        "n_plots": 3,
         "xAxisLength": 5000,
         "ylim": [
           -1.1,
@@ -109,24 +135,36 @@
       },
       "childs": [
         [
-          "Node [Feature_avg]",
+          "Features [Feature]",
           null,
           "Data",
           "receive_data"
         ]
       ]
     },
-    "Node [Feature_avg]": {
-      "class": "Feature_avg",
+    "Features [Feature]": {
+      "class": "Feature",
       "settings": {
-        "name": "Node"
+        "features": [
+          "calc_mean",
+          "rms"
+        ],
+        "feature_args": {
+          "samplingfrequency": 1000
+        }
       },
       "childs": [
         [
-          "Averaged Data [Draw_lines]",
+          "Feature Filter [Filter]",
           null,
           "Data",
           "receive_data"
+        ],
+        [
+          "Feature Filter [Filter]",
+          null,
+          "Channel Names",
+          "receive_channels"
         ],
         [
           "Node [Biokit_to_fs]",
@@ -136,22 +174,36 @@
         ]
       ]
     },
+    "Feature Filter [Filter]": {
+      "class": "Filter",
+      "settings": {
+        "name": "Feature Filter",
+        "names": [
+          "EMG1__rms",
+          "Gonio2__calc_mean",
+          "AccLow2__calc_mean"
+        ]
+      },
+      "childs": [
+        [
+          "Averaged Data [Draw_lines]",
+          null,
+          "Data",
+          "receive_data"
+        ],
+        [
+          "Averaged Data [Draw_lines]",
+          null,
+          "Channel Names",
+          "receive_channels"
+        ]
+      ]
+    },
     "Averaged Data [Draw_lines]": {
       "class": "Draw_lines",
       "settings": {
         "name": "Averaged Data",
-        "idx": [
-          12,
-          16,
-          17,
-          18
-        ],
-        "names": [
-          "Gonio2",
-          "GyroLow1",
-          "GyroLow2",
-          "GyroLow3"
-        ],
+        "n_plots": 3,
         "xAxisLength": 50,
         "ylim": [
           -1.1,
@@ -212,18 +264,7 @@
       "class": "Draw_lines",
       "settings": {
         "name": "Normed Data",
-        "idx": [
-          12,
-          16,
-          17,
-          18
-        ],
-        "names": [
-          "Gonio2",
-          "GyroLow1",
-          "GyroLow2",
-          "GyroLow3"
-        ],
+        "n_plots": 3,
         "xAxisLength": 50,
         "ylim": [
           -5,
