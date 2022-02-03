@@ -172,8 +172,8 @@ class Node():
             self.have_timer = True
             
             # n.b.: This is a circular import of sorts
-            from . import Receiver
-            self.timing_receiver = Receiver.Receiver(name=self.name + ".Timing",
+            from .receiver import Receiver
+            self.timing_receiver = Receiver(name=str(self) + ".Timing",
                                                      perform_timing=True, dont_time=True)(self)
                 
         if not self.has_outputs:
@@ -198,6 +198,7 @@ class Node():
         self.frame_callbacks[data_stream].append(new_frame_callback)
     
     def send_data(self, data_frame, data_stream="Data", **kwargs):
+    # previously called output_data
         """
         Send one frame of data. It should not generally be
         necessary to override this function.
@@ -210,6 +211,7 @@ class Node():
     # ie playback might output annotation, but not sure if it makes sense for all subsequent nodes to pass that through if only the last one actually needs it...
     # probably requires some sort of sync? ie if playback is connected to "pipeline" and to "accuracy" -> accuracy gets output from playback and pipeline, but (!) they have different function calls...
     def receive_data(self, data_frame, data_id=None, **kwargs):
+    # previously called add_data
         """
         Add a single frame of data, process it and call callbacks.
         

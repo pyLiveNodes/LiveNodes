@@ -1,8 +1,12 @@
 import collections
+from queue import Queue
 import numpy as np
 
 from .blit import BlitManager
 from .node import Node
+
+import multiprocessing as mp
+import ctypes as c
 
 import time
 
@@ -26,6 +30,11 @@ class Draw_lines(Node):
         self.names = names
         self.xAxisLength = xAxisLength
         self.ylim = ylim
+
+        # render process
+        self.yData = [[0] * self.xAxisLength] * len(self.names)
+        # data generation process
+        self.data_queue = [mp.SimpleQueue() for _ in range(len(self.names))]
     
     def _get_setup(self):
         return {\
@@ -55,46 +64,27 @@ class Draw_lines(Node):
             # ax.xaxis.grid(False)
 
         axes[-1].set_xlabel("Time (ms)")
-
         xData = range(0, self.xAxisLength)  
-        # self.yData = [collections.deque([0] * self.xAxisLength, maxlen=self.xAxisLength)] * len(self.names)
-        self.yData = [[0] * self.xAxisLength] * len(self.names)
-        # self.self.yData = np.zeros((len(names), self.xAxisLength)
-        self.lines = [axes[i].plot(xData, list(self.yData[i]), lw=2, animated=True)[0] for i in range(len(self.names))]
+        self.lines = [axes[i].plot(xData, self.yData[i], lw=2, animated=True)[0] for i in range(len(self.names))]
         self.axes = axes
-        # self.bm = BlitManager(subfig.canvas, self.lines)
-        # self.time = time.time()
-        # self.time_ctr = 1
-        # return self.lines
+
         
         def update (**kwargs):
+            nonlocal self
+
             for i in range(len(self.axes)):
-                # print(np.array(list(self.yData[i])).shape)
-                # if i ==0:
-                #     print('----')
-                    # print(list(self.yData[i]))
-                    # print(list(self.yData_ref[i]))
-                self.lines[i].set_ydata(list(self.yData[i]))
+                while not self.data_queue[i].empty():
+                    self.yData[i].extend(list(self.data_queue[i].get()))
+
+                # this is weird in behaviour as we need to overwrite this for some reason and cannot just use the view in the set_data part...
+                self.yData[i] = self.yData[i][-self.xAxisLength:]
+                self.lines[i].set_ydata(self.yData[i])
             return self.lines
 
         return update
 
     def receive_data(self, data_frame, **kwargs):
         periodData = np.array(data_frame).T
-        # print(periodData.shape)
-        # print(periodData)
-        # self.time_ctr += 1
 
         for i in range(len(self.axes)):
-            # there is some weird bug in the deque, no clue why this doesn't work out correctly...
-            # self.yData[i].extend(list(periodData[self.idx[i]]))
-            self.yData[i].extend(periodData[self.idx[i]])
-            self.yData[i] = self.yData[i][-self.xAxisLength:]
-            # if i ==0:
-            #     print('----')
-            #     print(list(zip(list(self.yData_ref[i]), self.yData[i])))
-            # self.lines[i].set_ydata(self.yData[i])
-        # self.bm.update()
-        # if self.time_ctr % 50 == 0:
-            # print(f'{str(self)}: {self.time_ctr / (time.time() - self.time):.2f}fps, total frames: {self.time_ctr}')
-        # return self.lines
+            self.data_queue[i].put(periodData[self.idx[i]])

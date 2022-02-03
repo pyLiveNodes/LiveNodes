@@ -1,0 +1,52 @@
+
+# erreonus path render
+- Threads + mp.Array -> 20fps
+- Threads + normal array -> 36fps
+- mp + mp.Array-> 26fps
+- mp + mp.Array + mp playback -> 26fps 
+
+
+notes:
+-> mp.queue seems to work best across both instances 
+    (probably fewest mp copy, as chunks are passed rather than whole array)
+-> #frames makes a difference in stability -> 10.000 -> frame rate drops over time, 5.000 maintains stable fps (on csl_home)
+-> not sure about pi
+
+# without recog path render but recog (10.000 frames raw)
+- threads + queue -> 46fps
+Rendered 100 frames in 2.15 seconds. This equals 46.51fps.
+Rendered 200 frames in 3.99 seconds. This equals 50.17fps.
+Rendered 300 frames in 5.91 seconds. This equals 50.73fps.
+Rendered 400 frames in 7.91 seconds. This equals 50.59fps.
+Rendered 500 frames in 10.06 seconds. This equals 49.69fps.
+Rendered 600 frames in 12.32 seconds. This equals 48.69fps.
+Rendered 700 frames in 14.53 seconds. This equals 48.17fps.
+Rendered 800 frames in 16.93 seconds. This equals 47.25fps.
+Rendered 900 frames in 19.26 seconds. This equals 46.74fps.
+Rendered 1000 frames in 21.68 seconds. This equals 46.12fps.
+
+- mp + queue -> 46fps
+Rendered 100 frames in 1.98 seconds. This equals 50.41fps.
+Rendered 200 frames in 3.72 seconds. This equals 53.83fps.
+Rendered 300 frames in 5.51 seconds. This equals 54.47fps.
+Rendered 400 frames in 7.35 seconds. This equals 54.41fps.
+Rendered 500 frames in 9.43 seconds. This equals 53.00fps.
+Rendered 600 frames in 11.55 seconds. This equals 51.94fps.
+Rendered 700 frames in 13.76 seconds. This equals 50.89fps.
+Rendered 800 frames in 16.03 seconds. This equals 49.90fps.
+Rendered 900 frames in 18.43 seconds. This equals 48.82fps.
+Rendered 1000 frames in 20.76 seconds. This equals 48.17fps.
+
+# without recod (recog + render), ie only preprocess (10.000 frames raw)
+- mp + queue
+Rendered 100 frames in 2.04 seconds. This equals 49.05fps.
+Rendered 200 frames in 3.81 seconds. This equals 52.49fps.
+Rendered 300 frames in 5.75 seconds. This equals 52.16fps.
+Rendered 400 frames in 7.81 seconds. This equals 51.19fps.
+Rendered 500 frames in 9.99 seconds. This equals 50.07fps.
+Rendered 600 frames in 12.27 seconds. This equals 48.90fps.
+Rendered 700 frames in 14.53 seconds. This equals 48.17fps.
+Rendered 800 frames in 16.79 seconds. This equals 47.64fps.
+Rendered 900 frames in 19.04 seconds. This equals 47.27fps.
+Rendered 1000 frames in 21.29 seconds. This equals 46.96fps.
+

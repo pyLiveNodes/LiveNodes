@@ -8,6 +8,8 @@ import time
 from itertools import groupby
 import seaborn as sns
 
+import multiprocessing as mp
+
 
 def convert_pos(pos, yrange):
         ymin, ywidth = yrange
@@ -44,6 +46,10 @@ class Draw_recognition(Node):
 
         self.verts = [[], [], [], []]
         self.names = [[''], [''], [''], ['']]
+
+        self.path_queue = mp.Queue()
+        self.annotation_queue = mp.Queue()
+        self.color_queue = mp.Queue()
 
         self._bar_colors = []
     
@@ -87,6 +93,32 @@ class Draw_recognition(Node):
 
         def update (**kwargs):
             nonlocal self, bar_objs, txt_fout_objs, txt_fin_objs
+
+            if not self.color_queue.empty():
+                self._bar_colors = self.color_queue.get()
+
+
+            if not self.path_queue.empty():
+                path = None
+
+                while not self.path_queue.empty():
+                    path = self.path_queue.get()
+
+                    states, atoms, tokens = zip(*path)
+
+                    self.names[0], self.verts[0] = convert_list_pos(states[-self.xAxisLength[0]:], self.xAxisLength[0], (0, 0.7))
+                    self.names[1], self.verts[1] = convert_list_pos(atoms[-self.xAxisLength[1]:], self.xAxisLength[1], (0, 0.7))
+                    self.names[2], self.verts[2] = convert_list_pos(tokens[-self.xAxisLength[2]:], self.xAxisLength[2], (0, 0.7))
+
+
+            if not self.annotation_queue.empty():
+                annotation = None
+
+                while not self.annotation_queue.empty():
+                    annotation = self.annotation_queue.get()
+
+                self.names[3], self.verts[3] = convert_list_pos(annotation[-self.xAxisLength[3]:], self.xAxisLength[3], (0, 0.7))
+
             
             #TODO: rework this to work properly with missing streams...
             if len(self.verts) > 0 and len(self._bar_colors) > 0:
@@ -98,6 +130,17 @@ class Draw_recognition(Node):
                 return bar_objs + txt_fout_objs + txt_fin_objs
             return []
         return update
+
+    def receive_data(self, data, **kwargs):
+        self.path_queue.put(data)
+
+    def receive_meta(self, meta, **kwargs):
+        topology = meta.get('topology')
+        token_colors, atom_colors, state_colors = self._init_colors(topology)
+        self.color_queue.put([state_colors, atom_colors, token_colors, token_colors])
+    
+    def receive_annotation(self, data, **kwargs):
+        self.annotation_queue.put(data)
 
 
     def _init_colors(self, topology):
@@ -117,20 +160,3 @@ class Draw_recognition(Node):
         if '' not in _atom_colors: _atom_colors[''] = '#b9b9b9'
 
         return _token_colors, _atom_colors, _state_colors
-
-    def receive_data(self, data, **kwargs):
-        states, atoms, tokens = zip(*data)
-
-        self.names[0], self.verts[0] = convert_list_pos(states[-self.xAxisLength[0]:], self.xAxisLength[0], (0, 0.7))
-        self.names[1], self.verts[1] = convert_list_pos(atoms[-self.xAxisLength[1]:], self.xAxisLength[1], (0, 0.7))
-        self.names[2], self.verts[2] = convert_list_pos(tokens[-self.xAxisLength[2]:], self.xAxisLength[2], (0, 0.7))
-
-    def receive_meta(self, meta, **kwargs):
-        topology = meta.get('topology')
-        token_colors, atom_colors, state_colors = self._init_colors(topology)
-        self._bar_colors = [state_colors, atom_colors, token_colors, token_colors]
-    
-    def receive_annotation(self, data, **kwargs):
-        # TODO: this expects the full length of seen data, but only receives the last batch from playback atm
-        self.names[3], self.verts[3] = convert_list_pos(data[-self.xAxisLength[3]:], self.xAxisLength[3], (0, 0.7))
-            

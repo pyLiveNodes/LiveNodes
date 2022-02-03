@@ -67,12 +67,6 @@
           null,
           "Data",
           "receive_data"
-        ],
-        [
-          "Memory [Memory]",
-          null,
-          "Annotation",
-          "receive_data"
         ]
       ]
     },
@@ -92,7 +86,7 @@
           "GyroLow2",
           "GyroLow3"
         ],
-        "xAxisLength": 5000,
+        "xAxisLength": 10000,
         "ylim": [
           -1.1,
           1.1
@@ -152,7 +146,7 @@
           "GyroLow2",
           "GyroLow3"
         ],
-        "xAxisLength": 50,
+        "xAxisLength": 100,
         "ylim": [
           -1.1,
           1.1
@@ -182,12 +176,6 @@
       "childs": [
         [
           "Node [Biokit_from_fs]",
-          null,
-          "Data",
-          "receive_data"
-        ],
-        [
-          "Recognizer [Biokit_recognizer]",
           null,
           "Data",
           "receive_data"
@@ -224,61 +212,13 @@
           "GyroLow2",
           "GyroLow3"
         ],
-        "xAxisLength": 50,
+        "xAxisLength": 100,
         "ylim": [
           -5,
           5
         ]
       },
       "childs": []
-    },
-    "Recognizer [Biokit_recognizer]": {
-      "class": "Biokit_recognizer",
-      "settings": {
-        "token_insertion_penalty": 50,
-        "model_path": "./models/KneeBandageCSL2018/partition-stand/sequence/"
-      },
-      "childs": [
-        [
-          "Recognition [Draw_recognition]",
-          null,
-          "Data",
-          "receive_data"
-        ],
-        [
-          "Recognition [Draw_recognition]",
-          null,
-          "Meta",
-          "receive_meta"
-        ]
-      ]
-    },
-    "Recognition [Draw_recognition]": {
-      "class": "Draw_recognition",
-      "settings": {
-        "name": "Recognition",
-        "xAxisLength": [
-          50,
-          50,
-          50,
-          5000
-        ]
-      },
-      "childs": []
-    },
-    "Memory [Memory]": {
-      "class": "Memory",
-      "settings": {
-        "length": 5000
-      },
-      "childs": [
-        [
-          "Recognition [Draw_recognition]",
-          null,
-          "Data",
-          "receive_annotation"
-        ]
-      ]
     }
   }
 }

@@ -57,12 +57,6 @@
       },
       "childs": [
         [
-          "Raw Data [Draw_lines]",
-          null,
-          "Data",
-          "receive_data"
-        ],
-        [
           "Window [Window]",
           null,
           "Data",
@@ -75,30 +69,6 @@
           "receive_data"
         ]
       ]
-    },
-    "Raw Data [Draw_lines]": {
-      "class": "Draw_lines",
-      "settings": {
-        "name": "Raw Data",
-        "idx": [
-          12,
-          16,
-          17,
-          18
-        ],
-        "names": [
-          "Gonio2",
-          "GyroLow1",
-          "GyroLow2",
-          "GyroLow3"
-        ],
-        "xAxisLength": 5000,
-        "ylim": [
-          -1.1,
-          1.1
-        ]
-      },
-      "childs": []
     },
     "Window [Window]": {
       "class": "Window",
@@ -123,42 +93,12 @@
       },
       "childs": [
         [
-          "Averaged Data [Draw_lines]",
-          null,
-          "Data",
-          "receive_data"
-        ],
-        [
           "Node [Biokit_to_fs]",
           null,
           "Data",
           "receive_data"
         ]
       ]
-    },
-    "Averaged Data [Draw_lines]": {
-      "class": "Draw_lines",
-      "settings": {
-        "name": "Averaged Data",
-        "idx": [
-          12,
-          16,
-          17,
-          18
-        ],
-        "names": [
-          "Gonio2",
-          "GyroLow1",
-          "GyroLow2",
-          "GyroLow3"
-        ],
-        "xAxisLength": 50,
-        "ylim": [
-          -1.1,
-          1.1
-        ]
-      },
-      "childs": []
     },
     "Node [Biokit_to_fs]": {
       "class": "Biokit_to_fs",
@@ -199,37 +139,6 @@
       "settings": {
         "name": "Node"
       },
-      "childs": [
-        [
-          "Normed Data [Draw_lines]",
-          null,
-          "Data",
-          "receive_data"
-        ]
-      ]
-    },
-    "Normed Data [Draw_lines]": {
-      "class": "Draw_lines",
-      "settings": {
-        "name": "Normed Data",
-        "idx": [
-          12,
-          16,
-          17,
-          18
-        ],
-        "names": [
-          "Gonio2",
-          "GyroLow1",
-          "GyroLow2",
-          "GyroLow3"
-        ],
-        "xAxisLength": 50,
-        "ylim": [
-          -5,
-          5
-        ]
-      },
       "childs": []
     },
     "Recognizer [Biokit_recognizer]": {
@@ -258,10 +167,10 @@
       "settings": {
         "name": "Recognition",
         "xAxisLength": [
-          50,
-          50,
-          50,
-          5000
+          100,
+          100,
+          100,
+          10000
         ]
       },
       "childs": []
@@ -269,7 +178,7 @@
     "Memory [Memory]": {
       "class": "Memory",
       "settings": {
-        "length": 5000
+        "length": 10000
       },
       "childs": [
         [

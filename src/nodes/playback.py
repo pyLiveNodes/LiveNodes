@@ -97,6 +97,7 @@ class Playback(Node):
         if self.feeder_process is None:
             # TODO: figure out why the Process results in no data being plotted
             self.feeder_process = threading.Thread(target=self.sender_process)
+            # self.feeder_process = Process(target=self.sender_process)
             self.feeder_process.start()
         super().start_processing(recurse)
         

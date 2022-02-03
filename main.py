@@ -1,20 +1,23 @@
 from matplotlib import animation
 from src.nodes.blit import BlitManager
-from src.nodes.playback import Playback
-from src.nodes.draw_lines import Draw_lines
-from src.nodes.node import Node
+
+from src.nodes.node import Node, activate_timing
 
 import numpy as np
 import matplotlib.pyplot as plt
 
 import time
 import threading
+from multiprocessing import Process
 
 import math
 
 # from src.realtime_animation import RealtimeAnimation
 
+TIME = False
+
 print('=== Load Pipeline ====')
+if TIME: activate_timing()
 pipeline = Node.load('pipelines/recognize.json')
 
 
@@ -57,13 +60,22 @@ artists = [setup_fn(subfig) for setup_fn, subfig in zip(draws, subfigs)]
 # plt.pause(.1)
 
 # not nice, as cannot be updated at runtime later on (not sure if that'll be necessary tho)
-n_frames_rendered = 0
 def draw_update (i, **kwargs):
-    global n_frames_rendered
-    n_frames_rendered = i
-    return list(np.concatenate([fn(**kwargs) for fn in artists], axis=0))
+    ret_arts = list(np.concatenate([fn(**kwargs) for fn in artists], axis=0))
 
-worker = threading.Thread(target = pipeline.start_processing)
+    if i % 100 == 0 and i != 0:
+        el_time = time.time() - timer
+        print(f"Rendered {i} frames in {el_time:.2f} seconds. This equals {i/el_time:.2f}fps.")
+
+    return ret_arts
+
+
+# Threading example
+# worker = threading.Thread(target = pipeline.start_processing)
+# worker.daemon = True
+# worker.start()
+
+worker = Process(target = pipeline.start_processing)
 worker.daemon = True
 worker.start()
 
@@ -82,5 +94,10 @@ plt.show()
 
 # worker.join()
 
-el_time = time.time() - timer
-print(f"Rendered {n_frames_rendered} frames in {el_time:.2f} seconds. This equals {n_frames_rendered/el_time:.2f}fps.")
+
+pipeline.make_dot_graph().save('current.png')
+
+if TIME:
+    # see https://gitlab.csl.uni-bremen.de/bioguitar/livenodes/-/blob/master/notebooks/NewInterfaceTest.ipynb
+    # for an example how to plot 
+    print(pipeline.get_timing_info())

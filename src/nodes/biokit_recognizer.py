@@ -42,11 +42,13 @@ class Biokit_recognizer(Node):
             self._initial = False
             self.send_data({"topology": self.topology}, data_stream="Meta") 
 
-        self.send_data([( \
+        res = [( \
                 r.mStateId, 
                 am.getAtom(r.mAtomId).getName(),
                 dc.getToken(r.mTokenId)
-            ) for r in path]) 
+            ) for r in path]
+        # print(res)
+        self.send_data(res) 
 
 
     def _get_topology(self):
