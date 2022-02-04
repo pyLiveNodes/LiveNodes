@@ -75,13 +75,14 @@ def add_recognition(norm, x_raw, x_processed, vis=True):
     recog = Biokit_recognizer(model_path="./models/KneeBandageCSL2018/partition-stand/sequence/", token_insertion_penalty=50)
     norm.add_output(recog)
 
-    draw_recognition_path = Draw_recognition(xAxisLength=[x_processed, x_processed, x_processed, x_raw])
-    recog.add_output(draw_recognition_path)
-    recog.add_output(draw_recognition_path, data_stream='Meta', recv_name='receive_meta')
+    if vis:
+        draw_recognition_path = Draw_recognition(xAxisLength=[x_processed, x_processed, x_processed, x_raw])
+        recog.add_output(draw_recognition_path)
+        recog.add_output(draw_recognition_path, data_stream='Meta', recv_name='receive_meta')
 
-    memory = Memory(x_raw)
-    pl.add_output(memory, data_stream='Annotation')
-    memory.add_output(draw_recognition_path, recv_name='receive_annotation')
+        memory = Memory(x_raw)
+        pl.add_output(memory, data_stream='Annotation')
+        memory.add_output(draw_recognition_path, recv_name='receive_annotation')
 
     return recog
 
@@ -204,6 +205,11 @@ if __name__ == "__main__":
     recog = add_recognition(norm, x_raw=x_raw, x_processed=x_processed, vis=True)
     save(pl, "pipelines/recognize.json")
 
+    print('=== Build Recognition Pipeline (no vis) ===')
+    pl = In_data(files="./data/KneeBandageCSL2018/part*/*.h5", meta=meta, batch=20)
+    norm = add_processing(pl, x_raw=x_raw, x_processed=x_processed, vis=False)
+    recog = add_recognition(norm, x_raw=x_raw, x_processed=x_processed, vis=False)
+    save(pl, "pipelines/recognize_no_vis.json")
 
 
     print('=== Build Train Pipeline ===')
