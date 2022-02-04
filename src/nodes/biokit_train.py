@@ -5,10 +5,12 @@ from .node import Node
 
 import recognizer
 import logger
+import BioKIT
 
 
 
 # TODO: figure out if/how we can update an already trained model with only the new data
+# TODO: also figure out how to adapt a model to the current wearer -> should be a standard procedure somewhere...
 class Biokit_train(Node):
     def __init__(self, model_path, token_insertion_penalty, atomList, tokenDictionary, train_iterations, name="Recognizer", dont_time=False):
         super().__init__(name, dont_time)
@@ -38,14 +40,21 @@ class Biokit_train(Node):
         processedSequences = []
         processedAnnotations = []
 
+        # TODO: clean this up and make sure we don't need store the data twice (once on self and once in fs)
         for _, g in groupby(zip(self.data, self.annotations, self.files), key=lambda x: x[2]):
-            processedSequences.append([x[0] for x in g])
+            g = list(g)
+            pro_sq = BioKIT.FeatureSequence()
+            for x in g: pro_sq.append(x[0])
+            processedSequences.append(pro_sq)
             processedAnnotations.append([x[1] for x in g])
             for atom, gg in groupby(g, key=lambda x: x[1]):
-                processedTokens[atom].append([x[0] for x in gg])
+                pro_sq = BioKIT.FeatureSequence()
+                for x in gg: pro_sq.append(x[0])
+                processedTokens[atom].append(pro_sq)
 
+        print(processedTokens.keys())
 
-        self.reco = recognizer.Recognizer.createCompletelyNew(self.atomList, self.tokenDictionary, 1, processedSequences[0].getDimensionality(), True)
+        self.reco = recognizer.Recognizer.createCompletelyNew(self.atomList, self.tokenDictionary, 1, len(processedSequences[0][0]), True)
         self.reco.setTokenInsertionPenalty(self.token_insertion_penalty)
 
         self.reco.setTrainerType(recognizer.TrainerType('merge_and_split_trainer'))
@@ -58,8 +67,8 @@ class Biokit_train(Node):
 
         logger.info('=== Initializaion ===')
         for atom in processedTokens:
-            for atoms, trainingData in processedTokens[atom]:
-                self.reco.storeTokenSequenceForInit(trainingData, atoms, fillerToken=-1, addFillerToBeginningAndEnd=False)
+            for trainingData in processedTokens[atom]:
+                self.reco.storeTokenSequenceForInit(trainingData, [atom], fillerToken=-1, addFillerToBeginningAndEnd=False)
         self.reco.initializeStoredModels()
 
 
@@ -69,9 +78,9 @@ class Biokit_train(Node):
         for i in range(self.train_iterations[0]):
             logger.info(f'--- Iteration {i} ---')
             for atom in processedTokens:
-                for atoms, trainingData in processedTokens[atom]:
+                for trainingData in processedTokens[atom]:
                     # Says sequence, but is used for small chunks, so that the initial gmm training etc is optimized before we use the full sequences
-                    self.reco.storeTokenSequenceForTrain(trainingData, atoms, fillerToken=-1, ignoreNoPathException=True, addFillerToBeginningAndEnd=False)
+                    self.reco.storeTokenSequenceForTrain(trainingData, [atom], fillerToken=-1, ignoreNoPathException=True, addFillerToBeginningAndEnd=False)
             self.reco.finishTrainIteration()
 
 
@@ -88,10 +97,11 @@ class Biokit_train(Node):
 
 
     def receive_data_end(self, data_frame, **kwargs):
+        # assume we never loose data, then these should be the same
         len_d, len_a, len_f = len(self.data), len(self.annotations), len(self.files)
         keep = min(len_d, len_a, len_f) 
         if len_d != len_a or len_d != len_f or len_a != len_f:
-            logger.warning(f"Data length ({len_d}) did not match annotation length ({len_a}) and file length ({len_f})")
+            logger.warn(f"Data length ({len_d}) did not match annotation length ({len_a}) and file length ({len_f})")
             self.data = self.data[:keep]
             self.annotations = self.annotations[:keep]
             self.files = self.files[:keep]
@@ -105,6 +115,7 @@ class Biokit_train(Node):
         self.annotations.extend(annotation)
 
     def receive_data(self, fs, **kwargs):
-        self.data.extend(fs)
+        self.data.append(fs)
+
 
 

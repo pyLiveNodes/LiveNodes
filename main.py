@@ -25,7 +25,7 @@ TIME = False
 
 print('=== Load Pipeline ====')
 if TIME: activate_timing()
-pipeline = Node.load('pipelines/preprocess.json')
+pipeline = Node.load('pipelines/recognize.json')
 
 
 print('=== Start main loops ====')

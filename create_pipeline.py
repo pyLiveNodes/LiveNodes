@@ -1,11 +1,14 @@
+from select import select
 from src.nodes.biokit_norm import Biokit_norm
 from src.nodes.biokit_to_fs import Biokit_to_fs
 from src.nodes.biokit_from_fs import Biokit_from_fs
 from src.nodes.biokit_recognizer import Biokit_recognizer
+from src.nodes.biokit_train import Biokit_train
 
 from src.nodes.transform_feature import Transform_feature
 from src.nodes.transform_window import Transform_window
 from src.nodes.transform_filter import Transform_filter
+from src.nodes.transform_majority_select import Transform_majority_select
 
 from src.nodes.memory import Memory
 from src.nodes.in_playback import In_playback
@@ -83,8 +86,66 @@ def add_recognition(norm, x_raw, x_processed, vis=True):
     return recog
 
 
-def add_train(norm):
-    pass
+def add_train(pl, norm):
+    tokenDictionary = \
+        { "cspin-ll": [ "cspin-ll_ISt", "cspin-ll_MSt", "cspin-ll_TSt", "cspin-ll_ISw", "cspin-ll_TSw"]
+        , "cspin-lr": [ "cspin-lr_ISt", "cspin-lr_MSt", "cspin-lr_TSt", "cspin-lr_ISw", "cspin-lr_TSw"]
+
+        , "cspin-rl": [ "cspin-rl_ISt", "cspin-rl_MSt", "cspin-rl_TSt", "cspin-rl_ISw", "cspin-rl_TSw"]
+        , "cspin-rr": [ "cspin-rr_ISt", "cspin-rr_MSt", "cspin-rr_TSt", "cspin-rr_ISw", "cspin-rr_TSw"]
+        , "cstep-l": [ "cstep-l_ISt", "cstep-l_MSt", "cstep-l_TSt", "cstep-l_ISw", "cstep-l_TSw"]
+
+        , "cstep-r": [ "cstep-r_ISt", "cstep-r_MSt", "cstep-r_TSt", "cstep-r_ISw", "cstep-r_TSw"]
+        , "jump-1": [ "jump-1_ITO", "jump-1_TTO", "jump-1_F", "jump-1_IL", "jump-1_TL"]
+
+        , "jump-2": [ "jump-2_ITO", "jump-2_TTO", "jump-2_F", "jump-2_IL", "jump-2_TL"]
+
+        , "run": [ "run_ISt", "run_MSt", "run_TSt", "run_ISw", "run_TSw"]
+
+        , "shuffle-l": [ "shuffle-l_ISt", "shuffle-l_MSt", "shuffle-l_TSt", "shuffle-l_ISw", "shuffle-l_TSw"]
+        , "shuffle-r": [ "shuffle-r_ISt", "shuffle-r_MSt", "shuffle-r_TSt", "shuffle-r_ISw", "shuffle-r_TSw"]
+
+        , "sit": [ "sit_sitting" ]
+        , "sit-stand": [ "sit-stand_sit2s" ]
+        , "stair-down": [ "stair-down_ISt", "stair-down_MSt", "stair-down_TSt", "stair-down_ISw", "stair-down_TSw"]
+
+        , "stair-up": [ "stair-up_ISt", "stair-up_MSt", "stair-up_TSt", "stair-up_ISw", "stair-up_TSw"]
+        , "stand": [ "stand_standing" ]
+        , "stand-sit": [ "stand-sit_stand2s"]
+
+        , "vcut-ll": [ "vcut-ll_ISt", "vcut-ll_MSt", "vcut-ll_TSt", "vcut-ll_ISw", "vcut-ll_TSw"]
+        , "vcut-lr": [ "vcut-lr_ISt", "vcut-lr_MSt", "vcut-lr_TSt", "vcut-lr_ISw", "vcut-lr_TSw"]
+
+        , "vcut-rl": [ "vcut-rl_ISt", "vcut-rl_MSt", "vcut-rl_TSt", "vcut-rl_ISw", "vcut-rl_TSw"]
+        , "vcut-rr": [ "vcut-rr_ISt", "vcut-rr_MSt", "vcut-rr_TSt", "vcut-rr_ISw", "vcut-rr_TSw"]
+        , "walk": [ "walk_ISt", "walk_MSt", "walk_TSt", "walk_ISw", "walk_TSw"]
+        }
+
+    atomList = {val: list(map(str, range(1))) for atoms in tokenDictionary.values() for val in atoms}
+    
+        
+    train = Biokit_train(model_path="./models/KneeBandageCSL2018/partition-stand/sequence/", \
+        token_insertion_penalty=50,
+        atomList=atomList,
+        tokenDictionary=tokenDictionary,
+        train_iterations=(5, 10)
+        )
+    norm.add_output(train)
+    pl.add_output(train, data_stream="Termination", recv_name='receive_data_end')
+    
+    window1 = Transform_window(100, 0, name="File")
+    select1 = Transform_majority_select(name="File")
+    pl.add_output(window1, data_stream="File")
+    window1.add_output(select1)
+    select1.add_output(train, recv_name='receive_file')
+
+    window2 = Transform_window(100, 0, name="Annotation")
+    select2 = Transform_majority_select(name="Annotation")
+    pl.add_output(window2, data_stream="Annotation")
+    window2.add_output(select2)
+    select2.add_output(train, recv_name='receive_annotation')
+    
+    return train
 
 def save(pl, file):
     print('--- Save Pipeline ---')
@@ -103,6 +164,7 @@ def save(pl, file):
 
 if __name__ == "__main__":
     channel_names_raw = ['EMG1', 'Gonio2', 'AccLow2']
+    # channel_names_fts = ['EMG1__calc_mean', 'Gonio2__calc_mean', 'AccLow2__calc_mean']
     channel_names_fts = ['EMG1__rms', 'Gonio2__calc_mean', 'AccLow2__calc_mean']
     recorded_channels = [
         'EMG1', 'EMG2', 'EMG3', 'EMG4',
@@ -144,9 +206,11 @@ if __name__ == "__main__":
 
 
 
-    # print('=== Build Train Pipeline ===')
+    print('=== Build Train Pipeline ===')
 
-    # pl = In_data(files="./data/KneeBandageCSL2018/part00/01.h5", meta=meta, batch=20)
-    # norm = add_processing(pl, x_raw=x_raw, x_processed=x_processed, vis=False)
-    # train = add_train(norm)
-    # save(train, "pipelines/train.json")
+    pl = In_data(files="./data/KneeBandageCSL2018/part*/*.h5", meta=meta, batch=20)
+    norm = add_processing(pl, x_raw=x_raw, x_processed=x_processed, vis=False)
+    save(pl, "pipelines/preprocess_no_vis.json")
+
+    train = add_train(pl, norm)
+    save(pl, "pipelines/train.json")

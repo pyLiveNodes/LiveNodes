@@ -8,6 +8,30 @@ import h5py
 import pandas as pd
 import random
 
+from .utils import printProgressBar
+
+
+def read_data(f):
+    # Read and send data from file
+    with h5py.File(f, "r") as dataFile:
+        dataSet = dataFile.get("data")
+        data = dataSet[:] # load into mem
+
+        # Prepare framewise annotation to be send
+        ref = pd.read_csv(f.replace('.h5', '.csv'), names=["act", "start", "end"])
+        targs = []
+        last_end = 0
+        for _, row in ref.iterrows():
+            filler = "stand" # use stand as filler for unknown. #Hack! TODO: remove
+            targs.append([filler] * (row['start'] - last_end))
+            targs.append([row['act']] * (row['end'] - row['start']))
+            last_end = row['end']
+        targs.append([filler] * (len(data) - last_end))
+        targs = list(np.concatenate(targs))
+
+    return data, targs
+
+
 class In_data(Node):
     """
     Playsback previously recorded data.
@@ -43,6 +67,7 @@ class In_data(Node):
 
     def stop(self):
         self._stop_event.set()
+        # self.feeder_process.terminate()
 
     def sender_process(self):
         """
@@ -53,32 +78,25 @@ class In_data(Node):
         if self.shuffle:
             random.shuffle(fs)
 
-        target_to_id = {key: key for i, key in enumerate(self.targets)}
-
         self.send_data(self.meta, data_stream="Meta")
         self.send_data(self.channels, data_stream="Channel Names")
 
-        for i, f in enumerate(fs):
-            print(f)
+        # TODO: create a producer/consumer queue here for best of both worlds ie fixed amount of mem with no hw access delay
+        # TODO: for now: just preload everything
 
-            # Prepare framewise annotation to be send
-            ref = pd.read_csv(f.replace('.h5', '.csv'), names=["act", "start", "end"])
-            targs = []
-            j = 0
-            for _, row in ref.iterrows():
-                targs += [target_to_id["stand"]] * (row['start'] - j) # use stand as filler for unknown. #Hack! TODO: remove
-                targs += [target_to_id[row['act']]] * (row['end'] - row['start'] - j)
-                j = row['end']
+        l = len(fs)
+        printProgressBar(0, l, prefix = 'Progress:', suffix = '', length = 50)
+        for file_number, f in enumerate(fs):
+            printProgressBar(file_number, l, prefix = 'Progress:', suffix = f, length = 50)
 
-            # Read and send data from file
-            with h5py.File(f, "r") as dataFile:
-                dataSet = dataFile.get("data")
-                data = dataSet[:] # load into mem
+            data, targs = read_data(f)
                 
-                for i in range(0, len(data), self.batch):
-                    self.send_data(np.array(data[i:i+self.batch]))
-                    self.send_data(targs[i:i+self.batch], data_stream='Annotation')
-                    self.send_data([i] * self.batch, data_stream="File")
+            for i in range(0, len(data), self.batch):
+                d_len = len(data[i:i+self.batch])
+                self.send_data(data[i:i+self.batch])
+                self.send_data(targs[i:i+self.batch], data_stream='Annotation')
+                self.send_data([file_number] * d_len, data_stream="File")
+
         self.send_data(None, data_stream='Termination') # TODO: maybe we could use something like this for syncing... ie seperate stream with just a counter 
     
     def start_processing(self, recurse=True):
@@ -87,6 +105,7 @@ class In_data(Node):
         """
         if self.feeder_process is None:
             self.feeder_process = threading.Thread(target=self.sender_process)
+            # self.feeder_process = Process(target=self.sender_process)
             self.feeder_process.start()
         super().start_processing(recurse)
         

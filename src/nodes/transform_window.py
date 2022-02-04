@@ -2,19 +2,10 @@ import numpy as np
 from .node import Node
 
 class Transform_window(Node):
-    def __init__(self, length, overlap, function="rectangular", name = "Window", dont_time = False):
+    def __init__(self, length, overlap, name = "Window", dont_time = False):
         super().__init__(name=name, dont_time=dont_time)
         self.length = length
         self.overlap = overlap
-        self.function = function
-
-        if hasattr(np, function):
-            self.multiplier = getattr(np, function)(length)
-        elif function != 'rectangular':
-            raise Exception(f'Window type "{function}" does not exist in the numpy module and is not rectangular')
-        else:
-            # self.multiplier = np.ones(length)
-            self.multiplier = 1
 
         self.buffer = []
     
@@ -22,7 +13,6 @@ class Transform_window(Node):
         return {\
             "length": self.length,
             "overlap": self.overlap,
-            "function": self.function
            }
 
     def receive_data(self, data_frame, **kwargs):
@@ -31,5 +21,5 @@ class Transform_window(Node):
         # benefits would be more performant feature calculation (for example), but prob. the whole pipline might see minor benefits
         while len(self.buffer) >= self.length:
             # print(np.array(self.buffer[:self.length]).shape, self.multiplier.shape)
-            self.send_data(np.multiply(np.array(self.buffer[:self.length]), self.multiplier))
+            self.send_data(self.buffer[:self.length])
             self.buffer = self.buffer[(self.length - self.overlap):]

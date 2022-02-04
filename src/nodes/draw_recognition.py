@@ -103,6 +103,7 @@ class Draw_recognition(Node):
 
                 while not self.path_queue.empty():
                     path = self.path_queue.get()
+                    # print('path', len(path))
 
                     states, atoms, tokens = zip(*path)
 
@@ -117,6 +118,7 @@ class Draw_recognition(Node):
                 while not self.annotation_queue.empty():
                     annotation = self.annotation_queue.get()
 
+                # print('annotation', len(annotation))
                 self.names[3], self.verts[3] = convert_list_pos(annotation[-self.xAxisLength[3]:], self.xAxisLength[3], (0, 0.7))
 
             

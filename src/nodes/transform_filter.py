@@ -18,7 +18,9 @@ class Transform_filter(Node):
            }
 
     def receive_channels(self, channel_names, **kwargs):
-        self.idx = np.isin(channel_names, self.names)
+        # yes, seems less efficient than np.isin, but implicitly re-orders the channels of the output to match the provided names
+        # also its just called once
+        self.idx = [channel_names.index(x) for x in self.names]
         self.received_channel_names = True
 
         self.send_data(self.names, data_stream="Channel Names")

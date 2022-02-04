@@ -130,8 +130,7 @@
       "class": "Transform_window",
       "settings": {
         "length": 100,
-        "overlap": 0,
-        "function": "rectangular"
+        "overlap": 0
       },
       "childs": [
         [
