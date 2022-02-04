@@ -81,6 +81,12 @@
           "receive_channels"
         ],
         [
+          "File [Transform_window]",
+          null,
+          "File",
+          "receive_data"
+        ],
+        [
           "Memory [Memory]",
           null,
           "Annotation",
@@ -336,6 +342,35 @@
         ]
       },
       "childs": []
+    },
+    "File [Transform_window]": {
+      "class": "Transform_window",
+      "settings": {
+        "length": 100,
+        "overlap": 0
+      },
+      "childs": [
+        [
+          "File [Transform_majority_select]",
+          null,
+          "Data",
+          "receive_data"
+        ]
+      ]
+    },
+    "File [Transform_majority_select]": {
+      "class": "Transform_majority_select",
+      "settings": {
+        "name": "File"
+      },
+      "childs": [
+        [
+          "Recognizer [Biokit_recognizer]",
+          null,
+          "Data",
+          "receive_file"
+        ]
+      ]
     },
     "Memory [Memory]": {
       "class": "Memory",

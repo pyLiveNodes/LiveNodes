@@ -22,7 +22,7 @@ class Biokit_recognizer(Node):
         self.topology = self._get_topology()
 
         self._initial = True
-    
+        self.file = None
 
     def _get_setup(self):
         return {\
@@ -31,6 +31,10 @@ class Biokit_recognizer(Node):
             "model_path": self.model_path
         }
 
+    def receive_file(self, file, **kwargs):
+        if self.file != file[0]:
+            self._initial = True
+            self.file = file[0]
 
     def receive_data(self, fs, **kwargs):
         am = self.reco.getAtomManager()

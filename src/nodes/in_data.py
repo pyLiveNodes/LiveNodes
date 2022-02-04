@@ -8,6 +8,8 @@ import h5py
 import pandas as pd
 import random
 
+from joblib import Parallel, delayed
+
 from .utils import printProgressBar
 
 
@@ -82,10 +84,12 @@ class In_data(Node):
         self.send_data(self.channels, data_stream="Channel Names")
 
         # TODO: create a producer/consumer queue here for best of both worlds ie fixed amount of mem with no hw access delay
-        # TODO: for now: just preload everything
+        # for now: just preload everything
+        # in_mem = Parallel(n_jobs=5)(delayed(read_data)(f) for f in fs)
 
         l = len(fs)
         printProgressBar(0, l, prefix = 'Progress:', suffix = '', length = 50)
+        # for file_number, (f, (data, targs)) in enumerate(zip(fs, in_mem)):
         for file_number, f in enumerate(fs):
             printProgressBar(file_number, l, prefix = 'Progress:', suffix = f, length = 50)
 
