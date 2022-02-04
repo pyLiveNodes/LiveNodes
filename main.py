@@ -5,6 +5,7 @@ from src.nodes.node import Node, activate_timing
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib
 
 import time
 import threading
@@ -13,6 +14,12 @@ from multiprocessing import Process
 import math
 
 # from src.realtime_animation import RealtimeAnimation
+
+import seaborn as sns
+sns.set_style("darkgrid")
+sns.set_context("paper")
+
+matplotlib.rcParams['toolbar'] = 'None'
 
 TIME = False
 
@@ -82,8 +89,9 @@ worker.start()
 # initial_draw_and_setup()
 timer = time.time()
 
-animationProcess = animation.FuncAnimation(fig=fig, func=draw_update, interval=1, blit=True)
+animationProcess = animation.FuncAnimation(fig=fig, func=draw_update, interval=10, blit=True)
 # plt.tight_layout()
+plt.ioff()
 plt.show()
 
 # import matplotlib as mpl 

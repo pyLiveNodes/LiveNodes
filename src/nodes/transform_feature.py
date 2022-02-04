@@ -44,7 +44,7 @@ class MultipleWrapper (BaseTransformer_eager):
             return res
 
 
-class Feature(Node):
+class Transform_feature(Node):
     def __init__(self, name="Features", features=["calc_mean"], feature_args={}, dont_time=False):
         super().__init__(name, dont_time)
 

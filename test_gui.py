@@ -1,4 +1,4 @@
-from src.nodes.playback import Playback
+from nodes.in_playback import Playback
 from src.nodes.draw_lines import Draw_lines
 
 

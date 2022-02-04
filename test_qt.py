@@ -1,4 +1,4 @@
-from src.nodes.playback import Playback
+from nodes.in_playback import Playback
 
 pl = Playback(files="./data/KneeBandageCSL2018/**/*.h5", sample_rate=1000)
 

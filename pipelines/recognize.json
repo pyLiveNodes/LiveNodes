@@ -1,8 +1,8 @@
 {
-  "start": "Playback [Playback]",
+  "start": "Playback [In_playback]",
   "nodes": {
-    "Playback [Playback]": {
-      "class": "Playback",
+    "Playback [In_playback]": {
+      "class": "In_playback",
       "settings": {
         "batch": 20,
         "files": "./data/KneeBandageCSL2018/part00/01.h5",
@@ -57,25 +57,25 @@
       },
       "childs": [
         [
-          "Raw Filter [Filter]",
+          "Raw Filter [Transform_filter]",
           null,
           "Data",
           "receive_data"
         ],
         [
-          "Raw Filter [Filter]",
+          "Raw Filter [Transform_filter]",
           null,
           "Channel Names",
           "receive_channels"
         ],
         [
-          "Window [Window]",
+          "Window [Transform_window]",
           null,
           "Data",
           "receive_data"
         ],
         [
-          "Features [Feature]",
+          "Features [Transform_feature]",
           null,
           "Channel Names",
           "receive_channels"
@@ -88,8 +88,8 @@
         ]
       ]
     },
-    "Raw Filter [Filter]": {
-      "class": "Filter",
+    "Raw Filter [Transform_filter]": {
+      "class": "Transform_filter",
       "settings": {
         "name": "Raw Filter",
         "names": [
@@ -126,8 +126,8 @@
       },
       "childs": []
     },
-    "Window [Window]": {
-      "class": "Window",
+    "Window [Transform_window]": {
+      "class": "Transform_window",
       "settings": {
         "length": 100,
         "overlap": 0,
@@ -135,15 +135,15 @@
       },
       "childs": [
         [
-          "Features [Feature]",
+          "Features [Transform_feature]",
           null,
           "Data",
           "receive_data"
         ]
       ]
     },
-    "Features [Feature]": {
-      "class": "Feature",
+    "Features [Transform_feature]": {
+      "class": "Transform_feature",
       "settings": {
         "features": [
           "calc_mean",
@@ -155,13 +155,13 @@
       },
       "childs": [
         [
-          "Feature Filter [Filter]",
+          "Feature Filter [Transform_filter]",
           null,
           "Data",
           "receive_data"
         ],
         [
-          "Feature Filter [Filter]",
+          "Feature Filter [Transform_filter]",
           null,
           "Channel Names",
           "receive_channels"
@@ -173,15 +173,15 @@
           "receive_data"
         ],
         [
-          "Normed Feature Filter [Filter]",
+          "Normed Feature Filter [Transform_filter]",
           null,
           "Channel Names",
           "receive_channels"
         ]
       ]
     },
-    "Feature Filter [Filter]": {
-      "class": "Filter",
+    "Feature Filter [Transform_filter]": {
+      "class": "Transform_filter",
       "settings": {
         "name": "Feature Filter",
         "names": [
@@ -259,15 +259,15 @@
       },
       "childs": [
         [
-          "Normed Feature Filter [Filter]",
+          "Normed Feature Filter [Transform_filter]",
           null,
           "Data",
           "receive_data"
         ]
       ]
     },
-    "Normed Feature Filter [Filter]": {
-      "class": "Filter",
+    "Normed Feature Filter [Transform_filter]": {
+      "class": "Transform_filter",
       "settings": {
         "name": "Normed Feature Filter",
         "names": [

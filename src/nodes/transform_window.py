@@ -1,7 +1,7 @@
 import numpy as np
 from .node import Node
 
-class Window(Node):
+class Transform_window(Node):
     def __init__(self, length, overlap, function="rectangular", name = "Window", dont_time = False):
         super().__init__(name=name, dont_time=dont_time)
         self.length = length

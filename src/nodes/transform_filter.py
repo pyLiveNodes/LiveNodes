@@ -3,7 +3,7 @@ import multiprocessing as mp
 
 from .node import Node
 
-class Filter(Node):
+class Transform_filter(Node):
     def __init__(self, names, name = "Channel Filter", dont_time = False):
         super().__init__(name=name, dont_time=dont_time)
         self.names = names
