@@ -212,7 +212,7 @@ if __name__ == "__main__":
     save(pl, "pipelines/recognize.json")
 
     print('=== Build Recognition Pipeline (no vis) ===')
-    pl = In_data(files="./data/KneeBandageCSL2018/part*/*.h5", meta=meta, batch=20)
+    pl = In_data(files="./data/KneeBandageCSL2018/part00/*.h5", meta=meta, batch=2000)
     norm = add_processing(pl, x_raw=x_raw, x_processed=x_processed, vis=False)
     recog = add_recognition(pl, norm, x_raw=x_raw, x_processed=x_processed, vis=False)
     save(pl, "pipelines/recognize_no_vis.json")
@@ -220,7 +220,7 @@ if __name__ == "__main__":
 
     print('=== Build Train Pipeline ===')
 
-    pl = In_data(files="./data/KneeBandageCSL2018/part*/*.h5", meta=meta, batch=20)
+    pl = In_data(files="./data/KneeBandageCSL2018/part*/*.h5", meta=meta, batch=2000)
     norm = add_processing(pl, x_raw=x_raw, x_processed=x_processed, vis=False)
     save(pl, "pipelines/preprocess_no_vis.json")
 

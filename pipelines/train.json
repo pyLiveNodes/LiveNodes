@@ -4,7 +4,7 @@
     "Data input [In_data]": {
       "class": "In_data",
       "settings": {
-        "batch": 20,
+        "batch": 2000,
         "files": "./data/KneeBandageCSL2018/part*/*.h5",
         "meta": {
           "sample_rate": 1000,

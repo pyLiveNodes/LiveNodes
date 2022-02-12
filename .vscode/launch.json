@@ -5,6 +5,20 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Run Pipeline",
+            "type": "python",
+            "request": "launch",
+            "program": "run_pipeline.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Create Pipeline",
+            "type": "python",
+            "request": "launch",
+            "program": "create_pipeline.py",
+            "console": "integratedTerminal"
+        },
+        {
             "name": "Python: Remote Attach",
             "type": "python",
             "request": "attach",

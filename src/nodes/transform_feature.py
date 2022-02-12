@@ -85,6 +85,8 @@ class Transform_feature(Node):
         # TODO: update the union stuff etc to not expect a tuple as input
         # TODO: update this to not expect it to be wrapped in a list
         # TODO: update this to not use a map anymore
+        # TODO: currently ft.transform is called twice, as the dimensions_ will otherwise not be set -> most of the time we do double the work for no benefit 
+        # data, channels = self._union.transform((data_frame, self.channel_names))
         data, channels = self._union.transform(([np.array(data_frame).T], self.channel_names))
         self.send_data(list(data))
 

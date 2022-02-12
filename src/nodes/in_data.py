@@ -85,15 +85,15 @@ class In_data(Node):
 
         # TODO: create a producer/consumer queue here for best of both worlds ie fixed amount of mem with no hw access delay
         # for now: just preload everything
-        # in_mem = Parallel(n_jobs=5)(delayed(read_data)(f) for f in fs)
+        in_mem = Parallel(n_jobs=10)(delayed(read_data)(f) for f in fs)
 
         l = len(fs)
         printProgressBar(0, l, prefix = 'Progress:', suffix = '', length = 50)
-        # for file_number, (f, (data, targs)) in enumerate(zip(fs, in_mem)):
-        for file_number, f in enumerate(fs):
+        for file_number, (f, (data, targs)) in enumerate(zip(fs, in_mem)):
+        # for file_number, f in enumerate(fs):
             printProgressBar(file_number, l, prefix = 'Progress:', suffix = f, length = 50)
 
-            data, targs = read_data(f)
+            # data, targs = read_data(f)
                 
             for i in range(0, len(data), self.batch):
                 d_len = len(data[i:i+self.batch])

@@ -1,4 +1,4 @@
-from nodes.in_playback import Playback
+from src.nodes.in_playback import In_playback
 from src.nodes.draw_lines import Draw_lines
 
 
@@ -41,7 +41,8 @@ class mplWidget(FigureCanvasQTAgg):
             'GyroLow1', 'GyroLow2', 'GyroLow3']
         idx = np.isin(recorded_channels, channel_names).nonzero()[0]
 
-        self.node = Draw_lines(name='Raw Data', subfig=self.figure, idx=idx, names=channel_names)
+        self.node = Draw_lines(name='Raw Data')
+        self.node.init_draw(self.figure)
         self.show()
         print('show plot initial')
 
@@ -58,7 +59,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         draw_lines_widget = mplWidget()
         layout.addWidget(draw_lines_widget)
 
-        self.pl = Playback(files="./data/KneeBandageCSL2018/**/*.h5", sample_rate=1000)
+        self.pl = In_playback(meta={}, files="./data/KneeBandageCSL2018/**/*.h5")
         self.pl.add_output(draw_lines_widget.node)
         # pl.add_output(lambda data: print(data))
 

@@ -40,7 +40,7 @@ print(draws)
 
 plt.rc('font', **font)
 
-fig = plt.figure(num=0, figsize =(16, 10))
+fig = plt.figure(num=0, figsize=(12, 7.5))
 # fig.suptitle("ASK", fontsize='x-large')
 fig.canvas.manager.set_window_title("ASK")
 fig.canvas.mpl_connect("close_event", pipeline.stop_processing)
@@ -74,6 +74,10 @@ def draw_update (i, **kwargs):
         el_time = time.time() - timer
         print(f"Rendered {i} frames in {el_time:.2f} seconds. This equals {i/el_time:.2f}fps.")
 
+    if i > 300:
+        print('Called stop')
+        worker.terminate()
+
     return ret_arts
 
 
@@ -89,9 +93,9 @@ worker.start()
 # initial_draw_and_setup()
 timer = time.time()
 
-animationProcess = animation.FuncAnimation(fig=fig, func=draw_update, interval=10, blit=True)
+animationProcess = animation.FuncAnimation(fig=fig, func=draw_update, interval=0, blit=True)
 # plt.tight_layout()
-plt.ioff()
+# plt.ioff()
 plt.show()
 
 # import matplotlib as mpl 
