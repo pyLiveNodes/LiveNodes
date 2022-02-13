@@ -250,8 +250,10 @@ class Node():
                 output_class.stop_processing()
 
 
-    def make_dot_graph(self, scale = 0.5, name=False):
-        dot = Digraph(format = 'png', strict = False)
+    def make_dot_graph(self, name=False, transparent_bg=False):
+        graph_attr={"size":"10,10!", "ratio":"fill"}
+        if transparent_bg: graph_attr["bgcolor"]= "#00000000"
+        dot = Digraph(format = 'png', strict = False, graph_attr=graph_attr)
 
         # as the str rep need to be unique we can get only the unique instances this way 
         nodes = list({str(n):n for n in self.discover_childs(self)}.values())
@@ -272,8 +274,7 @@ class Node():
                 stream_name = 'Data' if stream_name == None else stream_name
                 dot.edge(str(node), str(node_output), label=stream_name)
 
-        img = Image.open(BytesIO(dot.pipe()))
-        return img.resize((int(img.width * scale), int(img.height * scale)), Image.LANCZOS)
+        return Image.open(BytesIO(dot.pipe()))
 
 
     @classmethod

@@ -166,7 +166,7 @@ def save(pl, file):
     # print()
 
     print('--- Visualize Pipeline ---')
-    pl.make_dot_graph().save(file.replace('.json', '.png'))
+    pl.make_dot_graph(transparent_bg=True).save(file.replace('.json', '.png'), 'PNG')
 
 
 if __name__ == "__main__":
