@@ -6,5 +6,5 @@
 
 
 QLabel {
-    background-color: red;
+    background-color: white;
 }

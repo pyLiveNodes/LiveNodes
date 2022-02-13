@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButt
 # from PyQt6.QtGui import QSizePolicy
 
 from src.gui.home import Home
+from src.gui.config import Config
 from src.gui.run import Run
 from src.nodes.node import Node
 
@@ -65,7 +66,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.central_widget.setCurrentWidget(widget_run)
 
     def onconfig(self, pipeline_path):
-        print(pipeline_path)
+        pipeline = Node.load(pipeline_path)
+        widget_run = SubView(child=Config(pipeline=pipeline), name=f"Configuring: {pipeline_path}", back_fn=self.return_home)
+        self.central_widget.addWidget(widget_run)
+        self.central_widget.setCurrentWidget(widget_run)
 
 
 
@@ -76,6 +80,6 @@ if __name__ == '__main__':
         app.setStyleSheet(f.read())
 
     window = MainWindow()
-    window.resize(1020, 720)
+    window.resize(1400, 820)
     window.show()
     sys.exit(app.exec())

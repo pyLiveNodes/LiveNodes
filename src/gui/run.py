@@ -4,7 +4,7 @@ import matplotlib
 import matplotlib as mpl
 from matplotlib.figure import Figure
 from matplotlib import animation
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import math
 import numpy as np
 import time
@@ -60,7 +60,7 @@ class Run(FigureCanvasQTAgg):
         draws = {str(n): n.init_draw for n in pipeline.discover_childs(pipeline) if hasattr(n, 'init_draw')}.values()
         # print(draws)
 
-        # plt.rc('font', **font)
+        plt.rc('font', **font)
 
         # fig.suptitle("ASK", fontsize='x-large')
         # self.figure.canvas.manager.set_window_title("ASK")
