@@ -1,12 +1,12 @@
 from functools import partial
 import sys
 import random
-from PyQt6 import QtWidgets
+from PyQt5 import QtWidgets
 from glob import glob
 
-from PyQt6.QtGui import QPixmap, QIcon                                                                                                        
-from PyQt6.QtWidgets import QToolButton, QFormLayout, QComboBox, QPushButton, QVBoxLayout, QWidget, QGridLayout, QHBoxLayout, QScrollArea, QLabel
-from PyQt6.QtCore import Qt, QSize, pyqtSignal
+from PyQt5.QtGui import QPixmap, QIcon                                                                                                        
+from PyQt5.QtWidgets import QToolButton, QFormLayout, QComboBox, QPushButton, QVBoxLayout, QWidget, QGridLayout, QHBoxLayout, QScrollArea, QLabel
+from PyQt5.QtCore import Qt, QSize, pyqtSignal
 
 class Home(QWidget):
 

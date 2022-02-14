@@ -1,12 +1,12 @@
 from functools import partial
 import sys
 import random
-from PyQt6 import QtWidgets
+from PyQt5 import QtWidgets
 from glob import glob
 
-from PyQt6.QtGui import QPixmap, QIcon                                                                                                        
-from PyQt6.QtWidgets import QToolButton, QFormLayout, QComboBox, QPushButton, QVBoxLayout, QWidget, QGridLayout, QHBoxLayout, QScrollArea, QLabel
-from PyQt6.QtCore import Qt, QSize, pyqtSignal
+from PyQt5.QtGui import QPixmap, QIcon                                                                                                        
+from PyQt5.QtWidgets import QToolButton, QFormLayout, QComboBox, QPushButton, QVBoxLayout, QWidget, QGridLayout, QHBoxLayout, QScrollArea, QLabel
+from PyQt5.QtCore import Qt, QSize, pyqtSignal
 
 import qtpynodeeditor
 from qtpynodeeditor import (NodeData, NodeDataModel, NodeDataType, PortType,
@@ -133,8 +133,8 @@ class Config(QWidget):
 
         # TODO: this isn't perfect at all...
         # TODO: add saving of layouts and then try to match them when loading...
-        # self.scene.auto_arrange('planar_layout')
-        self.scene.auto_arrange('graphviz_layout', prog='dot', scale=1)
+        self.scene.auto_arrange('planar_layout')
+        # self.scene.auto_arrange('graphviz_layout', prog='dot', scale=1)
         # self.scene.auto_arrange('graphviz_layout', scale=3)
 
     def get_nodes(self):

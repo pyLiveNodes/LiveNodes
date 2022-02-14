@@ -1,4 +1,4 @@
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 
 import matplotlib
 import matplotlib as mpl
@@ -9,7 +9,7 @@ import math
 import numpy as np
 import time
 
-from PyQt6 import QtWidgets
+from PyQt5 import QtWidgets
 import sys
 
 from multiprocessing import Process

@@ -1,9 +1,9 @@
 from functools import partial
 import sys
 from turtle import back
-from PyQt6 import QtCore, QtGui, QtWidgets
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSizePolicy
-# from PyQt6.QtGui import QSizePolicy
+from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSizePolicy
+# from PyQt5.QtGui import QSizePolicy
 
 from src.gui.home import Home
 from src.gui.config import Config

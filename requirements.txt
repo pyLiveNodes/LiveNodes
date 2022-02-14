@@ -8,5 +8,4 @@ graphviz
 
 tsfel
 
-graphviz==0.19.1
 networkx==2.6.3
