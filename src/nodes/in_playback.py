@@ -33,6 +33,17 @@ class In_playback(Node):
 
         self._stop_event = threading.Event()
     
+    @staticmethod
+    def info():
+        return {
+            "class": "In_playback",
+            "file": "In_playback.py",
+            "in": [],
+            "out": ["Data", "File", "Annotation", "Meta", "Channel Names"],
+            "init": {}, #TODO!
+            "category": "Data Source"
+        }
+
     def _get_setup(self):
         return {\
             "batch": self.batch,
@@ -56,10 +67,12 @@ class In_playback(Node):
 
         self.send_data(self.meta, data_stream="Meta")
         self.send_data(self.channels, data_stream="Channel Names")
+        ctr = -1
 
         while(not self._stop_event.is_set()):
             f = random.choice(fs)
-            print(f)
+            ctr += 1
+            print(ctr, f)
 
 
             # Read and send data from file
@@ -82,8 +95,10 @@ class In_playback(Node):
                 # TODO: for some reason i have no fucking clue about using read_data results in the annotation plot in draw recog to be wrong, although the targs are exactly the same (yes, if checked read_data()[1] == targs)...
 
                 for i in range(start, end, self.batch):
+                    d_len = len(data[i:i+self.batch]) # usefull if i+self.batch > len(data)
                     self.send_data(np.array(data[i:i+self.batch]))
                     self.send_data(targs[i:i+self.batch], data_stream='Annotation')
+                    self.send_data([ctr] * d_len, data_stream="File")
                     time.sleep(sleep_time)
 
         # TODO: look at this implementation again, seems to be the more precise one

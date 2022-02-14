@@ -28,6 +28,17 @@ class Out_data(Node):
         self.outputFile = h5py.File(self.outputFilename + '.h5', 'w')
         self.outputDataset = self.outputFile.create_dataset ("data", (1, len(self.recorded_channels)), maxshape = (None, len(self.recorded_channels)), dtype = "float32")
        
+    @staticmethod
+    def info():
+        return {
+            "class": "out_data",
+            "file": "out_data.py",
+            "in": ["Data"],
+            "out": [],
+            "init": {}, #TODO!
+            "category": "Data Out"
+        }
+
     
     def _get_setup(self):
         return {\

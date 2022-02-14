@@ -24,6 +24,24 @@ class Biokit_recognizer(Node):
         self._initial = True
         self.file = None
 
+    @staticmethod
+    def info():
+        return {
+            "class": "Biokit_recognizer",
+            "file": "biokit_recognizer.py",
+            "in": ["Data", "File"],
+            "out": ["Data", "Meta"],
+            "init": {}, #TODO!
+            "category": "BioKIT"
+        }
+    
+    @property
+    def in_map(self):
+        return {
+            "Data": self.receive_data,
+            "File": self.receive_file,
+        }
+
     def _get_setup(self):
         return {\
             # "batch": self.batch,
@@ -53,7 +71,7 @@ class Biokit_recognizer(Node):
                     dc.getToken(r.mTokenId)
                 ) for r in path]
             # print(res)
-            self.send_data(res) 
+            self.send_data(res) # TODO: this should be named as it's not Data!
 
 
     def _get_topology(self):

@@ -60,37 +60,37 @@
           "Raw Filter [Transform_filter]",
           null,
           "Data",
-          "receive_data"
+          "Data"
         ],
         [
           "Raw Filter [Transform_filter]",
           null,
           "Channel Names",
-          "receive_channels"
+          "Channel Names"
         ],
         [
           "Window [Transform_window]",
           null,
           "Data",
-          "receive_data"
+          "Data"
         ],
         [
           "Features [Transform_feature]",
           null,
           "Channel Names",
-          "receive_channels"
+          "Channel Names"
         ],
         [
           "File [Transform_window]",
           null,
           "File",
-          "receive_data"
+          "Data"
         ],
         [
           "Memory [Memory]",
           null,
           "Annotation",
-          "receive_data"
+          "Data"
         ]
       ]
     },
@@ -109,13 +109,13 @@
           "Raw Data [Draw_lines]",
           null,
           "Data",
-          "receive_data"
+          "Data"
         ],
         [
           "Raw Data [Draw_lines]",
           null,
           "Channel Names",
-          "receive_channels"
+          "Channel Names"
         ]
       ]
     },
@@ -136,14 +136,15 @@
       "class": "Transform_window",
       "settings": {
         "length": 100,
-        "overlap": 0
+        "overlap": 0,
+        "name": "Window"
       },
       "childs": [
         [
           "Features [Transform_feature]",
           null,
           "Data",
-          "receive_data"
+          "Data"
         ]
       ]
     },
@@ -163,25 +164,25 @@
           "Feature Filter [Transform_filter]",
           null,
           "Data",
-          "receive_data"
+          "Data"
         ],
         [
           "Feature Filter [Transform_filter]",
           null,
           "Channel Names",
-          "receive_channels"
+          "Channel Names"
         ],
         [
           "Node [Biokit_to_fs]",
           null,
           "Data",
-          "receive_data"
+          "Data"
         ],
         [
           "Normed Feature Filter [Transform_filter]",
           null,
           "Channel Names",
-          "receive_channels"
+          "Channel Names"
         ]
       ]
     },
@@ -200,13 +201,13 @@
           "Features [Draw_lines]",
           null,
           "Data",
-          "receive_data"
+          "Data"
         ],
         [
           "Features [Draw_lines]",
           null,
           "Channel Names",
-          "receive_channels"
+          "Channel Names"
         ]
       ]
     },
@@ -233,7 +234,7 @@
           "Node [Biokit_norm]",
           null,
           "Data",
-          "receive_data"
+          "Data"
         ]
       ]
     },
@@ -247,13 +248,13 @@
           "Node [Biokit_from_fs]",
           null,
           "Data",
-          "receive_data"
+          "Data"
         ],
         [
           "Recognizer [Biokit_recognizer]",
           null,
           "Data",
-          "receive_data"
+          "Data"
         ]
       ]
     },
@@ -267,7 +268,7 @@
           "Normed Feature Filter [Transform_filter]",
           null,
           "Data",
-          "receive_data"
+          "Data"
         ]
       ]
     },
@@ -286,13 +287,13 @@
           "Normed Features [Draw_lines]",
           null,
           "Data",
-          "receive_data"
+          "Data"
         ],
         [
           "Normed Features [Draw_lines]",
           null,
           "Channel Names",
-          "receive_channels"
+          "Channel Names"
         ]
       ]
     },
@@ -320,13 +321,13 @@
           "Recognition [Draw_recognition]",
           null,
           "Data",
-          "receive_data"
+          "Data"
         ],
         [
           "Recognition [Draw_recognition]",
           null,
           "Meta",
-          "receive_meta"
+          "Meta"
         ]
       ]
     },
@@ -347,14 +348,15 @@
       "class": "Transform_window",
       "settings": {
         "length": 100,
-        "overlap": 0
+        "overlap": 0,
+        "name": "File"
       },
       "childs": [
         [
           "File [Transform_majority_select]",
           null,
           "Data",
-          "receive_data"
+          "Data"
         ]
       ]
     },
@@ -368,7 +370,7 @@
           "Recognizer [Biokit_recognizer]",
           null,
           "Data",
-          "receive_file"
+          "File"
         ]
       ]
     },
@@ -382,7 +384,7 @@
           "Recognition [Draw_recognition]",
           null,
           "Data",
-          "receive_annotation"
+          "Annotation"
         ]
       ]
     }

@@ -42,6 +42,24 @@ class Draw_lines(Node):
         self.names = list(map(str, range(n_plots)))
         # self.axes = []
 
+    @staticmethod
+    def info():
+        return {
+            "class": "Draw_lines",
+            "file": "draw_lines.py",
+            "in": ["Data", "Channel Names"],
+            "out": [],
+            "init": {}, #TODO!
+            "category": "Draw"
+        }
+        
+    @property
+    def in_map(self):
+        return {
+            "Data": self.receive_data,
+            "Channel Names": self.receive_channels
+        }
+
     def _get_setup(self):
         return {\
             "name": self.name,

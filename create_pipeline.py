@@ -28,27 +28,27 @@ def add_processing(pl_in, x_raw, x_processed, vis=True):
     if vis:
         filter1 =Transform_filter(name="Raw Filter", names=channel_names_raw)
         pl_in.add_output(filter1)
-        pl_in.add_output(filter1, data_stream="Channel Names", recv_name="receive_channels")
+        pl_in.add_output(filter1, data_stream="Channel Names", recv_data_stream="Channel Names")
 
         draw_raw = Draw_lines(name='Raw Data', n_plots=len(channel_names_raw), xAxisLength=x_raw)
         filter1.add_output(draw_raw)
-        filter1.add_output(draw_raw, data_stream="Channel Names", recv_name="receive_channels")
+        filter1.add_output(draw_raw, data_stream="Channel Names", recv_data_stream="Channel Names")
 
     window = Transform_window(100, 0)
     pl_in.add_output(window)
 
     fts = Transform_feature(features=['calc_mean', 'rms'], feature_args={"samplingfrequency": meta['sample_rate']})
     window.add_output(fts)
-    pl_in.add_output(fts, data_stream="Channel Names", recv_name="receive_channels")
+    pl_in.add_output(fts, data_stream="Channel Names", recv_data_stream="Channel Names")
 
     if vis:
         filter2 =Transform_filter(name="Feature Filter", names=channel_names_fts)
         fts.add_output(filter2)
-        fts.add_output(filter2, data_stream="Channel Names", recv_name="receive_channels")
+        fts.add_output(filter2, data_stream="Channel Names", recv_data_stream="Channel Names")
 
         draw_fts = Draw_lines(name='Features', n_plots=len(channel_names_fts), xAxisLength=x_processed)
         filter2.add_output(draw_fts)
-        filter2.add_output(draw_fts, data_stream="Channel Names", recv_name="receive_channels")
+        filter2.add_output(draw_fts, data_stream="Channel Names", recv_data_stream="Channel Names")
 
     to_fs = Biokit_to_fs()
     fts.add_output(to_fs)
@@ -62,11 +62,11 @@ def add_processing(pl_in, x_raw, x_processed, vis=True):
 
         filter3 =Transform_filter(name="Normed Feature Filter", names=channel_names_fts)
         from_fs.add_output(filter3)
-        fts.add_output(filter3, data_stream="Channel Names", recv_name="receive_channels")
+        fts.add_output(filter3, data_stream="Channel Names", recv_data_stream="Channel Names")
 
         draw_normed = Draw_lines(name='Normed Features', n_plots=len(channel_names_fts), ylim=(-5, 5), xAxisLength=x_processed)
         filter3.add_output(draw_normed)
-        filter3.add_output(draw_normed, data_stream="Channel Names", recv_name="receive_channels")
+        filter3.add_output(draw_normed, data_stream="Channel Names", recv_data_stream="Channel Names")
 
     return norm
 
@@ -79,16 +79,16 @@ def add_recognition(pl, norm, x_raw, x_processed, vis=True):
 
     recog = Biokit_recognizer(model_path="./models/KneeBandageCSL2018/partition-stand/sequence/", token_insertion_penalty=50)
     norm.add_output(recog)
-    select1.add_output(recog, recv_name="receive_file")
+    select1.add_output(recog, recv_data_stream="File")
 
     if vis:
         draw_recognition_path = Draw_recognition(xAxisLength=[x_processed, x_processed, x_processed, x_raw])
         recog.add_output(draw_recognition_path)
-        recog.add_output(draw_recognition_path, data_stream='Meta', recv_name='receive_meta')
+        recog.add_output(draw_recognition_path, data_stream='Meta', recv_data_stream='Meta')
 
         memory = Memory(x_raw)
         pl.add_output(memory, data_stream='Annotation')
-        memory.add_output(draw_recognition_path, recv_name='receive_annotation')
+        memory.add_output(draw_recognition_path, recv_data_stream='Annotation')
 
     return recog
 
@@ -138,19 +138,19 @@ def add_train(pl, norm):
         train_iterations=(5, 10)
         )
     norm.add_output(train)
-    pl.add_output(train, data_stream="Termination", recv_name='receive_data_end')
+    pl.add_output(train, data_stream="Termination", recv_data_stream='Termination')
     
     window1 = Transform_window(100, 0, name="File")
     select1 = Transform_majority_select(name="File")
     pl.add_output(window1, data_stream="File")
     window1.add_output(select1)
-    select1.add_output(train, recv_name='receive_file')
+    select1.add_output(train, recv_data_stream='File')
 
     window2 = Transform_window(100, 0, name="Annotation")
     select2 = Transform_majority_select(name="Annotation")
     pl.add_output(window2, data_stream="Annotation")
     window2.add_output(select2)
-    select2.add_output(train, recv_name='receive_annotation')
+    select2.add_output(train, recv_data_stream='Annotation')
     
     return train
 
@@ -166,7 +166,8 @@ def save(pl, file):
     # print()
 
     print('--- Visualize Pipeline ---')
-    pl.make_dot_graph(transparent_bg=True).save(file.replace('.json', '.png'), 'PNG')
+    pl_val.make_dot_graph(transparent_bg=True).save(file.replace('.json', '.png'), 'PNG')
+    pl_val.make_dot_graph(transparent_bg=False).save(file.replace('.json', '_white_bg.png'), 'PNG')
 
 
 if __name__ == "__main__":
@@ -207,7 +208,6 @@ if __name__ == "__main__":
 
 
     print('=== Build Recognition Pipeline ===')
-
     recog = add_recognition(pl, norm, x_raw=x_raw, x_processed=x_processed, vis=True)
     save(pl, "pipelines/recognize.json")
 

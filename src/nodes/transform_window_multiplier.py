@@ -6,8 +6,20 @@ class Transform_window_multiplier(Node):
         super().__init__(name=name, dont_time=dont_time)
         self.function = function
     
+    @staticmethod
+    def info():
+        return {
+            "class": "Transform_window_multiplier",
+            "file": "Transform_window_multiplier.py",
+            "in": ["Data"],
+            "out": ["Data"],
+            "init": {}, #TODO!
+            "category": "Transform"
+        }
+        
     def _get_setup(self):
         return {\
+            "name": self.name,
             "function": self.function
            }
 

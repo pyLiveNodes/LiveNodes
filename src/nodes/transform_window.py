@@ -9,10 +9,22 @@ class Transform_window(Node):
 
         self.buffer = []
     
+    @staticmethod
+    def info():
+        return {
+            "class": "Transform_window",
+            "file": "Transform_window.py",
+            "in": ["Data"],
+            "out": ["Data"],
+            "init": {}, #TODO!
+            "category": "Transform"
+        }
+
     def _get_setup(self):
         return {\
             "length": self.length,
             "overlap": self.overlap,
+            "name": self.name,
            }
 
     def receive_data(self, data_frame, **kwargs):

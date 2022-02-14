@@ -25,6 +25,27 @@ class Biokit_train(Node):
         self.annotations = []
         self.files = []
 
+    @staticmethod
+    def info():
+        return {
+            "class": "Biokit_train",
+            "file": "Biokit_train.py",
+            "in": ["Data", "File", "Annotation", "Termination"],
+            "out": [],
+            "init": {}, #TODO!
+            "category": "BioKIT"
+        }
+
+        
+    @property
+    def in_map(self):
+        return {
+            "Data": self.receive_data,
+            "File": self.receive_file,
+            "Annotation": self.receive_annotation,
+            "Termination": self.receive_data_end
+        }
+
     def _get_setup(self):
         return {\
             # "batch": self.batch,

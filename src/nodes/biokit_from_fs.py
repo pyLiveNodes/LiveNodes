@@ -7,6 +7,19 @@ class Biokit_from_fs(Node):
     def receive_data(self, fs, **kwargs):
         self.send_data(fs.getMatrix())
 
+    @staticmethod
+    def info():
+        return {
+            "class": "Biokit_from_fs",
+            "file": "biokit_from_fs.py",
+            "in": ["Data"],
+            "out": ["Data"],
+            "init": {
+                "name": "str"
+            },
+            "category": "BioKIT"
+        }
+
     # def receive_data(self, mcfs, data_id=0):
     #     dim1 = mcfs[0].getLength(
     #     )  # assume same length of all FeatureSequences

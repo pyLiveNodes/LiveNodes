@@ -60,9 +60,35 @@ class Node():
         """
         Get the Nodes setup settings.
         Primarily used for serialization from json files.
-        No need to overwrite.
         """
         return { "name": self.name}
+
+    @staticmethod
+    def info():
+        """
+        Get all information required to use the node.
+        Should be overwritten!
+        """
+        return {
+            "class": "Node",
+            "file": "node.py",
+            "in": ["Data"],
+            "out": ["Data"],
+            "init": {
+                "name": "str"
+            },
+            "category": "Base"
+        }
+        
+    @property
+    def in_map(self):
+        return {
+            "Data": self.receive_data
+        }
+
+    # @classmethod
+    # def describe(self):
+    #     pass
 
     def __call__(self, input_classes):
         """
@@ -154,7 +180,8 @@ class Node():
         self.input_is_set = True
         
     # TODO: think about api, should we rather use set_inputs instead of add_output? (i think that was the original intention, but i kinda like the current state quite a lot)
-    def add_output(self, new_output, data_id=None, data_stream="Data", recv_name='receive_data'):
+    # TODO: rename data_stream (the name from the input node), and recv_data_stream (the stream name of this node)
+    def add_output(self, new_output, data_id=None, data_stream="Data", recv_data_stream='Data'):
         """
         Adds a new class that this class will output data to. Used
         internally by __call__ / set_inputs to register outputs.
@@ -183,11 +210,11 @@ class Node():
             raise(ValueError("Module does not have outputs."))
         
         if isinstance(new_output, Node):
-            if hasattr(new_output, recv_name):
-                self.output_classes.append((new_output, data_id, data_stream, recv_name))
-                new_frame_callback_plain = getattr(new_output, recv_name)
+            if recv_data_stream in new_output.in_map:
+                self.output_classes.append((new_output, data_id, data_stream, recv_data_stream))
+                new_frame_callback_plain = new_output.in_map[recv_data_stream]
             else:
-                raise Exception('Unknown receiver function')
+                raise Exception('Unknown receiver data stream')
         else:
             # TODO: consider if we need this feature (functionst, that are not nodes) in the future...
             # Reason is, that these cannot be serialized and may not obey some of the other assumptions about we can make about nodes
@@ -304,7 +331,7 @@ class Node():
         nodes = {str(n): { \
                 "class": n.__class__.__name__, \
                 "settings": n._get_setup(),  \
-                "childs": [(str(node_output), output_id, data_stream, recv_name) for node_output, output_id, data_stream, recv_name in n.output_classes if isinstance(node_output, Node)] \
+                "childs": [(str(node_output), output_id, data_stream, recv_data_stream) for node_output, output_id, data_stream, recv_data_stream in n.output_classes if isinstance(node_output, Node)] \
             } for n in nodes}
 
         with open(path, 'w') as f:
@@ -327,7 +354,7 @@ class Node():
             # cannot be done earlier, as order of instantiation is important, but not maintained during saving
             for name, ns in nodes_settings.items():
                 for ch_name, ch_id, ch_stream, ch_fn in ns['childs']:
-                    nodes[name].add_output(nodes[ch_name], data_id=ch_id, data_stream=ch_stream, recv_name=ch_fn)
+                    nodes[name].add_output(nodes[ch_name], data_id=ch_id, data_stream=ch_stream, recv_data_stream=ch_fn)
 
             return nodes[start_node]
 

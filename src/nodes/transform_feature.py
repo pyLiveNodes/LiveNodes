@@ -71,6 +71,24 @@ class Transform_feature(Node):
         self.channel_names = []
         self.out_channels = None
 
+    @staticmethod
+    def info():
+        return {
+            "class": "Transform_feature",
+            "file": "Transform_feature.py",
+            "in": ["Data", "Channel Names"],
+            "out": ["Data", "Channel Names"],
+            "init": {}, #TODO!
+            "category": "Transform"
+        }
+        
+    @property
+    def in_map(self):
+        return {
+            "Data": self.receive_data,
+            "Channel Names": self.receive_channels
+        }
+        
     def _get_setup(self):
         return {\
             "features": self.features,

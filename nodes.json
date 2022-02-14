@@ -1,0 +1,209 @@
+[
+  {
+    "class": "Biokit_from_fs",
+    "file": "biokit_from_fs.py",
+    "in": [
+      "Data"
+    ],
+    "out": [
+      "Data"
+    ],
+    "init": {
+      "name": "str"
+    },
+    "category": "BioKIT"
+  },
+  {
+    "class": "Biokit_norm",
+    "file": "biokit_norm.py",
+    "in": [
+      "Data"
+    ],
+    "out": [
+      "Data"
+    ],
+    "init": {
+      "name": "str"
+    },
+    "category": "BioKIT"
+  },
+  {
+    "class": "Biokit_recognizer",
+    "file": "biokit_recognizer.py",
+    "in": [
+      "Data",
+      "File"
+    ],
+    "out": [
+      "Data",
+      "Meta"
+    ],
+    "init": {},
+    "category": "BioKIT"
+  },
+  {
+    "class": "Biokit_to_fs",
+    "file": "biokit_to_fs.py",
+    "in": [
+      "Data"
+    ],
+    "out": [
+      "Data"
+    ],
+    "init": {
+      "name": "str"
+    },
+    "category": "BioKIT"
+  },
+  {
+    "class": "Biokit_train",
+    "file": "Biokit_train.py",
+    "in": [
+      "Data",
+      "File",
+      "Annotation",
+      "Termination"
+    ],
+    "out": [],
+    "init": {},
+    "category": "BioKIT"
+  },
+  {
+    "class": "Draw_lines",
+    "file": "draw_lines.py",
+    "in": [
+      "Data",
+      "Channel Names"
+    ],
+    "out": [],
+    "init": {},
+    "category": "Draw"
+  },
+  {
+    "class": "Draw_recognition",
+    "file": "draw_recognition.py",
+    "in": [
+      "Data",
+      "Annotation",
+      "Meta"
+    ],
+    "out": [],
+    "init": {},
+    "category": "Draw"
+  },
+  {
+    "class": "In_data",
+    "file": "in_data.py",
+    "in": [],
+    "out": [
+      "Data",
+      "File",
+      "Annotation",
+      "Meta",
+      "Channel Names",
+      "Termination"
+    ],
+    "init": {},
+    "category": "Data Source"
+  },
+  {
+    "class": "In_playback",
+    "file": "In_playback.py",
+    "in": [],
+    "out": [
+      "Data",
+      "File",
+      "Annotation",
+      "Meta",
+      "Channel Names"
+    ],
+    "init": {},
+    "category": "Data Source"
+  },
+  {
+    "class": "Memory",
+    "file": "Memory.py",
+    "in": [
+      "Data"
+    ],
+    "out": [
+      "Data"
+    ],
+    "init": {},
+    "category": "Basic"
+  },
+  {
+    "class": "out_data",
+    "file": "out_data.py",
+    "in": [
+      "Data"
+    ],
+    "out": [],
+    "init": {},
+    "category": "Data Out"
+  },
+  {
+    "class": "Transform_feature",
+    "file": "Transform_feature.py",
+    "in": [
+      "Data",
+      "Channel Names"
+    ],
+    "out": [
+      "Data",
+      "Channel Names"
+    ],
+    "init": {},
+    "category": "Transform"
+  },
+  {
+    "class": "Transform_filter",
+    "file": "Transform_filter.py",
+    "in": [
+      "Data",
+      "Channel Names"
+    ],
+    "out": [
+      "Data",
+      "Channel Names"
+    ],
+    "init": {},
+    "category": "Transform"
+  },
+  {
+    "class": "Transform_majority_select",
+    "file": "Transform_majority_select.py",
+    "in": [
+      "Data"
+    ],
+    "out": [
+      "Data"
+    ],
+    "init": {},
+    "category": "Transform"
+  },
+  {
+    "class": "Transform_window",
+    "file": "Transform_window.py",
+    "in": [
+      "Data"
+    ],
+    "out": [
+      "Data"
+    ],
+    "init": {},
+    "category": "Transform"
+  },
+  {
+    "class": "Transform_window_multiplier",
+    "file": "Transform_window_multiplier.py",
+    "in": [
+      "Data"
+    ],
+    "out": [
+      "Data"
+    ],
+    "init": {},
+    "category": "Transform"
+  }
+]

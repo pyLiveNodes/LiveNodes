@@ -6,7 +6,18 @@ class Memory(Node):
         super().__init__(name=name, dont_time=dont_time)
         self.length = length
         self.buffer = []
-    
+
+    @staticmethod
+    def info():
+        return {
+            "class": "Memory",
+            "file": "Memory.py",
+            "in": ["Data"],
+            "out": ["Data"],
+            "init": {}, #TODO!
+            "category": "Basic"
+        }
+
     def _get_setup(self):
         return {\
             "length": self.length

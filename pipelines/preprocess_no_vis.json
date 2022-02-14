@@ -61,13 +61,13 @@
           "Window [Transform_window]",
           null,
           "Data",
-          "receive_data"
+          "Data"
         ],
         [
           "Features [Transform_feature]",
           null,
           "Channel Names",
-          "receive_channels"
+          "Channel Names"
         ]
       ]
     },
@@ -75,14 +75,15 @@
       "class": "Transform_window",
       "settings": {
         "length": 100,
-        "overlap": 0
+        "overlap": 0,
+        "name": "Window"
       },
       "childs": [
         [
           "Features [Transform_feature]",
           null,
           "Data",
-          "receive_data"
+          "Data"
         ]
       ]
     },
@@ -102,7 +103,7 @@
           "Node [Biokit_to_fs]",
           null,
           "Data",
-          "receive_data"
+          "Data"
         ]
       ]
     },
@@ -116,7 +117,7 @@
           "Node [Biokit_norm]",
           null,
           "Data",
-          "receive_data"
+          "Data"
         ]
       ]
     },

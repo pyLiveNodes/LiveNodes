@@ -10,93 +10,132 @@ from PyQt6.QtCore import Qt, QSize, pyqtSignal
 
 import qtpynodeeditor
 from qtpynodeeditor import (NodeData, NodeDataModel, NodeDataType, PortType,
-                            StyleCollection)
-style_json = '''
-    {
-      "FlowViewStyle": {
-        "BackgroundColor": [255, 255, 240],
-        "FineGridColor": [245, 245, 230],
-        "CoarseGridColor": [235, 235, 220]
-      },
-      "NodeStyle": {
-        "NormalBoundaryColor": "darkgray",
-        "SelectedBoundaryColor": "deepskyblue",
-        "GradientColor0": "mintcream",
-        "GradientColor1": "mintcream",
-        "GradientColor2": "mintcream",
-        "GradientColor3": "mintcream",
-        "ShadowColor": [200, 200, 200],
-        "FontColor": [10, 10, 10],
-        "FontColorFaded": [100, 100, 100],
-        "ConnectionPointColor": "white",
-        "PenWidth": 2.0,
-        "HoveredPenWidth": 2.5,
-        "ConnectionPointDiameter": 10.0,
-        "Opacity": 1.0
-      },
-      "ConnectionStyle": {
-        "ConstructionColor": "gray",
-        "NormalColor": "black",
-        "SelectedColor": "gray",
-        "SelectedHaloColor": "deepskyblue",
-        "HoveredColor": "deepskyblue",
-        "LineWidth": 3.0,
-        "ConstructionLineWidth": 2.0,
-        "PointDiameter": 10.0,
-        "UseDataDefinedColors": false
-      }
-  }
-'''
+                            StyleCollection, Connection)
+from qtpynodeeditor.type_converter import TypeConverter
 
-
-class MyNodeData(NodeData):
-    data_type = NodeDataType(id='MyNodeData', name='My Node Data')
 
 
 class MyDataModel(NodeDataModel):
     name = 'MyDataModel'
     caption = 'Caption'
     caption_visible = True
-    num_ports = {PortType.input: 1,
-                 PortType.output: 3,
+    num_ports = {PortType.input: 2,
+                 PortType.output: 2,
                  }
-    data_type = MyNodeData.data_type
-
-    def out_data(self, port):
-        print(port)
-
-
-    def set_in_data(self, node_data, port):
-        print(node_data, port)
+    data_type = {
+        PortType.input: {
+            0: NodeDataType(id='MyNodeData', name='Data'),
+            1: NodeDataType(id='MyAnnoation', name='Annotation')
+        },
+        PortType.output: {
+            0: NodeDataType(id='MyNodeData', name='Data'),
+            1: NodeDataType(id='MyAnnoation', name='Annotation')
+        }
+    }
 
     def embedded_widget(self):
         return None
+        
 
+def noop(*args, **kwargs):
+  pass
 
 class Config(QWidget):
 
-    def __init__(self, pipeline, nodes, parent=None):
+    def __init__(self, pipeline=None, nodes=[], parent=None):
         super().__init__(parent)
 
-        style = StyleCollection.from_json(style_json)
+        ### Setup Datastructures
+        # style = StyleCollection.from_json(style_json)
 
         registry = qtpynodeeditor.DataModelRegistry()
-        registry.register_model(MyDataModel, category='My Category', style=style)
-        scene = qtpynodeeditor.FlowScene(style=style, registry=registry)
+        # TODO: figure out how to allow multiple connections to a single input!
+        # Not relevant yet, but will be when there are sync nodes (ie sync 1-x sensor nodes) etc
 
-        view = qtpynodeeditor.FlowView(scene)
+        known_classes = {} 
+        known_streams = set()
+        known_dtypes = {}
 
-        node = scene.create_node(MyDataModel)
+        # Collect and create Datatypes
+        for node in nodes:
+          for val in node['in'] + node['out']:
+            known_dtypes[val] = NodeDataType(id=val, name=val)
+
+        # Collect and create Node-Classes
+        for node in nodes:
+          cls_name = node.get('class', 'Unknown Class')
+          cls = type(cls_name, (NodeDataModel,), \
+            { 'name': cls_name,
+            'caption': cls_name,
+            'caption_visible': True,
+            'num_ports': {
+              PortType.input: len(node['in']), 
+              PortType.output: len(node['out'])
+              },
+            'data_type': {
+              PortType.input: {i: known_dtypes[val] for i, val in enumerate(node['in'])},
+              PortType.output: {i: known_dtypes[val] for i, val in enumerate(node['out'])}
+              }
+            })
+          known_streams.update(set(node['in'] + node['out']))
+          known_classes[cls_name] = cls
+          registry.register_model(cls, category=node.get("category", "Unknown"))
+
+        # Create Converters
+        # Allow any stream to map onto Data:
+        for stream in known_streams:
+          converter = TypeConverter(known_dtypes[stream], known_dtypes["Data"], noop)
+          registry.register_type_converter(known_dtypes[stream], known_dtypes["Data"], converter)
+
+          converter = TypeConverter(known_dtypes["Data"], known_dtypes[stream], noop)
+          registry.register_type_converter(known_dtypes["Data"], known_dtypes[stream], converter)
+
+
+        ### Setup scene
+        self.scene = qtpynodeeditor.FlowScene(registry=registry)
+
+        connection_style = self.scene.style_collection.connection
+        # Configure the style collection to use colors based on data types:
+        connection_style.use_data_defined_colors = True
+
+        view = qtpynodeeditor.FlowView(self.scene)
 
         grid = QHBoxLayout(self)
         grid.addWidget(view)
 
 
-# if __name__ == "__main__":
-#     app = QtWidgets.QApplication([])
+        ### Add nodes
 
-#     widget = Home(noop, noop)
-#     widget.resize(800, 600)
-#     widget.show()
+        if pipeline is not None:
+          # only keep uniques
+          p_nodes = {str(n): n for n in pipeline.discover_childs(pipeline)}
+          
+          # first pass: create all nodes
+          s_nodes = {}
+          # print([str(n) for n in p_nodes])
+          for name, n in p_nodes.items():
+            s_nodes[name] = self.scene.create_node(known_classes[n.info()['class']])
 
-#     sys.exit(app.exec())
+          # second pass: create all connectins
+          for name, n in p_nodes.items():
+            # node_output refers to the node in which n is inputing data, ie n's output
+            for node_output, output_id, data_stream, recv_data_stream in n.output_classes:
+              print('=====')
+              print(name, node_output, output_id, data_stream, recv_data_stream)
+              print(data_stream, n.info()['out'], node_output.info()['in'])
+              out_idx = n.info()['out'].index(data_stream)
+              in_idx = node_output.info()['in'].index(recv_data_stream)
+              print(out_idx, in_idx)
+              n_out = s_nodes[name][PortType.output][out_idx]
+              n_in = s_nodes[str(node_output)][PortType.input][in_idx]
+              self.scene.create_connection(n_out, n_in)
+
+
+        # TODO: this isn't perfect at all...
+        # TODO: add saving of layouts and then try to match them when loading...
+        # self.scene.auto_arrange('planar_layout')
+        self.scene.auto_arrange('graphviz_layout', prog='dot', scale=1)
+        # self.scene.auto_arrange('graphviz_layout', scale=3)
+
+    def get_nodes(self):
+      return self.scene.__getstate__()

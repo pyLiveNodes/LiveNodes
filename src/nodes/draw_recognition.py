@@ -53,6 +53,25 @@ class Draw_recognition(Node):
 
         self._bar_colors = []
     
+    @staticmethod
+    def info():
+        return {
+            "class": "Draw_recognition",
+            "file": "draw_recognition.py",
+            "in": ["Data", "Annotation", "Meta"],
+            "out": [],
+            "init": {}, #TODO!
+            "category": "Draw"
+        }
+        
+    @property
+    def in_map(self):
+        return {
+            "Data": self.receive_data,
+            "Annotation": self.receive_annotation,
+            "Meta": self.receive_meta
+        }
+
     def _get_setup(self):
         return {\
             "name": self.name,

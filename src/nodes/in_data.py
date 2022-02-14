@@ -59,6 +59,17 @@ class In_data(Node):
 
         self._stop_event = threading.Event()
     
+    @staticmethod
+    def info():
+        return {
+            "class": "In_data",
+            "file": "in_data.py",
+            "in": [],
+            "out": ["Data", "File", "Annotation", "Meta", "Channel Names", "Termination"],
+            "init": {}, #TODO!
+            "category": "Data Source"
+        }
+
     def _get_setup(self):
         return {\
             "batch": self.batch,
@@ -96,7 +107,7 @@ class In_data(Node):
             # data, targs = read_data(f)
                 
             for i in range(0, len(data), self.batch):
-                d_len = len(data[i:i+self.batch])
+                d_len = len(data[i:i+self.batch]) # usefull if i+self.batch > len(data)
                 self.send_data(data[i:i+self.batch])
                 self.send_data(targs[i:i+self.batch], data_stream='Annotation')
                 self.send_data([file_number] * d_len, data_stream="File")

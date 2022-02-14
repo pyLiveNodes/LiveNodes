@@ -11,6 +11,24 @@ class Transform_filter(Node):
         self.received_channel_names = False
         self._wait_queue = mp.Queue()
 
+    @staticmethod
+    def info():
+        return {
+            "class": "Transform_filter",
+            "file": "Transform_filter.py",
+            "in": ["Data", "Channel Names"],
+            "out": ["Data", "Channel Names"],
+            "init": {}, #TODO!
+            "category": "Transform"
+        }
+        
+    @property
+    def in_map(self):
+        return {
+            "Data": self.receive_data,
+            "Channel Names": self.receive_channels
+        }
+
     def _get_setup(self):
         return {\
             "name": self.name,
@@ -25,7 +43,7 @@ class Transform_filter(Node):
 
         self.send_data(self.names, data_stream="Channel Names")
 
-        # forward all temporary stored data
+        # forward all tempo rary stored data
         while not self._wait_queue.empty():
             self.receive_data(self._wait_queue.get())
         

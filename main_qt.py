@@ -1,3 +1,4 @@
+from functools import partial
 import sys
 from turtle import back
 from PyQt6 import QtCore, QtGui, QtWidgets
@@ -8,6 +9,8 @@ from src.gui.home import Home
 from src.gui.config import Config
 from src.gui.run import Run
 from src.nodes.node import Node
+
+import json
 
 
 class SubView(QWidget):
@@ -54,6 +57,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def return_home(self):
         cur = self.central_widget.currentWidget()
+        
+        # TODO: this shoudl really be in a onclose event inside of config rather than here..., but i don't know yet when/how those are called or connected to...
+        if isinstance(cur.child, Config):
+            print(cur.child.get_nodes())
+            # for n in cur.child.get_nodes().values():
+            #     print(n.__getstate__())
+        
         self.central_widget.setCurrentWidget(self.widget_home)
         self.central_widget.removeWidget(cur)
         cur.stop()
@@ -66,8 +76,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.central_widget.setCurrentWidget(widget_run)
 
     def onconfig(self, pipeline_path):
+        with open("nodes.json", 'r') as f:
+            known_nodes = json.load(f)
+
         pipeline = Node.load(pipeline_path)
-        widget_run = SubView(child=Config(pipeline=pipeline), name=f"Configuring: {pipeline_path}", back_fn=self.return_home)
+        widget_run = SubView(child=Config(pipeline=pipeline, nodes=known_nodes), name=f"Configuring: {pipeline_path}", back_fn=self.return_home)
         self.central_widget.addWidget(widget_run)
         self.central_widget.setCurrentWidget(widget_run)
 
