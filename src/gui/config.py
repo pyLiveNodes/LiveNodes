@@ -35,7 +35,7 @@ class MyDataModel(NodeDataModel):
 
     def embedded_widget(self):
         return None
-        
+
 
 def noop(*args, **kwargs):
   pass
@@ -120,12 +120,12 @@ class Config(QWidget):
           for name, n in p_nodes.items():
             # node_output refers to the node in which n is inputing data, ie n's output
             for node_output, output_id, data_stream, recv_data_stream in n.output_classes:
-              print('=====')
-              print(name, node_output, output_id, data_stream, recv_data_stream)
-              print(data_stream, n.info()['out'], node_output.info()['in'])
+              # print('=====')
+              # print(name, node_output, output_id, data_stream, recv_data_stream)
+              # print(data_stream, n.info()['out'], node_output.info()['in'])
               out_idx = n.info()['out'].index(data_stream)
               in_idx = node_output.info()['in'].index(recv_data_stream)
-              print(out_idx, in_idx)
+              # print(out_idx, in_idx)
               n_out = s_nodes[name][PortType.output][out_idx]
               n_in = s_nodes[str(node_output)][PortType.input][in_idx]
               self.scene.create_connection(n_out, n_in)
