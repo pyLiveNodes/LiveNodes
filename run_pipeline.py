@@ -17,7 +17,7 @@ TIME = False
 
 print('=== Load Pipeline ====')
 if TIME: activate_timing()
-pipeline = Node.load('pipelines/recognize_no_vis.json')
+pipeline = Node.load('pipelines/process_live.json')
 
 
 print('=== Start pipeline ====')

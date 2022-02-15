@@ -1,0 +1,99 @@
+import time
+import numpy as np
+from multiprocessing import Process
+import threading
+from .node import Node
+import glob, random
+import pandas as pd
+import random
+
+import plux
+
+class NewDevice(plux.SignalsDev):
+    def __init__(self, address):
+        plux.MemoryDev.__init__(address)
+
+        self.onRawFrame = lambda _: None
+
+    # From the doc/examples:
+    # 
+    # https://github.com/biosignalsplux/python-samples/blob/master/MultipleDeviceThreadingExample.py
+    # Supported channel number codes:
+    # {1 channel - 0x01, 2 channels - 0x03, 3 channels - 0x07
+    # 4 channels - 0x0F, 5 channels - 0x1F, 6 channels - 0x3F
+    # 7 channels - 0x7F, 8 channels - 0xFF}
+    # Maximum acquisition frequencies for number of channels:
+    # 1 channel - 8000, 2 channels - 5000, 3 channels - 4000
+    # 4 channels - 3000, 5 channels - 3000, 6 channels - 2000
+    # 7 channels - 2000, 8 channels - 2000
+class In_biosignalsplux(Node):
+    def __init__(self, adr, freq, channel_names=[], n_bits=16, name="Biosignalsplux", dont_time=False):
+        super().__init__(name, has_inputs=False, dont_time=dont_time)
+        self.feeder_process = None
+
+        self.adr = adr
+        self.freq = freq
+        self.n_bits = n_bits
+        self.channel_names = channel_names
+
+        # self.feeder_process = None
+        self._stop_event = threading.Event()
+    
+    def _get_setup(self):
+        return {\
+            "adr": self.adr,
+            "freq": self.freq,
+            "n_bits": self.n_bits,
+            "channel_names": self.channel_names
+        }
+
+    def stop(self):
+        self._stop_event.set()
+        # self.feeder_process.terminate()
+
+        self.device.stop()
+        self.device.close()
+
+    def sender_process(self):
+        """
+        Streams the data and calls frame callbacks for each frame.
+        """
+        def onRawFrame (nSeq, data):
+            # d = np.array(data)
+            # if nSeq % 1000 == 0:
+            #     print(nSeq, d, d.shape)
+            self.send_data([data])
+
+        self.send_data(self.channel_names, data_stream="Channel Names")
+
+        self.device = NewDevice(self.adr)
+        self.device.frequency = self.freq
+
+        # TODO: consider moving the start into the init and assign noop, then here overwrite noop with onRawFrame
+        # Idea: connect pretty much as soon as possible, but only pass data once the rest is also ready
+        # but: make sure to use the correct threads/processes :D
+        self.device.onRawFrame = onRawFrame
+        # self.device.start(self.device.frequency, 0x01, 16)
+        # convert len of channel_names to bit mask for start (see top, or: https://github.com/biosignalsplux/python-samples/blob/master/MultipleDeviceThreadingExample.py)
+        self.device.start(self.device.frequency, 2 ** len(self.channel_names) - 1, self.n_bits)
+        self.device.loop()  # calls self.device.onRawFrame until it returns True
+        
+    
+    def start_processing(self, recurse=True):
+        """
+        Starts the streaming process.
+        """
+        if self.feeder_process is None:
+            self.feeder_process = threading.Thread(target=self.sender_process)
+            # self.feeder_process = Process(target=self.sender_process)
+            self.feeder_process.start()
+        super().start_processing(recurse)
+        
+    def stop_processing(self, recurse=True):
+        """
+        Stops the streaming process.
+        """
+        super().stop_processing(recurse)
+        if self.feeder_process is not None:
+            self.stop()
+        self.feeder_process = None

@@ -1,4 +1,7 @@
 from select import select
+from src.nodes.transform_scale import Transform_scale
+from src.nodes.log_data import Log_data
+from src.nodes.in_biosignalsplux import In_biosignalsplux
 from src.nodes.biokit_norm import Biokit_norm
 from src.nodes.biokit_to_fs import Biokit_to_fs
 from src.nodes.biokit_from_fs import Biokit_from_fs
@@ -195,9 +198,22 @@ if __name__ == "__main__":
 
     x_raw = 5000
     x_processed = 50
+    n_bits = 16
+
+    print('=== Build Live Connection Pipeline ===')
+    pl = In_biosignalsplux("00:07:80:B3:83:ED", 1000, n_bits=n_bits, channel_names=["Pushbutton"])
+    # log_data = Log_data()
+    # pl.add_output(log_data)
+    scaler = Transform_scale(0, 2**n_bits)
+    pl.add_output(scaler)
+    draw_raw = Draw_lines(name='Raw Data', n_plots=1, xAxisLength=x_raw)
+    scaler.add_output(draw_raw)
+    pl.add_output(draw_raw, data_stream="Channel Names", recv_data_stream="Channel Names")
+
+    save(pl, "pipelines/process_live.json")
+
 
     print('=== Build Processing Pipeline ===')
-
     # TODO: currently the saving and everything else assumes we have a single node as entry, not sure if that is always true. consider multi indepdendent sensors, that are synced in the second node 
     #   -> might be solveable with "pipeline nodes" or similar, where a node acts as container for a node system -> might be good for paralellisation anyway 
     pl = In_playback(files="./data/KneeBandageCSL2018/part00/01.h5", meta=meta, batch=20)
