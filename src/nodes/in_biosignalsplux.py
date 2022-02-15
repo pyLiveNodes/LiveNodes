@@ -26,6 +26,10 @@ class NewDevice(plux.SignalsDev):
     # 1 channel - 8000, 2 channels - 5000, 3 channels - 4000
     # 4 channels - 3000, 5 channels - 3000, 6 channels - 2000
     # 7 channels - 2000, 8 channels - 2000
+
+    # DEBUG NOTE:
+    # It seems to work best when activating the plux hub and shortly after starting the pipline in qt interface
+    # (which is weird) as on command line the timing is not important at all...
 class In_biosignalsplux(Node):
     def __init__(self, adr, freq, channel_names=[], n_bits=16, name="Biosignalsplux", dont_time=False):
         super().__init__(name, has_inputs=False, dont_time=dont_time)
