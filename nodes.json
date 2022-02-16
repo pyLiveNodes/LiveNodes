@@ -121,6 +121,19 @@
     "category": "Data Source"
   },
   {
+    "class": "In_biosignalsplux",
+    "file": "In_biosignalsplux.py",
+    "in": [],
+    "out": [
+      "Data",
+      "Channel Names"
+    ],
+    "init": {
+      "name": "str"
+    },
+    "category": "Base"
+  },
+  {
     "class": "Memory",
     "file": "Memory.py",
     "in": [
@@ -185,6 +198,18 @@
   {
     "class": "Transform_window",
     "file": "Transform_window.py",
+    "in": [
+      "Data"
+    ],
+    "out": [
+      "Data"
+    ],
+    "init": {},
+    "category": "Transform"
+  },
+  {
+    "class": "Transform_scale",
+    "file": "Transform_scale.py",
     "in": [
       "Data"
     ],

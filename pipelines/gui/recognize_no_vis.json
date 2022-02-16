@@ -1,0 +1,168 @@
+{
+  "connections": [
+    {
+      "in_id": "a6daa178-4446-48c1-a563-78cf842d7998",
+      "in_index": 0,
+      "out_id": "963890ff-38d8-47e2-958a-0a1c8a804998",
+      "out_index": 0
+    },
+    {
+      "in_id": "4ac8c302-f8c6-4ff9-8e87-95a67c8b632d",
+      "in_index": 1,
+      "out_id": "963890ff-38d8-47e2-958a-0a1c8a804998",
+      "out_index": 4
+    },
+    {
+      "in_id": "9e1b4fcb-04f6-4f7a-adf3-5aaaa101dc30",
+      "in_index": 0,
+      "out_id": "963890ff-38d8-47e2-958a-0a1c8a804998",
+      "out_index": 1,
+      "converter": {
+        "in": {
+          "id": "Data",
+          "name": "Data"
+        },
+        "out": {
+          "id": "File",
+          "name": "File"
+        }
+      }
+    },
+    {
+      "in_id": "4ac8c302-f8c6-4ff9-8e87-95a67c8b632d",
+      "in_index": 0,
+      "out_id": "a6daa178-4446-48c1-a563-78cf842d7998",
+      "out_index": 0
+    },
+    {
+      "in_id": "159d04f1-230b-4f6c-850c-510db180ca93",
+      "in_index": 0,
+      "out_id": "4ac8c302-f8c6-4ff9-8e87-95a67c8b632d",
+      "out_index": 0
+    },
+    {
+      "in_id": "e0f4bc86-7ea8-4138-b71d-0e44c54a3860",
+      "in_index": 0,
+      "out_id": "159d04f1-230b-4f6c-850c-510db180ca93",
+      "out_index": 0
+    },
+    {
+      "in_id": "97ceb7a6-a16b-4717-b3b0-577155f7ba9d",
+      "in_index": 0,
+      "out_id": "e0f4bc86-7ea8-4138-b71d-0e44c54a3860",
+      "out_index": 0
+    },
+    {
+      "in_id": "a2870ef8-dbab-455a-afbe-7983a54d4d2f",
+      "in_index": 0,
+      "out_id": "9e1b4fcb-04f6-4f7a-adf3-5aaaa101dc30",
+      "out_index": 0
+    },
+    {
+      "in_id": "97ceb7a6-a16b-4717-b3b0-577155f7ba9d",
+      "in_index": 1,
+      "out_id": "a2870ef8-dbab-455a-afbe-7983a54d4d2f",
+      "out_index": 0,
+      "converter": {
+        "in": {
+          "id": "File",
+          "name": "File"
+        },
+        "out": {
+          "id": "Data",
+          "name": "Data"
+        }
+      }
+    }
+  ],
+  "nodes": [
+    {
+      "id": "963890ff-38d8-47e2-958a-0a1c8a804998",
+      "model": {
+        "name": "In_data",
+        "association_to_node": "Data input [In_data]"
+      },
+      "position": {
+        "x": 50.0,
+        "y": 55.33333333333337
+      }
+    },
+    {
+      "id": "a6daa178-4446-48c1-a563-78cf842d7998",
+      "model": {
+        "name": "Transform_window",
+        "association_to_node": "Window [Transform_window]"
+      },
+      "position": {
+        "x": 286.66666666666663,
+        "y": 59.33333333333337
+      }
+    },
+    {
+      "id": "4ac8c302-f8c6-4ff9-8e87-95a67c8b632d",
+      "model": {
+        "name": "Transform_feature",
+        "association_to_node": "Features [Transform_feature]"
+      },
+      "position": {
+        "x": 505.7777777777778,
+        "y": 52.22222222222223
+      }
+    },
+    {
+      "id": "159d04f1-230b-4f6c-850c-510db180ca93",
+      "model": {
+        "name": "Biokit_to_fs",
+        "association_to_node": "Node [Biokit_to_fs]"
+      },
+      "position": {
+        "x": 856.8888888888889,
+        "y": 50.11111111111114
+      }
+    },
+    {
+      "id": "e0f4bc86-7ea8-4138-b71d-0e44c54a3860",
+      "model": {
+        "name": "Biokit_norm",
+        "association_to_node": "Node [Biokit_norm]"
+      },
+      "position": {
+        "x": 1017.0,
+        "y": 50.0
+      }
+    },
+    {
+      "id": "97ceb7a6-a16b-4717-b3b0-577155f7ba9d",
+      "model": {
+        "name": "Biokit_recognizer",
+        "association_to_node": "Recognizer [Biokit_recognizer]"
+      },
+      "position": {
+        "x": 1231.111111111111,
+        "y": 61.888888888888914
+      }
+    },
+    {
+      "id": "9e1b4fcb-04f6-4f7a-adf3-5aaaa101dc30",
+      "model": {
+        "name": "Transform_window",
+        "association_to_node": "File [Transform_window]"
+      },
+      "position": {
+        "x": 479.33333333333337,
+        "y": 268.6666666666667
+      }
+    },
+    {
+      "id": "a2870ef8-dbab-455a-afbe-7983a54d4d2f",
+      "model": {
+        "name": "Transform_majority_select",
+        "association_to_node": "File [Transform_majority_select]"
+      },
+      "position": {
+        "x": 761.2222222222222,
+        "y": 266.77777777777777
+      }
+    }
+  ]
+}

@@ -60,7 +60,9 @@ class MainWindow(QtWidgets.QMainWindow):
         
         # TODO: this shoudl really be in a onclose event inside of config rather than here..., but i don't know yet when/how those are called or connected to...
         if isinstance(cur.child, Config):
-            print(cur.child.get_nodes())
+            cur.child.save()
+            # vis_state, new_pl = cur.child.get_nodes()
+            # print(vis_state)
             # for n in cur.child.get_nodes().values():
             #     print(n.__getstate__())
         
@@ -80,7 +82,7 @@ class MainWindow(QtWidgets.QMainWindow):
             known_nodes = json.load(f)
 
         pipeline = Node.load(pipeline_path)
-        widget_run = SubView(child=Config(pipeline=pipeline, nodes=known_nodes), name=f"Configuring: {pipeline_path}", back_fn=self.return_home)
+        widget_run = SubView(child=Config(pipeline=pipeline, nodes=known_nodes, pipeline_path=pipeline_path), name=f"Configuring: {pipeline_path}", back_fn=self.return_home)
         self.central_widget.addWidget(widget_run)
         self.central_widget.setCurrentWidget(widget_run)
 

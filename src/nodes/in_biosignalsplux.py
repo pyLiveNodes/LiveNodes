@@ -51,6 +51,23 @@ class In_biosignalsplux(Node):
             "channel_names": self.channel_names
         }
 
+    @staticmethod
+    def info():
+        return {
+            "class": "In_biosignalsplux",
+            "file": "In_biosignalsplux.py",
+            "in": [],
+            "out": ["Data", "Channel Names"],
+            "init": {
+                "name": "str"
+            },
+            "category": "Base"
+        }
+    
+    @property
+    def in_map(self):
+        return {}
+
     def stop(self):
         self._stop_event.set()
         # self.feeder_process.terminate()

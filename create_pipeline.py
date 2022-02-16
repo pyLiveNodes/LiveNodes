@@ -157,6 +157,11 @@ def add_train(pl, norm):
     
     return train
 
+# From: https://stackoverflow.com/questions/2556108/rreplace-how-to-replace-the-last-occurrence-of-an-expression-in-a-string
+def rreplace(s, old, new, occurrence):
+  li = s.rsplit(old, occurrence)
+  return new.join(li)
+
 def save(pl, file):
     print('--- Save Pipeline ---')
     pl.save(file)
@@ -169,8 +174,8 @@ def save(pl, file):
     # print()
 
     print('--- Visualize Pipeline ---')
-    pl_val.make_dot_graph(transparent_bg=True).save(file.replace('.json', '.png'), 'PNG')
-    pl_val.make_dot_graph(transparent_bg=False).save(file.replace('.json', '_white_bg.png'), 'PNG')
+    pl_val.make_dot_graph(transparent_bg=True).save(rreplace(file, '/', '/gui/', 1).replace('.json', '.png'), 'PNG')
+    pl_val.make_dot_graph(transparent_bg=False).save(file.replace('.json', '.png'), 'PNG')
 
 
 if __name__ == "__main__":

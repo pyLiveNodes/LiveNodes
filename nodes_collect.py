@@ -7,6 +7,7 @@ from src.nodes.draw_lines import Draw_lines
 from src.nodes.draw_recognition import Draw_recognition
 from src.nodes.in_data import In_data
 from src.nodes.in_playback import In_playback
+from src.nodes.in_biosignalsplux import In_biosignalsplux
 from src.nodes.memory import Memory
 from src.nodes.node import Node
 from src.nodes.out_data import Out_data
@@ -15,10 +16,12 @@ from src.nodes.transform_feature import Transform_feature
 from src.nodes.transform_filter import Transform_filter
 from src.nodes.transform_majority_select import Transform_majority_select
 from src.nodes.transform_window import Transform_window
+from src.nodes.transform_scale import Transform_scale
 from src.nodes.transform_window_multiplier import Transform_window_multiplier
 
 import json
 
+# TODO: rather make this with auto detection and ignore filter and run automatically on main_qt startup...
 
 if __name__ == "__main__":
     nodes = [Biokit_from_fs, 
@@ -30,6 +33,7 @@ if __name__ == "__main__":
     Draw_recognition, 
     In_data, 
     In_playback, 
+    In_biosignalsplux,
     Memory, 
     # Node, 
     Out_data, 
@@ -38,6 +42,7 @@ if __name__ == "__main__":
     Transform_filter, 
     Transform_majority_select, 
     Transform_window, 
+    Transform_scale,
     Transform_window_multiplier] 
 
     # Creates a json file with all available nodes

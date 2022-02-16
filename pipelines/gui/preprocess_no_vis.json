@@ -1,0 +1,91 @@
+{
+  "connections": [
+    {
+      "in_id": "6192ba43-142b-4887-8d93-ec3c32485238",
+      "in_index": 0,
+      "out_id": "fa038e11-74db-4cd3-bdea-d7ee09d856ac",
+      "out_index": 0
+    },
+    {
+      "in_id": "a973a390-870e-4503-845d-69b59214a57c",
+      "in_index": 1,
+      "out_id": "fa038e11-74db-4cd3-bdea-d7ee09d856ac",
+      "out_index": 4
+    },
+    {
+      "in_id": "a973a390-870e-4503-845d-69b59214a57c",
+      "in_index": 0,
+      "out_id": "6192ba43-142b-4887-8d93-ec3c32485238",
+      "out_index": 0
+    },
+    {
+      "in_id": "1ebea31f-4892-4277-8728-881a0821d52d",
+      "in_index": 0,
+      "out_id": "a973a390-870e-4503-845d-69b59214a57c",
+      "out_index": 0
+    },
+    {
+      "in_id": "312cbf4e-bcbf-46a8-8804-9f7870563011",
+      "in_index": 0,
+      "out_id": "1ebea31f-4892-4277-8728-881a0821d52d",
+      "out_index": 0
+    }
+  ],
+  "nodes": [
+    {
+      "id": "fa038e11-74db-4cd3-bdea-d7ee09d856ac",
+      "model": {
+        "name": "In_data",
+        "association_to_node": "Data input [In_data]"
+      },
+      "position": {
+        "x": 150.0,
+        "y": 157.45999999999998
+      }
+    },
+    {
+      "id": "6192ba43-142b-4887-8d93-ec3c32485238",
+      "model": {
+        "name": "Transform_window",
+        "association_to_node": "Window [Transform_window]"
+      },
+      "position": {
+        "x": 393.1400000000002,
+        "y": 158.86000000000007
+      }
+    },
+    {
+      "id": "a973a390-870e-4503-845d-69b59214a57c",
+      "model": {
+        "name": "Transform_feature",
+        "association_to_node": "Features [Transform_feature]"
+      },
+      "position": {
+        "x": 646.5100000000002,
+        "y": 162.61000000000007
+      }
+    },
+    {
+      "id": "1ebea31f-4892-4277-8728-881a0821d52d",
+      "model": {
+        "name": "Biokit_to_fs",
+        "association_to_node": "Node [Biokit_to_fs]"
+      },
+      "position": {
+        "x": 1002.9699999999998,
+        "y": 160.59000000000012
+      }
+    },
+    {
+      "id": "312cbf4e-bcbf-46a8-8804-9f7870563011",
+      "model": {
+        "name": "Biokit_norm",
+        "association_to_node": "Node [Biokit_norm]"
+      },
+      "position": {
+        "x": 1201.0199999999995,
+        "y": 162.0
+      }
+    }
+  ]
+}

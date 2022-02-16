@@ -25,6 +25,11 @@ class Home(QWidget):
 
         # l1.setFixedWidth(80)
 
+# From: https://stackoverflow.com/questions/2556108/rreplace-how-to-replace-the-last-occurrence-of-an-expression-in-a-string
+def rreplace(s, old, new, occurrence):
+  li = s.rsplit(old, occurrence)
+  return new.join(li)
+
 class Pipline_Selection(QWidget):
     # TODO: figure out how to hold stat...
 
@@ -49,7 +54,7 @@ class Pipline_Selection(QWidget):
         self.mainLayout.addWidget(self.scroll_area)
 
         for itm in pipelines:
-            icon  = QIcon(itm.replace('.json', '.png'))
+            icon  = QIcon(rreplace(itm, '/', '/gui/', 1).replace('.json', '.png'))
             button = QToolButton()
             button.setText(itm.split('/')[-1].replace('.json', ''))
             button.setIcon(icon)

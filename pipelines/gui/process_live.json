@@ -1,0 +1,57 @@
+{
+  "connections": [
+    {
+      "in_id": "f5cd282d-8ba9-46c0-bce6-24c59843b541",
+      "in_index": 0,
+      "out_id": "9bfe39d2-dab0-4ed2-a890-df65158c321c",
+      "out_index": 0
+    },
+    {
+      "in_id": "9695397f-daa3-4f38-9330-a5cc0bf98207",
+      "in_index": 1,
+      "out_id": "9bfe39d2-dab0-4ed2-a890-df65158c321c",
+      "out_index": 1
+    },
+    {
+      "in_id": "9695397f-daa3-4f38-9330-a5cc0bf98207",
+      "in_index": 0,
+      "out_id": "f5cd282d-8ba9-46c0-bce6-24c59843b541",
+      "out_index": 0
+    }
+  ],
+  "nodes": [
+    {
+      "id": "9bfe39d2-dab0-4ed2-a890-df65158c321c",
+      "model": {
+        "name": "In_biosignalsplux",
+        "association_to_node": "Biosignalsplux [In_biosignalsplux]"
+      },
+      "position": {
+        "x": 100.0,
+        "y": 117.27999999999992
+      }
+    },
+    {
+      "id": "f5cd282d-8ba9-46c0-bce6-24c59843b541",
+      "model": {
+        "name": "Transform_scale",
+        "association_to_node": "Scaler [Transform_scale]"
+      },
+      "position": {
+        "x": 381.98400000000026,
+        "y": 99.99999999999997
+      }
+    },
+    {
+      "id": "9695397f-daa3-4f38-9330-a5cc0bf98207",
+      "model": {
+        "name": "Draw_lines",
+        "association_to_node": "Raw Data [Draw_lines]"
+      },
+      "position": {
+        "x": 611.648,
+        "y": 117.44000000000023
+      }
+    }
+  ]
+}
