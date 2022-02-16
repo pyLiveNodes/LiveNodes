@@ -202,8 +202,7 @@ if __name__ == "__main__":
 
     print('=== Build Live Connection Pipeline ===')
     pl = In_biosignalsplux("00:07:80:B3:83:ED", 1000, n_bits=n_bits, channel_names=["Pushbutton"])
-    # log_data = Log_data()
-    # pl.add_output(log_data)
+    # pl.add_output(Log_data())
     scaler = Transform_scale(0, 2**n_bits)
     pl.add_output(scaler)
     draw_raw = Draw_lines(name='Raw Data', n_plots=1, xAxisLength=x_raw)

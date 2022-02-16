@@ -1,0 +1,60 @@
+
+Howto use the Airwriting experimentation system
+
+We just use biokit for every script even if it does not depend on it for 
+convenience reasons.
+
+The database uri must be compatible with sqlalchemy, e.g.
+
+"mysql+mysqldb://@i19pc56/diss"
+
+for the mysql server on i19pc56 with anonymous login using the database diss.
+
+1. Get an empty database and prepare it 
+	
+	For example use 
+
+    /home/camma/dumps/diss_with_recordings_and_sets.sql
+
+    load it into an existing mysql database via
+
+    mysql dbname < /home/camma/dumps/diss_with_recordings_and_sets.sql
+	
+2. Generate jobs for character training
+
+	biokit confgen_trainchar.py <dburi>
+	
+	All parameters must be specified within the confgen file in source
+	
+3. Run the Scheduler and let it do the job 
+
+	if biokit is installed nicely you do not have to give absolute paths
+	to the executable
+	<rundir> is the directory where it really runs all the jobs, must be 
+		accesible from all machines, a subdirectory is created for every job
+	<logdir> is the directory where the scheduler saves the job log
+	-k means keep the files, should generally not be necessary
+	<machines> machines to use, format is "2 3 6 8" (i19pc2, i19pc3, ...)
+
+    python scheduler.py <dburi> "biokit <path-to-pythonlib>/runrecognizer.py --dir <rundir> -k" <logdir> <machines>
+    
+4. Generate jobs for word training 
+	
+	biokit confgen_trainword.py <dburi>
+	
+	All parameters must be specified in the source file, basemodels with 
+	correct configuration must exist
+	
+5. Run Scheduler again
+
+6. Generate jobs for sentence cross-validation
+
+	biokit confgen_sentence.py <dburi>
+	
+	Parameters must be specified in source file
+	
+7. Run Scheduler again
+
+*** Known bugs ***
+
+1. Handling of basemodel search is incomplete for word and sentence configs
