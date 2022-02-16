@@ -1,11 +1,9 @@
 import math
 
 # python lib
-import logger
-from logger import log
+from .logger import log
 
-import BioKIT
-from BioKIT import *
+from . import BioKIT
 
 
 ###
@@ -13,8 +11,8 @@ from BioKIT import *
 ###
 def getGlobalVarianceSequence(fs):
         targetVectorSequence=fs
-        varianceVector=NumericVector(fs.getDimensionality())
-        meanVector=NumericVector(fs.getDimensionality())
+        varianceVector=BioKIT.NumericVector(fs.getDimensionality())
+        meanVector=BioKIT.NumericVector(fs.getDimensionality())
         for t in range(0,targetVectorSequence.getLength()):
             meanVector+=targetVectorSequence.getFeatureVector(t).getVector()
 
@@ -25,9 +23,9 @@ def getGlobalVarianceSequence(fs):
                 varianceVector.set(d,varianceVector.get(d)+diff*diff)
 
         varianceVector/=targetVectorSequence.getLength()
-        vFS=FeatureSequence()
+        vFS=BioKIT.FeatureSequence()
         vFS.setMatrix(varianceVector.toRowMatrix())
-        mFS=FeatureSequence()
+        mFS=BioKIT.FeatureSequence()
         mFS.setMatrix(meanVector.toRowMatrix())
         return (mFS, vFS)
 
@@ -35,8 +33,8 @@ def getGlobalVarianceSequenceFromList(fslist):
         totalLength=0
         if(len(fslist)<=0):
             log(logger.Error, "GlobalVariance:: fslist had no entries")
-        meanVector=NumericVector(fslist[0].getDimensionality())
-        varianceVector=NumericVector(fslist[0].getDimensionality())
+        meanVector=BioKIT.NumericVector(fslist[0].getDimensionality())
+        varianceVector=BioKIT.NumericVector(fslist[0].getDimensionality())
         for fs in fslist:
             totalLength+=fs.getLength()
             for t in range(0,fs.getLength()):

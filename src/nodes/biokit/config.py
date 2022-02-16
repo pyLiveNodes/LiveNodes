@@ -3,8 +3,8 @@ __author__ = "Fabian Winnen, Jochen Weiner"
 
 import ast
 
-import BioKIT
-import logger
+from . import BioKIT
+from . import logger
 
 
 class Config:

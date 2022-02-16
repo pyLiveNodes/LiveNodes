@@ -2,7 +2,7 @@
 Utility functions to convert numpy to BioKIT data structures and vice versa.
 """
 
-import BioKIT
+from . import BioKIT
 import numpy
 
 def array2mcfs(arr, isbegin = True, isend = True):

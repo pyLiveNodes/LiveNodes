@@ -1,7 +1,7 @@
 import numpy as np
 from .node import Node
 
-import BioKIT
+from .biokit import BioKIT
 
 class Biokit_from_fs(Node):
     def receive_data(self, fs, **kwargs):

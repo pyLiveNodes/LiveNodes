@@ -1,7 +1,7 @@
 import numpy as np
 from .node import Node
 
-import recognizer
+from .biokit import recognizer
 
 import seaborn as sns
 

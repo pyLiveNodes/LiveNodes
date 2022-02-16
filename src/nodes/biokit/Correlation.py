@@ -1,7 +1,7 @@
 # -*- coding: utf8 -*-
 
-import BioKIT
-from BioKIT import *
+from . import BioKIT
+from .BioKIT import *
 from math import *
 
 def correlateFilesWithFilter(xName, yName, whichName):

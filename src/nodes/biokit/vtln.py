@@ -1,7 +1,7 @@
 # python-lib
-import logger
+from . import logger
 
-import BioKIT
+from . import BioKIT
 
 
 class VtlnWrapper:

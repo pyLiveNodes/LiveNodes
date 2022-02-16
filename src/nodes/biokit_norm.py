@@ -1,7 +1,7 @@
 import numpy as np
 from .node import Node
 
-import BioKIT
+from .biokit import BioKIT
 
 class Biokit_norm(Node):
     def __init__(self, name="Node", has_inputs=True, has_outputs=True, dont_time=False):

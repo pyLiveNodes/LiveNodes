@@ -3,9 +3,7 @@ from typing import DefaultDict
 import numpy as np
 from .node import Node
 
-import recognizer
-import logger
-import BioKIT
+from .biokit import BioKIT, logger, recognizer
 
 
 

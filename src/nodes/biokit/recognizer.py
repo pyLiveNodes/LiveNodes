@@ -4,13 +4,13 @@ import tempfile
 from enum import Enum
 from collections import defaultdict
 
-import BioKIT
+from . import BioKIT
 
 # python-lib
-import align
-import logger
-from wkm import wkmb
-from wkm import wkmb2
+from . import align
+from . import logger
+from .wkm import wkmb
+from .wkm import wkmb2
 
 import numpy as np
 np.random.seed(1234)

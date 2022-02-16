@@ -16,7 +16,7 @@ Logging goes to stdout
 [2] 2014-05-23 16:48:12.336892 - MainThread  : 4 threads working on 8 requests
 """
 
-import BioKIT
+from . import BioKIT
 
 logger_lock = multiprocessing.Lock()
 

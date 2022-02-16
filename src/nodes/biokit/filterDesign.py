@@ -5,7 +5,7 @@
 # Currently available:
 #   * SimpleHighPassImpulseResponse - a steep highpass filter
 
-import BioKIT
+from . import BioKIT
 import math
 
 ## TODO get similiar methods for lowPass, band pass and notch filters
