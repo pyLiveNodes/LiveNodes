@@ -62,6 +62,12 @@ class Node():
         Primarily used for serialization from json files.
         """
         return { "name": self.name}
+    
+    def _set_attr(self, **kwargs):
+        for key, val in kwargs.items():
+            setattr(self, key, val)
+
+    # TODO: consider implementing the __subclass__ (?) function to verify new nodes?
 
     @staticmethod
     def info():
@@ -312,6 +318,7 @@ class Node():
         return [node]
 
     # TODO: doesn't currently work, as we are ignoring the set_inputs api and are using the add_output one, above is a todo to reconsider
+    # TODO: fix this, as we'll need it if we are to save an entire pipline / want to get away from the need of having one lone entry point node
     @classmethod
     def discover_parents(self, node):
         if len(node.input_classes) > 0:

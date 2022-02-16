@@ -1,7 +1,7 @@
 {
   "connections": [
     {
-      "in_id": "6192ba43-142b-4887-8d93-ec3c32485238",
+      "in_id": "a2c3155d-7ad3-4861-b024-c8649762454e",
       "in_index": 0,
       "out_id": "fa038e11-74db-4cd3-bdea-d7ee09d856ac",
       "out_index": 0
@@ -15,7 +15,7 @@
     {
       "in_id": "a973a390-870e-4503-845d-69b59214a57c",
       "in_index": 0,
-      "out_id": "6192ba43-142b-4887-8d93-ec3c32485238",
+      "out_id": "a2c3155d-7ad3-4861-b024-c8649762454e",
       "out_index": 0
     },
     {
@@ -39,19 +39,19 @@
         "association_to_node": "Data input [In_data]"
       },
       "position": {
-        "x": 150.0,
-        "y": 157.45999999999998
+        "x": 49.0,
+        "y": 50.0
       }
     },
     {
-      "id": "6192ba43-142b-4887-8d93-ec3c32485238",
+      "id": "a2c3155d-7ad3-4861-b024-c8649762454e",
       "model": {
         "name": "Transform_window",
         "association_to_node": "Window [Transform_window]"
       },
       "position": {
-        "x": 393.1400000000002,
-        "y": 158.86000000000007
+        "x": 435.1519999999998,
+        "y": 142.4119999999998
       }
     },
     {
@@ -61,8 +61,8 @@
         "association_to_node": "Features [Transform_feature]"
       },
       "position": {
-        "x": 646.5100000000002,
-        "y": 162.61000000000007
+        "x": 688.5100000000002,
+        "y": 149.1500000000001
       }
     },
     {
@@ -72,8 +72,8 @@
         "association_to_node": "Node [Biokit_to_fs]"
       },
       "position": {
-        "x": 1002.9699999999998,
-        "y": 160.59000000000012
+        "x": 1044.9699999999998,
+        "y": 144.1300000000001
       }
     },
     {
@@ -83,8 +83,8 @@
         "association_to_node": "Node [Biokit_norm]"
       },
       "position": {
-        "x": 1201.0199999999995,
-        "y": 162.0
+        "x": 1243.0199999999995,
+        "y": 145.53999999999996
       }
     }
   ]

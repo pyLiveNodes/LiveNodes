@@ -52,7 +52,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.central_widget.addWidget(self.widget_home)
 
         # for some fucking reason i cannot figure out how to set the css class only on the home class... so hacking this by adding and removign the class on view change...
-        self.central_widget.setProperty("cssClass", "home")
+        # self.central_widget.setProperty("cssClass", "home")
         # self.widget_home.setProperty("cssClass", "home")
 
     def return_home(self):

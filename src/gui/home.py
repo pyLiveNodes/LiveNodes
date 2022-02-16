@@ -101,7 +101,15 @@ class Selection(QWidget):
         buttons.addWidget(config)
         buttons.addWidget(start)
 
+        self.setProperty("cssClass", "home")
+
+        # self.pixmap = QLabel(self)
+        # w, h = self.pixmap.width(), self.pixmap.height()
+        # p = QPixmap('./src/gui/static/connected_human.jpg')
+        # self.pixmap.setPixmap(p.scaled(w, h))
+
         l1 = QVBoxLayout(self)
+        # l1.addWidget(self.pixmap, stretch=1)
         l1.addStretch(1) # idea from: https://zetcode.com/gui/pysidetutorial/layoutmanagement/
         l1.addWidget(selection)
         l1.addLayout(buttons)

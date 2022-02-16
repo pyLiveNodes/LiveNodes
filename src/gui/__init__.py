@@ -213,3 +213,17 @@ def auto_arrange(self, layout='planar_layout', scale=700, align='horizontal',
 
 
 qtpynodeeditor.flow_scene.FlowScene.auto_arrange = auto_arrange
+### End patch
+
+
+
+
+
+
+
+
+# #### Monkey Patch to allow attatching to click on node graphic
+# import qtpynodeeditor.node_graphics_object
+
+# prev_mouseMoveEvent_fn = qtpynodeeditor.node_graphics_object.NodeGraphicsObject.mousePressEvent
+

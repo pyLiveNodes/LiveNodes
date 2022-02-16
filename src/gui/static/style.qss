@@ -4,6 +4,11 @@
     background-position: center top;
 }
 
+MainWindow {
+    background-image: url('./src/gui/static/connected_human.jpg');
+    background-repeat: no-repeat; 
+    background-position: center top;
+}
 
 QLabel {
     background-color: white;
