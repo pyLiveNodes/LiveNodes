@@ -22,6 +22,10 @@ def activate_timing():
     global timing_active
     timing_active = True
 
+# TODO: consider adding an "init pulse", ie allow all modules to initialize and send one-time setup info
+# main use case: pre-draw complex shapes, that require one time inputs (ie draw_gmm, draw_recognition and draw_search_graph)
+# but might also be useful for other one time setups
+# -> BUT: that would then mean the axes labels etc can never be updated at runtime (due to blit), not sure if that is really worth it in the end...
 
 class Node():
     """

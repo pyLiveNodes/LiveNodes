@@ -23,6 +23,12 @@
           null,
           "Channel Names",
           "Channel Names"
+        ],
+        [
+          "Channel Annotation [Annotate_channel]",
+          null,
+          "Channel Names",
+          "Channel Names"
         ]
       ]
     },
@@ -39,6 +45,12 @@
           null,
           "Data",
           "Data"
+        ],
+        [
+          "Channel Annotation [Annotate_channel]",
+          null,
+          "Data",
+          "Data"
         ]
       ]
     },
@@ -46,6 +58,38 @@
       "class": "Draw_lines",
       "settings": {
         "name": "Raw Data",
+        "n_plots": 1,
+        "xAxisLength": 5000,
+        "ylim": [
+          -1.1,
+          1.1
+        ]
+      },
+      "childs": []
+    },
+    "Channel Annotation [Annotate_channel]": {
+      "class": "Annotate_channel",
+      "settings": {
+        "name": "Channel Annotation",
+        "channel_name": "Pushbutton",
+        "targets": [
+          1,
+          -1
+        ]
+      },
+      "childs": [
+        [
+          "Annotation [Draw_lines]",
+          null,
+          "Annotation",
+          "Data"
+        ]
+      ]
+    },
+    "Annotation [Draw_lines]": {
+      "class": "Draw_lines",
+      "settings": {
+        "name": "Annotation",
         "n_plots": 1,
         "xAxisLength": 5000,
         "ylim": [

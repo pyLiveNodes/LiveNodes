@@ -58,7 +58,7 @@ class Draw_recognition(Node):
         return {
             "class": "Draw_recognition",
             "file": "draw_recognition.py",
-            "in": ["Data", "Annotation", "Meta"],
+            "in": ["Data", "Annotation", "HMM Meta"],
             "out": [],
             "init": {}, #TODO!
             "category": "Draw"
@@ -69,7 +69,7 @@ class Draw_recognition(Node):
         return {
             "Data": self.receive_data,
             "Annotation": self.receive_annotation,
-            "Meta": self.receive_meta
+            "HMM Meta": self.receive_meta
         }
 
     def _get_setup(self):

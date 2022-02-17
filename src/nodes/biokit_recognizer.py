@@ -5,6 +5,7 @@ from .biokit import recognizer
 
 import seaborn as sns
 
+import json
 
 # TODO: figure out if needed (!) how we can train this as well...
 
@@ -30,7 +31,7 @@ class Biokit_recognizer(Node):
             "class": "Biokit_recognizer",
             "file": "biokit_recognizer.py",
             "in": ["Data", "File"],
-            "out": ["Data", "Meta"],
+            "out": ["Recognition", "HMM Meta", "Hypothesis"],
             "init": {}, #TODO!
             "category": "BioKIT"
         }
@@ -62,7 +63,9 @@ class Biokit_recognizer(Node):
 
         if self._initial:
             self._initial = False
-            self.send_data({"topology": self.topology}, data_stream="Meta") 
+            graph_json = self.reco.getSearchGraph().createGraphJson(self.reco.getDictionary(), False)
+            graph = json.loads(graph_json)
+            self.send_data({"topology": self.topology, "search_graph": graph}, data_stream="HMM Meta") 
 
         if path != None:
             res = [( \
@@ -71,8 +74,10 @@ class Biokit_recognizer(Node):
                     dc.getToken(r.mTokenId)
                 ) for r in path]
             # print(res)
-            self.send_data(res) # TODO: this should be named as it's not Data!
+            self.send_data(res, data_stream="Recognition")
 
+            # Maybe consider adding a mechanism that only calcs/gets this if someone requested it?
+            self.send_data(self.reco.handler.getCurrentHypoNodeIds(), data_stream="Hypothesis")
 
     def _get_topology(self):
         dc = self.reco.getDictionary()

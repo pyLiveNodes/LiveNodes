@@ -57,18 +57,6 @@
       },
       "childs": [
         [
-          "Raw Filter [Transform_filter]",
-          null,
-          "Data",
-          "Data"
-        ],
-        [
-          "Raw Filter [Transform_filter]",
-          null,
-          "Channel Names",
-          "Channel Names"
-        ],
-        [
           "Window [Transform_window]",
           null,
           "Data",
@@ -93,44 +81,6 @@
           "Data"
         ]
       ]
-    },
-    "Raw Filter [Transform_filter]": {
-      "class": "Transform_filter",
-      "settings": {
-        "name": "Raw Filter",
-        "names": [
-          "EMG1",
-          "Gonio2",
-          "AccLow2"
-        ]
-      },
-      "childs": [
-        [
-          "Raw Data [Draw_lines]",
-          null,
-          "Data",
-          "Data"
-        ],
-        [
-          "Raw Data [Draw_lines]",
-          null,
-          "Channel Names",
-          "Channel Names"
-        ]
-      ]
-    },
-    "Raw Data [Draw_lines]": {
-      "class": "Draw_lines",
-      "settings": {
-        "name": "Raw Data",
-        "n_plots": 3,
-        "xAxisLength": 5000,
-        "ylim": [
-          -1.1,
-          1.1
-        ]
-      },
-      "childs": []
     },
     "Window [Transform_window]": {
       "class": "Transform_window",
@@ -161,18 +111,6 @@
       },
       "childs": [
         [
-          "Feature Filter [Transform_filter]",
-          null,
-          "Data",
-          "Data"
-        ],
-        [
-          "Feature Filter [Transform_filter]",
-          null,
-          "Channel Names",
-          "Channel Names"
-        ],
-        [
           "Node [Biokit_to_fs]",
           null,
           "Data",
@@ -185,44 +123,6 @@
           "Channel Names"
         ]
       ]
-    },
-    "Feature Filter [Transform_filter]": {
-      "class": "Transform_filter",
-      "settings": {
-        "name": "Feature Filter",
-        "names": [
-          "EMG1__rms",
-          "Gonio2__calc_mean",
-          "AccLow2__calc_mean"
-        ]
-      },
-      "childs": [
-        [
-          "Features [Draw_lines]",
-          null,
-          "Data",
-          "Data"
-        ],
-        [
-          "Features [Draw_lines]",
-          null,
-          "Channel Names",
-          "Channel Names"
-        ]
-      ]
-    },
-    "Features [Draw_lines]": {
-      "class": "Draw_lines",
-      "settings": {
-        "name": "Features",
-        "n_plots": 3,
-        "xAxisLength": 50,
-        "ylim": [
-          -1.1,
-          1.1
-        ]
-      },
-      "childs": []
     },
     "Node [Biokit_to_fs]": {
       "class": "Biokit_to_fs",
@@ -320,14 +220,26 @@
         [
           "Recognition [Draw_recognition]",
           null,
-          "Data",
+          "Recognition",
           "Data"
         ],
         [
           "Recognition [Draw_recognition]",
           null,
-          "Meta",
-          "Meta"
+          "HMM Meta",
+          "HMM Meta"
+        ],
+        [
+          "Search Graph [Draw_search_graph]",
+          null,
+          "HMM Meta",
+          "HMM Meta"
+        ],
+        [
+          "Search Graph [Draw_search_graph]",
+          null,
+          "Hypothesis",
+          "Hypothesis"
         ]
       ]
     },
@@ -341,6 +253,13 @@
           50,
           5000
         ]
+      },
+      "childs": []
+    },
+    "Search Graph [Draw_search_graph]": {
+      "class": "Draw_search_graph",
+      "settings": {
+        "name": "Search Graph"
       },
       "childs": []
     },

@@ -205,8 +205,8 @@
         "association_to_node": "Playback [In_playback]"
       },
       "position": {
-        "x": 100.0,
-        "y": 468.4399999999998
+        "x": 50.0,
+        "y": 418.4399999999998
       }
     },
     {
@@ -216,8 +216,8 @@
         "association_to_node": "Raw Filter [Transform_filter]"
       },
       "position": {
-        "x": 414.48000000000036,
-        "y": 925.6599999999999
+        "x": 364.48000000000036,
+        "y": 875.6599999999999
       }
     },
     {
@@ -227,8 +227,8 @@
         "association_to_node": "Raw Data [Draw_lines]"
       },
       "position": {
-        "x": 792.4600000000003,
-        "y": 926.3999999999997
+        "x": 742.4600000000003,
+        "y": 876.3999999999997
       }
     },
     {
@@ -238,8 +238,8 @@
         "association_to_node": "Window [Transform_window]"
       },
       "position": {
-        "x": 446.2000000000003,
-        "y": 285.55999999999995
+        "x": 396.2000000000003,
+        "y": 235.55999999999995
       }
     },
     {
@@ -249,8 +249,8 @@
         "association_to_node": "Features [Transform_feature]"
       },
       "position": {
-        "x": 690.2200000000003,
-        "y": 286.3399999999999
+        "x": 640.2200000000003,
+        "y": 236.33999999999992
       }
     },
     {
@@ -260,8 +260,8 @@
         "association_to_node": "Feature Filter [Transform_filter]"
       },
       "position": {
-        "x": 1123.4999999999998,
-        "y": 102.18000000000029
+        "x": 1073.4999999999998,
+        "y": 52.18000000000029
       }
     },
     {
@@ -271,8 +271,8 @@
         "association_to_node": "Features [Draw_lines]"
       },
       "position": {
-        "x": 1557.6400000000003,
-        "y": 100.0
+        "x": 1507.6400000000003,
+        "y": 50.0
       }
     },
     {
@@ -282,8 +282,8 @@
         "association_to_node": "Node [Biokit_to_fs]"
       },
       "position": {
-        "x": 1109.72,
-        "y": 287.81999999999977
+        "x": 1059.72,
+        "y": 237.81999999999977
       }
     },
     {
@@ -293,8 +293,8 @@
         "association_to_node": "Node [Biokit_norm]"
       },
       "position": {
-        "x": 1289.7199999999998,
-        "y": 287.12000000000006
+        "x": 1239.7199999999998,
+        "y": 237.12000000000006
       }
     },
     {
@@ -304,8 +304,8 @@
         "association_to_node": "Node [Biokit_from_fs]"
       },
       "position": {
-        "x": 1496.38,
-        "y": 286.4200000000001
+        "x": 1446.38,
+        "y": 236.42000000000007
       }
     },
     {
@@ -315,8 +315,8 @@
         "association_to_node": "Normed Feature Filter [Transform_filter]"
       },
       "position": {
-        "x": 1757.0599999999997,
-        "y": 286.4600000000001
+        "x": 1707.0599999999997,
+        "y": 236.4600000000001
       }
     },
     {
@@ -326,8 +326,8 @@
         "association_to_node": "Normed Features [Draw_lines]"
       },
       "position": {
-        "x": 2155.9399999999996,
-        "y": 285.72000000000014
+        "x": 2105.9399999999996,
+        "y": 235.72000000000014
       }
     },
     {
@@ -337,8 +337,8 @@
         "association_to_node": "Recognizer [Biokit_recognizer]"
       },
       "position": {
-        "x": 1484.08,
-        "y": 513.24
+        "x": 1434.08,
+        "y": 463.24
       }
     },
     {
@@ -348,8 +348,8 @@
         "association_to_node": "Recognition [Draw_recognition]"
       },
       "position": {
-        "x": 1759.8200000000002,
-        "y": 555.74
+        "x": 1709.8200000000002,
+        "y": 505.74
       }
     },
     {
@@ -359,8 +359,8 @@
         "association_to_node": "File [Transform_window]"
       },
       "position": {
-        "x": 429.26000000000005,
-        "y": 508.8399999999999
+        "x": 402.26,
+        "y": 457.8399999999999
       }
     },
     {
@@ -370,8 +370,8 @@
         "association_to_node": "File [Transform_majority_select]"
       },
       "position": {
-        "x": 680.52,
-        "y": 509.5799999999999
+        "x": 630.52,
+        "y": 459.5799999999999
       }
     },
     {
@@ -381,8 +381,8 @@
         "association_to_node": "Memory [Memory]"
       },
       "position": {
-        "x": 775.56,
-        "y": 716.3199999999999
+        "x": 725.56,
+        "y": 666.3199999999999
       }
     }
   ]

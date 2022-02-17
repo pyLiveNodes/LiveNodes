@@ -1,4 +1,5 @@
-from select import select
+from src.nodes.annotate_channel import Annotate_channel
+from src.nodes.draw_search_graph import Draw_search_graph
 from src.nodes.transform_scale import Transform_scale
 from src.nodes.log_data import Log_data
 from src.nodes.in_biosignalsplux import In_biosignalsplux
@@ -24,11 +25,11 @@ from src.nodes.node import Node
 
 
 
-def add_processing(pl_in, x_raw, x_processed, vis=True):
+def add_processing(pl_in, x_raw, x_processed, vis=(True, True, True)):
     # This output will not be saved, as it cannot be reconstructed
     pl_in.add_output(lambda data: print(data))
 
-    if vis:
+    if vis[0]:
         filter1 =Transform_filter(name="Raw Filter", names=channel_names_raw)
         pl_in.add_output(filter1)
         pl_in.add_output(filter1, data_stream="Channel Names", recv_data_stream="Channel Names")
@@ -44,7 +45,7 @@ def add_processing(pl_in, x_raw, x_processed, vis=True):
     window.add_output(fts)
     pl_in.add_output(fts, data_stream="Channel Names", recv_data_stream="Channel Names")
 
-    if vis:
+    if vis[1]:
         filter2 =Transform_filter(name="Feature Filter", names=channel_names_fts)
         fts.add_output(filter2)
         fts.add_output(filter2, data_stream="Channel Names", recv_data_stream="Channel Names")
@@ -59,7 +60,7 @@ def add_processing(pl_in, x_raw, x_processed, vis=True):
     norm = Biokit_norm()
     to_fs.add_output(norm)
 
-    if vis:
+    if vis[2]:
         from_fs = Biokit_from_fs()
         norm.add_output(from_fs)
 
@@ -86,12 +87,17 @@ def add_recognition(pl, norm, x_raw, x_processed, vis=True):
 
     if vis:
         draw_recognition_path = Draw_recognition(xAxisLength=[x_processed, x_processed, x_processed, x_raw])
-        recog.add_output(draw_recognition_path)
-        recog.add_output(draw_recognition_path, data_stream='Meta', recv_data_stream='Meta')
+        recog.add_output(draw_recognition_path, data_stream="Recognition")
+        recog.add_output(draw_recognition_path, data_stream='HMM Meta', recv_data_stream='HMM Meta')
 
         memory = Memory(x_raw)
         pl.add_output(memory, data_stream='Annotation')
         memory.add_output(draw_recognition_path, recv_data_stream='Annotation')
+
+    if vis:
+        draw_search_graph = Draw_search_graph()
+        recog.add_output(draw_search_graph, data_stream="HMM Meta", recv_data_stream="HMM Meta")
+        recog.add_output(draw_search_graph, data_stream="Hypothesis", recv_data_stream="Hypothesis")
 
     return recog
 
@@ -213,7 +219,11 @@ if __name__ == "__main__":
     draw_raw = Draw_lines(name='Raw Data', n_plots=1, xAxisLength=x_raw)
     scaler.add_output(draw_raw)
     pl.add_output(draw_raw, data_stream="Channel Names", recv_data_stream="Channel Names")
-
+    annotate_channel = Annotate_channel("Pushbutton", [1, -1])
+    pl.add_output(annotate_channel, data_stream="Channel Names", recv_data_stream="Channel Names")
+    scaler.add_output(annotate_channel)
+    draw_raw2 = Draw_lines(name='Annotation', n_plots=1, xAxisLength=x_raw)
+    annotate_channel.add_output(draw_raw2, data_stream="Annotation")
     save(pl, "pipelines/process_live.json")
 
 
@@ -223,17 +233,20 @@ if __name__ == "__main__":
     pl = In_playback(files="./data/KneeBandageCSL2018/part00/01.h5", meta=meta, batch=20)
     # pl = Playback(files="./data/KneeBandageCSL2018/**/*.h5", meta=meta, batch=20)
 
-    norm = add_processing(pl, x_raw=x_raw, x_processed=x_processed, vis=True)
+    norm = add_processing(pl, x_raw=x_raw, x_processed=x_processed, vis=(True, True, True))
     save(pl, "pipelines/preprocess.json")
 
 
     print('=== Build Recognition Pipeline ===')
+    pl = In_playback(files="./data/KneeBandageCSL2018/part00/01.h5", meta=meta, batch=20)
+    norm = add_processing(pl, x_raw=x_raw, x_processed=x_processed, vis=(False, False, True))
     recog = add_recognition(pl, norm, x_raw=x_raw, x_processed=x_processed, vis=True)
     save(pl, "pipelines/recognize.json")
 
+
     print('=== Build Recognition Pipeline (no vis) ===')
     pl = In_data(files="./data/KneeBandageCSL2018/part00/*.h5", meta=meta, batch=2000)
-    norm = add_processing(pl, x_raw=x_raw, x_processed=x_processed, vis=False)
+    norm = add_processing(pl, x_raw=x_raw, x_processed=x_processed, vis=(False, False, False))
     recog = add_recognition(pl, norm, x_raw=x_raw, x_processed=x_processed, vis=False)
     save(pl, "pipelines/recognize_no_vis.json")
 
@@ -241,7 +254,7 @@ if __name__ == "__main__":
     print('=== Build Train Pipeline ===')
 
     pl = In_data(files="./data/KneeBandageCSL2018/part*/*.h5", meta=meta, batch=2000)
-    norm = add_processing(pl, x_raw=x_raw, x_processed=x_processed, vis=False)
+    norm = add_processing(pl, x_raw=x_raw, x_processed=x_processed, vis=(False, False, False))
     save(pl, "pipelines/preprocess_no_vis.json")
 
     train = add_train(pl, norm)
