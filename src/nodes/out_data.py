@@ -1,4 +1,5 @@
 import time
+import datetime
 import numpy as np
 from multiprocessing import Process
 import threading
@@ -7,6 +8,10 @@ import glob, random
 import h5py
 import pandas as pd
 import random
+import json
+import os
+import multiprocessing as mp
+
 
 class Out_data(Node):
     """
@@ -18,87 +23,75 @@ class Out_data(Node):
     # - batch_size (int, default=5): number of frames that are sent at the same time -> not implemented yet
     """
     # TODO: consider using a file for meta data instead of dictionary...
-    def __init__(self, file, name="Data input", dont_time=False):
+    def __init__(self, folder, name="Data input", dont_time=False):
         super().__init__(name, has_outputs=False, dont_time=dont_time)
         self.feeder_process = None
 
         # TODO: change this to folder instead? might make in and out easier compatible as we can have more assumptions about the data formats etc
-        self.file = file
+        self.folder = folder
+
+        self.outputFilename = f"{name}/{datetime.datetime.fromtimestamp(time.time())}"
 
         self.outputFile = h5py.File(self.outputFilename + '.h5', 'w')
-        self.outputDataset = self.outputFile.create_dataset ("data", (1, len(self.recorded_channels)), maxshape = (None, len(self.recorded_channels)), dtype = "float32")
+        self.outputDataset = None
+        self._wait_queue = mp.Queue()
+
        
     @staticmethod
     def info():
         return {
             "class": "out_data",
             "file": "out_data.py",
-            "in": ["Data"],
+            "in": ["Data", "Channel Names", "Meta"],
             "out": [],
             "init": {}, #TODO!
-            "category": "Data Out"
+            "category": "Save"
+        }
+    
+    @property
+    def in_map(self):
+        return {
+            "Data": self.receive_data,
+            "Channel Names": self.receive_channels
         }
 
     
     def _get_setup(self):
         return {\
-            "file": self.file
+            "folder": self.folder
         }
 
-    ### TODO: implement and test this!
+    def receive_data(self, data_frame, **kwargs):
+        if self.outputDataset is None:
+            self._wait_queue.put(data_frame)
 
-    def sender_process(self):
-        """
-        Streams the data and calls frame callbacks for each frame.
-        """
-        fs = glob.glob(self.file)
+            # Assume that we don't have any changes in the channels over time
+            if self.channels is not None:
+                self.outputDataset = self.outputFile.create_dataset("data", (1, len(self.channels)), maxshape = (None, len(self.channels)), dtype = "float32")
+        else:
+            self.outputDataset.extend(data_frame)
 
-        if self.shuffle:
-            random.shuffle(fs)
-
-        target_to_id = {key: key for i, key in enumerate(self.targets)}
-
-    #     self.send_data(self.meta, data_stream="Meta")
-    #     self.send_data(self.channels, data_stream="Channel Names")
-
-    #     for f in fs:
-    #         print(f)
-
-    #         # Prepare framewise annotation to be send
-    #         ref = pd.read_csv(f.replace('.h5', '.csv'), names=["act", "start", "end"])
-    #         targs = []
-    #         j = 0
-    #         for _, row in ref.iterrows():
-    #             targs += [target_to_id["stand"]] * (row['start'] - j) # use stand as filler for unknown. #Hack! TODO: remove
-    #             targs += [target_to_id[row['act']]] * (row['end'] - row['start'] - j)
-    #             j = row['end']
-
-    #         # Read and send data from file
-    #         with h5py.File(f, "r") as dataFile:
-    #             dataSet = dataFile.get("data")
-    #             data = dataSet[:] # load into mem
-                
-    #             for i in range(0, len(data), self.batch):
-    #                 self.send_data(np.array(data[i:i+self.batch]))
-    #                 self.send_data(targs[i:i+self.batch], data_stream='Annotation')
+    def _read_meta(self):
+        if not os.path.exists(self.outputFilename):
+            return {}
+        with open(self.outputFilename, 'r') as f:
+            return json.load(f) 
     
-    # def receive_data(self, data_frame, **kwargs):
-    #     return super().receive_data(data_frame, data_id, **kwargs)()
+    def _write_meta(self, setting):
+        with open(self.outputFilename, 'w') as f:
+            json.dump(setting, f, indent=2) 
 
-    # def start_processing(self, recurse=True):
-    #     """
-    #     Starts the streaming process.
-    #     """
-    #     if self.feeder_process is None:
-    #         self.feeder_process = threading.Thread(target=self.sender_process)
-    #         self.feeder_process.start()
-    #     super().start_processing(recurse)
-        
-    # def stop_processing(self, recurse=True):
-    #     """
-    #     Stops the streaming process.
-    #     """
-    #     super().stop_processing(recurse)
-    #     if self.feeder_process is not None:
-    #         self.stop()
-    #     self.feeder_process = None
+    def receive_channels(self, channels, **kwargs):
+        self.channels = channels
+
+        m_dict = self._read_meta()
+        m_dict['channels'] = channels
+        self._write_meta(m_dict)
+
+    def receive_meta(self, meta, **kwargs):
+        m_dict = self._read_meta()
+        for key, val in meta.items():
+            # We'll assume that the channels are always hooked up
+            if not (key == "channels"):
+                m_dict[key] = val
+        self._write_meta(m_dict)
