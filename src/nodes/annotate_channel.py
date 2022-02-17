@@ -45,5 +45,5 @@ class Annotate_channel(Node):
         if self.idx is not None:
             d = np.array(data_frame)
             self.send_data(d[:,~self.idx])
-            self.send_data(np.where(d[:,self.idx] >= 0, self.targets[1], self.targets[0]))
+            self.send_data(np.where(d[:,self.idx] >= 0, self.targets[1], self.targets[0]), data_stream="Annotation")
         
