@@ -3,6 +3,7 @@ from src.nodes.draw_search_graph import Draw_search_graph
 from src.nodes.transform_scale import Transform_scale
 from src.nodes.log_data import Log_data
 from src.nodes.in_biosignalsplux import In_biosignalsplux
+from src.nodes.in_riot import In_riot
 from src.nodes.biokit_norm import Biokit_norm
 from src.nodes.biokit_to_fs import Biokit_to_fs
 from src.nodes.biokit_from_fs import Biokit_from_fs
@@ -17,6 +18,7 @@ from src.nodes.transform_majority_select import Transform_majority_select
 from src.nodes.memory import Memory
 from src.nodes.in_playback import In_playback
 from src.nodes.in_data import In_data
+from src.nodes.out_data import Out_data
 
 from src.nodes.draw_lines import Draw_lines
 from src.nodes.draw_recognition import Draw_recognition
@@ -163,6 +165,22 @@ def add_train(pl, norm):
     
     return train
 
+def build_riot_record():
+    pl = In_riot(id=1)
+
+    filter1 =Transform_filter(name="Raw Filter", names=["ACC_X", "ACC_Y", "ACC_Z"])
+    pl.add_output(filter1)
+    pl.add_output(filter1, data_stream="Channel Names", recv_data_stream="Channel Names")
+
+    draw_raw = Draw_lines(name='Raw Data', n_plots=3, xAxisLength=x_raw)
+    filter1.add_output(draw_raw)
+    filter1.add_output(draw_raw, data_stream="Channel Names", recv_data_stream="Channel Names")
+
+    out_data = Out_data(folder="./data/RIoT/")
+    pl.add_output(out_data)
+    pl.add_output(out_data, data_stream="Channel Names", recv_data_stream="Channel Names")
+    return pl
+
 # From: https://stackoverflow.com/questions/2556108/rreplace-how-to-replace-the-last-occurrence-of-an-expression-in-a-string
 def rreplace(s, old, new, occurrence):
   li = s.rsplit(old, occurrence)
@@ -225,6 +243,29 @@ if __name__ == "__main__":
     draw_raw2 = Draw_lines(name='Annotation', n_plots=1, xAxisLength=x_raw)
     annotate_channel.add_output(draw_raw2, data_stream="Annotation")
     save(pl, "pipelines/process_live.json")
+
+
+    print('=== Build RIoT Record Pipeline ===')
+    pl = build_riot_record()
+    save(pl, "pipelines/riot_record.json")
+
+
+    print('=== Build RIoT Playback Pipeline ===')
+    riot_meta = {
+        "sample_rate": 10,
+        "channels": In_riot.channels,
+        "targets": []
+    }
+
+    pl = In_playback(files="./data/RIoT/*.h5", meta=riot_meta, batch=20)
+    filter1 =Transform_filter(name="Raw Filter", names=["ACC_X", "ACC_Y", "ACC_Z"])
+    pl.add_output(filter1)
+    pl.add_output(filter1, data_stream="Channel Names", recv_data_stream="Channel Names")
+
+    draw_raw = Draw_lines(name='Raw Data', n_plots=3, xAxisLength=x_raw)
+    filter1.add_output(draw_raw)
+    filter1.add_output(draw_raw, data_stream="Channel Names", recv_data_stream="Channel Names")
+    save(pl, "pipelines/riot_playback.json")
 
 
     print('=== Build Processing Pipeline ===')

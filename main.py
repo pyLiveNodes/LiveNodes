@@ -25,7 +25,8 @@ TIME = False
 
 print('=== Load Pipeline ====')
 if TIME: activate_timing()
-pipeline = Node.load('pipelines/recognize.json')
+pipeline = Node.load('pipelines/riot_record.json')
+# pipeline = Node.load('pipelines/riot_playback.json')
 
 
 print('=== Start main loops ====')
@@ -82,13 +83,15 @@ def draw_update (i, **kwargs):
 
 
 # Threading example
-# worker = threading.Thread(target = pipeline.start_processing)
-# worker.daemon = True
-# worker.start()
-
-worker = Process(target = pipeline.start_processing)
+worker = threading.Thread(target = pipeline.start_processing)
 worker.daemon = True
 worker.start()
+
+# TODO: when using processes the matplotlib on close event is not working, as it's called from the wrong process... 
+# Usually this is not a problem, but h5py cannot close files if not for a stop call.
+# worker = Process(target = pipeline.start_processing)
+# worker.daemon = True
+# worker.start()
 
 # initial_draw_and_setup()
 timer = time.time()

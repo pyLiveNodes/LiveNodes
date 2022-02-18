@@ -23,16 +23,15 @@ class Out_data(Node):
     # - batch_size (int, default=5): number of frames that are sent at the same time -> not implemented yet
     """
     # TODO: consider using a file for meta data instead of dictionary...
-    def __init__(self, folder, name="Data input", dont_time=False):
+    def __init__(self, folder, name="Save", dont_time=False):
         super().__init__(name, has_outputs=False, dont_time=dont_time)
-        self.feeder_process = None
 
-        # TODO: change this to folder instead? might make in and out easier compatible as we can have more assumptions about the data formats etc
         self.folder = folder
 
-        self.outputFilename = f"{name}/{datetime.datetime.fromtimestamp(time.time())}"
+        self.outputFilename = f"{self.folder}{datetime.datetime.fromtimestamp(time.time())}"
+        print("Saving to:", self.outputFilename)
 
-        self.outputFile = h5py.File(self.outputFilename + '.h5', 'w')
+        self.outputFile = None
         self.outputDataset = None
         self._wait_queue = mp.Queue()
 
@@ -69,16 +68,36 @@ class Out_data(Node):
             if self.channels is not None:
                 self.outputDataset = self.outputFile.create_dataset("data", (1, len(self.channels)), maxshape = (None, len(self.channels)), dtype = "float32")
         else:
-            self.outputDataset.extend(data_frame)
+            # feels weird, but i haven't found an extend or append api
+            self.outputDataset.resize(self.outputDataset.shape[0] + len(data_frame), axis = 0)
+            self.outputDataset[-len(data_frame):] = data_frame
+
+    def start_processing(self, recurse=True):
+        """
+        Starts the streaming process.
+        """
+        if self.outputFile is None:
+            self.outputFile = h5py.File(self.outputFilename + '.h5', 'w')
+        super().start_processing(recurse)
+        
+    def stop_processing(self, recurse=True):
+        """
+        Stops the streaming process.
+        """
+        super().stop_processing(recurse)
+        if self.outputFile is not None:
+            self.outputFile.close()
+        self.outputFile = None
+
 
     def _read_meta(self):
-        if not os.path.exists(self.outputFilename):
+        if not os.path.exists(f"{self.outputFilename}.json"):
             return {}
-        with open(self.outputFilename, 'r') as f:
+        with open(f"{self.outputFilename}.json", 'r') as f:
             return json.load(f) 
     
     def _write_meta(self, setting):
-        with open(self.outputFilename, 'w') as f:
+        with open(f"{self.outputFilename}.json", 'w') as f:
             json.dump(setting, f, indent=2) 
 
     def receive_channels(self, channels, **kwargs):

@@ -1,0 +1,92 @@
+{
+  "start": "Playback [In_playback]",
+  "nodes": {
+    "Playback [In_playback]": {
+      "class": "In_playback",
+      "settings": {
+        "batch": 20,
+        "files": "./data/RIoT/*.h5",
+        "meta": {
+          "sample_rate": 100,
+          "channels": [
+            "ACC_X",
+            "ACC_Y",
+            "ACC_Z",
+            "GYRO_X",
+            "GYRO_Y",
+            "GYRO_Z",
+            "MAG_X",
+            "MAG_Y",
+            "MAG_Z",
+            "TEMP",
+            "IO",
+            "A1",
+            "A2",
+            "C",
+            "Q1",
+            "Q2",
+            "Q3",
+            "Q4",
+            "PITCH",
+            "YAW",
+            "ROLL",
+            "HEAD"
+          ],
+          "targets": []
+        }
+      },
+      "childs": [
+        [
+          "Raw Filter [Transform_filter]",
+          null,
+          "Data",
+          "Data"
+        ],
+        [
+          "Raw Filter [Transform_filter]",
+          null,
+          "Channel Names",
+          "Channel Names"
+        ]
+      ]
+    },
+    "Raw Filter [Transform_filter]": {
+      "class": "Transform_filter",
+      "settings": {
+        "name": "Raw Filter",
+        "names": [
+          "ACC_X",
+          "ACC_Y",
+          "ACC_Z"
+        ]
+      },
+      "childs": [
+        [
+          "Raw Data [Draw_lines]",
+          null,
+          "Data",
+          "Data"
+        ],
+        [
+          "Raw Data [Draw_lines]",
+          null,
+          "Channel Names",
+          "Channel Names"
+        ]
+      ]
+    },
+    "Raw Data [Draw_lines]": {
+      "class": "Draw_lines",
+      "settings": {
+        "name": "Raw Data",
+        "n_plots": 3,
+        "xAxisLength": 5000,
+        "ylim": [
+          -1.1,
+          1.1
+        ]
+      },
+      "childs": []
+    }
+  }
+}
