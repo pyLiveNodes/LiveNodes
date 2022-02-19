@@ -50,18 +50,15 @@ class In_riot(Node):
     def in_map(self):
         return {}
 
-    def stop(self):
-        self._stop_event.set()
-        # self.feeder_process.terminate()
-
     async def collect(self):
         factors = np.array([1/x for x in [8, 8, 8, 2, 2, 2, 2, 2, 2, 1, 1, 1, 4095, 4095, 1, 1, 1,  1, 180, 180, 180, 180]])
 
         def onRawFrame (addr, *data):
             # nonlocal factors
-            # self.send_data([np.array(list(data))*factors])
             # print(addr, data)
-            self.send_data([data])
+            # print(np.array(data).shape)
+            self.send_data([np.array(list(data))*factors])
+            # self.send_data([data])
 
         disp = Dispatcher()
         disp.map(f"/{self.id}/raw", onRawFrame)
@@ -90,6 +87,7 @@ class In_riot(Node):
         if self.feeder_process is None:
             self.feeder_process = threading.Thread(target=self.sender_process)
             # self.feeder_process = Process(target=self.sender_process)
+            # self.feeder_process.daemon = True
             self.feeder_process.start()
         super().start_processing(recurse)
         
@@ -97,7 +95,11 @@ class In_riot(Node):
         """
         Stops the streaming process.
         """
-        super().stop_processing(recurse)
         if self.feeder_process is not None:
-            self.stop()
+            # set stop and wait for it to go through
+            self._stop_event.set()
+            self.feeder_process.join()
+            # self.feeder_process.terminate()
         self.feeder_process = None
+        # our own close is called first, as we don't want to send data to a closed output
+        super().stop_processing(recurse)

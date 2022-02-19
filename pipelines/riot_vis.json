@@ -20,18 +20,6 @@
           null,
           "Channel Names",
           "Channel Names"
-        ],
-        [
-          "Save [Out_data]",
-          null,
-          "Data",
-          "Data"
-        ],
-        [
-          "Save [Out_data]",
-          null,
-          "Channel Names",
-          "Channel Names"
         ]
       ]
     },
@@ -79,13 +67,6 @@
           -1.1,
           1.1
         ]
-      },
-      "childs": []
-    },
-    "Save [Out_data]": {
-      "class": "Out_data",
-      "settings": {
-        "folder": "./data/Debug/"
       },
       "childs": []
     }

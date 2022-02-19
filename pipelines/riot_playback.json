@@ -4,7 +4,7 @@
     "Playback [In_playback]": {
       "class": "In_playback",
       "settings": {
-        "batch": 20,
+        "batch": 1,
         "files": "./data/RIoT/*.h5",
         "meta": {
           "sample_rate": 100,
@@ -55,9 +55,17 @@
       "settings": {
         "name": "Raw Filter",
         "names": [
-          "ACC_X",
-          "ACC_Y",
-          "ACC_Z"
+          "A1",
+          "A2",
+          "C",
+          "Q1",
+          "Q2",
+          "Q3",
+          "Q4",
+          "PITCH",
+          "YAW",
+          "ROLL",
+          "HEAD"
         ]
       },
       "childs": [
@@ -79,8 +87,9 @@
       "class": "Draw_lines",
       "settings": {
         "name": "Raw Data",
-        "n_plots": 3,
-        "xAxisLength": 5000,
+        "n_plots": 11,
+        "xAxisLength": 1000,
+        "sample_rate": 100,
         "ylim": [
           -1.1,
           1.1

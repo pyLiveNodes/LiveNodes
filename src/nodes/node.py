@@ -131,7 +131,7 @@ class Node():
         
         timing_data = collections.OrderedDict([])
         timing_data[self.name] = self.timing_receiver.get_data()
-        for output_class in self.get_outputs():
+        for output_class in self.get_output_instances():
             child_timing_info = output_class.get_timing_info()
             for name, sequence in child_timing_info.items():
                 timing_data[self.name + "|" + name] = sequence
@@ -270,7 +270,7 @@ class Node():
         _first_ start processing locally and _then_ recurse.
         """
         if recurse:
-            for output_class in self.get_outputs():
+            for output_class in self.get_output_instances():
                 output_class.start_processing()
             
     def stop_processing(self, recurse=True):
@@ -283,7 +283,7 @@ class Node():
         _first_ recurse and _then_ stop processing locally.
         """
         if recurse:
-            for output_class in self.get_outputs():
+            for output_class in self.get_output_instances():
                 output_class.stop_processing()
 
 

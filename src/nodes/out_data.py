@@ -14,6 +14,10 @@ import multiprocessing as mp
 
 
 class Out_data(Node):
+    # # TODO: FIX THIS! This is a problem as soon as we have mor than one output!
+    # outputDataset = None
+    # outputFile = None
+
     """
     Playsback previously recorded data.
 
@@ -28,6 +32,11 @@ class Out_data(Node):
 
         self.folder = folder
 
+        if not os.path.exists(self.folder):
+            os.makedirs(self.folder)
+
+        # NOTE: we can create the filename here (although debatable)
+        # but we cannot create the file here, as no processing is being done or even planned yet (this might just be create_pipline)
         self.outputFilename = f"{self.folder}{datetime.datetime.fromtimestamp(time.time())}"
         print("Saving to:", self.outputFilename)
 
@@ -65,7 +74,7 @@ class Out_data(Node):
             self._wait_queue.put(data_frame)
 
             # Assume that we don't have any changes in the channels over time
-            if self.channels is not None:
+            if self.channels is not None and self.outputFile is not None:
                 self.outputDataset = self.outputFile.create_dataset("data", (1, len(self.channels)), maxshape = (None, len(self.channels)), dtype = "float32")
         else:
             # feels weird, but i haven't found an extend or append api
@@ -88,6 +97,7 @@ class Out_data(Node):
         if self.outputFile is not None:
             self.outputFile.close()
         self.outputFile = None
+        self.outputDataset = None
 
 
     def _read_meta(self):

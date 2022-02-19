@@ -163,15 +163,26 @@ import math
 from pythonosc.osc_server import AsyncIOOSCUDPServer, ThreadingOSCUDPServer
 from pythonosc.dispatcher import Dispatcher
 import asyncio
+from collections import defaultdict
+import time
 
 labels = ["ACC_X", "ACC_Y", "ACC_Z", "GYRO_X", "GYRO_Y", "GYRO_Z", "MAG_X", "MAG_Y", "MAG_Z","TEMP", "IO", "A1", "A2", "C", "Q1", "Q2", "Q3", "Q4", "PITCH", "YAW", "ROLL", "HEAD"]
 
 ## Data arrives to this function as a sinlge tuple argument
 ## This contains 22 floats values
+ctrs = defaultdict(int)
+t = time.time()
 def riot_handler(addr, *data):
-    print(addr)
-    print(data)
-    print('======')
+    global ctrs, t
+    ctrs[addr] += 1
+    if ctrs[addr] % 300 == 0:
+        t2 = time.time() - t
+        fps = ctrs[addr] / t2
+        print(f"{addr}; Received {ctrs[addr]} frames in {t2:.2f} seconds. This equals {fps:.2f}Hz.")
+
+    # print(addr, ctrs[addr])
+    # print(data)
+    # print('======')
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

@@ -6,6 +6,7 @@ from .node import Node
 import glob, random
 import h5py
 import pandas as pd
+import os
 
 from .in_data import read_data
 
@@ -83,21 +84,23 @@ class In_playback(Node):
                 data = dataSet[start:end] # load into mem
 
                 # Prepare framewise annotation to be send
-                ref = pd.read_csv(f.replace('.h5', '.csv'), names=["act", "start", "end"])
                 targs = []
-                j = 0
-                for _, row in ref.iterrows():
-                    targs += [target_to_id["stand"]] * (row['start'] - j) # use stand as filler for unknown. #Hack! TODO: remove
-                    targs += [target_to_id[row['act']]] * (row['end'] - row['start'])
-                    j = row['end']
-                targs += [target_to_id["stand"]] * (len(data) - j)
+                if os.path.exists(f.replace('.h5', '.csv')):
+                    ref = pd.read_csv(f.replace('.h5', '.csv'), names=["act", "start", "end"])
+                    j = 0
+                    for _, row in ref.iterrows():
+                        targs += [target_to_id["stand"]] * (row['start'] - j) # use stand as filler for unknown. #Hack! TODO: remove
+                        targs += [target_to_id[row['act']]] * (row['end'] - row['start'])
+                        j = row['end']
+                    targs += [target_to_id["stand"]] * (len(data) - j)
 
                 # TODO: for some reason i have no fucking clue about using read_data results in the annotation plot in draw recog to be wrong, although the targs are exactly the same (yes, if checked read_data()[1] == targs)...
 
                 for i in range(start, end, self.batch):
                     d_len = len(data[i:i+self.batch]) # usefull if i+self.batch > len(data)
                     self.send_data(np.array(data[i:i+self.batch]))
-                    self.send_data(targs[i:i+self.batch], data_stream='Annotation')
+                    if len(targs[i:i+self.batch]) > 0:
+                        self.send_data(targs[i:i+self.batch], data_stream='Annotation')
                     self.send_data([ctr] * d_len, data_stream="File")
                     time.sleep(sleep_time)
 

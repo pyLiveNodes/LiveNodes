@@ -113,6 +113,7 @@
         "name": "Raw Data",
         "n_plots": 3,
         "xAxisLength": 5000,
+        "sample_rate": 1000,
         "ylim": [
           -1.1,
           1.1
@@ -205,6 +206,7 @@
         "name": "Features",
         "n_plots": 3,
         "xAxisLength": 50,
+        "sample_rate": 1000,
         "ylim": [
           -1.1,
           1.1
@@ -285,6 +287,7 @@
         "name": "Normed Features",
         "n_plots": 3,
         "xAxisLength": 50,
+        "sample_rate": 1000,
         "ylim": [
           -5,
           5

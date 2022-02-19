@@ -1,0 +1,23 @@
+RIoT Wifi Notes.
+
+
+# Links:
+
+## Device
+- datasheet: https://bitalino.com/storage/uploads/media/datasheet-r-iot---v12.pdf
+- config: https://bitalino.com/storage/uploads/media/r-iot-user-manual-v13.pdf
+
+## Python server/backend
+- pyhton-osc: https://python-osc.readthedocs.io/en/latest/#
+
+
+## Config notes (see image)
+
+The device (most likely pi or computer), that wants to receive signals hast to have the ip set in the riot configuration.
+Currently 192.168.1.101
+
+The sample rate setting is weird.
+A high value, eg 150 gives a low sample rate, ie smth like 7hz
+while a low value eg 5 or 2, both give exactly 100Hz
+
+I guess don't change anymore...

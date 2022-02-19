@@ -26,10 +26,11 @@ import time
 
 
 class Draw_lines(Node):
-    # TODO: consider removing the filter here and rather putting it into a filter node
-    def __init__(self, n_plots=4, xAxisLength=5000, ylim=(-1.1, 1.1), name = "Draw Output Lines", dont_time = False):
+    # TODO: move the sample rate into a data_stream?
+    def __init__(self, n_plots=4, xAxisLength=5000, sample_rate=1000, ylim=(-1.1, 1.1), name = "Draw Output Lines", dont_time = False):
         super().__init__(name=name, has_outputs=False, dont_time=dont_time)
         self.xAxisLength = xAxisLength
+        self.sample_rate = sample_rate
         self.ylim = ylim
         self.n_plots = n_plots
 
@@ -65,6 +66,7 @@ class Draw_lines(Node):
             "name": self.name,
             "n_plots": self.n_plots, # TODO: consider if we could make this max_plots so that the data stream might also contain less than the specified amount of plots
             "xAxisLength": self.xAxisLength,
+            "sample_rate": self.sample_rate,
             "ylim": self.ylim
            }
 
@@ -82,10 +84,10 @@ class Draw_lines(Node):
 
             ticks = np.linspace(0, self.xAxisLength, 11).astype(np.int)
             ax.set_xticks(ticks)
-            ax.set_xticklabels(ticks - self.xAxisLength)
+            ax.set_xticklabels((ticks - self.xAxisLength) / self.sample_rate)
             # ax.xaxis.grid(False)
 
-        axes[-1].set_xlabel("Time (ms)")
+        axes[-1].set_xlabel("Time [sec]")
         xData = range(0, self.xAxisLength)  
         self.lines = [axes[i].plot(xData, self.yData[i], lw=2, animated=True)[0] for i in range(self.n_plots)]
 

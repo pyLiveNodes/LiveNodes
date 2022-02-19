@@ -10,6 +10,7 @@ import matplotlib
 import time
 import threading
 from multiprocessing import Process
+import multiprocessing as mp
 
 import math
 
@@ -25,6 +26,8 @@ TIME = False
 
 print('=== Load Pipeline ====')
 if TIME: activate_timing()
+# pipeline = Node.load('pipelines/preprocess.json')
+# pipeline = Node.load('pipelines/riot_vis.json')
 pipeline = Node.load('pipelines/riot_record.json')
 # pipeline = Node.load('pipelines/riot_playback.json')
 
@@ -35,7 +38,7 @@ font={'size': 6}
 
 # TODO: let nodes explizitly declare this! 
 # TODO: while we're at it: let nodes declare available/required input and output streams
-# the following works because the str representation of each node in a pipline must be unique
+# the following works because the str representation of each node in a pipeline must be unique
 draws = {str(n): n.init_draw for n in Node.discover_childs(pipeline) if hasattr(n, 'init_draw')}.values()
 print(draws)
 
@@ -44,7 +47,6 @@ plt.rc('font', **font)
 fig = plt.figure(num=0, figsize=(12, 7.5))
 # fig.suptitle("ASK", fontsize='x-large')
 fig.canvas.manager.set_window_title("ASK")
-fig.canvas.mpl_connect("close_event", pipeline.stop_processing)
 
 if len(draws) <= 0:
     raise Exception ('Must have at least one draw function registered')
@@ -75,23 +77,42 @@ def draw_update (i, **kwargs):
         el_time = time.time() - timer
         print(f"Rendered {i} frames in {el_time:.2f} seconds. This equals {i/el_time:.2f}fps.")
 
-    if i > 300:
-        print('Called stop')
-        worker.terminate()
+    # if i > 300:
+    #     print('Called stop')
+    #     worker.terminate()
 
     return ret_arts
 
 
-# Threading example
-worker = threading.Thread(target = pipeline.start_processing)
-worker.daemon = True
+import asyncio 
+server_q = mp.Queue()
+
+def start():
+    asyncio.run(start_stop())
+    print('Process returning')
+
+async def start_stop():
+    pipeline.start_processing()
+
+    while (server_q.empty()):
+        await asyncio.sleep(0)
+
+    print('Termination time in pipeline!')
+    pipeline.stop_processing()
+
+worker = Process(target=start)
 worker.start()
 
-# TODO: when using processes the matplotlib on close event is not working, as it's called from the wrong process... 
-# Usually this is not a problem, but h5py cannot close files if not for a stop call.
-# worker = Process(target = pipeline.start_processing)
-# worker.daemon = True
-# worker.start()
+def stop(*args, **kwargs):
+    # Tell the process to terminate, then wait until it returns
+    server_q.put("Terminate")
+    worker.join()
+
+    print('Termination time in main!')
+    worker.terminate()
+
+fig.canvas.mpl_connect("close_event", stop)
+
 
 # initial_draw_and_setup()
 timer = time.time()

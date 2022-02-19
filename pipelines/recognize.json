@@ -203,6 +203,7 @@
         "name": "Normed Features",
         "n_plots": 3,
         "xAxisLength": 50,
+        "sample_rate": 1000,
         "ylim": [
           -5,
           5

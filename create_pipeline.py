@@ -23,6 +23,8 @@ from src.nodes.out_data import Out_data
 from src.nodes.draw_lines import Draw_lines
 from src.nodes.draw_recognition import Draw_recognition
 
+from src.nodes.debug_frame_counter import Debug_frame_counter
+
 from src.nodes.node import Node
 
 
@@ -165,20 +167,24 @@ def add_train(pl, norm):
     
     return train
 
-def build_riot_record():
-    pl = In_riot(id=1)
+def add_riot_draw(pl, subset=2):
+    if subset == 0:
+        f = ["ACC_X", "ACC_Y", "ACC_Z"]
+    elif subset == 1:
+        f = ["ACC_X", "ACC_Y", "ACC_Z", "GYRO_X", "GYRO_Y", "GYRO_Z", "MAG_X", "MAG_Y", "MAG_Z"]
+    elif subset == 2:
+        f = ["A1", "A2", "C", "Q1", "Q2", "Q3", "Q4", "PITCH", "YAW", "ROLL", "HEAD"]
+    else:
+        f = ["ACC_X", "ACC_Y", "ACC_Z", "GYRO_X", "GYRO_Y", "GYRO_Z", "MAG_X", "MAG_Y", "MAG_Z","TEMP", "IO", "A1", "A2", "C", "Q1", "Q2", "Q3", "Q4", "PITCH", "YAW", "ROLL", "HEAD"]
 
-    filter1 =Transform_filter(name="Raw Filter", names=["ACC_X", "ACC_Y", "ACC_Z"])
+    filter1 =Transform_filter(name="Raw Filter", names=f)
     pl.add_output(filter1)
     pl.add_output(filter1, data_stream="Channel Names", recv_data_stream="Channel Names")
 
-    draw_raw = Draw_lines(name='Raw Data', n_plots=3, xAxisLength=x_raw)
+    draw_raw = Draw_lines(name='Raw Data', n_plots=len(f), sample_rate=100, xAxisLength=x_raw)
     filter1.add_output(draw_raw)
     filter1.add_output(draw_raw, data_stream="Channel Names", recv_data_stream="Channel Names")
 
-    out_data = Out_data(folder="./data/RIoT/")
-    pl.add_output(out_data)
-    pl.add_output(out_data, data_stream="Channel Names", recv_data_stream="Channel Names")
     return pl
 
 # From: https://stackoverflow.com/questions/2556108/rreplace-how-to-replace-the-last-occurrence-of-an-expression-in-a-string
@@ -245,29 +251,6 @@ if __name__ == "__main__":
     save(pl, "pipelines/process_live.json")
 
 
-    print('=== Build RIoT Record Pipeline ===')
-    pl = build_riot_record()
-    save(pl, "pipelines/riot_record.json")
-
-
-    print('=== Build RIoT Playback Pipeline ===')
-    riot_meta = {
-        "sample_rate": 10,
-        "channels": In_riot.channels,
-        "targets": []
-    }
-
-    pl = In_playback(files="./data/RIoT/*.h5", meta=riot_meta, batch=20)
-    filter1 =Transform_filter(name="Raw Filter", names=["ACC_X", "ACC_Y", "ACC_Z"])
-    pl.add_output(filter1)
-    pl.add_output(filter1, data_stream="Channel Names", recv_data_stream="Channel Names")
-
-    draw_raw = Draw_lines(name='Raw Data', n_plots=3, xAxisLength=x_raw)
-    filter1.add_output(draw_raw)
-    filter1.add_output(draw_raw, data_stream="Channel Names", recv_data_stream="Channel Names")
-    save(pl, "pipelines/riot_playback.json")
-
-
     print('=== Build Processing Pipeline ===')
     # TODO: currently the saving and everything else assumes we have a single node as entry, not sure if that is always true. consider multi indepdendent sensors, that are synced in the second node 
     #   -> might be solveable with "pipeline nodes" or similar, where a node acts as container for a node system -> might be good for paralellisation anyway 
@@ -300,3 +283,35 @@ if __name__ == "__main__":
 
     train = add_train(pl, norm)
     save(pl, "pipelines/train.json")
+
+
+
+
+
+    x_raw = 1000
+    x_processed = 10
+    n_bits = 16
+
+    print('=== Build RIoT Record Pipeline ===')
+    pl = In_riot(id=0)
+    # frm_ctr = Debug_frame_counter()
+    # pl.add_output(frm_ctr)
+    pl = add_riot_draw(pl)
+    save(pl, "pipelines/riot_vis.json")
+
+    out_data = Out_data(folder="./data/Debug/")
+    pl.add_output(out_data)
+    pl.add_output(out_data, data_stream="Channel Names", recv_data_stream="Channel Names")
+    save(pl, "pipelines/riot_record.json")
+
+
+    print('=== Build RIoT Playback Pipeline ===')
+    riot_meta = {
+        "sample_rate": 100,
+        "channels": In_riot.channels,
+        "targets": []
+    }
+
+    pl = In_playback(files="./data/RIoT/*.h5", meta=riot_meta, batch=1)
+    pl = add_riot_draw(pl)
+    save(pl, "pipelines/riot_playback.json")
