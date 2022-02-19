@@ -3,7 +3,6 @@ from queue import Queue
 from tkinter import N
 import numpy as np
 
-from .blit import BlitManager
 from .node import Node
 
 import matplotlib.patches as mpatches

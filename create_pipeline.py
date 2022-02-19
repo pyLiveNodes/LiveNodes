@@ -1,4 +1,6 @@
 from src.nodes.annotate_channel import Annotate_channel
+from src.nodes.annotate_ui_button import Annotate_ui_button
+
 from src.nodes.draw_search_graph import Draw_search_graph
 from src.nodes.transform_scale import Transform_scale
 from src.nodes.log_data import Log_data
@@ -299,8 +301,12 @@ if __name__ == "__main__":
     pl = add_riot_draw(pl)
     save(pl, "pipelines/riot_vis.json")
 
+    annot = Annotate_ui_button('Unknown')
+    pl.add_output(annot)
+
     out_data = Out_data(folder="./data/Debug/")
-    pl.add_output(out_data)
+    annot.add_output(out_data)
+    annot.add_output(out_data, data_stream="Annotation", recv_data_stream="Annotation")
     pl.add_output(out_data, data_stream="Channel Names", recv_data_stream="Channel Names")
     save(pl, "pipelines/riot_record.json")
 

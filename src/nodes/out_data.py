@@ -44,13 +44,15 @@ class Out_data(Node):
         self.outputDataset = None
         self._wait_queue = mp.Queue()
 
+        self.outputFileAnnotation = None
+        self.last_annotation = None
        
     @staticmethod
     def info():
         return {
             "class": "out_data",
             "file": "out_data.py",
-            "in": ["Data", "Channel Names", "Meta"],
+            "in": ["Data", "Channel Names", "Meta", "Annotation"],
             "out": [],
             "init": {}, #TODO!
             "category": "Save"
@@ -60,7 +62,9 @@ class Out_data(Node):
     def in_map(self):
         return {
             "Data": self.receive_data,
-            "Channel Names": self.receive_channels
+            "Channel Names": self.receive_channels,
+            "Meta": self.receive_meta,
+            "Annotation": self.receive_annotation,
         }
 
     
@@ -81,12 +85,28 @@ class Out_data(Node):
             self.outputDataset.resize(self.outputDataset.shape[0] + len(data_frame), axis = 0)
             self.outputDataset[-len(data_frame):] = data_frame
 
+    def receive_annotation(self, data_frame, **kwargs):
+        # For now lets assume the file is always open before this is called.
+        # TODO: re-consider that assumption
+        if self.last_annotation is None:
+            self.last_annotation = (data_frame[0], 0, 0)
+        
+        for annotation in data_frame:
+            if annotation == self.last_annotation[0]:
+                self.last_annotation = (annotation, self.last_annotation[1], self.last_annotation[2] + 1)
+            else:
+                self.outputFileAnnotation.write(f"{self.last_annotation[1]}, {self.last_annotation[2]}, {self.last_annotation[0]} \n")
+                self.last_annotation = (annotation, self.last_annotation[2] + 1, self.last_annotation[2] + 1)
+
+
+
     def start_processing(self, recurse=True):
         """
         Starts the streaming process.
         """
         if self.outputFile is None:
             self.outputFile = h5py.File(self.outputFilename + '.h5', 'w')
+            self.outputFileAnnotation = open(f"{self.outputFilename}.csv", "w")
         super().start_processing(recurse)
         
     def stop_processing(self, recurse=True):
@@ -96,8 +116,11 @@ class Out_data(Node):
         super().stop_processing(recurse)
         if self.outputFile is not None:
             self.outputFile.close()
+            self.outputFileAnnotation.write(f"{self.last_annotation[1]}, {self.last_annotation[2]}, {self.last_annotation[0]}")
+            self.outputFileAnnotation.close()
         self.outputFile = None
         self.outputDataset = None
+        self.outputFileAnnotation = None
 
 
     def _read_meta(self):

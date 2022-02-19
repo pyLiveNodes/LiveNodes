@@ -1,5 +1,4 @@
 from matplotlib import animation
-from src.nodes.blit import BlitManager
 
 from src.nodes.node import Node, activate_timing
 
@@ -64,7 +63,6 @@ subfigs = np.array(subfigs).flatten()
 
 # artists = np.concatenate([setup_fn(subfig) for setup_fn, subfig in zip(draws, subfigs)])
 artists = [setup_fn(subfig) for setup_fn, subfig in zip(draws, subfigs)]
-# bm = BlitManager(fig.canvas, artists)
 
 # plt.show(block=False)
 # plt.pause(.1)

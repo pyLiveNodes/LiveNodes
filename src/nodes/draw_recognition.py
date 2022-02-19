@@ -1,7 +1,6 @@
 import collections
 import numpy as np
 
-from .blit import BlitManager
 from .node import Node
 
 import time

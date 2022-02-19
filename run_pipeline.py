@@ -1,5 +1,4 @@
 from matplotlib import animation
-from src.nodes.blit import BlitManager
 
 from src.nodes.node import Node, activate_timing
 

@@ -22,7 +22,7 @@
           "Channel Names"
         ],
         [
-          "Save [Out_data]",
+          "GUI Button Annotation [Annotate_ui_button]",
           null,
           "Data",
           "Data"
@@ -81,6 +81,27 @@
         ]
       },
       "childs": []
+    },
+    "GUI Button Annotation [Annotate_ui_button]": {
+      "class": "Annotate_ui_button",
+      "settings": {
+        "name": "GUI Button Annotation",
+        "fall_back_target": "Unknown"
+      },
+      "childs": [
+        [
+          "Save [Out_data]",
+          null,
+          "Data",
+          "Data"
+        ],
+        [
+          "Save [Out_data]",
+          null,
+          "Annotation",
+          "Annotation"
+        ]
+      ]
     },
     "Save [Out_data]": {
       "class": "Out_data",
