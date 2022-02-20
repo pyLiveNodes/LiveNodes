@@ -16,7 +16,9 @@ class Log_data(Node):
             "file": "Log_data.py",
             "in": ["Data"],
             "out": ["Data"],
-            "init": {}, #TODO!
+            "init": {
+                "name": "Name"
+            },
             "category": "Basic"
         }
 

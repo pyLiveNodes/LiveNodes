@@ -14,7 +14,9 @@ class Memory(Node):
             "file": "Memory.py",
             "in": ["Data"],
             "out": ["Data"],
-            "init": {}, #TODO!
+            "init": {
+                "name": "Name"
+            },
             "category": "Basic"
         }
 

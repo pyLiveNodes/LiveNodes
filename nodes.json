@@ -9,7 +9,7 @@
       "Data"
     ],
     "init": {
-      "name": "str"
+      "name": "Name"
     },
     "category": "BioKIT"
   },
@@ -23,7 +23,7 @@
       "Data"
     ],
     "init": {
-      "name": "str"
+      "name": "Norm"
     },
     "category": "BioKIT"
   },
@@ -35,10 +35,15 @@
       "File"
     ],
     "out": [
-      "Data",
-      "Meta"
+      "Recognition",
+      "HMM Meta",
+      "Hypothesis"
     ],
-    "init": {},
+    "init": {
+      "name": "Recognizer",
+      "model_path": "./models/",
+      "token_insertion_penalty": 0
+    },
     "category": "BioKIT"
   },
   {
@@ -51,7 +56,7 @@
       "Data"
     ],
     "init": {
-      "name": "str"
+      "name": "Name"
     },
     "category": "BioKIT"
   },
@@ -65,7 +70,17 @@
       "Termination"
     ],
     "out": [],
-    "init": {},
+    "init": {
+      "name": "Train",
+      "model_path": "./models/",
+      "atomList": [],
+      "tokenDictionary": {},
+      "train_iterations": [
+        5,
+        5
+      ],
+      "token_insertion_penalty": 0
+    },
     "category": "BioKIT"
   },
   {
@@ -76,7 +91,9 @@
       "Channel Names"
     ],
     "out": [],
-    "init": {},
+    "init": {
+      "name": "Name"
+    },
     "category": "Draw"
   },
   {
@@ -85,10 +102,12 @@
     "in": [
       "Data",
       "Annotation",
-      "Meta"
+      "HMM Meta"
     ],
     "out": [],
-    "init": {},
+    "init": {
+      "name": "Name"
+    },
     "category": "Draw"
   },
   {
@@ -103,7 +122,9 @@
       "Channel Names",
       "Termination"
     ],
-    "init": {},
+    "init": {
+      "name": "Name"
+    },
     "category": "Data Source"
   },
   {
@@ -117,7 +138,9 @@
       "Meta",
       "Channel Names"
     ],
-    "init": {},
+    "init": {
+      "name": "Name"
+    },
     "category": "Data Source"
   },
   {
@@ -129,7 +152,7 @@
       "Channel Names"
     ],
     "init": {
-      "name": "str"
+      "name": "Name"
     },
     "category": "Base"
   },
@@ -142,18 +165,26 @@
     "out": [
       "Data"
     ],
-    "init": {},
+    "init": {
+      "name": "Name"
+    },
     "category": "Basic"
   },
   {
-    "class": "out_data",
-    "file": "out_data.py",
+    "class": "Out_data",
+    "file": "Out_data.py",
     "in": [
-      "Data"
+      "Data",
+      "Channel Names",
+      "Meta",
+      "Annotation"
     ],
     "out": [],
-    "init": {},
-    "category": "Data Out"
+    "init": {
+      "name": "Save",
+      "folder": "./data/Debug/"
+    },
+    "category": "Save"
   },
   {
     "class": "Transform_feature",
@@ -166,7 +197,9 @@
       "Data",
       "Channel Names"
     ],
-    "init": {},
+    "init": {
+      "name": "Name"
+    },
     "category": "Transform"
   },
   {
@@ -180,7 +213,9 @@
       "Data",
       "Channel Names"
     ],
-    "init": {},
+    "init": {
+      "name": "Name"
+    },
     "category": "Transform"
   },
   {
@@ -192,7 +227,9 @@
     "out": [
       "Data"
     ],
-    "init": {},
+    "init": {
+      "name": "Name"
+    },
     "category": "Transform"
   },
   {
@@ -204,7 +241,9 @@
     "out": [
       "Data"
     ],
-    "init": {},
+    "init": {
+      "name": "Name"
+    },
     "category": "Transform"
   },
   {
@@ -216,7 +255,9 @@
     "out": [
       "Data"
     ],
-    "init": {},
+    "init": {
+      "name": "Name"
+    },
     "category": "Transform"
   },
   {
@@ -228,7 +269,9 @@
     "out": [
       "Data"
     ],
-    "init": {},
+    "init": {
+      "name": "Name"
+    },
     "category": "Transform"
   }
 ]

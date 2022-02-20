@@ -66,7 +66,9 @@ class In_data(Node):
             "file": "in_data.py",
             "in": [],
             "out": ["Data", "File", "Annotation", "Meta", "Channel Names", "Termination"],
-            "init": {}, #TODO!
+            "init": {
+                "name": "Name"
+            },
             "category": "Data Source"
         }
 

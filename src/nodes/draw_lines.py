@@ -49,7 +49,9 @@ class Draw_lines(Node):
             "file": "draw_lines.py",
             "in": ["Data", "Channel Names"],
             "out": [],
-            "init": {}, #TODO!
+            "init": {
+                "name": "Name"
+            },
             "category": "Draw"
         }
         

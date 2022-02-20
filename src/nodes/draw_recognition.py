@@ -59,7 +59,9 @@ class Draw_recognition(Node):
             "file": "draw_recognition.py",
             "in": ["Data", "Annotation", "HMM Meta"],
             "out": [],
-            "init": {}, #TODO!
+            "init": {
+                "name": "Name"
+            },
             "category": "Draw"
         }
         

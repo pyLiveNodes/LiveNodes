@@ -41,7 +41,7 @@ class In_riot(Node):
             "in": [],
             "out": ["Data", "Channel Names"],
             "init": {
-                "name": "str"
+                "name": "Name"
             },
             "category": "Base"
         }

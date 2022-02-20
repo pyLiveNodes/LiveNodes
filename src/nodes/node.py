@@ -47,7 +47,6 @@ class Node():
     """
     def __init__(self, name = "Node", has_inputs = True, has_outputs = True, dont_time = False):
         """Initializes internal state."""
-        self.input_is_set = False
         self.has_inputs = has_inputs        
         self.has_outputs = has_outputs
         
@@ -85,7 +84,7 @@ class Node():
             "in": ["Data"],
             "out": ["Data"],
             "init": {
-                "name": "str"
+                "name": "Name"
             },
             "category": "Base"
         }
@@ -100,13 +99,13 @@ class Node():
     # def describe(self):
     #     pass
 
-    def __call__(self, input_classes):
-        """
-        Just calls through to set_inputs) and returns self
-        for easy chaining.
-        """
-        self.set_inputs(input_classes)
-        return self
+    # def __call__(self, input_classes):
+    #     """
+    #     Just calls through to set_inputs) and returns self
+    #     for easy chaining.
+    #     """
+    #     self.set_inputs(input_classes)
+    #     return self
 
     # Called in interactive mode
     def __repr__(self):
@@ -143,7 +142,7 @@ class Node():
         Sets this node up to just pass through to a sub-graph. Included since
         it is a reasonably common thing to want to do.
         """
-        self.get_inputs = node_in.get_inputs
+        # self.get_inputs = node_in.get_inputs
         self.set_inputs = node_in.set_inputs
         self.receive_data = node_in.receive_data
         self.start_processing = node_in.start_processing
@@ -152,11 +151,11 @@ class Node():
         self.get_outputs = node_out.get_outputs
         self.add_output = node_out.add_output
     
-    def get_inputs(self):
-        """
-        Gets the list of inputs.
-        """
-        return self.input_classes
+    # def get_inputs(self):
+    #     """
+    #     Gets the list of inputs.
+    #     """
+    #     return self.input_classes
     
     def get_outputs(self):
         """Gets the list of outputs."""
@@ -168,28 +167,74 @@ class Node():
         # and therefore always the last output entry for the same class is used by overwriting the previous ones
         return {str(n[0]):n[0] for n in self.output_classes}.values()
     
-    def set_inputs(self, input_classes):
-        """
-        Register an input class. Calling this multiple times is not allowed.
+    # def set_inputs(self, input_classes):
+    #     """
+    #     Register an input class. Calling this multiple times is not allowed.
            
-        Ideally this should not require overriding ever.
-        """
-        if not self.has_inputs:
-            raise(ValueError("Module does not have inputs."))
-        if self.input_is_set:
-            raise(ValueError("Module input already set."))
-        # if str(self) in list(map(str, self.discover_parents(self))):
-        #     raise(ValueError("Module name already taken by parent"))
-        if not isinstance(input_classes, list):
-            input_classes = [input_classes]
+    #     Ideally this should not require overriding ever.
+    #     """
+    #     if not self.has_inputs:
+    #         raise(ValueError("Module does not have inputs."))
+    #     # if str(self) in list(map(str, self.discover_parents(self))):
+    #     #     raise(ValueError("Module name already taken by parent"))
+    #     if not isinstance(input_classes, list):
+    #         input_classes = [input_classes]
             
-        for inputId, inputClass in enumerate(input_classes):
-            inputClass.add_output(self, data_id=inputId)
+    #     for inputId, inputClass in enumerate(input_classes):
+    #         inputClass.add_output(self, data_id=inputId)
             
-        self.input_classes = input_classes
-        self.input_is_set = True
+    #     self.input_classes = input_classes
+
+
+    # def add_input(self, input_node, input_data_stream="Data", recv_data_stream="Data"):
+    #     if str(self) in list(map(str, input_node.discover_parents(input_node))):
+    #         # TODO: currently this means that siblings may have the same name, check if that is valid or if that would cause trouble
+    #         raise(ValueError("Module name already taken by parent"))
         
+    #     self.input_classes.append(input_node)
+    #     data_id = None
+    #     input_node.add_output(self, data_id=data_id, data_stream=input_data_stream, )
+
+    def _add_input(self, input_node):
+        self.input_classes.append(input_node)
+    
+    def _remove_input(self, input_node):
+        self.input_classes.remove(input_node)
+
+    def remove_from_graph(self):
+        for node in self.input_classes: 
+            node.remove_all_output(self)
+
+    def remove_all_output(self, output_node):
+        for test_tuple in self.output_classes:
+            if test_tuple[0] == output_node:
+                self.remove_output(*test_tuple)
+
+    def remove_output(self, output_node, data_id=None, data_stream="Data", recv_data_stream='Data'):
+        test_tuple = (output_node, data_id, data_stream, recv_data_stream)
+        if not test_tuple in self.output_classes:
+            print(test_tuple, self.output_classes)
+            return False
+            # raise Exception('No such connection in outputs', test_tuple)
+        
+        # idx = self.output_classes.index(test_tuple)
+        # TODO: re-consider the graph operations! for the cleanest way
+
+        # remove self from output_nodes inputs if no connection exists anymore
+        if 0 == len([connection for connection in self.output_classes if connection[0] == output_node]):
+            output_node._remove_input(self)
+
+        # remove from frame_callbacks
+        self.frame_callbacks[data_stream].remove(output_node.in_map[recv_data_stream])
+
+        # remove from output_classes
+        self.output_classes.remove(test_tuple)
+        
+        return True
+        
+
     # TODO: think about api, should we rather use set_inputs instead of add_output? (i think that was the original intention, but i kinda like the current state quite a lot)
+        # -> so set_inputs is not a good idea if we want to be able to replace a node in the input, but add_input would be awesome, because we could set data_id automatically
     # TODO: rename data_stream (the name from the input node), and recv_data_stream (the stream name of this node)
     def add_output(self, new_output, data_id=None, data_stream="Data", recv_data_stream='Data'):
         """
@@ -223,6 +268,7 @@ class Node():
             if recv_data_stream in new_output.in_map:
                 self.output_classes.append((new_output, data_id, data_stream, recv_data_stream))
                 new_frame_callback_plain = new_output.in_map[recv_data_stream]
+                new_output._add_input(self)
             else:
                 raise Exception('Unknown receiver data stream')
         else:
@@ -314,6 +360,7 @@ class Node():
         return Image.open(BytesIO(dot.pipe()))
 
 
+    # TODO: replace parent and child with a discover_nodes() which gets all connected nodes of all childs and all parents
     @classmethod
     def discover_childs(self, node):
         if len(node.output_classes) > 0:

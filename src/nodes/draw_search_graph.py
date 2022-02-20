@@ -36,7 +36,9 @@ class Draw_search_graph(Node):
             "file": "draw_search_graph.py",
             "in": ["HMM Meta", "Hypothesis"],
             "out": [],
-            "init": {}, #TODO!
+            "init": {
+                "name": "Name"
+            },
             "category": "Draw"
         }
         

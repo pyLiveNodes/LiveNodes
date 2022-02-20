@@ -78,7 +78,9 @@ class Transform_feature(Node):
             "file": "Transform_feature.py",
             "in": ["Data", "Channel Names"],
             "out": ["Data", "Channel Names"],
-            "init": {}, #TODO!
+            "init": {
+                "name": "Name"
+            },
             "category": "Transform"
         }
         

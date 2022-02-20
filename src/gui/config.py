@@ -7,9 +7,10 @@ from PyQt5 import QtWidgets
 from glob import glob
 import json
 import os
+import importlib
 
 from PyQt5.QtGui import QPixmap, QIcon, QIntValidator                                                                        
-from PyQt5.QtWidgets import QToolButton, QFormLayout, QCheckBox, QLineEdit, QComboBox, QPushButton, QVBoxLayout, QWidget, QGridLayout, QHBoxLayout, QScrollArea, QLabel, QSizePolicy
+from PyQt5.QtWidgets import QToolButton, QDialogButtonBox, QDialog, QMessageBox, QFormLayout, QCheckBox, QLineEdit, QComboBox, QPushButton, QVBoxLayout, QWidget, QGridLayout, QHBoxLayout, QScrollArea, QLabel, QSizePolicy
 from PyQt5.QtCore import Qt, QSize, pyqtSignal, QEvent
 
 import qtpynodeeditor
@@ -30,6 +31,38 @@ class CustomNodeDataModel(NodeDataModel, verify=False):
             res = super().__getstate__()
             res['association_to_node'] = self.association_to_node
             return res
+
+    def _get_port_infos(self, connection):
+        # TODO: yes, the naming here is confusing, as qtpynode is the other way round that livenodes
+        in_port, out_port = connection.ports
+        data_stream = out_port.model.data_type[out_port.port_type][out_port.index].id
+        recv_data_stream = in_port.model.data_type[in_port.port_type][in_port.index].id
+
+        in_pl_node = in_port.model.association_to_node
+        out_pl_node = out_port.model.association_to_node
+        
+        return in_pl_node, out_pl_node, data_stream, recv_data_stream
+
+    def output_connection_created(self, connection):
+        # HACK: this currently works because of the three passes below (ie create node, create conneciton, associate pl node)
+        # TODO: fix this by checking if the connection already exists and if so ignore the call
+        if self.association_to_node is not None:
+            in_pl_node, out_pl_node, data_stream, recv_data_stream = self._get_port_infos(connection)
+
+            if in_pl_node is not None and out_pl_node is not None:
+                # occours when a node was deleted, in which case this is not important anyway
+                out_pl_node.add_output(new_output=in_pl_node, data_stream=data_stream, recv_data_stream=recv_data_stream)
+
+
+    def output_connection_deleted(self, connection):
+        if self.association_to_node is not None:
+            in_pl_node, out_pl_node, data_stream, recv_data_stream = self._get_port_infos(connection)
+            
+            if in_pl_node is not None and out_pl_node is not None:
+                # occours when a node was deleted, in which case this is not important anyway
+                out_pl_node.remove_output(output_node=in_pl_node, data_stream=data_stream, recv_data_stream=recv_data_stream)
+
+
 
 def attatch_click_cb(node_graphic_ob, cb):
     prev_fn = node_graphic_ob.mousePressEvent
@@ -190,7 +223,30 @@ class NodeConfigureContainer(QWidget):
         self.params.deleteLater()
         self.params = new_params
 
+class CustomDialog(QDialog):
+    def __init__(self, node):
+        super().__init__()
 
+        self.node = node
+
+        self.setWindowTitle(f"Create Node: {node.model.name}")
+
+        # TODO: replace with ok with save
+        QBtn = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
+
+        self.buttonBox = QDialogButtonBox(QBtn)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+
+        self.edit_dict = node.model.constructor.info()['init']
+        edit_form = EditDict(self.edit_dict)
+
+        self.layout = QVBoxLayout(self)
+        self.layout.addWidget(edit_form)
+        self.layout.addWidget(self.buttonBox)
+        self.setLayout(self.layout)
+
+        
 
 class Config(QWidget):
 
@@ -210,14 +266,17 @@ class Config(QWidget):
         ### Setup scene
         self.scene = qtpynodeeditor.FlowScene(registry=self.registry)
 
+        self.scene.node_deleted.connect(self._remove_pl_node)
+        self.scene.node_placed.connect(self._create_pl_node)
+        # self.scene.connection_created.connect(lambda connection: print("Created", connection))
+        # self.scene.connection_deleted.connect(lambda connection: print("Deleted", connection))
+
+
         connection_style = self.scene.style_collection.connection
         # Configure the style collection to use colors based on data types:
         connection_style.use_data_defined_colors = True
 
         view_nodes = qtpynodeeditor.FlowView(self.scene)
-
-        self.scene.node_deleted.connect(partial(noop, "Deleted:"))
-        view_nodes.node_placed.connect(partial(noop, "Added:"))
 
         self.view_configure = NodeConfigureContainer()
         # self.view_configure.setFixedWidth(300)
@@ -240,6 +299,29 @@ class Config(QWidget):
           self.scene.auto_arrange('planar_layout')
           # self.scene.auto_arrange('graphviz_layout', prog='dot', scale=1)
           # self.scene.auto_arrange('graphviz_layout', scale=3)
+
+    def _remove_pl_node(self, node):
+        if node.model.association_to_node is not None: 
+            node.model.association_to_node.remove_from_graph()
+
+    def _create_pl_node(self, node):
+        print("Added:", node)
+        # TODO: make this more in line with the qtpynodeetitor style
+        msg = CustomDialog(node)
+        if msg.exec():
+            # Successed
+            try:
+                pl_node = node.model.constructor(**msg.edit_dict)
+                node.model.set_node_association(pl_node)
+                node._graphics_obj = attatch_click_cb(node._graphics_obj, partial(self.view_configure.set_pl_node, pl_node))
+            except Exception as err:
+                # Failed
+                print('Could not instantiate Node')
+                print(err)
+                self.scene.remove_node(node)
+        else:
+            # Canceled
+            self.scene.remove_node(node)
 
     def _create_paths(self, pipeline_path):
         self.pipeline_path = pipeline_path
@@ -265,23 +347,28 @@ class Config(QWidget):
 
         # Collect and create Node-Classes
         for node in nodes:
-          cls_name = node.get('class', 'Unknown Class')
-          cls = type(cls_name, (CustomNodeDataModel,), \
-            { 'name': cls_name,
-            'caption': cls_name,
-            'caption_visible': True,
-            'num_ports': {
-              PortType.input: len(node['in']), 
-              PortType.output: len(node['out'])
-              },
-            'data_type': {
-              PortType.input: {i: self.known_dtypes[val] for i, val in enumerate(node['in'])},
-              PortType.output: {i: self.known_dtypes[val] for i, val in enumerate(node['out'])}
-              }
-            })
-          self.known_streams.update(set(node['in'] + node['out']))
-          self.known_classes[cls_name] = cls
-          self.registry.register_model(cls, category=node.get("category", "Unknown"))
+            cls_name = node.get('class', 'Unknown Class')
+
+            # HACK! TODO: fix this proper (same as in node.py): the convention of filename and class will likely not hold and feels very hacky!
+            module = importlib.import_module(f"src.nodes.{node['class'].lower()}")
+
+            cls = type(cls_name, (CustomNodeDataModel,), \
+                { 'name': cls_name,
+                'caption': cls_name,
+                'caption_visible': True,
+                'num_ports': {
+                    PortType.input: len(node['in']), 
+                    PortType.output: len(node['out'])
+                },
+                'data_type': {
+                    PortType.input: {i: self.known_dtypes[val] for i, val in enumerate(node['in'])},
+                    PortType.output: {i: self.known_dtypes[val] for i, val in enumerate(node['out'])}
+                }
+                , 'constructor': getattr(module, node['class'])
+                })
+            self.known_streams.update(set(node['in'] + node['out']))
+            self.known_classes[cls_name] = cls
+            self.registry.register_model(cls, category=node.get("category", "Unknown"))
 
         # Create Converters
         # Allow any stream to map onto Data:
@@ -321,12 +408,12 @@ class Config(QWidget):
             s_nodes = {}
             # print([str(n) for n in p_nodes])
             for name, n in p_nodes.items():
-                s_nodes[name] = self.scene.create_node(self.known_classes[n.info()['class']])
-                s_nodes[name]._model.set_node_association(n)
-                # COMMENT: ouch, this feels very wrong...
-                s_nodes[name]._graphics_obj = attatch_click_cb(s_nodes[name]._graphics_obj, partial(self.view_configure.set_pl_node, n))
                 if name in layout_nodes:
-                    s_nodes[name].__setstate__(layout_nodes[name])
+                    # lets' hope the interface hasn't changed in between
+                    # TODO: actually check if it has
+                    s_nodes[name] = self.scene.restore_node(layout_nodes[name])
+                else:
+                    s_nodes[name] = self.scene.create_node(self.known_classes[n.info()['class']])
 
             # second pass: create all connectins
             for name, n in p_nodes.items():
@@ -341,6 +428,14 @@ class Config(QWidget):
                     n_out = s_nodes[name][PortType.output][out_idx]
                     n_in = s_nodes[str(node_output)][PortType.input][in_idx]
                     self.scene.create_connection(n_out, n_in)
+            
+            # third pass: connect gui nodes to pipeline nodes
+            # TODO: this is kinda a hack so that we do not create connections twice (see custom model above)
+            for name, n in p_nodes.items():
+                s_nodes[name]._model.set_node_association(n)
+                # COMMENT: ouch, this feels very wrong...
+                s_nodes[name]._graphics_obj = attatch_click_cb(s_nodes[name]._graphics_obj, partial(self.view_configure.set_pl_node, n))
+
 
 
 

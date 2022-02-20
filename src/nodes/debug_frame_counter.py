@@ -16,7 +16,9 @@ class Debug_frame_counter(Node):
             "file": "Debug_frame_counter.py",
             "in": ["Data"],
             "out": ["Data"],
-            "init": {}, #TODO!
+            "init": {
+                "name": "Frame Counter"
+            },
             "category": "Debug"
         }
         

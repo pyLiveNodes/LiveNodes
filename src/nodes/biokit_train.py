@@ -10,7 +10,7 @@ from .biokit import BioKIT, logger, recognizer
 # TODO: figure out if/how we can update an already trained model with only the new data
 # TODO: also figure out how to adapt a model to the current wearer -> should be a standard procedure somewhere...
 class Biokit_train(Node):
-    def __init__(self, model_path, token_insertion_penalty, atomList, tokenDictionary, train_iterations, name="Recognizer", dont_time=False):
+    def __init__(self, model_path, token_insertion_penalty, atomList, tokenDictionary, train_iterations, name="Train", dont_time=False):
         super().__init__(name, dont_time)
 
         self.model_path = model_path
@@ -30,7 +30,14 @@ class Biokit_train(Node):
             "file": "Biokit_train.py",
             "in": ["Data", "File", "Annotation", "Termination"],
             "out": [],
-            "init": {}, #TODO!
+            "init": {
+                "name": "Train",
+                "model_path": "./models/",
+                "atomList": [],
+                "tokenDictionary": {},
+                "train_iterations": [5, 5],
+                "token_insertion_penalty": 0,
+            },
             "category": "BioKIT"
         }
 

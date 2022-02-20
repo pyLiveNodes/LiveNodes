@@ -16,7 +16,9 @@ class Transform_window(Node):
             "file": "Transform_window.py",
             "in": ["Data"],
             "out": ["Data"],
-            "init": {}, #TODO!
+            "init": {
+                "name": "Name"
+            },
             "category": "Transform"
         }
 

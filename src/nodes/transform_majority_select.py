@@ -10,7 +10,9 @@ class Transform_majority_select(Node):
             "file": "Transform_majority_select.py",
             "in": ["Data"],
             "out": ["Data"],
-            "init": {}, #TODO!
+            "init": {
+                "name": "Name"
+            },
             "category": "Transform"
         }
         

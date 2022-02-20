@@ -37,7 +37,9 @@ class Draw_gmm(Node):
             "file": "draw_gmm.py",
             "in": ["HMM Meta", "Hypothesis"],
             "out": [],
-            "init": {}, #TODO!
+            "init": {
+                "name": "Name"
+            },
             "category": "Draw"
         }
         

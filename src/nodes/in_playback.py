@@ -41,7 +41,9 @@ class In_playback(Node):
             "file": "In_playback.py",
             "in": [],
             "out": ["Data", "File", "Annotation", "Meta", "Channel Names"],
-            "init": {}, #TODO!
+            "init": {
+                "name": "Name"
+            },
             "category": "Data Source"
         }
 

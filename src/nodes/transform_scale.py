@@ -18,7 +18,9 @@ class Transform_scale(Node):
             "file": "Transform_scale.py",
             "in": ["Data"],
             "out": ["Data"],
-            "init": {}, #TODO!
+            "init": {
+                "name": "Name"
+            },
             "category": "Transform"
         }
 

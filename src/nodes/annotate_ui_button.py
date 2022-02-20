@@ -23,7 +23,9 @@ class Annotate_ui_button(Node):
             "file": "Annotate_ui_button.py",
             "in": ["Data"],
             "out": ["Data" "Annotation"],
-            "init": {}, #TODO!
+            "init": {
+                "name": "Name"
+            },
             "category": "Annotation"
         }
     

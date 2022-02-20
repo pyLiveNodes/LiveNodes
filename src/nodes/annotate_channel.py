@@ -19,7 +19,11 @@ class Annotate_channel(Node):
             "file": "Annotate_channel.py",
             "in": ["Data", "Channel Names"],
             "out": ["Data", "Channel Names", "Annotation"],
-            "init": {}, #TODO!
+            "init": {
+                "name": "Channel Annotation",
+                "channel_name": "Pushbutton",
+                "targets": ["Pressed", "Released"],
+            },
             "category": "Annotation"
         }
         

@@ -4,7 +4,7 @@ from .node import Node
 from .biokit import BioKIT
 
 class Biokit_norm(Node):
-    def __init__(self, name="Node", has_inputs=True, has_outputs=True, dont_time=False):
+    def __init__(self, name="Norm", has_inputs=True, has_outputs=True, dont_time=False):
         super().__init__(name, has_inputs, has_outputs, dont_time)
 
         self.meanSubtraction = BioKIT.ZNormalization()
@@ -24,7 +24,7 @@ class Biokit_norm(Node):
             "in": ["Data"],
             "out": ["Data"],
             "init": {
-                "name": "str"
+                "name": "Norm"
             },
             "category": "BioKIT"
         }

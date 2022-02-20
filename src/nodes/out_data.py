@@ -50,11 +50,14 @@ class Out_data(Node):
     @staticmethod
     def info():
         return {
-            "class": "out_data",
-            "file": "out_data.py",
+            "class": "Out_data",
+            "file": "Out_data.py",
             "in": ["Data", "Channel Names", "Meta", "Annotation"],
             "out": [],
-            "init": {}, #TODO!
+            "init": {
+                "name": "Save",
+                "folder": "./data/Debug/"
+            },
             "category": "Save"
         }
     

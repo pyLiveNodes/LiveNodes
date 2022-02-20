@@ -13,7 +13,9 @@ class Transform_window_multiplier(Node):
             "file": "Transform_window_multiplier.py",
             "in": ["Data"],
             "out": ["Data"],
-            "init": {}, #TODO!
+            "init": {
+                "name": "Name"
+            },
             "category": "Transform"
         }
         

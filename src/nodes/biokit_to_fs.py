@@ -17,7 +17,7 @@ class Biokit_to_fs(Node):
             "in": ["Data"],
             "out": ["Data"],
             "init": {
-                "name": "str"
+                "name": "Name"
             },
             "category": "BioKIT"
         }

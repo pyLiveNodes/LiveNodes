@@ -18,7 +18,9 @@ class Transform_filter(Node):
             "file": "Transform_filter.py",
             "in": ["Data", "Channel Names"],
             "out": ["Data", "Channel Names"],
-            "init": {}, #TODO!
+            "init": {
+                "name": "Name"
+            },
             "category": "Transform"
         }
         

@@ -32,7 +32,11 @@ class Biokit_recognizer(Node):
             "file": "biokit_recognizer.py",
             "in": ["Data", "File"],
             "out": ["Recognition", "HMM Meta", "Hypothesis"],
-            "init": {}, #TODO!
+            "init": {
+                "name": "Recognizer",
+                "model_path": "./models/",
+                "token_insertion_penalty": 0,
+            },
             "category": "BioKIT"
         }
     
