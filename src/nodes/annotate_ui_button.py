@@ -78,11 +78,13 @@ class Annotate_ui_button(Node):
 
         axes = subfig.subplots(3, 1, sharex=True)
 
-        target_default = TextBox(axes[0], 'Fallback:', initial=self.fall_back_target)
-        target_default.on_submit(self.__update_fallback)
+        self.target_default = TextBox(axes[0], 'Fallback:', initial=self.fall_back_target)
+        # self.target_default.label.set_fontsize(20)
+        self.target_default.on_submit(self.__update_fallback)
 
-        target_annotate = TextBox(axes[1], 'Recognize:', initial=self.fall_back_target)
-        target_annotate.on_submit(self.__update_annot)
+        self.target_annotate = TextBox(axes[1], 'Recognize:', initial=self.annot_target)
+        # self.target_annotate.label.set_fontsize(20)
+        self.target_annotate.on_submit(self.__update_annot)
 
         self.bnext = Button(axes[2], 'Start')
         self.bnext.label.set_fontsize(20)
