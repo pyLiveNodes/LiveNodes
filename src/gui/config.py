@@ -1,6 +1,8 @@
 from functools import partial
 import sys
 import random
+
+from graphviz import view
 from PyQt5 import QtWidgets
 from glob import glob
 import json
@@ -213,6 +215,9 @@ class Config(QWidget):
         connection_style.use_data_defined_colors = True
 
         view_nodes = qtpynodeeditor.FlowView(self.scene)
+
+        self.scene.node_deleted.connect(partial(noop, "Deleted:"))
+        view_nodes.node_placed.connect(partial(noop, "Added:"))
 
         self.view_configure = NodeConfigureContainer()
         # self.view_configure.setFixedWidth(300)
