@@ -12,7 +12,9 @@ import time
 from PyQt5 import QtWidgets
 import sys
 
-from multiprocessing import Process
+import asyncio 
+import multiprocessing as mp
+import threading
 
 
 # # TODO: as we now have a qt part here, we could add a qlabel with the fps...
@@ -36,18 +38,33 @@ class Run(FigureCanvasQTAgg):
 
         self.setupAnim(self.pipeline)
 
-        self.worker = Process(target = self.pipeline.start_processing)
-        self.worker.daemon = True
+        self.server_q = mp.Queue() # Termination Event
+        self.worker_term_lock = mp.Lock()
+        self.worker_term_lock.acquire()
+        self.worker = mp.Process(target = self.worker_start)
         self.worker.start()
 
         self.show()
 
-    # i would have assumed __del__ would be the better fit, but that doesn't seem to be called when using del... for some reason
-    def stop (self):
-        print("called stop")
+    def worker_start(self):
+        self.pipeline.start_processing()
+        self.worker_term_lock.acquire()
+
+        print('Termination time in pipeline!')
         self.pipeline.stop_processing()
+
+
+    # i would have assumed __del__ would be the better fit, but that doesn't seem to be called when using del... for some reason
+    # will be called in parent view, but also called on exiting the canvas
+    def stop(self, *args, **kwargs):
+        # Tell the process to terminate, then wait until it returns
+        self.worker_term_lock.release()
+        self.worker.join()
+
+        print('Termination time in view!')
         self.worker.terminate()
         self.animation.pause()
+
 
     def setupAnim(self, pipeline):
         self.timer = time.time()
@@ -64,7 +81,7 @@ class Run(FigureCanvasQTAgg):
 
         # fig.suptitle("ASK", fontsize='x-large')
         # self.figure.canvas.manager.set_window_title("ASK")
-        self.figure.canvas.mpl_connect("close_event", pipeline.stop_processing)
+        self.figure.canvas.mpl_connect("close_event", self.stop)
 
         if len(draws) <= 0:
             raise Exception ('Must have at least one draw function registered')

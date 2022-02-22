@@ -1,0 +1,189 @@
+{
+  "connections": [
+    {
+      "in_id": "25c77c66-e88d-42d2-af00-b64f1960c420",
+      "in_index": 0,
+      "out_id": "f46698ec-8dc3-4027-8e6e-f544e3d230ff",
+      "out_index": 0
+    },
+    {
+      "in_id": "25c77c66-e88d-42d2-af00-b64f1960c420",
+      "in_index": 1,
+      "out_id": "f46698ec-8dc3-4027-8e6e-f544e3d230ff",
+      "out_index": 1
+    },
+    {
+      "in_id": "20fe1590-8f2d-4239-8214-48e381798c87",
+      "in_index": 0,
+      "out_id": "f46698ec-8dc3-4027-8e6e-f544e3d230ff",
+      "out_index": 0
+    },
+    {
+      "in_id": "e119b136-1337-4d60-9a4b-487bf38e209b",
+      "in_index": 1,
+      "out_id": "f46698ec-8dc3-4027-8e6e-f544e3d230ff",
+      "out_index": 1
+    },
+    {
+      "in_id": "7e4e9186-e1c1-427c-8400-c29375f0bafc",
+      "in_index": 1,
+      "out_id": "f46698ec-8dc3-4027-8e6e-f544e3d230ff",
+      "out_index": 1
+    },
+    {
+      "in_id": "c3c30d15-1a39-44d9-9ecb-766735a97862",
+      "in_index": 0,
+      "out_id": "25c77c66-e88d-42d2-af00-b64f1960c420",
+      "out_index": 0
+    },
+    {
+      "in_id": "c3c30d15-1a39-44d9-9ecb-766735a97862",
+      "in_index": 1,
+      "out_id": "25c77c66-e88d-42d2-af00-b64f1960c420",
+      "out_index": 1
+    },
+    {
+      "in_id": "e119b136-1337-4d60-9a4b-487bf38e209b",
+      "in_index": 0,
+      "out_id": "20fe1590-8f2d-4239-8214-48e381798c87",
+      "out_index": 0
+    },
+    {
+      "in_id": "e119b136-1337-4d60-9a4b-487bf38e209b",
+      "in_index": 3,
+      "out_id": "20fe1590-8f2d-4239-8214-48e381798c87",
+      "out_index": 1
+    },
+    {
+      "in_id": "7e4e9186-e1c1-427c-8400-c29375f0bafc",
+      "in_index": 0,
+      "out_id": "20fe1590-8f2d-4239-8214-48e381798c87",
+      "out_index": 0
+    },
+    {
+      "in_id": "802a8c51-5b49-4920-af74-e7fefa68d9f7",
+      "in_index": 1,
+      "out_id": "20fe1590-8f2d-4239-8214-48e381798c87",
+      "out_index": 1
+    },
+    {
+      "in_id": "6c0bedbb-177b-4648-aa6b-c5179cc51c34",
+      "in_index": 0,
+      "out_id": "7e4e9186-e1c1-427c-8400-c29375f0bafc",
+      "out_index": 0
+    },
+    {
+      "in_id": "38bc53ad-b72e-4a1b-9032-432f71e4fd14",
+      "in_index": 0,
+      "out_id": "6c0bedbb-177b-4648-aa6b-c5179cc51c34",
+      "out_index": 0
+    },
+    {
+      "in_id": "802a8c51-5b49-4920-af74-e7fefa68d9f7",
+      "in_index": 0,
+      "out_id": "38bc53ad-b72e-4a1b-9032-432f71e4fd14",
+      "out_index": 0
+    }
+  ],
+  "nodes": [
+    {
+      "id": "f46698ec-8dc3-4027-8e6e-f544e3d230ff",
+      "model": {
+        "name": "In_riot",
+        "association_to_node": "RIoT [In_riot]"
+      },
+      "position": {
+        "x": 50.0,
+        "y": 208.92363636363638
+      }
+    },
+    {
+      "id": "25c77c66-e88d-42d2-af00-b64f1960c420",
+      "model": {
+        "name": "Transform_filter",
+        "association_to_node": "Raw Filter [Transform_filter]"
+      },
+      "position": {
+        "x": 300.69090909090914,
+        "y": 50.261818181818285
+      }
+    },
+    {
+      "id": "c3c30d15-1a39-44d9-9ecb-766735a97862",
+      "model": {
+        "name": "Draw_lines",
+        "association_to_node": "Raw Data [Draw_lines]"
+      },
+      "position": {
+        "x": 636.4727272727272,
+        "y": 50.0
+      }
+    },
+    {
+      "id": "20fe1590-8f2d-4239-8214-48e381798c87",
+      "model": {
+        "name": "Annotate_ui_button",
+        "association_to_node": "GUI Button Annotation [Annotate_ui_button]"
+      },
+      "position": {
+        "x": 278.17454545454547,
+        "y": 465.2436363636364
+      }
+    },
+    {
+      "id": "e119b136-1337-4d60-9a4b-487bf38e209b",
+      "model": {
+        "name": "Out_data",
+        "association_to_node": "Save [Out_data]"
+      },
+      "position": {
+        "x": 599.0327272727272,
+        "y": 437.09818181818184
+      }
+    },
+    {
+      "id": "7e4e9186-e1c1-427c-8400-c29375f0bafc",
+      "model": {
+        "name": "Transform_filter",
+        "association_to_node": "Annot Filter [Transform_filter]"
+      },
+      "position": {
+        "x": 444.9527272727273,
+        "y": 230.35636363636365
+      }
+    },
+    {
+      "id": "6c0bedbb-177b-4648-aa6b-c5179cc51c34",
+      "model": {
+        "name": "Biokit_to_fs",
+        "association_to_node": "Node [Biokit_to_fs]"
+      },
+      "position": {
+        "x": 862.290909090909,
+        "y": 216.25454545454554
+      }
+    },
+    {
+      "id": "38bc53ad-b72e-4a1b-9032-432f71e4fd14",
+      "model": {
+        "name": "Biokit_norm",
+        "association_to_node": "Norm [Biokit_norm]"
+      },
+      "position": {
+        "x": 929.709090909091,
+        "y": 375.39272727272737
+      }
+    },
+    {
+      "id": "802a8c51-5b49-4920-af74-e7fefa68d9f7",
+      "model": {
+        "name": "Biokit_update_model",
+        "association_to_node": "Train [Biokit_update_model]"
+      },
+      "position": {
+        "x": 1117.647272727273,
+        "y": 416.33090909090913
+      }
+    }
+  ]
+}

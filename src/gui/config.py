@@ -101,7 +101,7 @@ class EditList(QWidget):
             if type(val) == int:
                 q_in = QLineEdit(str(val))
                 q_in.setValidator(QIntValidator())
-                q_in.textChanged.connect(partial(self._update_state, i, int))
+                q_in.textChanged.connect(partial(self._update_state, i, lambda x: int(x) if x != '' else 0))
             elif type(val) == str:
                 q_in = QLineEdit(str(val))
                 q_in.textChanged.connect(partial(self._update_state, i, str))
@@ -143,7 +143,7 @@ class EditDict(QWidget):
             if type(val) == int:
                 q_in = QLineEdit(str(val))
                 q_in.setValidator(QIntValidator())
-                q_in.textChanged.connect(partial(self._update_state, key, int))
+                q_in.textChanged.connect(partial(self._update_state, key, lambda x: int(x) if x != '' else 0))
             elif type(val) == str:
                 q_in = QLineEdit(str(val))
                 q_in.textChanged.connect(partial(self._update_state, key, str))
@@ -422,6 +422,7 @@ class Config(QWidget):
                     # print('=====')
                     # print(name, node_output, output_id, data_stream, recv_data_stream)
                     # print(data_stream, n.info()['out'], node_output.info()['in'])
+                    print(name, n.info())
                     out_idx = n.info()['out'].index(data_stream)
                     in_idx = node_output.info()['in'].index(recv_data_stream)
                     # print(out_idx, in_idx)

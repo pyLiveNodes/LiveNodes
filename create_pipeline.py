@@ -11,6 +11,7 @@ from src.nodes.biokit_to_fs import Biokit_to_fs
 from src.nodes.biokit_from_fs import Biokit_from_fs
 from src.nodes.biokit_recognizer import Biokit_recognizer
 from src.nodes.biokit_train import Biokit_train
+from src.nodes.biokit_update_model import Biokit_update_model
 
 from src.nodes.transform_feature import Transform_feature
 from src.nodes.transform_window import Transform_window
@@ -295,10 +296,10 @@ if __name__ == "__main__":
     n_bits = 16
 
     print('=== Build RIoT Record Pipeline ===')
-    pl = In_riot(id=1)
+    pl = In_riot(id=0)
     # frm_ctr = Debug_frame_counter()
     # pl.add_output(frm_ctr)
-    pl = add_riot_draw(pl)
+    pl = add_riot_draw(pl, subset=0)
     save(pl, "pipelines/riot_vis.json")
 
     annot = Annotate_ui_button('Unknown')
@@ -309,6 +310,28 @@ if __name__ == "__main__":
     annot.add_output(out_data, data_stream="Annotation", recv_data_stream="Annotation")
     pl.add_output(out_data, data_stream="Channel Names", recv_data_stream="Channel Names")
     save(pl, "pipelines/riot_record.json")
+
+
+    print('=== Build RIoT Record and Update Pipeline ===')
+    filter1 =Transform_filter(name="Annot Filter", names=["ACC_X", "ACC_Y", "ACC_Z", "GYRO_X", "GYRO_Y", "GYRO_Z"])
+    annot.add_output(filter1)
+    pl.add_output(filter1, data_stream="Channel Names", recv_data_stream="Channel Names")
+
+    to_fs = Biokit_to_fs()
+    filter1.add_output(to_fs)
+
+    norm = Biokit_norm()
+    to_fs.add_output(norm)
+
+    pl_train_new = Biokit_update_model(model_path="./models/KneeBandageCSL2018/RIoT/sequence", \
+        token_insertion_penalty=50,
+        phases_new_act=3,
+        train_iterations=(7, 10)
+        )
+    norm.add_output(pl_train_new)
+    annot.add_output(pl_train_new, data_stream="Annotation", recv_data_stream="Annotation")
+    save(pl, "pipelines/riot_record_update.json")
+    
 
 
     print('=== Build RIoT Playback Pipeline ===')

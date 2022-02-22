@@ -32,6 +32,12 @@
           null,
           "Channel Names",
           "Channel Names"
+        ],
+        [
+          "Annot Filter [Transform_filter]",
+          null,
+          "Channel Names",
+          "Channel Names"
         ]
       ]
     },
@@ -92,6 +98,18 @@
           null,
           "Annotation",
           "Annotation"
+        ],
+        [
+          "Annot Filter [Transform_filter]",
+          null,
+          "Data",
+          "Data"
+        ],
+        [
+          "Train [Biokit_update_model]",
+          null,
+          "Annotation",
+          "Annotation"
         ]
       ]
     },
@@ -99,6 +117,70 @@
       "class": "Out_data",
       "settings": {
         "folder": "./data/Debug/"
+      },
+      "childs": []
+    },
+    "Annot Filter [Transform_filter]": {
+      "class": "Transform_filter",
+      "settings": {
+        "name": "Annot Filter",
+        "names": [
+          "ACC_X",
+          "ACC_Y",
+          "ACC_Z",
+          "GYRO_X",
+          "GYRO_Y",
+          "GYRO_Z"
+        ]
+      },
+      "childs": [
+        [
+          "Node [Biokit_to_fs]",
+          null,
+          "Data",
+          "Data"
+        ]
+      ]
+    },
+    "Node [Biokit_to_fs]": {
+      "class": "Biokit_to_fs",
+      "settings": {
+        "name": "Node"
+      },
+      "childs": [
+        [
+          "Norm [Biokit_norm]",
+          null,
+          "Data",
+          "Data"
+        ]
+      ]
+    },
+    "Norm [Biokit_norm]": {
+      "class": "Biokit_norm",
+      "settings": {
+        "name": "Norm"
+      },
+      "childs": [
+        [
+          "Train [Biokit_update_model]",
+          null,
+          "Data",
+          "Data"
+        ]
+      ]
+    },
+    "Train [Biokit_update_model]": {
+      "class": "Biokit_update_model",
+      "settings": {
+        "token_insertion_penalty": 50,
+        "model_path": "./models/KneeBandageCSL2018/RIoT/sequence",
+        "train_iterations": [
+          7,
+          10
+        ],
+        "phases_new_act": 1,
+        "update_every_s": 60
       },
       "childs": []
     }

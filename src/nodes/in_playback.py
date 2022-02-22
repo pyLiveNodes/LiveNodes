@@ -54,9 +54,6 @@ class In_playback(Node):
             "meta": self.meta
         }
 
-    def stop(self):
-        self._stop_event.set()
-        # self.feeder_process.terminate()
 
     def sender_process(self):
         """
@@ -134,5 +131,6 @@ class In_playback(Node):
         """
         super().stop_processing(recurse)
         if self.feeder_process is not None:
-            self.stop()
+            self._stop_event.set()
+            # self.feeder_process.terminate()
         self.feeder_process = None

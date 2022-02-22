@@ -22,7 +22,7 @@ class Annotate_ui_button(Node):
             "class": "Annotate_ui_button",
             "file": "Annotate_ui_button.py",
             "in": ["Data"],
-            "out": ["Data" "Annotation"],
+            "out": ["Data", "Annotation"],
             "init": {
                 "name": "Name"
             },
@@ -78,22 +78,24 @@ class Annotate_ui_button(Node):
     def init_draw(self, subfig):
         subfig.suptitle("Annotate", fontsize=14)
 
-        axes = subfig.subplots(3, 1, sharex=True)
+        self.axes = subfig.subplots(3, 1, sharex=True)
 
-        self.target_default = TextBox(axes[0], 'Fallback:', initial=self.fall_back_target)
+        self.target_default = TextBox(self.axes[0], 'Fallback:', initial=self.fall_back_target)
         # self.target_default.label.set_fontsize(20)
         self.target_default.on_submit(self.__update_fallback)
+        self.target_default.on_text_change(print)
 
-        self.target_annotate = TextBox(axes[1], 'Recognize:', initial=self.annot_target)
+        self.target_annotate = TextBox(self.axes[1], 'Recognize:', initial=self.annot_target)
         # self.target_annotate.label.set_fontsize(20)
         self.target_annotate.on_submit(self.__update_annot)
+        self.target_annotate.on_text_change(print)
 
-        self.bnext = Button(axes[2], 'Start')
+        self.bnext = Button(self.axes[2], 'Start')
         self.bnext.label.set_fontsize(20)
         self.bnext.on_clicked(self.__activity_toggle_rec)
 
         def update (**kwargs):
-            nonlocal axes
-            return axes
+            nonlocal self
+            return self.axes
 
         return update

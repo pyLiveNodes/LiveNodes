@@ -221,17 +221,17 @@
       },
       "childs": [
         [
-          "Node [Biokit_norm]",
+          "Norm [Biokit_norm]",
           null,
           "Data",
           "Data"
         ]
       ]
     },
-    "Node [Biokit_norm]": {
+    "Norm [Biokit_norm]": {
       "class": "Biokit_norm",
       "settings": {
-        "name": "Node"
+        "name": "Norm"
       },
       "childs": [
         [

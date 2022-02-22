@@ -4,7 +4,7 @@
     "RIoT [In_riot]": {
       "class": "In_riot",
       "settings": {
-        "id": 1,
+        "id": 0,
         "listen_ip": "192.168.1.101",
         "listen_port": 8888
       },
@@ -28,17 +28,9 @@
       "settings": {
         "name": "Raw Filter",
         "names": [
-          "A1",
-          "A2",
-          "C",
-          "Q1",
-          "Q2",
-          "Q3",
-          "Q4",
-          "PITCH",
-          "YAW",
-          "ROLL",
-          "HEAD"
+          "ACC_X",
+          "ACC_Y",
+          "ACC_Z"
         ]
       },
       "childs": [
@@ -60,7 +52,7 @@
       "class": "Draw_lines",
       "settings": {
         "name": "Raw Data",
-        "n_plots": 11,
+        "n_plots": 3,
         "xAxisLength": 1000,
         "sample_rate": 100,
         "ylim": [
