@@ -173,6 +173,8 @@ def add_train(pl, norm):
 def add_riot_draw(pl, subset=2):
     if subset == 0:
         f = ["ACC_X", "ACC_Y", "ACC_Z"]
+    elif subset == 0.5:
+        f = ["ACC_X", "ACC_Y", "ACC_Z", "GYRO_X", "GYRO_Y", "GYRO_Z"]
     elif subset == 1:
         f = ["ACC_X", "ACC_Y", "ACC_Z", "GYRO_X", "GYRO_Y", "GYRO_Z", "MAG_X", "MAG_Y", "MAG_Z"]
     elif subset == 2:
@@ -187,6 +189,35 @@ def add_riot_draw(pl, subset=2):
     draw_raw = Draw_lines(name='Raw Data', n_plots=len(f), sample_rate=100, xAxisLength=x_raw)
     filter1.add_output(draw_raw)
     filter1.add_output(draw_raw, data_stream="Channel Names", recv_data_stream="Channel Names")
+
+    return pl
+
+def riot_add_recog(pl, has_annotation=False):
+    filter1 =Transform_filter(name="Annot Filter", names=["ACC_X", "ACC_Y", "ACC_Z", "GYRO_X", "GYRO_Y", "GYRO_Z"])
+    pl.add_output(filter1)
+    pl.add_output(filter1, data_stream="Channel Names", recv_data_stream="Channel Names")
+
+    to_fs = Biokit_to_fs()
+    filter1.add_output(to_fs)
+
+    norm = Biokit_norm()
+    to_fs.add_output(norm)
+
+    recog = Biokit_recognizer(model_path="./models/RIoT/sequence/", token_insertion_penalty=50)
+    norm.add_output(recog)
+
+    draw_recognition_path = Draw_recognition(xAxisLength=[x_raw, x_raw, x_raw, x_raw])
+    recog.add_output(draw_recognition_path, data_stream="Recognition")
+    recog.add_output(draw_recognition_path, data_stream='HMM Meta', recv_data_stream='HMM Meta')
+
+    if has_annotation:
+        memory = Memory(x_raw)
+        pl.add_output(memory, data_stream='Annotation')
+        memory.add_output(draw_recognition_path, recv_data_stream='Annotation')
+
+    draw_search_graph = Draw_search_graph()
+    recog.add_output(draw_search_graph, data_stream="HMM Meta", recv_data_stream="HMM Meta")
+    recog.add_output(draw_search_graph, data_stream="Hypothesis", recv_data_stream="Hypothesis")
 
     return pl
 
@@ -299,10 +330,10 @@ if __name__ == "__main__":
     pl = In_riot(id=0)
     # frm_ctr = Debug_frame_counter()
     # pl.add_output(frm_ctr)
-    pl = add_riot_draw(pl, subset=0)
+    pl = add_riot_draw(pl, subset=0.5)
     save(pl, "pipelines/riot_vis.json")
 
-    annot = Annotate_ui_button('Unknown')
+    annot = Annotate_ui_button(fall_back_target='None')
     pl.add_output(annot)
 
     out_data = Out_data(folder="./data/Debug/")
@@ -323,10 +354,11 @@ if __name__ == "__main__":
     norm = Biokit_norm()
     to_fs.add_output(norm)
 
-    pl_train_new = Biokit_update_model(model_path="./models/KneeBandageCSL2018/RIoT/sequence", \
-        token_insertion_penalty=50,
-        phases_new_act=3,
-        train_iterations=(7, 10)
+    pl_train_new = Biokit_update_model(model_path="./models/RIoT/sequence", \
+        token_insertion_penalty=20,
+        phases_new_act=1,
+        train_iterations=(7, 10),
+        catch_all="None"
         )
     norm.add_output(pl_train_new)
     annot.add_output(pl_train_new, data_stream="Annotation", recv_data_stream="Annotation")
@@ -344,3 +376,15 @@ if __name__ == "__main__":
     pl = In_playback(files="./data/RIoT/*.h5", meta=riot_meta, batch=1)
     pl = add_riot_draw(pl)
     save(pl, "pipelines/riot_playback.json")
+
+
+    print('=== Build RIoT Playback Recognition ===')
+    pl = riot_add_recog(pl, has_annotation=True)
+    save(pl, "pipelines/riot_playback_recog.json")
+
+
+    print('=== Build RIoT Live Recognition ===')
+    pl = In_riot(id=0)
+    pl = add_riot_draw(pl, subset=0.5)
+    pl = riot_add_recog(pl, has_annotation=False)
+    save(pl, "pipelines/riot_live_recog.json")

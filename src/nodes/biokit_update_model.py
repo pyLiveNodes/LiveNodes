@@ -16,7 +16,7 @@ import traceback
 # TODO: also figure out how to adapt a model to the current wearer -> should be a standard procedure somewhere...
     # -> have a second look at the MAP tests in biokit
 class Biokit_update_model(Node):
-    def __init__(self, model_path, phases_new_act, token_insertion_penalty, train_iterations, update_every_s=60, name="Train", dont_time=False):
+    def __init__(self, model_path, phases_new_act, token_insertion_penalty, train_iterations, catch_all="None", update_every_s=60, name="Train", dont_time=False):
         super().__init__(name, dont_time)
 
         self.model_path = model_path
@@ -24,6 +24,7 @@ class Biokit_update_model(Node):
         self.phases_new_act = phases_new_act
         self.token_insertion_penalty = token_insertion_penalty
         self.update_every_s = update_every_s
+        self.catch_all = catch_all
 
         self.data_q = mp.Queue()
         self.data = []
@@ -67,6 +68,7 @@ class Biokit_update_model(Node):
             "train_iterations": self.train_iterations,
             "phases_new_act": self.phases_new_act,
             "update_every_s": self.update_every_s,
+            "catch_all": self.catch_all,
         }
 
     def _add_atoms_to_topo(self, atomList, topologyInfo):
@@ -210,7 +212,7 @@ class Biokit_update_model(Node):
             print('Adding new activities to new model')
             print('Feature dim:', len(self.data[0][0]))
             # This is kinda ugly, but biokit does not allow empty dicts here :/
-            self.reco = recognizer.Recognizer.createCompletelyNew({"unknown_1": ["0"], "unknown_2": ["0"]}, {"Unknown": ["unknown_1", "unknown_2"]}, 1, featuredimensionality=featuredimensionality)
+            self.reco = recognizer.Recognizer.createCompletelyNew({f"{self.catch_all}_1": ["0"], }, {self.catch_all: [f"{self.catch_all}_1"]}, 1, featuredimensionality=featuredimensionality)
             # self.reco = recognizer.Recognizer.createCompletelyNew({}, {}, 1, featuredimensionality=featuredimensionality)
         self.reco.setTokenInsertionPenalty(self.token_insertion_penalty)
 
@@ -232,11 +234,11 @@ class Biokit_update_model(Node):
         known_tokens = self.reco.getDictionary().getTokenList()
 
         for t in known_tokens:
-            if t in processedTokens and (t != "Unknown" and is_new):
+            if t in processedTokens and (t != self.catch_all and is_new):
                 del processedTokens[t]
 
         for token in processedTokens.keys():
-            if token != "Unknown":
+            if token != self.catch_all:
                 self.reco = self._add_token(token, [f"{token}_{i}" for i in range(self.phases_new_act)], featuredimensionality=featuredimensionality, nrofmixtures=1)
 
 
@@ -300,6 +302,7 @@ class Biokit_update_model(Node):
 
                 try:
                     self._train()
+                    print('Trained model')
                 except Exception as err:
                     print(traceback.format_exc())
                     print(err)

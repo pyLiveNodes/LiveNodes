@@ -121,6 +121,9 @@ class EditList(QWidget):
     
             layout.addWidget(q_in)
 
+            # plus = QPushButton("+")
+            # minus = QPushButton("-")
+
     def _update_state(self, key, type_cast, val):
         self.in_list[key] = type_cast(val)
         self.changed.emit(self.in_list)

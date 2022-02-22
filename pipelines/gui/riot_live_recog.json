@@ -1,0 +1,193 @@
+{
+  "connections": [
+    {
+      "in_id": "7ebdfe84-44dd-497f-9d9d-21a255c20047",
+      "in_index": 0,
+      "out_id": "d179537a-6a47-444a-8821-98f8c060b608",
+      "out_index": 0
+    },
+    {
+      "in_id": "7ebdfe84-44dd-497f-9d9d-21a255c20047",
+      "in_index": 1,
+      "out_id": "d179537a-6a47-444a-8821-98f8c060b608",
+      "out_index": 1
+    },
+    {
+      "in_id": "aecca174-17c2-4b9c-ade6-5901aac1e7aa",
+      "in_index": 0,
+      "out_id": "d179537a-6a47-444a-8821-98f8c060b608",
+      "out_index": 0
+    },
+    {
+      "in_id": "aecca174-17c2-4b9c-ade6-5901aac1e7aa",
+      "in_index": 1,
+      "out_id": "d179537a-6a47-444a-8821-98f8c060b608",
+      "out_index": 1
+    },
+    {
+      "in_id": "23e1ec4c-3a97-410e-921a-23c376329be1",
+      "in_index": 0,
+      "out_id": "7ebdfe84-44dd-497f-9d9d-21a255c20047",
+      "out_index": 0
+    },
+    {
+      "in_id": "23e1ec4c-3a97-410e-921a-23c376329be1",
+      "in_index": 1,
+      "out_id": "7ebdfe84-44dd-497f-9d9d-21a255c20047",
+      "out_index": 1
+    },
+    {
+      "in_id": "cc70fe39-2cdb-483c-aff5-c4079324b959",
+      "in_index": 0,
+      "out_id": "aecca174-17c2-4b9c-ade6-5901aac1e7aa",
+      "out_index": 0
+    },
+    {
+      "in_id": "d7d79966-b466-424d-8cf2-1637c67337e2",
+      "in_index": 0,
+      "out_id": "cc70fe39-2cdb-483c-aff5-c4079324b959",
+      "out_index": 0
+    },
+    {
+      "in_id": "79b08ecc-56db-4c01-8d35-e61dee30403c",
+      "in_index": 0,
+      "out_id": "d7d79966-b466-424d-8cf2-1637c67337e2",
+      "out_index": 0
+    },
+    {
+      "in_id": "5b113053-5a53-4000-b90d-2ceda501703a",
+      "in_index": 0,
+      "out_id": "79b08ecc-56db-4c01-8d35-e61dee30403c",
+      "out_index": 0,
+      "converter": {
+        "in": {
+          "id": "Data",
+          "name": "Data"
+        },
+        "out": {
+          "id": "Recognition",
+          "name": "Recognition"
+        }
+      }
+    },
+    {
+      "in_id": "5b113053-5a53-4000-b90d-2ceda501703a",
+      "in_index": 2,
+      "out_id": "79b08ecc-56db-4c01-8d35-e61dee30403c",
+      "out_index": 1
+    },
+    {
+      "in_id": "44b6d733-d12e-49ad-b94f-b84748cb935d",
+      "in_index": 0,
+      "out_id": "79b08ecc-56db-4c01-8d35-e61dee30403c",
+      "out_index": 1
+    },
+    {
+      "in_id": "44b6d733-d12e-49ad-b94f-b84748cb935d",
+      "in_index": 1,
+      "out_id": "79b08ecc-56db-4c01-8d35-e61dee30403c",
+      "out_index": 2
+    }
+  ],
+  "nodes": [
+    {
+      "id": "d179537a-6a47-444a-8821-98f8c060b608",
+      "model": {
+        "name": "In_riot",
+        "association_to_node": "RIoT [In_riot]"
+      },
+      "position": {
+        "x": 50.0,
+        "y": 137.59999999999997
+      }
+    },
+    {
+      "id": "7ebdfe84-44dd-497f-9d9d-21a255c20047",
+      "model": {
+        "name": "Transform_filter",
+        "association_to_node": "Raw Filter [Transform_filter]"
+      },
+      "position": {
+        "x": 274.52631578947364,
+        "y": 50.0
+      }
+    },
+    {
+      "id": "23e1ec4c-3a97-410e-921a-23c376329be1",
+      "model": {
+        "name": "Draw_lines",
+        "association_to_node": "Raw Data [Draw_lines]"
+      },
+      "position": {
+        "x": 659.6315789473684,
+        "y": 51.29473684210524
+      }
+    },
+    {
+      "id": "aecca174-17c2-4b9c-ade6-5901aac1e7aa",
+      "model": {
+        "name": "Transform_filter",
+        "association_to_node": "Annot Filter [Transform_filter]"
+      },
+      "position": {
+        "x": 285.1368421052632,
+        "y": 227.78947368421052
+      }
+    },
+    {
+      "id": "cc70fe39-2cdb-483c-aff5-c4079324b959",
+      "model": {
+        "name": "Biokit_to_fs",
+        "association_to_node": "Node [Biokit_to_fs]"
+      },
+      "position": {
+        "x": 620.9473684210526,
+        "y": 206.37894736842102
+      }
+    },
+    {
+      "id": "d7d79966-b466-424d-8cf2-1637c67337e2",
+      "model": {
+        "name": "Biokit_norm",
+        "association_to_node": "Norm [Biokit_norm]"
+      },
+      "position": {
+        "x": 630.4526315789474,
+        "y": 381.67368421052623
+      }
+    },
+    {
+      "id": "79b08ecc-56db-4c01-8d35-e61dee30403c",
+      "model": {
+        "name": "Biokit_recognizer",
+        "association_to_node": "Recognizer [Biokit_recognizer]"
+      },
+      "position": {
+        "x": 835.3578947368421,
+        "y": 216.16842105263152
+      }
+    },
+    {
+      "id": "5b113053-5a53-4000-b90d-2ceda501703a",
+      "model": {
+        "name": "Draw_recognition",
+        "association_to_node": "Recognition [Draw_recognition]"
+      },
+      "position": {
+        "x": 1109.8842105263157,
+        "y": 142.68421052631575
+      }
+    },
+    {
+      "id": "44b6d733-d12e-49ad-b94f-b84748cb935d",
+      "model": {
+        "name": "Draw_search_graph",
+        "association_to_node": "Search Graph [Draw_search_graph]"
+      },
+      "position": {
+        "x": 1118.663157894737,
+        "y": 335.06315789473683
+      }
+    }
+  ]
+}

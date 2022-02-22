@@ -22,16 +22,10 @@
           "Channel Names"
         ],
         [
-          "GUI Button Annotation [Annotate_ui_button]",
+          "Annot Filter [Transform_filter]",
           null,
           "Data",
           "Data"
-        ],
-        [
-          "Save [Out_data]",
-          null,
-          "Channel Names",
-          "Channel Names"
         ],
         [
           "Annot Filter [Transform_filter]",
@@ -83,46 +77,6 @@
       },
       "childs": []
     },
-    "GUI Button Annotation [Annotate_ui_button]": {
-      "class": "Annotate_ui_button",
-      "settings": {
-        "name": "GUI Button Annotation",
-        "fall_back_target": "None"
-      },
-      "childs": [
-        [
-          "Save [Out_data]",
-          null,
-          "Data",
-          "Data"
-        ],
-        [
-          "Save [Out_data]",
-          null,
-          "Annotation",
-          "Annotation"
-        ],
-        [
-          "Annot Filter [Transform_filter]",
-          null,
-          "Data",
-          "Data"
-        ],
-        [
-          "Train [Biokit_update_model]",
-          null,
-          "Annotation",
-          "Annotation"
-        ]
-      ]
-    },
-    "Save [Out_data]": {
-      "class": "Out_data",
-      "settings": {
-        "folder": "./data/Debug/"
-      },
-      "childs": []
-    },
     "Annot Filter [Transform_filter]": {
       "class": "Transform_filter",
       "settings": {
@@ -166,25 +120,63 @@
       },
       "childs": [
         [
-          "Train [Biokit_update_model]",
+          "Recognizer [Biokit_recognizer]",
           null,
           "Data",
           "Data"
         ]
       ]
     },
-    "Train [Biokit_update_model]": {
-      "class": "Biokit_update_model",
+    "Recognizer [Biokit_recognizer]": {
+      "class": "Biokit_recognizer",
       "settings": {
-        "token_insertion_penalty": 20,
-        "model_path": "./models/RIoT/sequence",
-        "train_iterations": [
-          7,
-          10
+        "token_insertion_penalty": 50,
+        "model_path": "./models/RIoT/sequence/"
+      },
+      "childs": [
+        [
+          "Recognition [Draw_recognition]",
+          null,
+          "Recognition",
+          "Data"
         ],
-        "phases_new_act": 1,
-        "update_every_s": 60,
-        "catch_all": "None"
+        [
+          "Recognition [Draw_recognition]",
+          null,
+          "HMM Meta",
+          "HMM Meta"
+        ],
+        [
+          "Search Graph [Draw_search_graph]",
+          null,
+          "HMM Meta",
+          "HMM Meta"
+        ],
+        [
+          "Search Graph [Draw_search_graph]",
+          null,
+          "Hypothesis",
+          "Hypothesis"
+        ]
+      ]
+    },
+    "Recognition [Draw_recognition]": {
+      "class": "Draw_recognition",
+      "settings": {
+        "name": "Recognition",
+        "xAxisLength": [
+          1000,
+          1000,
+          1000,
+          1000
+        ]
+      },
+      "childs": []
+    },
+    "Search Graph [Draw_search_graph]": {
+      "class": "Draw_search_graph",
+      "settings": {
+        "name": "Search Graph"
       },
       "childs": []
     }

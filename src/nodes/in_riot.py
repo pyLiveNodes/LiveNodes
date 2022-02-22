@@ -99,6 +99,7 @@ class In_riot(Node):
             # set stop and wait for it to go through
             self._stop_event.set()
             self.feeder_process.join()
+            print('Closed RIoT input')
             # self.feeder_process.terminate()
         self.feeder_process = None
         # our own close is called first, as we don't want to send data to a closed output

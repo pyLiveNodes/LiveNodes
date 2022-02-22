@@ -30,7 +30,10 @@
         "names": [
           "ACC_X",
           "ACC_Y",
-          "ACC_Z"
+          "ACC_Z",
+          "GYRO_X",
+          "GYRO_Y",
+          "GYRO_Z"
         ]
       },
       "childs": [
@@ -52,7 +55,7 @@
       "class": "Draw_lines",
       "settings": {
         "name": "Raw Data",
-        "n_plots": 3,
+        "n_plots": 6,
         "xAxisLength": 1000,
         "sample_rate": 100,
         "ylim": [

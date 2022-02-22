@@ -12,7 +12,7 @@ class Annotate_ui_button(Node):
         self.target_q = mp.Queue()
         self.fall_back_target = fall_back_target
         
-        self.annot_target = "Test"
+        self.annot_target = fall_back_target
         self.current_target = fall_back_target
         self.recording = False
 

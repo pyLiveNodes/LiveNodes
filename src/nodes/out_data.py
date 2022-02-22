@@ -119,8 +119,10 @@ class Out_data(Node):
         super().stop_processing(recurse)
         if self.outputFile is not None:
             self.outputFile.close()
-            self.outputFileAnnotation.write(f"{self.last_annotation[1]}, {self.last_annotation[2]}, {self.last_annotation[0]}")
+            if self.last_annotation is not None:
+                self.outputFileAnnotation.write(f"{self.last_annotation[1]}, {self.last_annotation[2]}, {self.last_annotation[0]}")
             self.outputFileAnnotation.close()
+            print('Stopped Writing out')
         self.outputFile = None
         self.outputDataset = None
         self.outputFileAnnotation = None
