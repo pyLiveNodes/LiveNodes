@@ -312,7 +312,9 @@ class Biokit_update_model(Node):
         Starts the streaming process.
         """
         if self.feeder_process is None:
+            # self.feeder_process = thread.Thread(target=self.sender_process)
             self.feeder_process = mp.Process(target=self.sender_process)
+            # self.feeder_process.daemon = True
             self.feeder_process.start()
         super().start_processing(recurse)
         

@@ -9,24 +9,12 @@ import math
 import numpy as np
 import time
 
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtCore
 import sys
 
 import asyncio 
 import multiprocessing as mp
 import threading
-
-
-# # TODO: as we now have a qt part here, we could add a qlabel with the fps...
-# class Run(QWidget):
-#     def __init__(self, pipeline, parent=None):
-#         super().__init__(parent)
-
-#         self.canvas = Animation(pipeline=pipeline)
-
-#         worker = Process(target = pipeline.start_processing)
-#         worker.daemon = True
-#         worker.start()
 
 
 # adapted from: https://stackoverflow.com/questions/39835300/python-qt-and-matplotlib-scatter-plots-with-blitting
@@ -38,10 +26,13 @@ class Run(FigureCanvasQTAgg):
 
         self.setupAnim(self.pipeline)
 
-        self.server_q = mp.Queue() # Termination Event
+        self.setFocusPolicy( QtCore.Qt.ClickFocus )
+        self.setFocus()
+
         self.worker_term_lock = mp.Lock()
         self.worker_term_lock.acquire()
         self.worker = mp.Process(target = self.worker_start)
+        # self.worker.daemon = True
         self.worker.start()
 
         self.show()
@@ -69,7 +60,7 @@ class Run(FigureCanvasQTAgg):
     def setupAnim(self, pipeline):
         self.timer = time.time()
 
-        font={'size': 6}
+        font={'size': 12}
 
         # TODO: let nodes explizitly declare this! 
         # TODO: while we're at it: let nodes declare available/required input and output streams

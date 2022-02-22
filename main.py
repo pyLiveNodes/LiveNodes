@@ -82,32 +82,26 @@ def draw_update (i, **kwargs):
     return ret_arts
 
 
-import asyncio 
-server_q = mp.Queue()
 
 def start():
-    asyncio.run(start_stop())
-    print('Process returning')
-
-async def start_stop():
     pipeline.start_processing()
-
-    while (server_q.empty()):
-        await asyncio.sleep(0)
-
+    worker_term_lock.acquire()
     print('Termination time in pipeline!')
     pipeline.stop_processing()
 
+worker_term_lock = mp.Lock()
+worker_term_lock.acquire()
 worker = Process(target=start)
 worker.start()
 
 def stop(*args, **kwargs):
     # Tell the process to terminate, then wait until it returns
-    server_q.put("Terminate")
+    worker_term_lock.release()
     worker.join()
 
-    print('Termination time in main!')
+    print('Termination time in view!')
     worker.terminate()
+    animationProcess.pause()
 
 fig.canvas.mpl_connect("close_event", stop)
 
