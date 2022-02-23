@@ -4,7 +4,7 @@ import json
 import traceback
 
 def discover_nodes():
-    ignore = ['utils', 'node', '__init__', 'draw_gmm']
+    ignore = ['utils', 'node', '__init__']
     files = [f.replace('/', '.').replace('.py', '') for f in list(glob.glob("src/nodes/*.py"))]
     imports = [(f, f.split('.')[-1].capitalize()) for f in files if f.split('.')[-1] not in ignore]
     return imports

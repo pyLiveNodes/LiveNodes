@@ -32,8 +32,18 @@
             "ROLL",
             "HEAD"
           ],
-          "targets": []
-        }
+          "targets": [
+            "None",
+            "Right",
+            "Left"
+          ]
+        },
+        "annotation_holes": "",
+        "csv_columns": [
+          "start",
+          "end",
+          "act"
+        ]
       },
       "childs": [
         [
@@ -65,6 +75,24 @@
           null,
           "Annotation",
           "Data"
+        ],
+        [
+          "GMM X [Draw_gmm]",
+          null,
+          "Channel Names",
+          "Channel Names"
+        ],
+        [
+          "GMM Y [Draw_gmm]",
+          null,
+          "Channel Names",
+          "Channel Names"
+        ],
+        [
+          "GMM Z [Draw_gmm]",
+          null,
+          "Channel Names",
+          "Channel Names"
         ]
       ]
     },
@@ -73,17 +101,12 @@
       "settings": {
         "name": "Raw Filter",
         "names": [
-          "A1",
-          "A2",
-          "C",
-          "Q1",
-          "Q2",
-          "Q3",
-          "Q4",
-          "PITCH",
-          "YAW",
-          "ROLL",
-          "HEAD"
+          "ACC_X",
+          "ACC_Y",
+          "ACC_Z",
+          "GYRO_X",
+          "GYRO_Y",
+          "GYRO_Z"
         ]
       },
       "childs": [
@@ -105,7 +128,7 @@
       "class": "Draw_lines",
       "settings": {
         "name": "Raw Data",
-        "n_plots": 11,
+        "n_plots": 6,
         "xAxisLength": 1000,
         "sample_rate": 100,
         "ylim": [
@@ -162,6 +185,24 @@
           null,
           "Data",
           "Data"
+        ],
+        [
+          "GMM X [Draw_gmm]",
+          null,
+          "Data",
+          "Data"
+        ],
+        [
+          "GMM Y [Draw_gmm]",
+          null,
+          "Data",
+          "Data"
+        ],
+        [
+          "GMM Z [Draw_gmm]",
+          null,
+          "Data",
+          "Data"
         ]
       ]
     },
@@ -195,6 +236,42 @@
           null,
           "Hypothesis",
           "Hypothesis"
+        ],
+        [
+          "GMM X [Draw_gmm]",
+          null,
+          "HMM Meta",
+          "HMM Meta"
+        ],
+        [
+          "GMM X [Draw_gmm]",
+          null,
+          "Hypo States",
+          "Hypo States"
+        ],
+        [
+          "GMM Y [Draw_gmm]",
+          null,
+          "HMM Meta",
+          "HMM Meta"
+        ],
+        [
+          "GMM Y [Draw_gmm]",
+          null,
+          "Hypo States",
+          "Hypo States"
+        ],
+        [
+          "GMM Z [Draw_gmm]",
+          null,
+          "HMM Meta",
+          "HMM Meta"
+        ],
+        [
+          "GMM Z [Draw_gmm]",
+          null,
+          "Hypo States",
+          "Hypo States"
         ]
       ]
     },
@@ -214,7 +291,47 @@
     "Search Graph [Draw_search_graph]": {
       "class": "Draw_search_graph",
       "settings": {
-        "name": "Search Graph"
+        "name": "Search Graph",
+        "n_hypos": 1
+      },
+      "childs": []
+    },
+    "GMM X [Draw_gmm]": {
+      "class": "Draw_gmm",
+      "settings": {
+        "name": "GMM X",
+        "plot_names": [
+          "ACC_X",
+          "GYRO_X"
+        ],
+        "n_scatter_points": 15,
+        "n_mixtures": 1
+      },
+      "childs": []
+    },
+    "GMM Y [Draw_gmm]": {
+      "class": "Draw_gmm",
+      "settings": {
+        "name": "GMM Y",
+        "plot_names": [
+          "ACC_Y",
+          "GYRO_Y"
+        ],
+        "n_scatter_points": 15,
+        "n_mixtures": 1
+      },
+      "childs": []
+    },
+    "GMM Z [Draw_gmm]": {
+      "class": "Draw_gmm",
+      "settings": {
+        "name": "GMM Z",
+        "plot_names": [
+          "ACC_Z",
+          "GYRO_Z"
+        ],
+        "n_scatter_points": 15,
+        "n_mixtures": 1
       },
       "childs": []
     },

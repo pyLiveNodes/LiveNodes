@@ -98,7 +98,7 @@ class Out_data(Node):
             if annotation == self.last_annotation[0]:
                 self.last_annotation = (annotation, self.last_annotation[1], self.last_annotation[2] + 1)
             else:
-                self.outputFileAnnotation.write(f"{self.last_annotation[1]}, {self.last_annotation[2]}, {self.last_annotation[0]} \n")
+                self.outputFileAnnotation.write(f"{self.last_annotation[1]},{self.last_annotation[2]},{self.last_annotation[0]}\n")
                 self.last_annotation = (annotation, self.last_annotation[2] + 1, self.last_annotation[2] + 1)
 
 
@@ -120,7 +120,7 @@ class Out_data(Node):
         if self.outputFile is not None:
             self.outputFile.close()
             if self.last_annotation is not None:
-                self.outputFileAnnotation.write(f"{self.last_annotation[1]}, {self.last_annotation[2]}, {self.last_annotation[0]}")
+                self.outputFileAnnotation.write(f"{self.last_annotation[1]},{self.last_annotation[2]},{self.last_annotation[0]}")
             self.outputFileAnnotation.close()
             print('Stopped Writing out')
         self.outputFile = None

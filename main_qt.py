@@ -10,7 +10,7 @@ from src.gui.config import Config
 from src.gui.run import Run
 from src.nodes.node import Node
 
-import json
+from nodes_collect import discover_infos
 
 
 class SubView(QWidget):
@@ -84,8 +84,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.central_widget.setCurrentWidget(widget_run)
 
     def onconfig(self, pipeline_path):
-        with open("nodes.json", 'r') as f:
-            known_nodes = json.load(f)
+        # in production we should switch this (no need to always load all modules!), but for now it's easier like this
+        known_nodes = discover_infos()
+        # with open("nodes.json", 'r') as f:
+        #     known_nodes = json.load(f)
 
         pipeline = Node.load(pipeline_path)
         widget_run = SubView(child=Config(pipeline=pipeline, nodes=known_nodes, pipeline_path=pipeline_path), name=f"Configuring: {pipeline_path}", back_fn=self.return_home)

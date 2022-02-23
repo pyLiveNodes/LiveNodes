@@ -53,7 +53,13 @@
             "cspin-rl",
             "vcut-lr"
           ]
-        }
+        },
+        "annotation_holes": "Stand",
+        "csv_columns": [
+          "act",
+          "start",
+          "end"
+        ]
       },
       "childs": [
         [

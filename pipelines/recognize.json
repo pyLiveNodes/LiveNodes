@@ -53,7 +53,13 @@
             "cspin-rl",
             "vcut-lr"
           ]
-        }
+        },
+        "annotation_holes": "Stand",
+        "csv_columns": [
+          "act",
+          "start",
+          "end"
+        ]
       },
       "childs": [
         [
@@ -121,6 +127,12 @@
           null,
           "Channel Names",
           "Channel Names"
+        ],
+        [
+          "GMM [Draw_gmm]",
+          null,
+          "Channel Names",
+          "Channel Names"
         ]
       ]
     },
@@ -152,6 +164,12 @@
         ],
         [
           "Recognizer [Biokit_recognizer]",
+          null,
+          "Data",
+          "Data"
+        ],
+        [
+          "GMM [Draw_gmm]",
           null,
           "Data",
           "Data"
@@ -241,6 +259,18 @@
           null,
           "Hypothesis",
           "Hypothesis"
+        ],
+        [
+          "GMM [Draw_gmm]",
+          null,
+          "HMM Meta",
+          "HMM Meta"
+        ],
+        [
+          "GMM [Draw_gmm]",
+          null,
+          "Hypo States",
+          "Hypo States"
         ]
       ]
     },
@@ -260,7 +290,21 @@
     "Search Graph [Draw_search_graph]": {
       "class": "Draw_search_graph",
       "settings": {
-        "name": "Search Graph"
+        "name": "Search Graph",
+        "n_hypos": 3
+      },
+      "childs": []
+    },
+    "GMM [Draw_gmm]": {
+      "class": "Draw_gmm",
+      "settings": {
+        "name": "GMM",
+        "plot_names": [
+          "EMG1__rms",
+          "Gonio2__calc_mean"
+        ],
+        "n_scatter_points": 10,
+        "n_mixtures": 2
       },
       "childs": []
     },

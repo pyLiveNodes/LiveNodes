@@ -25,6 +25,7 @@ from src.nodes.out_data import Out_data
 
 from src.nodes.draw_lines import Draw_lines
 from src.nodes.draw_recognition import Draw_recognition
+from src.nodes.draw_gmm import Draw_gmm
 
 from src.nodes.debug_frame_counter import Debug_frame_counter
 
@@ -79,10 +80,10 @@ def add_processing(pl_in, x_raw, x_processed, vis=(True, True, True)):
         filter3.add_output(draw_normed)
         filter3.add_output(draw_normed, data_stream="Channel Names", recv_data_stream="Channel Names")
 
-    return norm
+    return norm, fts
 
 
-def add_recognition(pl, norm, x_raw, x_processed, vis=True):
+def add_recognition(pl,fts, norm, x_raw, x_processed, vis=True):
     window1 = Transform_window(100, 0, name="File")
     select1 = Transform_majority_select(name="File")
     pl.add_output(window1, data_stream="File")
@@ -105,6 +106,14 @@ def add_recognition(pl, norm, x_raw, x_processed, vis=True):
         draw_search_graph = Draw_search_graph()
         recog.add_output(draw_search_graph, data_stream="HMM Meta", recv_data_stream="HMM Meta")
         recog.add_output(draw_search_graph, data_stream="Hypothesis", recv_data_stream="Hypothesis")
+
+    if vis:
+        draw_gmm = Draw_gmm(name="GMM", plot_names=channel_names_fts[:2])
+        norm.add_output(draw_gmm, data_stream="Data", recv_data_stream="Data")
+        fts.add_output(draw_gmm, data_stream="Channel Names", recv_data_stream="Channel Names")
+        recog.add_output(draw_gmm, data_stream="HMM Meta", recv_data_stream="HMM Meta")
+        recog.add_output(draw_gmm, data_stream="Hypo States", recv_data_stream="Hypo States")
+
 
     return recog
 
@@ -215,9 +224,27 @@ def riot_add_recog(pl, has_annotation=False):
         pl.add_output(memory, data_stream='Annotation')
         memory.add_output(draw_recognition_path, recv_data_stream='Annotation')
 
-    draw_search_graph = Draw_search_graph()
+    draw_search_graph = Draw_search_graph(n_hypos=1)
     recog.add_output(draw_search_graph, data_stream="HMM Meta", recv_data_stream="HMM Meta")
     recog.add_output(draw_search_graph, data_stream="Hypothesis", recv_data_stream="Hypothesis")
+
+    draw_gmm = Draw_gmm(name="GMM X", plot_names=["ACC_X", "GYRO_X"], n_mixtures=1, n_scatter_points=15)
+    norm.add_output(draw_gmm, data_stream="Data", recv_data_stream="Data")
+    pl.add_output(draw_gmm, data_stream="Channel Names", recv_data_stream="Channel Names")
+    recog.add_output(draw_gmm, data_stream="HMM Meta", recv_data_stream="HMM Meta")
+    recog.add_output(draw_gmm, data_stream="Hypo States", recv_data_stream="Hypo States")
+
+    draw_gmm = Draw_gmm(name="GMM Y", plot_names=["ACC_Y", "GYRO_Y"], n_mixtures=1, n_scatter_points=15)
+    norm.add_output(draw_gmm, data_stream="Data", recv_data_stream="Data")
+    pl.add_output(draw_gmm, data_stream="Channel Names", recv_data_stream="Channel Names")
+    recog.add_output(draw_gmm, data_stream="HMM Meta", recv_data_stream="HMM Meta")
+    recog.add_output(draw_gmm, data_stream="Hypo States", recv_data_stream="Hypo States")
+
+    draw_gmm = Draw_gmm(name="GMM Z", plot_names=["ACC_Z", "GYRO_Z"], n_mixtures=1, n_scatter_points=15)
+    norm.add_output(draw_gmm, data_stream="Data", recv_data_stream="Data")
+    pl.add_output(draw_gmm, data_stream="Channel Names", recv_data_stream="Channel Names")
+    recog.add_output(draw_gmm, data_stream="HMM Meta", recv_data_stream="HMM Meta")
+    recog.add_output(draw_gmm, data_stream="Hypo States", recv_data_stream="Hypo States")
 
     return pl
 
@@ -291,28 +318,28 @@ if __name__ == "__main__":
     pl = In_playback(files="./data/KneeBandageCSL2018/part00/01.h5", meta=meta, batch=20)
     # pl = Playback(files="./data/KneeBandageCSL2018/**/*.h5", meta=meta, batch=20)
 
-    norm = add_processing(pl, x_raw=x_raw, x_processed=x_processed, vis=(True, True, True))
+    norm, fts = add_processing(pl, x_raw=x_raw, x_processed=x_processed, vis=(True, True, True))
     save(pl, "pipelines/preprocess.json")
 
 
     print('=== Build Recognition Pipeline ===')
     pl = In_playback(files="./data/KneeBandageCSL2018/part00/01.h5", meta=meta, batch=20)
-    norm = add_processing(pl, x_raw=x_raw, x_processed=x_processed, vis=(False, False, True))
-    recog = add_recognition(pl, norm, x_raw=x_raw, x_processed=x_processed, vis=True)
+    norm, fts = add_processing(pl, x_raw=x_raw, x_processed=x_processed, vis=(False, False, True))
+    recog = add_recognition(pl, fts, norm, x_raw=x_raw, x_processed=x_processed, vis=True)
     save(pl, "pipelines/recognize.json")
 
 
     print('=== Build Recognition Pipeline (no vis) ===')
     pl = In_data(files="./data/KneeBandageCSL2018/part00/*.h5", meta=meta, batch=2000)
-    norm = add_processing(pl, x_raw=x_raw, x_processed=x_processed, vis=(False, False, False))
-    recog = add_recognition(pl, norm, x_raw=x_raw, x_processed=x_processed, vis=False)
+    norm, fts = add_processing(pl, x_raw=x_raw, x_processed=x_processed, vis=(False, False, False))
+    recog = add_recognition(pl, fts, norm, x_raw=x_raw, x_processed=x_processed, vis=False)
     save(pl, "pipelines/recognize_no_vis.json")
 
 
     print('=== Build Train Pipeline ===')
 
     pl = In_data(files="./data/KneeBandageCSL2018/part*/*.h5", meta=meta, batch=2000)
-    norm = add_processing(pl, x_raw=x_raw, x_processed=x_processed, vis=(False, False, False))
+    norm, fts = add_processing(pl, x_raw=x_raw, x_processed=x_processed, vis=(False, False, False))
     save(pl, "pipelines/preprocess_no_vis.json")
 
     train = add_train(pl, norm)
@@ -370,11 +397,11 @@ if __name__ == "__main__":
     riot_meta = {
         "sample_rate": 100,
         "channels": In_riot.channels,
-        "targets": []
+        "targets": ["None", "Right", "Left"]
     }
 
-    pl = In_playback(files="./data/RIoT/*.h5", meta=riot_meta, batch=1)
-    pl = add_riot_draw(pl)
+    pl = In_playback(files="./data/RIoT/*.h5", csv_columns=["start", "end", "act"], annotation_holes="", meta=riot_meta, batch=1)
+    pl = add_riot_draw(pl, subset=0.5)
     save(pl, "pipelines/riot_playback.json")
 
 

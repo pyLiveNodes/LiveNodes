@@ -12,7 +12,7 @@ import multiprocessing as mp
 
 
 class Draw_search_graph(Node):
-    def __init__(self, name = "Search Graph", dont_time = False):
+    def __init__(self, n_hypos = 3, name = "Search Graph", dont_time = False):
         super().__init__(name=name, has_outputs=False, dont_time=dont_time)
 
         self.queue_meta = mp.Queue()
@@ -23,8 +23,10 @@ class Draw_search_graph(Node):
 
         self.name = name
         self._axes_setup = False
+        self.n_hypos = n_hypos
 
         self.bar_objs = []
+        self.labels = []
         self.previous_alphas = []
         self.token_node_map = {}
 
@@ -52,6 +54,7 @@ class Draw_search_graph(Node):
     def _get_setup(self):
         return {\
             "name": self.name,
+            "n_hypos": self.n_hypos
            }
 
     def _hack_get_atom_from_model_id(self, model_id):
@@ -80,7 +83,8 @@ class Draw_search_graph(Node):
 
             n_atoms = len(self.token_node_map[token])
             ax.set_xlim(0, n_atoms)
-            ax.set_ylabel(token, rotation=0, ha='right', va='center')
+            self.labels.append(ax.text(0.005, 0.95, token, zorder=100, c="white", fontproperties=ax.xaxis.label.get_font_properties(), rotation='horizontal', va='top', ha='left', transform = ax.transAxes))
+            # ax.set_ylabel(token, rotation=0, ha='right', va='center')
 
             self.previous_alphas.append([1] * n_atoms)
             verts = [(start, 1) for start in range(n_atoms)]
@@ -114,7 +118,6 @@ class Draw_search_graph(Node):
         # axes = subfig.subplots(self.nr_plots, 1)
         # if self.nr_plots == 1:
         #     axes = [axes]
-        # subfig.suptitle("Search Graph", fontsize=14)
         
         def update (**kwargs):
             nonlocal self, subfig
@@ -133,11 +136,12 @@ class Draw_search_graph(Node):
 
                 self._setup_axes(subfig)
                 self._axes_setup = True
+                return self.labels
             
             # print('Update', self._axes_setup, self.graph is not None)
             
             if self._axes_setup and hypo is not None:
-                state_ids = hypo[:3]
+                state_ids = hypo[:self.n_hypos]
 
                 res_changed_bars = [] # faster if only few bars are changed, albeit less elegant than before
                 for i, bar in enumerate(self.bar_objs):
@@ -149,7 +153,7 @@ class Draw_search_graph(Node):
                         bar.set_alpha(alphas)
 
                 # if np.random.random() > 0.95: # some events i am not entirely aware of result in bars being wiped out and not redrawn, as we do keep track of them
-                return self.bar_objs
+                return self.labels + self.bar_objs
                 # return res_changed_bars
             return []
         return update

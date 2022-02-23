@@ -31,7 +31,7 @@ class Biokit_recognizer(Node):
             "class": "Biokit_recognizer",
             "file": "biokit_recognizer.py",
             "in": ["Data", "File"],
-            "out": ["Recognition", "HMM Meta", "Hypothesis"],
+            "out": ["Recognition", "HMM Meta", "Hypothesis", "Hypo States"],
             "init": {
                 "name": "Recognizer",
                 "model_path": "./models/",
@@ -66,10 +66,27 @@ class Biokit_recognizer(Node):
         _, path, _ = self.reco.decode(fs, generatepath=True, initialize=self._initial) # not sure if we need to initialize this on the first call?
 
         if self._initial:
-            self._initial = False
+            # get search graph
             graph_json = self.reco.getSearchGraph().createGraphJson(self.reco.getDictionary(), False)
             graph = json.loads(graph_json)
-            self.send_data({"topology": self.topology, "search_graph": graph}, data_stream="HMM Meta") 
+
+            # get gaussians
+            gmms = {}
+            for model_name in self.reco.getGaussMixturesSet().getAvailableModelNames():
+                gmm_id = self.reco.getGaussMixturesSet().getModelId(model_name)
+                gmm_container = self.reco.getGaussMixturesSet().getGaussMixture(gmm_id)
+                gmm = gmm_container.getGaussianContainer()
+                means = gmm.getMeanVectors()
+                mixture_weights = gmm_container.getMixtureWeights()
+                gmms[model_name] = {
+                    "means": means,
+                    "mixture_weights": mixture_weights,
+                    "covariances": [gmm.getCovariance(i).getData() for i in range(len(means))]
+                }
+
+            # send meta data
+            self.send_data({"topology": self.topology, "search_graph": graph, "gmms": gmms}, data_stream="HMM Meta") 
+            self._initial = False
 
         if path != None:
             res = [( \
@@ -81,7 +98,9 @@ class Biokit_recognizer(Node):
             self.send_data(res, data_stream="Recognition")
 
             # Maybe consider adding a mechanism that only calcs/gets this if someone requested it?
+            # TODO: check this again and see if we can merge the streams somehow...
             self.send_data(self.reco.handler.getCurrentHypoNodeIds(), data_stream="Hypothesis")
+            self.send_data(self.reco.handler.getCurrentHypoStates(), data_stream="Hypo States")
 
     def _get_topology(self):
         dc = self.reco.getDictionary()

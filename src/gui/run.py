@@ -1,3 +1,4 @@
+import traceback
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 
 import matplotlib
@@ -20,7 +21,7 @@ import threading
 # adapted from: https://stackoverflow.com/questions/39835300/python-qt-and-matplotlib-scatter-plots-with-blitting
 class Run(FigureCanvasQTAgg):
     def __init__(self, pipeline):
-        super().__init__(Figure(figsize=(12, 7.5)))
+        super().__init__(Figure(figsize=(12, 10)))
 
         self.pipeline = pipeline
 
@@ -50,7 +51,7 @@ class Run(FigureCanvasQTAgg):
     def stop(self, *args, **kwargs):
         # Tell the process to terminate, then wait until it returns
         self.worker_term_lock.release()
-        self.worker.join()
+        # self.worker.join()
 
         print('Termination time in view!')
         self.worker.terminate()
@@ -60,7 +61,7 @@ class Run(FigureCanvasQTAgg):
     def setupAnim(self, pipeline):
         self.timer = time.time()
 
-        font={'size': 12}
+        font={'size': 10}
 
         # TODO: let nodes explizitly declare this! 
         # TODO: while we're at it: let nodes declare available/required input and output streams
@@ -78,7 +79,7 @@ class Run(FigureCanvasQTAgg):
             raise Exception ('Must have at least one draw function registered')
 
         n_figs = len(draws)
-        cols = min(2, n_figs)
+        cols = min(3, n_figs)
         rows = math.ceil(n_figs / cols) # ie max 3 columns
 
         # https://matplotlib.org/stable/gallery/subplots_axes_and_figures/subfigures.html
@@ -92,8 +93,15 @@ class Run(FigureCanvasQTAgg):
 
         # not nice, as cannot be updated at runtime later on (not sure if that'll be necessary tho)
         def draw_update (i, **kwargs):
-            ret_arts = list(np.concatenate([fn(**kwargs) for fn in artists], axis=0))
+            ret_arts = []
+            for fn in artists:
+                try:
+                    ret_arts.extend(fn(**kwargs))
+                except Exception as err:
+                    print(err)
+                    print(traceback.format_exc())
 
+            # TODO: move this into a node :D
             if i % 100 == 0 and i != 0:
                 el_time = time.time() - self.timer
                 self.fps = i/el_time

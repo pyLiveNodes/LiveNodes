@@ -1,0 +1,341 @@
+{
+  "connections": [
+    {
+      "in_id": "e187cf4c-3150-45b8-833d-b066864f36d8",
+      "in_index": 0,
+      "out_id": "41ab42e0-b9b6-4a57-82e1-c6f0b5a8b194",
+      "out_index": 0
+    },
+    {
+      "in_id": "e187cf4c-3150-45b8-833d-b066864f36d8",
+      "in_index": 1,
+      "out_id": "41ab42e0-b9b6-4a57-82e1-c6f0b5a8b194",
+      "out_index": 4
+    },
+    {
+      "in_id": "b9f51bea-8667-4d19-8758-26c245bb4ba1",
+      "in_index": 0,
+      "out_id": "41ab42e0-b9b6-4a57-82e1-c6f0b5a8b194",
+      "out_index": 0
+    },
+    {
+      "in_id": "b9f51bea-8667-4d19-8758-26c245bb4ba1",
+      "in_index": 1,
+      "out_id": "41ab42e0-b9b6-4a57-82e1-c6f0b5a8b194",
+      "out_index": 4
+    },
+    {
+      "in_id": "17a68276-2582-4b7d-9f11-af470d9f3ca4",
+      "in_index": 0,
+      "out_id": "41ab42e0-b9b6-4a57-82e1-c6f0b5a8b194",
+      "out_index": 2,
+      "converter": {
+        "in": {
+          "id": "Data",
+          "name": "Data"
+        },
+        "out": {
+          "id": "Annotation",
+          "name": "Annotation"
+        }
+      }
+    },
+    {
+      "in_id": "9e80b762-c4ce-45fc-a165-4d61f7059271",
+      "in_index": 1,
+      "out_id": "41ab42e0-b9b6-4a57-82e1-c6f0b5a8b194",
+      "out_index": 4
+    },
+    {
+      "in_id": "94874d29-afc9-48cc-af3f-59b414c65166",
+      "in_index": 1,
+      "out_id": "41ab42e0-b9b6-4a57-82e1-c6f0b5a8b194",
+      "out_index": 4
+    },
+    {
+      "in_id": "21d4a4ca-4db0-4fe2-8b43-85057808a414",
+      "in_index": 1,
+      "out_id": "41ab42e0-b9b6-4a57-82e1-c6f0b5a8b194",
+      "out_index": 4
+    },
+    {
+      "in_id": "0d8eead1-b2ab-4317-8453-34ce936364fe",
+      "in_index": 0,
+      "out_id": "e187cf4c-3150-45b8-833d-b066864f36d8",
+      "out_index": 0
+    },
+    {
+      "in_id": "0d8eead1-b2ab-4317-8453-34ce936364fe",
+      "in_index": 1,
+      "out_id": "e187cf4c-3150-45b8-833d-b066864f36d8",
+      "out_index": 1
+    },
+    {
+      "in_id": "69b88061-5dcd-49d7-9d3e-6ec57682dd9a",
+      "in_index": 0,
+      "out_id": "b9f51bea-8667-4d19-8758-26c245bb4ba1",
+      "out_index": 0
+    },
+    {
+      "in_id": "2f89e253-e114-4290-98c0-a172fa2ef997",
+      "in_index": 0,
+      "out_id": "69b88061-5dcd-49d7-9d3e-6ec57682dd9a",
+      "out_index": 0
+    },
+    {
+      "in_id": "013a6e50-5489-44b4-9a80-2bee6c11c23b",
+      "in_index": 0,
+      "out_id": "2f89e253-e114-4290-98c0-a172fa2ef997",
+      "out_index": 0
+    },
+    {
+      "in_id": "9e80b762-c4ce-45fc-a165-4d61f7059271",
+      "in_index": 0,
+      "out_id": "2f89e253-e114-4290-98c0-a172fa2ef997",
+      "out_index": 0
+    },
+    {
+      "in_id": "94874d29-afc9-48cc-af3f-59b414c65166",
+      "in_index": 0,
+      "out_id": "2f89e253-e114-4290-98c0-a172fa2ef997",
+      "out_index": 0
+    },
+    {
+      "in_id": "21d4a4ca-4db0-4fe2-8b43-85057808a414",
+      "in_index": 0,
+      "out_id": "2f89e253-e114-4290-98c0-a172fa2ef997",
+      "out_index": 0
+    },
+    {
+      "in_id": "edd66aac-44d7-4c5c-b8ee-dc4d6e28fd8b",
+      "in_index": 0,
+      "out_id": "013a6e50-5489-44b4-9a80-2bee6c11c23b",
+      "out_index": 0,
+      "converter": {
+        "in": {
+          "id": "Data",
+          "name": "Data"
+        },
+        "out": {
+          "id": "Recognition",
+          "name": "Recognition"
+        }
+      }
+    },
+    {
+      "in_id": "edd66aac-44d7-4c5c-b8ee-dc4d6e28fd8b",
+      "in_index": 2,
+      "out_id": "013a6e50-5489-44b4-9a80-2bee6c11c23b",
+      "out_index": 1
+    },
+    {
+      "in_id": "6f9388a3-0d33-4b76-bf80-45a9aa628443",
+      "in_index": 0,
+      "out_id": "013a6e50-5489-44b4-9a80-2bee6c11c23b",
+      "out_index": 1
+    },
+    {
+      "in_id": "6f9388a3-0d33-4b76-bf80-45a9aa628443",
+      "in_index": 1,
+      "out_id": "013a6e50-5489-44b4-9a80-2bee6c11c23b",
+      "out_index": 2
+    },
+    {
+      "in_id": "9e80b762-c4ce-45fc-a165-4d61f7059271",
+      "in_index": 2,
+      "out_id": "013a6e50-5489-44b4-9a80-2bee6c11c23b",
+      "out_index": 1
+    },
+    {
+      "in_id": "9e80b762-c4ce-45fc-a165-4d61f7059271",
+      "in_index": 3,
+      "out_id": "013a6e50-5489-44b4-9a80-2bee6c11c23b",
+      "out_index": 3
+    },
+    {
+      "in_id": "94874d29-afc9-48cc-af3f-59b414c65166",
+      "in_index": 2,
+      "out_id": "013a6e50-5489-44b4-9a80-2bee6c11c23b",
+      "out_index": 1
+    },
+    {
+      "in_id": "94874d29-afc9-48cc-af3f-59b414c65166",
+      "in_index": 3,
+      "out_id": "013a6e50-5489-44b4-9a80-2bee6c11c23b",
+      "out_index": 3
+    },
+    {
+      "in_id": "21d4a4ca-4db0-4fe2-8b43-85057808a414",
+      "in_index": 2,
+      "out_id": "013a6e50-5489-44b4-9a80-2bee6c11c23b",
+      "out_index": 1
+    },
+    {
+      "in_id": "21d4a4ca-4db0-4fe2-8b43-85057808a414",
+      "in_index": 3,
+      "out_id": "013a6e50-5489-44b4-9a80-2bee6c11c23b",
+      "out_index": 3
+    },
+    {
+      "in_id": "edd66aac-44d7-4c5c-b8ee-dc4d6e28fd8b",
+      "in_index": 1,
+      "out_id": "17a68276-2582-4b7d-9f11-af470d9f3ca4",
+      "out_index": 0,
+      "converter": {
+        "in": {
+          "id": "Annotation",
+          "name": "Annotation"
+        },
+        "out": {
+          "id": "Data",
+          "name": "Data"
+        }
+      }
+    }
+  ],
+  "nodes": [
+    {
+      "id": "41ab42e0-b9b6-4a57-82e1-c6f0b5a8b194",
+      "model": {
+        "name": "In_playback",
+        "association_to_node": "Playback [In_playback]"
+      },
+      "position": {
+        "x": 50.0,
+        "y": 157.13599999999988
+      }
+    },
+    {
+      "id": "e187cf4c-3150-45b8-833d-b066864f36d8",
+      "model": {
+        "name": "Transform_filter",
+        "association_to_node": "Raw Filter [Transform_filter]"
+      },
+      "position": {
+        "x": 348.5049719626171,
+        "y": 50.0
+      }
+    },
+    {
+      "id": "0d8eead1-b2ab-4317-8453-34ce936364fe",
+      "model": {
+        "name": "Draw_lines",
+        "association_to_node": "Raw Data [Draw_lines]"
+      },
+      "position": {
+        "x": 708.1724112149534,
+        "y": 51.48456074766341
+      }
+    },
+    {
+      "id": "b9f51bea-8667-4d19-8758-26c245bb4ba1",
+      "model": {
+        "name": "Transform_filter",
+        "association_to_node": "Annot Filter [Transform_filter]"
+      },
+      "position": {
+        "x": 277.3084859813086,
+        "y": 331.5644859813085
+      }
+    },
+    {
+      "id": "69b88061-5dcd-49d7-9d3e-6ec57682dd9a",
+      "model": {
+        "name": "Biokit_to_fs",
+        "association_to_node": "Node [Biokit_to_fs]"
+      },
+      "position": {
+        "x": 604.2250467289721,
+        "y": 490.6639252336448
+      }
+    },
+    {
+      "id": "2f89e253-e114-4290-98c0-a172fa2ef997",
+      "model": {
+        "name": "Biokit_norm",
+        "association_to_node": "Norm [Biokit_norm]"
+      },
+      "position": {
+        "x": 678.2856074766356,
+        "y": 326.7473644859813
+      }
+    },
+    {
+      "id": "013a6e50-5489-44b4-9a80-2bee6c11c23b",
+      "model": {
+        "name": "Biokit_recognizer",
+        "association_to_node": "Recognizer [Biokit_recognizer]"
+      },
+      "position": {
+        "x": 880.218168224299,
+        "y": 311.4388037383177
+      }
+    },
+    {
+      "id": "edd66aac-44d7-4c5c-b8ee-dc4d6e28fd8b",
+      "model": {
+        "name": "Draw_recognition",
+        "association_to_node": "Recognition [Draw_recognition]"
+      },
+      "position": {
+        "x": 1214.9632897196261,
+        "y": 184.0536822429906
+      }
+    },
+    {
+      "id": "6f9388a3-0d33-4b76-bf80-45a9aa628443",
+      "model": {
+        "name": "Draw_search_graph",
+        "association_to_node": "Search Graph [Draw_search_graph]"
+      },
+      "position": {
+        "x": 1213.1861682242989,
+        "y": 465.7462429906541
+      }
+    },
+    {
+      "id": "9e80b762-c4ce-45fc-a165-4d61f7059271",
+      "model": {
+        "name": "Draw_gmm",
+        "association_to_node": "ACC X_Y [Draw_gmm]"
+      },
+      "position": {
+        "x": 1225.0,
+        "y": 645.0
+      }
+    },
+    {
+      "id": "94874d29-afc9-48cc-af3f-59b414c65166",
+      "model": {
+        "name": "Draw_gmm",
+        "association_to_node": "GMM Y_Z [Draw_gmm]"
+      },
+      "position": {
+        "x": 1208.0,
+        "y": 884.0
+      }
+    },
+    {
+      "id": "21d4a4ca-4db0-4fe2-8b43-85057808a414",
+      "model": {
+        "name": "Draw_gmm",
+        "association_to_node": "GMM Z [Draw_gmm]"
+      },
+      "position": {
+        "x": 862.0,
+        "y": 800.0
+      }
+    },
+    {
+      "id": "17a68276-2582-4b7d-9f11-af470d9f3ca4",
+      "model": {
+        "name": "Memory",
+        "association_to_node": "Memory [Memory]"
+      },
+      "position": {
+        "x": 456.12785046728993,
+        "y": 203.30512149532703
+      }
+    }
+  ]
+}

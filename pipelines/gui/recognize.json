@@ -1,18 +1,6 @@
 {
   "connections": [
     {
-      "in_id": "cd3fd473-0dd2-497f-90e2-029fddf02161",
-      "in_index": 0,
-      "out_id": "43c8a859-3de6-4868-b139-47ca91c0f8e0",
-      "out_index": 0
-    },
-    {
-      "in_id": "cd3fd473-0dd2-497f-90e2-029fddf02161",
-      "in_index": 1,
-      "out_id": "43c8a859-3de6-4868-b139-47ca91c0f8e0",
-      "out_index": 4
-    },
-    {
       "in_id": "388c50b8-90de-47a7-abb1-464f2d632058",
       "in_index": 0,
       "out_id": "43c8a859-3de6-4868-b139-47ca91c0f8e0",
@@ -57,34 +45,10 @@
       }
     },
     {
-      "in_id": "dc9eee8e-8cc5-41d9-8565-dd1d9cc30415",
-      "in_index": 0,
-      "out_id": "cd3fd473-0dd2-497f-90e2-029fddf02161",
-      "out_index": 0
-    },
-    {
-      "in_id": "dc9eee8e-8cc5-41d9-8565-dd1d9cc30415",
-      "in_index": 1,
-      "out_id": "cd3fd473-0dd2-497f-90e2-029fddf02161",
-      "out_index": 1
-    },
-    {
       "in_id": "821c0723-ed58-4a30-8bd8-86b2ae20a6cb",
       "in_index": 0,
       "out_id": "388c50b8-90de-47a7-abb1-464f2d632058",
       "out_index": 0
-    },
-    {
-      "in_id": "7e1fffb5-b4e1-4769-864e-c4f55ed3acd4",
-      "in_index": 0,
-      "out_id": "821c0723-ed58-4a30-8bd8-86b2ae20a6cb",
-      "out_index": 0
-    },
-    {
-      "in_id": "7e1fffb5-b4e1-4769-864e-c4f55ed3acd4",
-      "in_index": 1,
-      "out_id": "821c0723-ed58-4a30-8bd8-86b2ae20a6cb",
-      "out_index": 1
     },
     {
       "in_id": "2f84071d-a31f-4734-a34b-58f8dcc764f8",
@@ -99,19 +63,13 @@
       "out_index": 1
     },
     {
-      "in_id": "0c838bd9-f089-4a93-be22-725687f1c92f",
-      "in_index": 0,
-      "out_id": "7e1fffb5-b4e1-4769-864e-c4f55ed3acd4",
-      "out_index": 0
-    },
-    {
-      "in_id": "0c838bd9-f089-4a93-be22-725687f1c92f",
+      "in_id": "7573c340-99e5-40e8-9e92-e9c1da79d0ee",
       "in_index": 1,
-      "out_id": "7e1fffb5-b4e1-4769-864e-c4f55ed3acd4",
+      "out_id": "821c0723-ed58-4a30-8bd8-86b2ae20a6cb",
       "out_index": 1
     },
     {
-      "in_id": "a8515f2d-f79b-4aaa-8481-e59d4b2e1a41",
+      "in_id": "e33304d3-79a5-4864-97f1-a166bb7834f6",
       "in_index": 0,
       "out_id": "2f84071d-a31f-4734-a34b-58f8dcc764f8",
       "out_index": 0
@@ -119,13 +77,19 @@
     {
       "in_id": "a026ca10-daf7-438b-ae2c-ba5c15a4fd99",
       "in_index": 0,
-      "out_id": "a8515f2d-f79b-4aaa-8481-e59d4b2e1a41",
+      "out_id": "e33304d3-79a5-4864-97f1-a166bb7834f6",
       "out_index": 0
     },
     {
       "in_id": "8acf133b-30a3-4e0c-b4a0-d4df447d32cb",
       "in_index": 0,
-      "out_id": "a8515f2d-f79b-4aaa-8481-e59d4b2e1a41",
+      "out_id": "e33304d3-79a5-4864-97f1-a166bb7834f6",
+      "out_index": 0
+    },
+    {
+      "in_id": "7573c340-99e5-40e8-9e92-e9c1da79d0ee",
+      "in_index": 0,
+      "out_id": "e33304d3-79a5-4864-97f1-a166bb7834f6",
       "out_index": 0
     },
     {
@@ -150,13 +114,47 @@
       "in_id": "a459d79a-f9ee-4076-a3a7-42302cfcb08a",
       "in_index": 0,
       "out_id": "8acf133b-30a3-4e0c-b4a0-d4df447d32cb",
-      "out_index": 0
+      "out_index": 0,
+      "converter": {
+        "in": {
+          "id": "Data",
+          "name": "Data"
+        },
+        "out": {
+          "id": "Recognition",
+          "name": "Recognition"
+        }
+      }
     },
     {
       "in_id": "a459d79a-f9ee-4076-a3a7-42302cfcb08a",
       "in_index": 2,
       "out_id": "8acf133b-30a3-4e0c-b4a0-d4df447d32cb",
       "out_index": 1
+    },
+    {
+      "in_id": "0a4d37d3-d7f0-47b0-b898-0839434defcc",
+      "in_index": 0,
+      "out_id": "8acf133b-30a3-4e0c-b4a0-d4df447d32cb",
+      "out_index": 1
+    },
+    {
+      "in_id": "0a4d37d3-d7f0-47b0-b898-0839434defcc",
+      "in_index": 1,
+      "out_id": "8acf133b-30a3-4e0c-b4a0-d4df447d32cb",
+      "out_index": 2
+    },
+    {
+      "in_id": "7573c340-99e5-40e8-9e92-e9c1da79d0ee",
+      "in_index": 2,
+      "out_id": "8acf133b-30a3-4e0c-b4a0-d4df447d32cb",
+      "out_index": 1
+    },
+    {
+      "in_id": "7573c340-99e5-40e8-9e92-e9c1da79d0ee",
+      "in_index": 3,
+      "out_id": "8acf133b-30a3-4e0c-b4a0-d4df447d32cb",
+      "out_index": 3
     },
     {
       "in_id": "2f8c0c6c-ab74-42e4-8dc0-8b5af6a213cb",
@@ -206,29 +204,7 @@
       },
       "position": {
         "x": 50.0,
-        "y": 418.4399999999998
-      }
-    },
-    {
-      "id": "cd3fd473-0dd2-497f-90e2-029fddf02161",
-      "model": {
-        "name": "Transform_filter",
-        "association_to_node": "Raw Filter [Transform_filter]"
-      },
-      "position": {
-        "x": 364.48000000000036,
-        "y": 875.6599999999999
-      }
-    },
-    {
-      "id": "dc9eee8e-8cc5-41d9-8565-dd1d9cc30415",
-      "model": {
-        "name": "Draw_lines",
-        "association_to_node": "Raw Data [Draw_lines]"
-      },
-      "position": {
-        "x": 742.4600000000003,
-        "y": 876.3999999999997
+        "y": 232.87999999999988
       }
     },
     {
@@ -239,7 +215,7 @@
       },
       "position": {
         "x": 396.2000000000003,
-        "y": 235.55999999999995
+        "y": 50.0
       }
     },
     {
@@ -250,29 +226,7 @@
       },
       "position": {
         "x": 640.2200000000003,
-        "y": 236.33999999999992
-      }
-    },
-    {
-      "id": "7e1fffb5-b4e1-4769-864e-c4f55ed3acd4",
-      "model": {
-        "name": "Transform_filter",
-        "association_to_node": "Feature Filter [Transform_filter]"
-      },
-      "position": {
-        "x": 1073.4999999999998,
-        "y": 52.18000000000029
-      }
-    },
-    {
-      "id": "0c838bd9-f089-4a93-be22-725687f1c92f",
-      "model": {
-        "name": "Draw_lines",
-        "association_to_node": "Features [Draw_lines]"
-      },
-      "position": {
-        "x": 1507.6400000000003,
-        "y": 50.0
+        "y": 50.77999999999997
       }
     },
     {
@@ -283,18 +237,18 @@
       },
       "position": {
         "x": 1059.72,
-        "y": 237.81999999999977
+        "y": 52.25999999999982
       }
     },
     {
-      "id": "a8515f2d-f79b-4aaa-8481-e59d4b2e1a41",
+      "id": "e33304d3-79a5-4864-97f1-a166bb7834f6",
       "model": {
         "name": "Biokit_norm",
-        "association_to_node": "Node [Biokit_norm]"
+        "association_to_node": "Norm [Biokit_norm]"
       },
       "position": {
-        "x": 1239.7199999999998,
-        "y": 237.12000000000006
+        "x": 1247.04,
+        "y": 52.04000000000002
       }
     },
     {
@@ -305,7 +259,7 @@
       },
       "position": {
         "x": 1446.38,
-        "y": 236.42000000000007
+        "y": 50.86000000000013
       }
     },
     {
@@ -316,7 +270,7 @@
       },
       "position": {
         "x": 1707.0599999999997,
-        "y": 236.4600000000001
+        "y": 50.90000000000015
       }
     },
     {
@@ -327,7 +281,7 @@
       },
       "position": {
         "x": 2105.9399999999996,
-        "y": 235.72000000000014
+        "y": 50.160000000000196
       }
     },
     {
@@ -337,8 +291,8 @@
         "association_to_node": "Recognizer [Biokit_recognizer]"
       },
       "position": {
-        "x": 1434.08,
-        "y": 463.24
+        "x": 1264.1600000000003,
+        "y": 299.28
       }
     },
     {
@@ -348,8 +302,30 @@
         "association_to_node": "Recognition [Draw_recognition]"
       },
       "position": {
-        "x": 1709.8200000000002,
-        "y": 505.74
+        "x": 1755.9000000000003,
+        "y": 478.58000000000004
+      }
+    },
+    {
+      "id": "0a4d37d3-d7f0-47b0-b898-0839434defcc",
+      "model": {
+        "name": "Draw_search_graph",
+        "association_to_node": "Search Graph [Draw_search_graph]"
+      },
+      "position": {
+        "x": 1776.42,
+        "y": 688.7399999999997
+      }
+    },
+    {
+      "id": "7573c340-99e5-40e8-9e92-e9c1da79d0ee",
+      "model": {
+        "name": "Draw_gmm",
+        "association_to_node": "GMM [Draw_gmm]"
+      },
+      "position": {
+        "x": 1762.5599999999997,
+        "y": 229.16000000000003
       }
     },
     {
@@ -360,7 +336,7 @@
       },
       "position": {
         "x": 402.26,
-        "y": 457.8399999999999
+        "y": 272.28
       }
     },
     {
@@ -371,7 +347,7 @@
       },
       "position": {
         "x": 630.52,
-        "y": 459.5799999999999
+        "y": 274.02
       }
     },
     {
@@ -382,7 +358,7 @@
       },
       "position": {
         "x": 725.56,
-        "y": 666.3199999999999
+        "y": 480.76
       }
     }
   ]

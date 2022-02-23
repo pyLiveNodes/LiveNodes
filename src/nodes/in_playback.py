@@ -20,13 +20,15 @@ class In_playback(Node):
     # - batch_size (int, default=5): number of frames that are sent at the same time -> not implemented yet
     """
     # TODO: consider using a file for meta data instead of dictionary...
-    def __init__(self, files, meta, batch=1, name="Playback", dont_time=False):
+    def __init__(self, files, meta, batch=1, annotation_holes="Stand", csv_columns=["act", "start", "end"], name="Playback", dont_time=False):
         super().__init__(name, has_inputs=False, dont_time=dont_time)
         self.feeder_process = None
 
         self.meta = meta
         self.files = files
         self.batch = batch
+        self.annotation_holes = annotation_holes
+        self.csv_columns = csv_columns # TODO: remove theses asap and rather convert the old datasets to a consistent format!
 
         self.sample_rate = meta.get('sample_rate')
         self.targets = meta.get('targets')
@@ -51,7 +53,9 @@ class In_playback(Node):
         return {\
             "batch": self.batch,
             "files": self.files,
-            "meta": self.meta
+            "meta": self.meta,
+            "annotation_holes": self.annotation_holes,
+            "csv_columns": self.csv_columns,
         }
 
 
@@ -85,13 +89,16 @@ class In_playback(Node):
                 # Prepare framewise annotation to be send
                 targs = []
                 if os.path.exists(f.replace('.h5', '.csv')):
-                    ref = pd.read_csv(f.replace('.h5', '.csv'), names=["act", "start", "end"])
+                    ref = pd.read_csv(f.replace('.h5', '.csv'), names=self.csv_columns)
                     j = 0
                     for _, row in ref.iterrows():
-                        targs += [target_to_id["stand"]] * (row['start'] - j) # use stand as filler for unknown. #Hack! TODO: remove
-                        targs += [target_to_id[row['act']]] * (row['end'] - row['start'])
+                        # This is hacky af, but hey... achieves that we cann playback annotaitons with holes (and fill those) and also playback annotations without holes
+                        if self.annotation_holes in target_to_id:
+                            targs += [target_to_id[self.annotation_holes]] * (row['start'] - j) # use stand as filler for unknown. #Hack! TODO: remove
+                        targs += [target_to_id[row['act'].strip()]] * (row['end'] - row['start'])
                         j = row['end']
-                    targs += [target_to_id["stand"]] * (len(data) - j)
+                    if self.annotation_holes in target_to_id:
+                        targs += [target_to_id[self.annotation_holes]] * (len(data) - j)
 
                 # TODO: for some reason i have no fucking clue about using read_data results in the annotation plot in draw recog to be wrong, although the targs are exactly the same (yes, if checked read_data()[1] == targs)...
 
