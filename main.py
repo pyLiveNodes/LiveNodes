@@ -97,7 +97,7 @@ worker.start()
 def stop(*args, **kwargs):
     # Tell the process to terminate, then wait until it returns
     worker_term_lock.release()
-    worker.join()
+    worker.join(3)
 
     print('Termination time in view!')
     worker.terminate()

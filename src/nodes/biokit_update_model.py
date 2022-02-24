@@ -1,6 +1,7 @@
 from itertools import groupby
 from turtle import update
 from typing import DefaultDict
+import threading
 import numpy as np
 from .node import Node
 from .biokit import BioKIT, logger, recognizer
@@ -32,6 +33,8 @@ class Biokit_update_model(Node):
         self.annotations_q = mp.Queue()
         self.annotations = []
 
+        self.worker_term_lock = mp.Lock()
+        self.worker_term_lock.acquire()
         self.feeder_process = None
 
     @staticmethod
@@ -40,7 +43,7 @@ class Biokit_update_model(Node):
             "class": "Biokit_update_model",
             "file": "Biokit_update_model.py",
             "in": ["Data", "Annotation"],
-            "out": [],
+            "out": ["Text"],
             "init": {
                 "name": "Train",
                 "model_path": "./models/",
@@ -234,8 +237,11 @@ class Biokit_update_model(Node):
         known_tokens = self.reco.getDictionary().getTokenList()
 
         for t in known_tokens:
-            if t in processedTokens and (t != self.catch_all and is_new):
-                del processedTokens[t]
+            if t in processedTokens:
+                if t != self.catch_all or not is_new:
+                    del processedTokens[t]
+
+        print("Now training:", processedTokens.keys())
 
         for token in processedTokens.keys():
             if token != self.catch_all:
@@ -255,7 +261,6 @@ class Biokit_update_model(Node):
             print("No new activities")
             return
 
-        print("Now training:", processedTokens.keys())
 
         logger.info('=== Initializaion ===')
         for atom in processedTokens:
@@ -274,11 +279,6 @@ class Biokit_update_model(Node):
                     self.reco.storeTokenSequenceForTrain(trainingData, [atom], fillerToken=-1, ignoreNoPathException=True, addFillerToBeginningAndEnd=False)
             self.reco.finishTrainIteration()
 
-        # Save the model
-        self.reco.saveToFiles(self.model_path)
-
-
-
 
     def receive_annotation(self, annotation, **kwargs):
         self.annotations_q.put(annotation)
@@ -288,8 +288,12 @@ class Biokit_update_model(Node):
 
     def sender_process(self):
         t = time.time()
-        while (True):
+        msg_loop_ctr = 0
+        # TODO: this design might be a problem if we just started a training (which then takes several seconds/minutes before) and then directly the lock is release, -> main program might not wait as long before terminating the process -> then no model will be saved
+        # way to fix this: implement proper updating of already seen models and then save after each training step instead of only at the end
+        while (not self.worker_term_lock.acquire(block=False)):
             time.sleep(0.01)
+            msg_loop_ctr += 1
             # read data from queues
             while (not self.annotations_q.empty()):
                 self.annotations.extend(self.annotations_q.get())
@@ -297,17 +301,32 @@ class Biokit_update_model(Node):
             while (not self.data_q.empty()):
                 self.data.append(self.data_q.get())
 
-            if time.time() - t  >= self.update_every_s:
+            loop_t = time.time()
+            if msg_loop_ctr >= 10:
+                self.send_data(f"[{str(self)}]\n     Next training: {self.update_every_s - (loop_t - t):.2f}s.", data_stream="Text") 
+                msg_loop_ctr = 0
+
+            if loop_t - t  >= self.update_every_s:
+                t = loop_t
                 print('Update!', len(self.data))
 
                 try:
+                    self.send_data(f"[{str(self)}]\n      Starting training.", data_stream="Text") 
                     self._train()
+                    self.send_data(f"[{str(self)}]\n      Finished training.", data_stream="Text") 
                     print('Trained model')
                 except Exception as err:
                     print(traceback.format_exc())
                     print(err)
+                msg_loop_ctr = 0
 
-                t = time.time()
+
+        if self.reco is not None:
+            # Save the model when stop_processing is called
+            self.reco.saveToFiles(self.model_path)
+            print('Saved recognizer to disk')
+        else: 
+            print('No model was trained')
 
 
     def start_processing(self, recurse=True):
@@ -315,7 +334,7 @@ class Biokit_update_model(Node):
         Starts the streaming process.
         """
         if self.feeder_process is None:
-            # self.feeder_process = thread.Thread(target=self.sender_process)
+            # self.feeder_process = threading.Thread(target=self.sender_process)
             self.feeder_process = mp.Process(target=self.sender_process)
             # self.feeder_process.daemon = True
             self.feeder_process.start()
@@ -328,7 +347,9 @@ class Biokit_update_model(Node):
         super().stop_processing(recurse)
         if self.feeder_process is not None:
             print('Terminating updater')
-            # TODO not sure if we can just kill this or if that abrupt stop causes some corrupt files or similar, but hey
+            self.worker_term_lock.release()
+            self.feeder_process.join(3)
             self.feeder_process.terminate()
+            print('updater terminated')
 
         self.feeder_process = None

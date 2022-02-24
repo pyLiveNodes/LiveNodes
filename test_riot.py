@@ -20,14 +20,20 @@ labels = ["ACC_X", "ACC_Y", "ACC_Z", "GYRO_X", "GYRO_Y", "GYRO_Z", "MAG_X", "MAG
 ## Data arrives to this function as a sinlge tuple argument
 ## This contains 22 floats values
 ctrs = defaultdict(int)
-t = time.time()
+times = defaultdict(int)
 def riot_handler(addr, *data):
-    global ctrs, t
+    global ctrs, times
     ctrs[addr] += 1
-    if ctrs[addr] % 300 == 0:
-        t2 = time.time() - t
-        fps = ctrs[addr] / t2
-        print(f"{addr}; Received {ctrs[addr]} frames in {t2:.2f} seconds. This equals {fps:.2f}Hz.")
+    if times[addr] == 0:
+        times[addr] = time.time()
+
+    every = 100
+    if ctrs[addr] % every == 0:
+        t2 = time.time()
+        t_diff = t2 - times[addr]
+        times[addr] = t2
+        fps = every / t_diff
+        print(f"{addr}; Received {ctrs[addr]} frames in {t_diff:.2f} seconds. This equals {fps:.2f}Hz.")
 
     # print(addr, ctrs[addr])
     # print(data)

@@ -167,33 +167,19 @@
       },
       "childs": [
         [
-          "Norm [Biokit_norm]",
-          null,
-          "Data",
-          "Data"
-        ]
-      ]
-    },
-    "Norm [Biokit_norm]": {
-      "class": "Biokit_norm",
-      "settings": {
-        "name": "Norm"
-      },
-      "childs": [
-        [
           "Recognizer [Biokit_recognizer]",
           null,
           "Data",
           "Data"
         ],
         [
-          "GMM X [Draw_gmm]",
+          "GMM Y [Draw_gmm]",
           null,
           "Data",
           "Data"
         ],
         [
-          "GMM Y [Draw_gmm]",
+          "GMM X [Draw_gmm]",
           null,
           "Data",
           "Data"

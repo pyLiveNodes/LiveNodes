@@ -329,6 +329,7 @@ class Node():
         _first_ recurse and _then_ stop processing locally.
         """
         if recurse:
+            print(f'Closing childs of {self.name}')
             for output_class in self.get_output_instances():
                 output_class.stop_processing()
 

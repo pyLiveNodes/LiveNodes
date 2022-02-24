@@ -1,11 +1,9 @@
 from src.nodes.annotate_channel import Annotate_channel
 from src.nodes.annotate_ui_button import Annotate_ui_button
 
-from src.nodes.draw_search_graph import Draw_search_graph
-from src.nodes.transform_scale import Transform_scale
 from src.nodes.log_data import Log_data
-from src.nodes.in_biosignalsplux import In_biosignalsplux
-from src.nodes.in_riot import In_riot
+from src.nodes.memory import Memory
+
 from src.nodes.biokit_norm import Biokit_norm
 from src.nodes.biokit_to_fs import Biokit_to_fs
 from src.nodes.biokit_from_fs import Biokit_from_fs
@@ -13,19 +11,24 @@ from src.nodes.biokit_recognizer import Biokit_recognizer
 from src.nodes.biokit_train import Biokit_train
 from src.nodes.biokit_update_model import Biokit_update_model
 
+from src.nodes.transform_scale import Transform_scale
 from src.nodes.transform_feature import Transform_feature
 from src.nodes.transform_window import Transform_window
 from src.nodes.transform_filter import Transform_filter
 from src.nodes.transform_majority_select import Transform_majority_select
 
-from src.nodes.memory import Memory
 from src.nodes.in_playback import In_playback
 from src.nodes.in_data import In_data
+from src.nodes.in_biosignalsplux import In_biosignalsplux
+from src.nodes.in_riot import In_riot
+
 from src.nodes.out_data import Out_data
 
 from src.nodes.draw_lines import Draw_lines
 from src.nodes.draw_recognition import Draw_recognition
+from src.nodes.draw_search_graph import Draw_search_graph
 from src.nodes.draw_gmm import Draw_gmm
+from src.nodes.draw_text_display import Draw_text_display
 
 from src.nodes.debug_frame_counter import Debug_frame_counter
 
@@ -297,7 +300,7 @@ if __name__ == "__main__":
     n_bits = 16
 
     print('=== Build Live Connection Pipeline ===')
-    pl = In_biosignalsplux("00:07:80:B3:83:ED", 1000, n_bits=n_bits, channel_names=["Pushbutton"])
+    pl = In_biosignalsplux("00:07:80:B3:83:ED", 1000, n_bits=n_bits, channel_names=["Pushbutton", "EDA"])
     # pl.add_output(Log_data())
     scaler = Transform_scale(0, 2**n_bits)
     pl.add_output(scaler)
@@ -389,6 +392,9 @@ if __name__ == "__main__":
         )
     norm.add_output(pl_train_new)
     annot.add_output(pl_train_new, data_stream="Annotation", recv_data_stream="Annotation")
+
+    status_text = Draw_text_display(name="Training Status")
+    pl_train_new.add_output(status_text, data_stream="Text", recv_data_stream="Text")
     save(pl, "pipelines/riot_record_update.json")
     
 

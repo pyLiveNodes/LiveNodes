@@ -51,7 +51,7 @@ class In_riot(Node):
         return {}
 
     async def collect(self):
-        factors = np.array([1/x for x in [8, 8, 8, 2, 2, 2, 2, 2, 2, 1, 1, 1, 4095, 4095, 1, 1, 1,  1, 180, 180, 180, 180]])
+        factors = np.array([2/x for x in [8, 8, 8, 2, 2, 2, 2, 2, 2, 1, 1, 1, 4095, 4095, 1, 1, 1,  1, 180, 180, 180, 180]])
 
         def onRawFrame (addr, *data):
             # nonlocal factors
@@ -68,6 +68,7 @@ class In_riot(Node):
         while (not self._stop_event.is_set()):
             await asyncio.sleep(0)
 
+        print("closing transport")
         transport.close()
 
     def sender_process(self):
@@ -95,10 +96,11 @@ class In_riot(Node):
         """
         Stops the streaming process.
         """
+        print("Stop processed in riot called")
         if self.feeder_process is not None:
             # set stop and wait for it to go through
             self._stop_event.set()
-            self.feeder_process.join()
+            self.feeder_process.join(3)
             print('Closed RIoT input')
             # self.feeder_process.terminate()
         self.feeder_process = None

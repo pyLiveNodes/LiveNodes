@@ -35,6 +35,7 @@ class Draw_gmm(Node):
         self.n_mixtures = n_mixtures
         self.update_scatter_fn = None
         self.model_ell_map = None
+        self.ells_list = None
 
         self.bar_objs = []
         self.previous_alphas = []
@@ -82,8 +83,8 @@ class Draw_gmm(Node):
 
     def init_draw(self, subfig):
         self.ax = subfig.subplots(1, 1)
-        self.ax.set_xlim(-2.1, 2.1)
-        self.ax.set_ylim(-2.1, 2.1)
+        self.ax.set_xlim(-0.5, 0.5)
+        self.ax.set_ylim(-0.5, 0.5)
         self.ax.spines['top'].set_visible(False)
         self.ax.spines['right'].set_visible(False)
 

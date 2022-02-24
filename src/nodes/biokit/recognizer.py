@@ -1606,7 +1606,8 @@ class Recognizer(object):
             if len(samples_names-model_names) > 0:
                 raise ValueError("For these names no models were defined: {}".format(samples_names - model_names))
             else:
-                raise ValueError("There is no data for these models: {}\nModels cannot be initialized.".format(sorted(model_names - samples_names)))
+                # raise ValueError("There is no data for these models: {}\nModels cannot be initialized.".format(sorted(model_names - samples_names)))
+                logger.warn("There is no data for these models: {}\nModels cannot be initialized.".format(sorted(model_names - samples_names)))
 
         # shortcut
         gmmScorer = BioKIT.GmmFeatureVectorScorer(self.gaussMixturesSet)

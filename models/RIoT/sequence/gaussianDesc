@@ -1,7 +1,11 @@
-Left_0-0   NONE   1   6   DIAGONAL
+Left_0-0   NONE   2   6   DIAGONAL
 Left_1-0   NONE   1   6   DIAGONAL
-Left_2-0   NONE   1   6   DIAGONAL
+Left_2-0   NONE   2   6   DIAGONAL
+Left_3-0   NONE   2   6   DIAGONAL
+Left_4-0   NONE   2   6   DIAGONAL
 None_1-0   NONE   10   6   DIAGONAL
-Right_0-0   NONE   1   6   DIAGONAL
+Right_0-0   NONE   2   6   DIAGONAL
 Right_1-0   NONE   1   6   DIAGONAL
-Right_2-0   NONE   1   6   DIAGONAL
+Right_2-0   NONE   2   6   DIAGONAL
+Right_3-0   NONE   2   6   DIAGONAL
+Right_4-0   NONE   2   6   DIAGONAL

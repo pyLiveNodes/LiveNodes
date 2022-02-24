@@ -41,13 +41,13 @@
       }
     },
     {
-      "in_id": "9e80b762-c4ce-45fc-a165-4d61f7059271",
+      "in_id": "ffd8d264-336d-404b-b92c-954c3345c872",
       "in_index": 1,
       "out_id": "41ab42e0-b9b6-4a57-82e1-c6f0b5a8b194",
       "out_index": 4
     },
     {
-      "in_id": "94874d29-afc9-48cc-af3f-59b414c65166",
+      "in_id": "0f43ddc2-e388-41f8-8d10-ddd42bdfa413",
       "in_index": 1,
       "out_id": "41ab42e0-b9b6-4a57-82e1-c6f0b5a8b194",
       "out_index": 4
@@ -74,36 +74,6 @@
       "in_id": "69b88061-5dcd-49d7-9d3e-6ec57682dd9a",
       "in_index": 0,
       "out_id": "b9f51bea-8667-4d19-8758-26c245bb4ba1",
-      "out_index": 0
-    },
-    {
-      "in_id": "2f89e253-e114-4290-98c0-a172fa2ef997",
-      "in_index": 0,
-      "out_id": "69b88061-5dcd-49d7-9d3e-6ec57682dd9a",
-      "out_index": 0
-    },
-    {
-      "in_id": "013a6e50-5489-44b4-9a80-2bee6c11c23b",
-      "in_index": 0,
-      "out_id": "2f89e253-e114-4290-98c0-a172fa2ef997",
-      "out_index": 0
-    },
-    {
-      "in_id": "9e80b762-c4ce-45fc-a165-4d61f7059271",
-      "in_index": 0,
-      "out_id": "2f89e253-e114-4290-98c0-a172fa2ef997",
-      "out_index": 0
-    },
-    {
-      "in_id": "94874d29-afc9-48cc-af3f-59b414c65166",
-      "in_index": 0,
-      "out_id": "2f89e253-e114-4290-98c0-a172fa2ef997",
-      "out_index": 0
-    },
-    {
-      "in_id": "21d4a4ca-4db0-4fe2-8b43-85057808a414",
-      "in_index": 0,
-      "out_id": "2f89e253-e114-4290-98c0-a172fa2ef997",
       "out_index": 0
     },
     {
@@ -141,25 +111,25 @@
       "out_index": 2
     },
     {
-      "in_id": "9e80b762-c4ce-45fc-a165-4d61f7059271",
+      "in_id": "ffd8d264-336d-404b-b92c-954c3345c872",
       "in_index": 2,
       "out_id": "013a6e50-5489-44b4-9a80-2bee6c11c23b",
       "out_index": 1
     },
     {
-      "in_id": "9e80b762-c4ce-45fc-a165-4d61f7059271",
+      "in_id": "ffd8d264-336d-404b-b92c-954c3345c872",
       "in_index": 3,
       "out_id": "013a6e50-5489-44b4-9a80-2bee6c11c23b",
       "out_index": 3
     },
     {
-      "in_id": "94874d29-afc9-48cc-af3f-59b414c65166",
+      "in_id": "0f43ddc2-e388-41f8-8d10-ddd42bdfa413",
       "in_index": 2,
       "out_id": "013a6e50-5489-44b4-9a80-2bee6c11c23b",
       "out_index": 1
     },
     {
-      "in_id": "94874d29-afc9-48cc-af3f-59b414c65166",
+      "in_id": "0f43ddc2-e388-41f8-8d10-ddd42bdfa413",
       "in_index": 3,
       "out_id": "013a6e50-5489-44b4-9a80-2bee6c11c23b",
       "out_index": 3
@@ -191,6 +161,30 @@
           "name": "Data"
         }
       }
+    },
+    {
+      "in_id": "013a6e50-5489-44b4-9a80-2bee6c11c23b",
+      "in_index": 0,
+      "out_id": "69b88061-5dcd-49d7-9d3e-6ec57682dd9a",
+      "out_index": 0
+    },
+    {
+      "in_id": "0f43ddc2-e388-41f8-8d10-ddd42bdfa413",
+      "in_index": 0,
+      "out_id": "69b88061-5dcd-49d7-9d3e-6ec57682dd9a",
+      "out_index": 0
+    },
+    {
+      "in_id": "ffd8d264-336d-404b-b92c-954c3345c872",
+      "in_index": 0,
+      "out_id": "69b88061-5dcd-49d7-9d3e-6ec57682dd9a",
+      "out_index": 0
+    },
+    {
+      "in_id": "21d4a4ca-4db0-4fe2-8b43-85057808a414",
+      "in_index": 0,
+      "out_id": "69b88061-5dcd-49d7-9d3e-6ec57682dd9a",
+      "out_index": 0
     }
   ],
   "nodes": [
@@ -245,19 +239,8 @@
         "association_to_node": "Node [Biokit_to_fs]"
       },
       "position": {
-        "x": 604.2250467289721,
-        "y": 490.6639252336448
-      }
-    },
-    {
-      "id": "2f89e253-e114-4290-98c0-a172fa2ef997",
-      "model": {
-        "name": "Biokit_norm",
-        "association_to_node": "Norm [Biokit_norm]"
-      },
-      "position": {
-        "x": 678.2856074766356,
-        "y": 326.7473644859813
+        "x": 622.2250467289721,
+        "y": 352.6639252336448
       }
     },
     {
@@ -294,25 +277,25 @@
       }
     },
     {
-      "id": "9e80b762-c4ce-45fc-a165-4d61f7059271",
+      "id": "ffd8d264-336d-404b-b92c-954c3345c872",
       "model": {
         "name": "Draw_gmm",
-        "association_to_node": "ACC X_Y [Draw_gmm]"
+        "association_to_node": "GMM X [Draw_gmm]"
       },
       "position": {
-        "x": 1225.0,
-        "y": 645.0
+        "x": 1167.0,
+        "y": 844.0
       }
     },
     {
-      "id": "94874d29-afc9-48cc-af3f-59b414c65166",
+      "id": "0f43ddc2-e388-41f8-8d10-ddd42bdfa413",
       "model": {
         "name": "Draw_gmm",
-        "association_to_node": "GMM Y_Z [Draw_gmm]"
+        "association_to_node": "GMM Y [Draw_gmm]"
       },
       "position": {
-        "x": 1208.0,
-        "y": 884.0
+        "x": 1268.0,
+        "y": 624.0
       }
     },
     {

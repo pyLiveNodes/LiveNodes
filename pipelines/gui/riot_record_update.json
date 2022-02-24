@@ -73,15 +73,15 @@
       "out_index": 0
     },
     {
-      "in_id": "38bc53ad-b72e-4a1b-9032-432f71e4fd14",
+      "in_id": "802a8c51-5b49-4920-af74-e7fefa68d9f7",
       "in_index": 0,
       "out_id": "6c0bedbb-177b-4648-aa6b-c5179cc51c34",
       "out_index": 0
     },
     {
-      "in_id": "802a8c51-5b49-4920-af74-e7fefa68d9f7",
+      "in_id": "8d34dd23-8cf1-4e52-ba3c-68a9cb74039b",
       "in_index": 0,
-      "out_id": "38bc53ad-b72e-4a1b-9032-432f71e4fd14",
+      "out_id": "802a8c51-5b49-4920-af74-e7fefa68d9f7",
       "out_index": 0
     }
   ],
@@ -104,7 +104,7 @@
         "association_to_node": "Raw Filter [Transform_filter]"
       },
       "position": {
-        "x": 301.69090909090914,
+        "x": 300.69090909090914,
         "y": 50.0
       }
     },
@@ -126,8 +126,8 @@
         "association_to_node": "GUI Button Annotation [Annotate_ui_button]"
       },
       "position": {
-        "x": 279.1745454545455,
-        "y": 465.9818181818182
+        "x": 237.17454545454552,
+        "y": 425.9818181818182
       }
     },
     {
@@ -137,8 +137,8 @@
         "association_to_node": "Save [Out_data]"
       },
       "position": {
-        "x": 599.0327272727272,
-        "y": 437.83636363636356
+        "x": 594.0327272727272,
+        "y": 567.8363636363636
       }
     },
     {
@@ -148,8 +148,8 @@
         "association_to_node": "Annot Filter [Transform_filter]"
       },
       "position": {
-        "x": 444.9527272727273,
-        "y": 231.09454545454537
+        "x": 466.9527272727273,
+        "y": 224.09454545454537
       }
     },
     {
@@ -159,19 +159,8 @@
         "association_to_node": "Node [Biokit_to_fs]"
       },
       "position": {
-        "x": 862.290909090909,
-        "y": 216.99272727272725
-      }
-    },
-    {
-      "id": "38bc53ad-b72e-4a1b-9032-432f71e4fd14",
-      "model": {
-        "name": "Biokit_norm",
-        "association_to_node": "Norm [Biokit_norm]"
-      },
-      "position": {
-        "x": 930.709090909091,
-        "y": 375.1309090909091
+        "x": 870.290909090909,
+        "y": 213.99272727272728
       }
     },
     {
@@ -181,8 +170,19 @@
         "association_to_node": "Train [Biokit_update_model]"
       },
       "position": {
-        "x": 1119.647272727273,
+        "x": 1118.647272727273,
         "y": 416.06909090909085
+      }
+    },
+    {
+      "id": "8d34dd23-8cf1-4e52-ba3c-68a9cb74039b",
+      "model": {
+        "name": "Draw_text_display",
+        "association_to_node": "Training Status [Draw_text_display]"
+      },
+      "position": {
+        "x": 1457.0,
+        "y": 380.0
       }
     }
   ]

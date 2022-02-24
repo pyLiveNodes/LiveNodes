@@ -119,7 +119,7 @@
     "Save [Out_data]": {
       "class": "Out_data",
       "settings": {
-        "folder": "./data/Debug/"
+        "folder": "./data/RIoT/"
       },
       "childs": []
     },
@@ -152,20 +152,6 @@
       },
       "childs": [
         [
-          "Norm [Biokit_norm]",
-          null,
-          "Data",
-          "Data"
-        ]
-      ]
-    },
-    "Norm [Biokit_norm]": {
-      "class": "Biokit_norm",
-      "settings": {
-        "name": "Norm"
-      },
-      "childs": [
-        [
           "Train [Biokit_update_model]",
           null,
           "Data",
@@ -182,9 +168,23 @@
           7,
           10
         ],
-        "phases_new_act": 1,
+        "phases_new_act": 5,
         "update_every_s": 60,
         "catch_all": "None"
+      },
+      "childs": [
+        [
+          "Training Status [Draw_text_display]",
+          null,
+          "Text",
+          "Text"
+        ]
+      ]
+    },
+    "Training Status [Draw_text_display]": {
+      "class": "Draw_text_display",
+      "settings": {
+        "name": "Training Status"
       },
       "childs": []
     }
