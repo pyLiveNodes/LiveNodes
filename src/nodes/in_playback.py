@@ -108,6 +108,8 @@ class In_playback(Node):
                     if len(targs[i:i+self.batch]) > 0:
                         self.send_data(targs[i:i+self.batch], data_stream='Annotation')
                     self.send_data([ctr] * d_len, data_stream="File")
+                    
+                    self.clock_tick()
                     time.sleep(sleep_time)
 
         # TODO: look at this implementation again, seems to be the more precise one

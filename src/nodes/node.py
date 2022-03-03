@@ -26,6 +26,14 @@ def activate_timing():
 # would make life in the nodes a lot easier (at least mp case, not sure about those that require call orders)
 # would also make running accross multiple pcs for free (ie send_data just needs to send via socket)
 
+# Note: we cannot replace the send_data calls with a return value
+# because: mp, in mp context the functions seldom return, in single process this would actually be perfect
+
+# Every node creates a "clock" for all of it's childs
+# -> syncing two outputs of a node is just matching the send clock in each package
+# -> syncing two nodes is basically just matching the clocks / just using the faster one
+# clock = (node ref, ctr) -> that way we now if a clock matches or not 
+
 # TODO: think if we can get nodes to be purely functional again, ie can we remove state!?
 
 # TODO: rework the connection code ie, will be add_output or add_input the main calls?
@@ -69,6 +77,8 @@ class Node():
         self.have_timer = False
         self.dont_time = dont_time
 
+        self.clock = (self, 0)
+
     def _get_setup(self):
         """
         Get the Nodes setup settings.
@@ -109,6 +119,11 @@ class Node():
         return {
             "Data": self.receive_data
         }
+
+    def clock_tick(self):
+        if self.clock[0] is not self:
+            raise Exception('Cannot tick clock that is not yours')
+        self.clock = (self, self.clock[0] + 1)
 
     # @classmethod
     # def describe(self):
@@ -311,7 +326,7 @@ class Node():
         necessary to override this function.
         """
         for frame_callback in self.frame_callbacks[data_stream]:
-            frame_callback(data_frame, data_stream=data_stream, **kwargs)
+            frame_callback(data_frame, data_stream=data_stream, clock=self.clock, **kwargs)
 
     
     # TODO: figure out how to do the different data streams in **kwargs, but not needing to pass through everything that was before
