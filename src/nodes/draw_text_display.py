@@ -28,7 +28,8 @@ class Draw_text_display(Node):
             "in": ["Text",],
             "out": [],
             "init": {
-                "name": "Name"
+                "name": "Text Outpuy",
+                "initial_text": "",
             },
             "category": "Draw"
         }

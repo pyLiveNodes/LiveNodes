@@ -17,6 +17,14 @@ import asyncio
 import multiprocessing as mp
 import threading
 
+import seaborn as sns
+sns.set_style("darkgrid")
+sns.set_context("paper")
+
+
+# TODO: make each subplot their own animation and use user customizable panels
+# TODO: allow nodes to use qt directly -> also consider how to make this understandable to user (ie some nodes will not run everywhere then)
+
 
 # adapted from: https://stackoverflow.com/questions/39835300/python-qt-and-matplotlib-scatter-plots-with-blitting
 class Run(FigureCanvasQTAgg):

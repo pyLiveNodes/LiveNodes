@@ -22,6 +22,16 @@ def activate_timing():
     global timing_active
     timing_active = True
 
+# TODO: consider changing the nodes to automatically be runnable in separate processes
+# would make life in the nodes a lot easier (at least mp case, not sure about those that require call orders)
+# would also make running accross multiple pcs for free (ie send_data just needs to send via socket)
+
+# TODO: think if we can get nodes to be purely functional again, ie can we remove state!?
+
+# TODO: rework the connection code ie, will be add_output or add_input the main calls?
+
+# TODO: rework implementation of nodes, there is likely a more elgant way of providing meta info (in/out/class/file) etc.
+
 # TODO: consider adding an "init pulse", ie allow all modules to initialize and send one-time setup info
 # main use case: pre-draw complex shapes, that require one time inputs (ie draw_gmm, draw_recognition and draw_search_graph)
 # but might also be useful for other one time setups
@@ -69,6 +79,11 @@ class Node():
     def _set_attr(self, **kwargs):
         for key, val in kwargs.items():
             setattr(self, key, val)
+
+    # only copies the node, not the connections!
+    # TODO: deep copy should use the same mechanism as the serialization, look below! (would be useful for cross validation for instance)
+    def copy(self):
+        return type(self)(**self._get_setup())
 
     # TODO: consider implementing the __subclass__ (?) function to verify new nodes?
 
@@ -232,6 +247,12 @@ class Node():
         
         return True
         
+    def add_output_auto(self, new_output):
+        self_outputs = self.info()['out']
+        outputs_inputs = new_output.info()['in']
+        overlapping_streams = set(self_outputs + outputs_inputs)
+        for stream in overlapping_streams:
+            self.add_output(new_output, data_stream=stream, recv_data_stream=stream)
 
     # TODO: think about api, should we rather use set_inputs instead of add_output? (i think that was the original intention, but i kinda like the current state quite a lot)
         # -> so set_inputs is not a good idea if we want to be able to replace a node in the input, but add_input would be awesome, because we could set data_id automatically
@@ -416,6 +437,7 @@ class Node():
                     nodes[name].add_output(nodes[ch_name], data_id=ch_id, data_stream=ch_stream, recv_data_stream=ch_fn)
 
             return nodes[start_node]
+
 
 
 class NumpyEncoder(json.JSONEncoder):

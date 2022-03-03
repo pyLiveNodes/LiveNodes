@@ -59,7 +59,11 @@ class In_biosignalsplux(Node):
             "in": [],
             "out": ["Data", "Channel Names"],
             "init": {
-                "name": "Name"
+                "adr": "mac address",
+                "freq": 100,
+                "channel_names": ["Channel 1"],
+                "n_bits": 16,
+                "name": "Biosignalsplux",
             },
             "category": "Base"
         }

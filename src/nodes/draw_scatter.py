@@ -24,9 +24,11 @@ import time
 #  
 
 
+# TODO: this doesn't work yet!
+
 class Draw_scatter(Node):
     # TODO: move the sample rate into a data_stream?
-    def __init__(self, ylim=(-1.1, 1.1), xlim=(-1.1, 1.1), name = "Draw Output Lines", dont_time = False):
+    def __init__(self, ylim=(-1.1, 1.1), xlim=(-1.1, 1.1), name = "Draw Output Scatter", dont_time = False):
         super().__init__(name=name, has_outputs=False, dont_time=dont_time)
         self.ylim = ylim
         self.xlim = xlim
@@ -52,7 +54,9 @@ class Draw_scatter(Node):
     def in_map(self):
         return {
             "Data": self.receive_data,
-            "Channel Names": self.receive_channels
+            "Channel Names": self.receive_channels,
+            "ylim": self.ylim,
+            "xlim": self.xlim,
         }
 
     def _get_setup(self):
@@ -84,7 +88,7 @@ class Draw_scatter(Node):
         def update(**kwargs):
             nonlocal xData, yData # no clue why this is needed here, but not the draw and update funcitons...
 
-            processedData = self._empty_queue(self.queue_data)
+            processedData = self._empty_queue(self.data_queue)
             # channel_names = self._empty_queue(self.queue_channels)
 
             if processedData != None:
@@ -103,4 +107,4 @@ class Draw_scatter(Node):
         self.name_queue.put(names)
 
     def receive_data(self, data, **kwargs):
-        self.queue_data.put(data)
+        self.data_queue.put(data)

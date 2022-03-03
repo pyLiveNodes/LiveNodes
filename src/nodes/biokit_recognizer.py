@@ -31,7 +31,7 @@ class Biokit_recognizer(Node):
             "class": "Biokit_recognizer",
             "file": "biokit_recognizer.py",
             "in": ["Data", "File"],
-            "out": ["Recognition", "HMM Meta", "Hypothesis", "Hypo States"],
+            "out": ["Recognition", "HMM Meta", "Hypothesis", "Hypo States", "GMM Models", "GMM Means", "GMM Covariances", "GMM Weights"],
             "init": {
                 "name": "Recognizer",
                 "model_path": "./models/",
@@ -71,6 +71,10 @@ class Biokit_recognizer(Node):
             graph = json.loads(graph_json)
 
             # get gaussians
+            gmm_models = []
+            gmm_means = []
+            gmm_cov = []
+            gmm_weights = []
             gmms = {}
             for model_name in self.reco.getGaussMixturesSet().getAvailableModelNames():
                 gmm_id = self.reco.getGaussMixturesSet().getModelId(model_name)
@@ -78,6 +82,12 @@ class Biokit_recognizer(Node):
                 gmm = gmm_container.getGaussianContainer()
                 means = gmm.getMeanVectors()
                 mixture_weights = gmm_container.getMixtureWeights()
+                n_gaussians = len(means)
+                gmm_models.extend([model_name] * n_gaussians)
+                gmm_means.extend(means)
+                gmm_cov.extend([gmm.getCovariance(i).getData() for i in range(len(means))])
+                gmm_weights.extend(mixture_weights)
+
                 gmms[model_name] = {
                     "means": means,
                     "mixture_weights": mixture_weights,
@@ -85,7 +95,12 @@ class Biokit_recognizer(Node):
                 }
 
             # send meta data
-            self.send_data({"topology": self.topology, "search_graph": graph, "gmms": gmms}, data_stream="HMM Meta") 
+            self.send_data({"topology": self.topology, "search_graph": graph, 'gmms': gmms}, data_stream="HMM Meta") 
+            self.send_data(gmm_models, data_stream="GMM Models")
+            self.send_data(gmm_means, data_stream="GMM Means")
+            self.send_data(gmm_cov, data_stream="GMM Covariances")
+            self.send_data(gmm_weights, data_stream="GMM Weights")
+            
             self._initial = False
 
         if path != None:

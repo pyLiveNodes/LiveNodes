@@ -60,7 +60,8 @@ class Draw_recognition(Node):
             "in": ["Data", "Annotation", "HMM Meta"],
             "out": [],
             "init": {
-                "name": "Name"
+                "name": "Recognition",
+                "xAxisLength": [50, 50, 50, 5000]
             },
             "category": "Draw"
         }

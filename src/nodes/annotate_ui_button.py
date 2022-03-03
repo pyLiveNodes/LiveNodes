@@ -24,7 +24,8 @@ class Annotate_ui_button(Node):
             "in": ["Data"],
             "out": ["Data", "Annotation"],
             "init": {
-                "name": "Name"
+                "name": "GUI Button Annotation",
+                "fall_back_target": "Unknown",
             },
             "category": "Annotation"
         }

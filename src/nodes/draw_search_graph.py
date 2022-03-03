@@ -39,7 +39,8 @@ class Draw_search_graph(Node):
             "in": ["HMM Meta", "Hypothesis"],
             "out": [],
             "init": {
-                "name": "Name"
+                "n_hypos": 3, 
+                "name": "Search Graph",
             },
             "category": "Draw"
         }
@@ -136,7 +137,7 @@ class Draw_search_graph(Node):
 
                 self._setup_axes(subfig)
                 self._axes_setup = True
-                return self.labels
+                # return self.labels
             
             # print('Update', self._axes_setup, self.graph is not None)
             
@@ -153,9 +154,9 @@ class Draw_search_graph(Node):
                         bar.set_alpha(alphas)
 
                 # if np.random.random() > 0.95: # some events i am not entirely aware of result in bars being wiped out and not redrawn, as we do keep track of them
-                return self.labels + self.bar_objs
+            return self.labels + self.bar_objs
                 # return res_changed_bars
-            return []
+            # return []
         return update
 
     def receive_meta(self, meta, **kwargs):

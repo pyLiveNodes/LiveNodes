@@ -67,7 +67,15 @@ class In_data(Node):
             "in": [],
             "out": ["Data", "File", "Annotation", "Meta", "Channel Names", "Termination"],
             "init": {
-                "name": "Name"
+                "files": "./files/**/.h5",
+                "meta": {
+                    "sample_rate": 100,
+                    "targets": ["target 1"],
+                    "channels": ["Channel 1"]
+                },
+                "shuffle": True,
+                "batch": 1,
+                "name": "Data input",
             },
             "category": "Data Source"
         }

@@ -50,7 +50,11 @@ class Draw_lines(Node):
             "in": ["Data", "Channel Names"],
             "out": [],
             "init": {
-                "name": "Name"
+                "name": "Draw Data Lines",
+                "n_plots": 4,
+                "xAxisLength": 5000,
+                "sample_rate": 1000,
+                "ylim": (-1.1, 1.1)
             },
             "category": "Draw"
         }

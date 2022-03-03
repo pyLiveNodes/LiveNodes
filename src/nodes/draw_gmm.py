@@ -24,6 +24,10 @@ class Draw_gmm(Node):
         self.queue_meta = mp.Queue()
         self.queue_hypo = mp.Queue()
         self.queue_data = mp.Queue()
+        self.queue_gmm_models = mp.Queue()
+        self.queue_gmm_means = mp.Queue()
+        self.queue_gmm_covs = mp.Queue()
+        self.queue_gmm_weights = mp.Queue()
         self.queue_channels = mp.Queue()
 
         self.graph = None
@@ -50,10 +54,14 @@ class Draw_gmm(Node):
         return {
             "class": "Draw_gmm",
             "file": "draw_gmm.py",
-            "in": ["Data", "Channel Names", "HMM Meta", "Hypo States"],
+            "in": ["Data", "Channel Names", "HMM Meta", "Hypo States", "GMM Models", "GMM Means", "GMM Covariances", "GMM Weights"],
             "out": [],
             "init": {
-                "name": "Name"
+                "name": "GMM",
+                 "plot_names": ["Channel 1", "Channel 2"],
+                 "n_mixtures": 2,
+                 "n_scatter_points": 10,
+                 "name": "GMM"
             },
             "category": "Draw"
         }
@@ -64,7 +72,11 @@ class Draw_gmm(Node):
             "HMM Meta": self.receive_meta,
             "Hypo States": self.receive_hypo,
             "Data": self.receive_data,
-            "Channel Names": self.receive_channels
+            "Channel Names": self.receive_channels,
+            "GMM Models": self.receive_gmm_models, 
+            "GMM Means": self.receive_gmm_means, 
+            "GMM Covariances": self.receive_gmm_covs, 
+            "GMM Weights": self.receive_gmm_weights,
         }
 
     def _get_setup(self):
@@ -104,6 +116,14 @@ class Draw_gmm(Node):
                 meta = self._empty_queue(self.queue_meta)
                 state_ids = self._empty_queue(self.queue_hypo)
                 data = self._empty_queue(self.queue_data)
+
+                # TODO: THIS is a problem!
+                # We can never be sure these are all set at the same time, as the queue filling and matplotlib render are completely independent processes
+                # yes, in the fill part the calls are basically syncronus, but the render process can still be called in between the queues!
+                # gmm_models = self._empty_queue(self.queue_gmm_models)
+                # gmm_means = self._empty_queue(self.queue_gmm_means)
+                # gmm_covs = self._empty_queue(self.queue_gmm_covs)
+                # gmm_weights = self._empty_queue(self.queue_gmm_weights)
             channel_names = self._empty_queue(self.queue_channels)
             # gmms = self._empty_queue(self.queue_gmms) # TODO: consider separate stream for this (pro: can use filter, and can visualize training, con: complicated)
 
@@ -144,6 +164,18 @@ class Draw_gmm(Node):
     
     def receive_data(self, data, **kwargs):
         self.queue_data.put(data)
+
+    def receive_gmm_models(self, data, **kwargs):
+        self.queue_gmm_models.put(data)
+
+    def receive_gmm_means(self, data, **kwargs):
+        self.queue_gmm_means.put(data)
+
+    def receive_gmm_covs(self, data, **kwargs):
+        self.queue_gmm_covs.put(data)
+
+    def receive_gmm_weights(self, data, **kwargs):
+        self.queue_gmm_weights.put(data)
 
     def receive_channels(self, data, **kwargs):
         self.queue_channels.put(data)

@@ -17,15 +17,7 @@ class Biokit_to_fs(Node):
             "in": ["Data"],
             "out": ["Data"],
             "init": {
-                "name": "Name"
+                "name": "To Feature Sequence"
             },
             "category": "BioKIT"
         }
-
-    # def receive_data(self, data_frame, data_id=0):
-    #     mcfs = []
-    #     for channel in np.array(data_frame).T:
-    #         fs = BioKIT.FeatureSequence()
-    #         fs.setMatrix(np.atleast_2d(channel).T)
-    #         mcfs.append(fs)
-    #     self.send_data(mcfs)
