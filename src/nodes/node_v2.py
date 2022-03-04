@@ -1,8 +1,7 @@
 
 from enum import Enum
-from functools import partial
-from multiprocessing.sharedctypes import Value
-
+import json
+import numpy as np
 
 class Location(Enum):
     SAME = 1
@@ -57,13 +56,11 @@ class Node ():
             self.clock = (self, 0)
 
     def __repr__(self):
-        pass
+        return f"{str(self)} Settings:{json.dumps(self._get_setup())}"
 
     def __str__(self):
-        pass
+        return f"{self.name} [{self.__class__.__name__}]"
 
-    def __eq__(self):
-        pass # TODO: needed?
 
     # === Logging Stuff =================
     def __log(self, msg, level):
@@ -83,18 +80,23 @@ class Node ():
 
     # === Seriallization Stuff =================
     def copy(self, deep=False):
+        """
+        Copy the current node
+        if deep=True copy all childs as well
+        """
+        return self.from_json(self.to_json(deep=deep))
+
+    def to_json(self, deep=False):
         pass
 
-    def to_json(self):
+    def from_json(self, json_str):
         pass
 
-    def from_json(self):
+    def save(self, path, deep=True):
         pass
 
-    def save(self):
-        pass
-
-    def load(self):
+    @classmethod
+    def load(cls, path, deep=True):
         pass
 
 
@@ -209,13 +211,20 @@ class Node ():
 
 
     # === Connection Discovery Stuff =================
-    def discover_childs(self, deep=True):
+    @staticmethod
+    TODO
+    def discover_childs(node, deep=True):
+        if len(node.output_classes) > 0:
+            childs = [n.discover_childs(n) for n in node.get_outputs()]
+            return [node] + list(np.concatenate(childs))
+        return [node]
+
+    @staticmethod
+    def discover_parents(node, deep=True):
         pass
 
-    def discover_parents(self, deep=True):
-        pass
-
-    def discover_full(self):
+    @staticmethod
+    def discover_full(node):
         pass
 
 
@@ -239,6 +248,9 @@ class Node ():
 
     # === Node Specific Stuff =================
     # (Computation, Render)
+    def __serialize(self):
+        return {"name": self.name}
+
     def __should_process(self):
         """
         Given the inputs, this determines if process should be called on the new data or not
