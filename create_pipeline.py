@@ -34,10 +34,8 @@ from src.nodes.debug_frame_counter import Debug_frame_counter
 
 from src.nodes.node import Node
 
-
-
-def add_processing(pl_in, x_raw, x_processed, vis=(True, True, True)):
-    # This output will not be saved, as it cannot be reconstructed
+def add_features(pl_in, x_raw, x_processed, vis=(True, True)):
+# This output will not be saved, as it cannot be reconstructed
     pl_in.add_output(lambda data: print(data))
 
     if vis[0]:
@@ -64,6 +62,10 @@ def add_processing(pl_in, x_raw, x_processed, vis=(True, True, True)):
         draw_fts = Draw_lines(name='Features', n_plots=len(channel_names_fts), xAxisLength=x_processed)
         filter2.add_output(draw_fts)
         filter2.add_output(draw_fts, data_stream="Channel Names", recv_data_stream="Channel Names")
+    return 
+
+def add_processing(pl_in, x_raw, x_processed, vis=(True, True, True)):
+    fts = add_features(pl_in, x_raw, x_processed, vis[:2])
 
     to_fs = Biokit_to_fs()
     fts.add_output(to_fs)

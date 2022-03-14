@@ -109,7 +109,7 @@ class In_playback(Node):
                         self.send_data(targs[i:i+self.batch], data_stream='Annotation')
                     self.send_data([ctr] * d_len, data_stream="File")
                     
-                    self.clock_tick()
+                    # self.clock_tick()
                     time.sleep(sleep_time)
 
         # TODO: look at this implementation again, seems to be the more precise one

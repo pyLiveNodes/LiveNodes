@@ -123,7 +123,7 @@ class Node():
     def clock_tick(self):
         if self.clock[0] is not self:
             raise Exception('Cannot tick clock that is not yours')
-        self.clock = (self, self.clock[0] + 1)
+        self.clock = (self, self.clock[1] + 1)
 
     # @classmethod
     # def describe(self):
