@@ -19,6 +19,9 @@ class Connection ():
         self._receiving_channel = receiving_channel
         self._connection_counter = connection_counter
 
+    def to_json(self):
+        return json.dumps({"emitting_node": self._emitting_node, "receiving_node": self._receiving_node, "emitting_channel": self._emitting_channel, "receiving_channel": self._receiving_channel, "connection_counter": self._connection_counter})
+
     def _set_connection_counter(self, counter):
         self._connection_counter = counter
 
@@ -79,25 +82,73 @@ class Node ():
 
 
     # === Seriallization Stuff =================
-    def copy(self, deep=False):
+    def copy(self, children=False, parents=False):
         """
         Copy the current node
         if deep=True copy all childs as well
         """
-        return self.from_json(self.to_json(deep=deep))
+        # not sure if this will work, as from_json expects a cls not self...
+        return self.from_json(self.to_json(children=children, parents=parents), children=children, parents=parents)
 
-    def to_json(self, deep=False):
-        pass
+    def serialize(self):
+        return json.dumps({ \
+            "settings": self.__serialize(),
+            "inputs": [con.to_json() for con in self.input_connections],
+            "outputs": [con.to_json() for con in self.output_connections]
+        })
 
-    def from_json(self, json_str):
-        pass
+    def to_json(self, children=False, parents=False):
+        # Assume no nodes in the graph have the same name+node_class -> should be checked in the add_inputs
+        res = {str(self): self.serialize()}
+        if parents:
+            for node in self.discover_parents(self):
+                res[str(node)] = node.serialize()
+        if children:
+            for node in self.discover_childs(self):
+                res[str(node)] = node.serialize()
+        return json.dumps(self.remove_discovered_duplicates(res))
+    
+    @staticmethod
+    def from_json(cls, json_str, initial_node=None): 
+        # TODO: implement children=True, parents=True
+        items = json.loads(json_str)
+        # format should be as in to_json, ie a dictionary, where the name is unique and the values is a dictionary with three values (settings, ins, outs)
 
-    def save(self, path, deep=True):
-        pass
+        items_instc = {}
+        initial = None
+
+        # first pass: create nodes
+        for name, itm in items.items():
+            tmp = cls(**itm['settings'])
+            items_instc[name] = tmp
+
+            if initial_node is None:
+                initial = tmp
+
+        if initial_node is not None:
+            initial = items_instc[initial_node]
+
+        # second pass: create connections
+        for name, itm in items.items():
+            # only add inputs, as, if we go through all nodes this automatically includes all outputs as well
+            for con in itm['inputs']:
+                items_instc[name].add_input(emitting_node=items_instc[con._emitting_node], emitting_channel=con._emitting_channel, receiving_channel=con._receiving_channel)
+
+        return initial
+
+    def save(self, path, children=True, parents=True):
+        json_str = self.to_json(self, children=children, parents=parents)
+        # check if folder exists?
+
+        with open(path, 'w') as f:
+            json.dump(json_str, f)
 
     @classmethod
-    def load(cls, path, deep=True):
-        pass
+    def load(cls, path):
+        # TODO: implement children=True, parents=True (ie implement it in from_json)
+        with open(path, 'r') as f:
+            json_str = json.load(f)
+        return cls.from_json(json_str)
 
 
     # === Connection Stuff =================
@@ -127,6 +178,8 @@ class Node ():
         if receiving_channel not in self.channels_in:
             raise ValueError("Receiving Channel not present on node. Got", receiving_channel)
         
+        if str(self) in list(map(str, emitting_node.discover_full(emitting_node))):
+            raise ValueError("Name already in parent sub-graph. Got:", str(self))
 
         # Create connection instance
         connection = Connection(emitting_node, self, emitting_channel=emitting_channel, receiving_channel=receiving_channel)
@@ -184,10 +237,10 @@ class Node ():
 
 
     # === Start/Stop Stuff =================
-    def start(self, deep=True):
+    def start(self, children=True):
         pass
 
-    def stop(self, deep=True):
+    def stop(self, children=True):
         pass
 
 
@@ -211,32 +264,77 @@ class Node ():
 
 
     # === Connection Discovery Stuff =================
+    # not sure if this is needed, might be for the set() part, where equality should be based on pointer
+    # def __eq__(self, __o):
+    #     pass
+
     @staticmethod
-    TODO
-    def discover_childs(node, deep=True):
+    def remove_discovered_duplicates(nodes):
+        return list(set(nodes))
+
+    @staticmethod
+    def discover_childs(node):
         if len(node.output_classes) > 0:
-            childs = [n.discover_childs(n) for n in node.get_outputs()]
+            childs = [con._receiving_node.discover_childs(con._receiving_node) for con in node.output_connections]
             return [node] + list(np.concatenate(childs))
         return [node]
 
     @staticmethod
-    def discover_parents(node, deep=True):
-        pass
+    def discover_parents(node):
+        if len(node.input_classes) > 0:
+            parents = [con._emitting_node.discover_childs(con._emitting_node) for con in node.input_connections]
+            return [node] + list(np.concatenate(parents))
+        return [node]
 
     @staticmethod
     def discover_full(node):
-        pass
+        return node.remove_discovered_duplicates(node.discover_parents(node) + node.discover_childs(node))
+
+    def is_child_of(self, node):
+        # self is always a child of itself
+        return self in self.discover_childs(node)
+
+    def is_parent_of(self, node):
+        # self is always a parent of itself
+        return self in self.discover_parents(node)
 
 
     # === Drawing Graph Stuff =================
-    def dot_graph_childs(self):
-        pass
+    def dot_graph(self, nodes, name=False, transparent_bg=False):
+        # Imports are done here, as if you don't need the dotgraph it should not be required to start
+        from graphviz import Digraph
+        from PIL import Image
+        from io import BytesIO
 
-    def dot_graph_parents(self):
-        pass
+        graph_attr={"size":"10,10!", "ratio":"fill"}
+        if transparent_bg: graph_attr["bgcolor"]= "#00000000"
+        dot = Digraph(format = 'png', strict = False, graph_attr=graph_attr)
 
-    def dot_graph_full(self):
-        pass
+        for node in nodes:
+            shape = 'rect'
+            if node.has_inputs == False:
+                shape = 'invtrapezium'
+            if node.has_outputs == False:
+                shape = 'trapezium'
+            disp_name = node.name if name else str(node)
+            dot.node(str(node), disp_name, shape = shape, style = 'rounded')
+        
+        # Second pass: add edges based on output links
+        for node in nodes:
+            for node_output, _, stream_name, _ in node.output_classes:
+                stream_name = 'Data' if stream_name == None else stream_name
+                dot.edge(str(node), str(node_output), label=stream_name)
+
+        return Image.open(BytesIO(dot.pipe()))
+
+    def dot_graph_childs(self, **kwargs):
+        return self.dot_graph(self.discover_childs(self), **kwargs)
+
+    def dot_graph_parents(self, **kwargs):
+        return self.dot_graph(self.discover_parents(self), **kwargs)
+
+    def dot_graph_full(self, **kwargs):
+        return self.dot_graph(self.discover_full(self), **kwargs)
     
 
     # === Performance Stuff =================
