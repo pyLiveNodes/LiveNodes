@@ -19,6 +19,9 @@ class Connection ():
         self._receiving_channel = receiving_channel
         self._connection_counter = connection_counter
 
+    def __repr__(self):
+        return f"{str(self._emitting_node)}.{self._emitting_channel} -> {str(self._receiving_node)}.{self._receiving_channel}"
+
     def to_json(self):
         return json.dumps({"emitting_node": self._emitting_node, "receiving_node": self._receiving_node, "emitting_channel": self._emitting_channel, "receiving_channel": self._receiving_channel, "connection_counter": self._connection_counter})
 
@@ -59,7 +62,8 @@ class Node ():
             self.clock = (self, 0)
 
     def __repr__(self):
-        return f"{str(self)} Settings:{json.dumps(self._get_setup())}"
+        return str(self)
+        # return f"{str(self)} Settings:{json.dumps(self.__serialize())}"
 
     def __str__(self):
         return f"{self.name} [{self.__class__.__name__}]"
@@ -88,27 +92,27 @@ class Node ():
         if deep=True copy all childs as well
         """
         # not sure if this will work, as from_json expects a cls not self...
-        return self.from_json(self.to_json(children=children, parents=parents), children=children, parents=parents)
+        return self.from_json(self.to_json(children=children, parents=parents)) #, children=children, parents=parents)
 
-    def serialize(self):
-        return json.dumps({ \
-            "settings": self.__serialize(),
+    def get_settings(self):
+        return { \
+            "settings": self.__settings(),
             "inputs": [con.to_json() for con in self.input_connections],
             "outputs": [con.to_json() for con in self.output_connections]
-        })
+        }
 
     def to_json(self, children=False, parents=False):
         # Assume no nodes in the graph have the same name+node_class -> should be checked in the add_inputs
-        res = {str(self): self.serialize()}
+        res = {str(self): self.get_settings()}
         if parents:
             for node in self.discover_parents(self):
-                res[str(node)] = node.serialize()
+                res[str(node)] = node.get_settings()
         if children:
             for node in self.discover_childs(self):
-                res[str(node)] = node.serialize()
-        return json.dumps(self.remove_discovered_duplicates(res))
+                res[str(node)] = node.get_settings()
+        return json.dumps(res)
     
-    @staticmethod
+    @classmethod
     def from_json(cls, json_str, initial_node=None): 
         # TODO: implement children=True, parents=True
         items = json.loads(json_str)
@@ -158,7 +162,7 @@ class Node ():
         Main function to connect two nodes together with add_input.
         """
 
-        channels_in_common = set(self.channels_in + emitting_node.channels_out)
+        channels_in_common = set(self.channels_in).intersection(emitting_node.channels_out)
         for channel in channels_in_common:
             self.add_input(emitting_node=emitting_node, emitting_channel=channel, receiving_channel=channel)
 
@@ -178,13 +182,20 @@ class Node ():
         if receiving_channel not in self.channels_in:
             raise ValueError("Receiving Channel not present on node. Got", receiving_channel)
         
-        if str(self) in list(map(str, emitting_node.discover_full(emitting_node))):
-            raise ValueError("Name already in parent sub-graph. Got:", str(self))
+        # This is too simple, as when connecting two nodes, we really are connecting two sub-graphs, which need to be checked
+        # TODO: implement this proper
+        # nodes_in_graph = emitting_node.discover_full(emitting_node)
+        # if list(map(str, nodes_in_graph)):
+        #     raise ValueError("Name already in parent sub-graph. Got:", str(self))
 
         # Create connection instance
         connection = Connection(emitting_node, self, emitting_channel=emitting_channel, receiving_channel=receiving_channel)
+
+        if len(list(filter(connection.__eq__, self.input_connections))) > 0:
+            raise ValueError("Connection already exists.")
+
         # Find existing connections of these nodes and channels
-        counter = len(filter(connection._similar, self.input_connections))
+        counter = len(list(filter(connection._similar, self.input_connections)))
         # Update counter
         connection._set_connection_counter(counter)
 
@@ -213,7 +224,7 @@ class Node ():
 
         # Remove first 
         # -> in case something goes wrong the connection remains intact
-        cons[0].emitting_node.__remove_output(cons[0]) 
+        cons[0]._emitting_node.__remove_output(cons[0]) 
         self.input_connections.remove(cons[0])
 
 
@@ -274,15 +285,15 @@ class Node ():
 
     @staticmethod
     def discover_childs(node):
-        if len(node.output_classes) > 0:
+        if len(node.output_connections) > 0:
             childs = [con._receiving_node.discover_childs(con._receiving_node) for con in node.output_connections]
             return [node] + list(np.concatenate(childs))
         return [node]
 
     @staticmethod
     def discover_parents(node):
-        if len(node.input_classes) > 0:
-            parents = [con._emitting_node.discover_childs(con._emitting_node) for con in node.input_connections]
+        if len(node.input_connections) > 0:
+            parents = [con._emitting_node.discover_parents(con._emitting_node) for con in node.input_connections]
             return [node] + list(np.concatenate(parents))
         return [node]
 
@@ -346,7 +357,7 @@ class Node ():
 
     # === Node Specific Stuff =================
     # (Computation, Render)
-    def __serialize(self):
+    def __settings(self):
         return {"name": self.name}
 
     def __should_process(self):
