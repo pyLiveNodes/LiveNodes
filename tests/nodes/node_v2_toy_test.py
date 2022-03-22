@@ -1,6 +1,8 @@
 import pytest
 from src.nodes.node_v2 import Node, Location
 import json
+import time
+import multiprocessing as mp
 
 class Data(Node):
     channels_in = []
@@ -27,10 +29,16 @@ class Save(Node):
 
     def __init__(self, name, compute_on=Location.SAME, should_time=False):
         super().__init__(name, compute_on, should_time)
-        self.out = []
+        self.out = mp.SimpleQueue()
 
     def process(self, Data):
-        self.out.append(Data)
+        self.out.put(Data)
+
+    def get_state(self):
+        res = []
+        while not self.out.empty():
+            res.append(self.out.get())
+        return res
 
 
 # Arrange
@@ -51,9 +59,9 @@ def create_simple_graph():
 @pytest.fixture
 def create_simple_graph_mp():
     data = Data(name="A", compute_on=Location.PROCESS)
-    quadratic = Quadratic(name="B", compute_on=Location.PROCESS)
-    out1 = Save(name="C", compute_on=Location.PROCESS)
-    out2 = Save(name="D", compute_on=Location.PROCESS)
+    quadratic = Quadratic(name="B", compute_on=Location.SAME)
+    out1 = Save(name="C", compute_on=Location.SAME)
+    out2 = Save(name="D", compute_on=Location.SAME)
     
     out1.connect_inputs_to(data)
     quadratic.connect_inputs_to(data)
@@ -68,19 +76,28 @@ class TestProcessing():
         data, quadratic, out1, out2 = create_simple_graph
 
         data.start()
+        time.sleep(1) # not sure if we can avoid this... or move this into the node class?
+
         for _ in range(10):
             data.trigger_process()
+        time.sleep(1) # not sure if we can avoid this... or move this into the node class?
+
+        data.stop()
         
-        assert out1.out == list(range(10))
-        assert out2.out == list(map(lambda x: x**2, range(10)))
+        assert out1.get_state() == list(range(10))
+        assert out2.get_state() == list(map(lambda x: x**2, range(10)))
 
 
     def test_calc_mp(self, create_simple_graph_mp):
         data, quadratic, out1, out2 = create_simple_graph_mp
 
         data.start()
+        time.sleep(1) # not sure if we can avoid this... or move this into the node class?
+
         for _ in range(10):
             data.trigger_process()
-        
-        assert out1.out == list(range(10))
-        assert out2.out == list(map(lambda x: x**2, range(10)))
+        time.sleep(1) # not sure if we can avoid this... or move this into the node class?
+        data.stop()
+
+        assert out1.get_state() == list(range(10))
+        assert out2.get_state() == list(map(lambda x: x**2, range(10)))

@@ -5,6 +5,8 @@ import numpy as np
 import time 
 import multiprocessing as mp
 from collections import defaultdict
+import datetime
+import threading
 
 class NumpyEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -41,7 +43,8 @@ class QueueHelperHack():
             if discard_before:
                 self._read = {key: val for key, val in self._read.items() if key > ctr}
                 
-            return res
+            return True, res
+        return False, None
     
 
 class Clock():
@@ -89,6 +92,11 @@ class Connection ():
     def __eq__(self, other):
         return self._similar(other) and self._connection_counter == other._connection_counter
 
+# class LogLevels(Enum):
+#     Debug 
+
+LOGGER_LOCK = mp.Lock()
+
 
 class Node ():
     # === Information Stuff =================
@@ -110,18 +118,18 @@ class Node ():
         self.input_connections = []
         self.output_connections = []
 
-        self.__compute_on = compute_on
+        self._compute_on = compute_on
 
-        self.__received_data = {key: QueueHelperHack() for key in self.channels_in}
-        self.__draw_state = mp.SimpleQueue()
-        self.__current_data = {}
+        self._received_data = {key: QueueHelperHack() for key in self.channels_in}
+        self._draw_state = mp.SimpleQueue()
+        self._current_data = {}
 
-        self.__clock = Clock(node=self, should_time=should_time)
+        self._clock = Clock(node=self, should_time=should_time)
 
-        self.__running = False
+        self._running = False
 
         self._subprocess_info = {}
-        if self.__compute_on in [Location.PROCESS]:
+        if self._compute_on in [Location.PROCESS]:
             self._subprocess_info = {
                 "process": None,
                 "data_lock": mp.Lock(),
@@ -131,26 +139,40 @@ class Node ():
 
     def __repr__(self):
         return str(self)
-        # return f"{str(self)} Settings:{json.dumps(self.__serialize())}"
+        # return f"{str(self)} Settings:{json.dumps(self._serialize())}"
 
     def __str__(self):
         return f"{self.name} [{self.__class__.__name__}]"
 
 
     # === Logging Stuff =================
-    def __log(self, msg, level):
-        pass
+    # TODO: move this into it's own module/file?
+    def _log(self, *text):
+        # if 4 <= level:
+        msg = "{} | {:<11} | {:<11} | {:>11} | {}".format(datetime.datetime.now().strftime("%Y-%m-%d %X"),
+                                                            mp.current_process().name,
+                                                            threading.current_thread().name,
+                                                            str("Debug"),
+                                                            " ".join(str(t) for t in text))
 
-    def set_log_level(self, level):
-        pass
+        # acquire blocking log
+        LOGGER_LOCK.acquire(True)
+
+        print(msg, flush=True)
+
+        # release log
+        LOGGER_LOCK.release()
+
+    # def set_log_level(self, level):
+    #     self._log_level = level
 
 
-    # === Subclass Validation Stuff =================
-    def __init_subclass__(self):
-        """
-        Check if a new class instance is valid, ie if channels are correct, info is existing etc
-        """
-        pass
+    # # === Subclass Validation Stuff =================
+    # def __init_subclass__(self):
+    #     """
+    #     Check if a new class instance is valid, ie if channels are correct, info is existing etc
+    #     """
+    #     pass
 
 
     # === Seriallization Stuff =================
@@ -164,7 +186,7 @@ class Node ():
 
     def get_settings(self):
         return { \
-            "settings": self.__settings(),
+            "settings": self._settings(),
             "inputs": [con.to_json() for con in self.input_connections],
             "outputs": [con.to_json() for con in self.output_connections]
         }
@@ -268,7 +290,7 @@ class Node ():
         connection._set_connection_counter(counter)
 
         # Not sure if this'll actually work, otherwise we should name them _add_output
-        emitting_node.__add_output(connection)
+        emitting_node._add_output(connection)
         self.input_connections.append(connection)
 
 
@@ -291,12 +313,12 @@ class Node ():
             raise ValueError("Passed connection is not in inputs. Got", connection)
 
         # Remove first 
-        # -> in case something goes wrong the connection remains intact
-        cons[0]._emitting_node.__remove_output(cons[0]) 
+        # -> in case something goes wrong on the parents side, the connection remains intact
+        cons[0]._emitting_node._remove_output(cons[0]) 
         self.input_connections.remove(cons[0])
 
 
-    def __add_output(self, connection):
+    def _add_output(self, connection):
         """
         Add an output to self. 
         Only ever called by another node, that wants this node as input
@@ -304,7 +326,7 @@ class Node ():
         self.output_connections.append(connection)
 
 
-    def __remove_output(self, connection):
+    def _remove_output(self, connection):
         """
         Remove an output from self. 
         Only ever called by another node, that wants this node as input
@@ -325,22 +347,24 @@ class Node ():
                 con._receiving_node.start()
 
         # now start self
-        if self.__running == False: # the node might be child to multiple parents, but we just want to start once
-            self.__running = True
+        if self._running == False: # the node might be child to multiple parents, but we just want to start once
+            self._running = True
 
-            if self.__compute_on in [Location.PROCESS]:
+            if self._compute_on in [Location.PROCESS]:
                 self._subprocess_info['process'] = mp.Process(target=self._process_on_proc)
+                self._log('create subprocess')
                 self._subprocess_info['data_lock'].acquire()
                 self._subprocess_info['termination_lock'].acquire()
+                self._log('start subprocess')
                 self._subprocess_info['process'].start()
 
 
     def stop(self, children=True):
         # first stop self, so that non-existing children don't receive inputs
-        if self.__running == True: # the node might be child to multiple parents, but we just want to stop once
-            self.__running = False
+        if self._running == True: # the node might be child to multiple parents, but we just want to stop once
+            self._running = False
 
-            if self.__compute_on in [Location.PROCESS]:
+            if self._compute_on in [Location.PROCESS]:
                 self._subprocess_info['termination_lock'].release()
                 self._subprocess_info['data_lock'].release() # the subprocess might block termination until this is released.
                 self._subprocess_info['process'].join(3)
@@ -360,52 +384,60 @@ class Node ():
         """
         for con in self.output_connections:
             if con._receiving_channel == stream:
-                con._receiving_node.receive_data(self.__clock, payload={stream: data})
+                con._receiving_node.receive_data(self._clock, payload={stream: data})
 
-    def __emit_draw(self, **kwargs):
+    def _emit_draw(self, **kwargs):
         """
         Called in computation process, ie self.process
         Emits data to draw process, ie draw_inits update fn
         """
-        self.__draw_state.put(kwargs)
+        self._draw_state.put(kwargs)
 
     def _process_on_proc(self):
+        self._log('subprocess')
         # as long as we do not receive a termination signal, we will wait for data to be processed
         while not self._subprocess_info['termination_lock'].acquire(block=False):
+            self._log('wating to process')
             # block until signaled that we have new data
             # as we might receive not data after having received a termination, make sure to release the data lock when terminating.
             self._subprocess_info['data_lock'].acquire(block=True)
-            self._subprocess_info['data_lock'].release()
+            self._log('processing')
             self._process()
+            self._subprocess_info['data_lock'].release()
+        self._log('finished subprocess')
+        
             
     def _process(self):
         """
         called in location of self
         """
         # update current state, based on own clock
-        for key, queue in self.__received_data.items():
+        for key, queue in self._received_data.items():
             # discard everything, that was before our own current clock
-            self.__current_data[key] = queue.get(self.__clock.ctr)
+            found_value, cur_value = queue.get(self._clock.ctr)
+            if found_value:
+                self._current_data[key] = cur_value
 
         # check if all required data to proceed is available and then call process
         # then cleanup aggregated data and advance our own clock
-        if self.__should_process(**self.__current_data):
-            self.process(**self.__current_data)
-            self.__current_data = {}
-            self.__clock.tick()
+        if self._should_process(**self._current_data):
+            self.process(**self._current_data)
+            self._current_data = {}
+            self._clock.tick()
 
     def trigger_process(self):
-        if self.__compute_on in [Location.SAME]:
+        if self._compute_on in [Location.SAME]:
             # same and threads both may be called directly and do not require a notification
             self._process()
-        elif self.__compute_on in [Location.PROCESS]:
+        elif self._compute_on in [Location.PROCESS]:
             # signal subprocess that new data has arrived by:
             # 1) releasing the lock so that it may process the new data and
             # 2) aquiring it directly, so that it'll wait for new data again
+            self._log('ON Data?')
             self._subprocess_info['data_lock'].release()
-            self._subprocess_info['data_lock'].acquire(block=False)
+            self._subprocess_info['data_lock'].acquire(block=True)
         else:
-            raise Exception(f'Location {self.__compute_on} not implemented yet.')
+            raise Exception(f'Location {self._compute_on} not implemented yet.')
 
     def receive_data(self, clock, payload):
         """
@@ -413,7 +445,7 @@ class Node ():
         """
         # store all received data in their according mp.simplequeues
         for key, val in payload.items():
-            self.__received_data[key].put(clock.ctr, val)
+            self._received_data[key].put(clock.ctr, val)
 
         self.trigger_process()
 
@@ -488,32 +520,32 @@ class Node ():
     
 
     # === Performance Stuff =================
-    def timeit(self):
-        pass
+    # def timeit(self):
+    #     pass
 
     # TODO: Look at the original timing code, ideas and plots
 
 
     # === Node Specific Stuff =================
     # (Computation, Render)
-    def __settings(self):
+    def _settings(self):
         return {"name": self.name}
 
-    def __should_process(self, **kwargs):
+    def _should_process(self, **kwargs):
         """
         Given the inputs, this determines if process should be called on the new data or not
         params: **channels_in
         returns bool (if process should be called with these inputs)
         """
-        return True
+        return set(self.channels_in) <= set(list(kwargs.keys()))
     
     def process(self):
         """
         Heart of the nodes processing, should be a stateless(/functional) processing function, 
-        ie "self" should only be used to call __emit_[data|draw]. 
+        ie "self" should only be used to call _emit_[data|draw]. 
         However, if you really require a separate state management of your own, you may use self
 
-        TODO: consider later on if we might change this to not call __emit but just return the stuff needed...
+        TODO: consider later on if we might change this to not call _emit but just return the stuff needed...
         -> pro: clearer process functions, more likely to actually be funcitonal; cannot have confusion when emitting twice in the same channel
         -> con: children need to wait until the full node is finished with processing (ie: no ability to do partial computations (not sure if we want those, tho))
 
