@@ -52,7 +52,7 @@ class Save(Node):
 if __name__ == "__main__":
     data = Data(name="A", compute_on=Location.SAME)
     quadratic = Quadratic(name="B", compute_on=Location.PROCESS)
-    out1 = Save(name="C", compute_on=Location.SAME)
+    out1 = Save(name="C", compute_on=Location.PROCESS)
     out2 = Save(name="D", compute_on=Location.SAME)
     
     out1.connect_inputs_to(data)
@@ -61,7 +61,6 @@ if __name__ == "__main__":
 
 
     data.start()
-    time.sleep(0.1) # not sure if we can avoid this... or move this into the node class?
 
     for _ in range(10):
         data.trigger_process()

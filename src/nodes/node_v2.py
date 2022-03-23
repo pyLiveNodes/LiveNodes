@@ -36,8 +36,8 @@ class QueueHelperHack():
 
     def get(self, ctr, discard_before=True):
         while not self.queue.empty():
-            ctr, item = self.queue.get()
-            self._read[ctr] = item
+            itm_ctr, item = self.queue.get()
+            self._read[itm_ctr] = item
 
         if ctr in self._read:
             res = self._read[ctr]
@@ -133,9 +133,8 @@ class Node ():
         self._subprocess_info = {}
         if self._compute_on in [Location.PROCESS]:
             self._subprocess_info = {
-                "process": None,
-                "data_lock": mp.Lock(),
-                "data_queue": mp.Queue(),
+                "process": mp.Process(target=self._process_on_proc),
+                "message_queue": mp.Queue(),
                 "termination_lock": mp.Lock()
             }
 
@@ -152,11 +151,14 @@ class Node ():
     # TODO: move this into it's own module/file?
     def _log(self, *text):
         # if 4 <= level:
-        msg = "{} | {:<11} | {:<11} | {:>11} | {}".format(datetime.datetime.now().strftime("%Y-%m-%d %X"),
-                                                            mp.current_process().name,
-                                                            threading.current_thread().name,
-                                                            str("Debug"),
-                                                            " ".join(str(t) for t in text))
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %X")
+        cur_proc = mp.current_process().name
+        cur_thread = threading.current_thread().name
+        level = "Debug"
+        node = str(self)
+        txt = " ".join(str(t) for t in text)
+
+        msg = f"{timestamp} | {cur_proc: <11} | {cur_thread: <11} | {level: >11} | {node: >15} | {txt}"
 
         # acquire blocking log
         LOGGER_LOCK.acquire(True)
@@ -345,6 +347,7 @@ class Node ():
     # === Start/Stop Stuff =================
     def start(self, children=True):
         # first start children, so they are ready to receive inputs
+        # children cannot not have inputs, ie they are always relying on this node to send them data if they want to progress their clock
         if children:
             for con in self.output_connections:
                 con._receiving_node.start()
@@ -353,10 +356,10 @@ class Node ():
         if self._running == False: # the node might be child to multiple parents, but we just want to start once
             self._running = True
 
+            # TODO: consider moving this in the node constructor, so that we do not have this nested behaviour processeses due to parents calling their childs start()
             if self._compute_on in [Location.PROCESS]:
-                self._subprocess_info['process'] = mp.Process(target=self._process_on_proc)
+                # self._subprocess_info['process'] = mp.Process(target=self._process_on_proc)
                 self._log('create subprocess')
-                self._subprocess_info['data_lock'].acquire()
                 self._subprocess_info['termination_lock'].acquire()
                 self._log('start subprocess')
                 self._subprocess_info['process'].start()
@@ -396,30 +399,23 @@ class Node ():
         self._draw_state.put(kwargs)
 
     def _process_on_proc(self):
-        self._log('subprocess')
+        self._log('Started subprocess')
+
         # as long as we do not receive a termination signal, we will wait for data to be processed
         # the .empty() is not reliable (according to the python doc), but the best we have at the moment
-        while not self._subprocess_info['termination_lock'].acquire(block=False) or not self._subprocess_info['data_queue'].empty():
-            self._log('wating to process')
-            
+        while not self._subprocess_info['termination_lock'].acquire(block=False) or not self._subprocess_info['message_queue'].empty():
             # block until signaled that we have new data
             # as we might receive not data after having received a termination
             #      -> we'll just poll, so that on termination we do terminate after no longer than 0.1seconds
-            # if self._subprocess_info['data_lock'].acquire(block=True, timeout=0.1):
-            #     self._log('processing')
-            #     self._process()
-            #     # time.sleep(1)
-            #     self._subprocess_info['data_lock'].release()
-
             try:
-                self._subprocess_info['data_queue'].get(block=True, timeout=0.1)
+                self._subprocess_info['message_queue'].get(block=True, timeout=0.1)
             except queue.Empty:
                 continue
 
             self._log('processing')
             self._process()
 
-        self._log('finished subprocess')
+        self._log('Finished subprocess')
         
             
     def _process(self):
@@ -433,9 +429,11 @@ class Node ():
             if found_value:
                 self._current_data[key] = cur_value
 
+        self._log(self._current_data, self._clock.ctr)
         # check if all required data to proceed is available and then call process
         # then cleanup aggregated data and advance our own clock
         if self._should_process(**self._current_data):
+            self._log
             self.process(**self._current_data)
             self._current_data = {}
             self._clock.tick()
@@ -445,15 +443,8 @@ class Node ():
             # same and threads both may be called directly and do not require a notification
             self._process()
         elif self._compute_on in [Location.PROCESS]:
-            # signal subprocess that new data has arrived by:
-            # 1) releasing the lock so that it may process the new data and
-            # 2) aquiring it directly, so that it'll wait for new data again
-            self._log('ON Data?')
-            # self._subprocess_info['data_lock'].release()
-            # time.sleep(0.1) # allow any other thread to jump in, if need be
-            # self._subprocess_info['data_lock'].acquire(block=True)
-            self._subprocess_info['data_queue'].put(1)
-            self._log('end signal')
+            # signal subprocess that new data has arrived by adding an item to the signal queue, 
+            self._subprocess_info['message_queue'].put(1)
         else:
             raise Exception(f'Location {self._compute_on} not implemented yet.')
 
@@ -462,8 +453,8 @@ class Node ():
         called in location of emitting node
         """
         # store all received data in their according mp.simplequeues
-        for key, val in payload.items():
-            self._received_data[key].put(clock.ctr, val)
+        # for key, val in payload.items():
+            # self._received_data[key].put(clock.ctr, val)
 
         self.trigger_process()
 

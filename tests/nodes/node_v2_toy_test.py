@@ -59,9 +59,9 @@ def create_simple_graph():
 @pytest.fixture
 def create_simple_graph_mp():
     data = Data(name="A", compute_on=Location.PROCESS)
-    quadratic = Quadratic(name="B", compute_on=Location.SAME)
-    out1 = Save(name="C", compute_on=Location.SAME)
-    out2 = Save(name="D", compute_on=Location.SAME)
+    quadratic = Quadratic(name="B", compute_on=Location.PROCESS)
+    out1 = Save(name="C", compute_on=Location.PROCESS)
+    out2 = Save(name="D", compute_on=Location.PROCESS)
     
     out1.connect_inputs_to(data)
     quadratic.connect_inputs_to(data)
@@ -93,6 +93,7 @@ class TestProcessing():
 
         for _ in range(10):
             data.trigger_process()
+
         data.stop()
 
         assert out1.get_state() == list(range(10))
