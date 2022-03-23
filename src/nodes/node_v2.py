@@ -10,6 +10,10 @@ from collections import defaultdict
 import datetime
 import threading
 
+# this fix is for macos (https://docs.python.org/3.8/library/multiprocessing.html#contexts-and-start-methods) 
+# TODO: test/validate this works in all cases (ie increase test cases, coverage and machines to be tested on) 
+mp.set_start_method('fork')
+
 class NumpyEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, np.ndarray):
