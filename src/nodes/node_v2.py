@@ -433,7 +433,6 @@ class Node ():
         # check if all required data to proceed is available and then call process
         # then cleanup aggregated data and advance our own clock
         if self._should_process(**self._current_data):
-            self._log
             self.process(**self._current_data)
             self._current_data = {}
             self._clock.tick()
@@ -453,8 +452,8 @@ class Node ():
         called in location of emitting node
         """
         # store all received data in their according mp.simplequeues
-        # for key, val in payload.items():
-            # self._received_data[key].put(clock.ctr, val)
+        for key, val in payload.items():
+            self._received_data[key].put(clock.ctr, val)
 
         self.trigger_process()
 
