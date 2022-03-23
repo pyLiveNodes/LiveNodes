@@ -76,11 +76,9 @@ class TestProcessing():
         data, quadratic, out1, out2 = create_simple_graph
 
         data.start()
-        time.sleep(1) # not sure if we can avoid this... or move this into the node class?
 
         for _ in range(10):
             data.trigger_process()
-        time.sleep(1) # not sure if we can avoid this... or move this into the node class?
 
         data.stop()
         
@@ -92,11 +90,9 @@ class TestProcessing():
         data, quadratic, out1, out2 = create_simple_graph_mp
 
         data.start()
-        time.sleep(1) # not sure if we can avoid this... or move this into the node class?
 
         for _ in range(10):
             data.trigger_process()
-        time.sleep(1) # not sure if we can avoid this... or move this into the node class?
         data.stop()
 
         assert out1.get_state() == list(range(10))

@@ -1,9 +1,11 @@
 
 from enum import Enum
 import json
+from socket import timeout
 import numpy as np
 import time 
 import multiprocessing as mp
+import queue
 from collections import defaultdict
 import datetime
 import threading
@@ -133,6 +135,7 @@ class Node ():
             self._subprocess_info = {
                 "process": None,
                 "data_lock": mp.Lock(),
+                "data_queue": mp.Queue(),
                 "termination_lock": mp.Lock()
             }
 
@@ -366,7 +369,6 @@ class Node ():
 
             if self._compute_on in [Location.PROCESS]:
                 self._subprocess_info['termination_lock'].release()
-                self._subprocess_info['data_lock'].release() # the subprocess might block termination until this is released.
                 self._subprocess_info['process'].join(3)
                 self._subprocess_info['process'].terminate()
 
@@ -396,14 +398,27 @@ class Node ():
     def _process_on_proc(self):
         self._log('subprocess')
         # as long as we do not receive a termination signal, we will wait for data to be processed
-        while not self._subprocess_info['termination_lock'].acquire(block=False):
+        # the .empty() is not reliable (according to the python doc), but the best we have at the moment
+        while not self._subprocess_info['termination_lock'].acquire(block=False) or not self._subprocess_info['data_queue'].empty():
             self._log('wating to process')
+            
             # block until signaled that we have new data
-            # as we might receive not data after having received a termination, make sure to release the data lock when terminating.
-            self._subprocess_info['data_lock'].acquire(block=True)
+            # as we might receive not data after having received a termination
+            #      -> we'll just poll, so that on termination we do terminate after no longer than 0.1seconds
+            # if self._subprocess_info['data_lock'].acquire(block=True, timeout=0.1):
+            #     self._log('processing')
+            #     self._process()
+            #     # time.sleep(1)
+            #     self._subprocess_info['data_lock'].release()
+
+            try:
+                self._subprocess_info['data_queue'].get(block=True, timeout=0.1)
+            except queue.Empty:
+                continue
+
             self._log('processing')
             self._process()
-            self._subprocess_info['data_lock'].release()
+
         self._log('finished subprocess')
         
             
@@ -434,8 +449,11 @@ class Node ():
             # 1) releasing the lock so that it may process the new data and
             # 2) aquiring it directly, so that it'll wait for new data again
             self._log('ON Data?')
-            self._subprocess_info['data_lock'].release()
-            self._subprocess_info['data_lock'].acquire(block=True)
+            # self._subprocess_info['data_lock'].release()
+            # time.sleep(0.1) # allow any other thread to jump in, if need be
+            # self._subprocess_info['data_lock'].acquire(block=True)
+            self._subprocess_info['data_queue'].put(1)
+            self._log('end signal')
         else:
             raise Exception(f'Location {self._compute_on} not implemented yet.')
 
