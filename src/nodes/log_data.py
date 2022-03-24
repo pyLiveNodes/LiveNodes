@@ -10,5 +10,5 @@ class Log_data(Node):
     example_init = {'name': 'Name'}
 
     def process(self, data, **kwargs):
-        self._log(data_frame)
-        self._emit_data(data_frame)
+        self._log(data)
+        self._emit_data(data)

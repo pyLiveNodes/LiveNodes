@@ -21,8 +21,8 @@ class Memory(Node):
             "length": self.length
            }
 
-    def process(self, data, **kwargs):
-        self.buffer.extend(data_frame)
+    def process(self, data):
+        self.buffer.extend(data)
         if self.length != None:
             self.buffer = self.buffer[-self.length:]
         self._emit_data(self.buffer)
