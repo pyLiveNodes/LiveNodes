@@ -138,7 +138,7 @@ class Node ():
         if self._compute_on in [Location.PROCESS]:
             self._subprocess_info = {
                 "process": mp.Process(target=self._process_on_proc),
-                "message_queue": mp.Queue(),
+                "message_to_subprocess": mp.Queue(),
                 "termination_lock": mp.Lock()
             }
 
@@ -407,12 +407,12 @@ class Node ():
 
         # as long as we do not receive a termination signal, we will wait for data to be processed
         # the .empty() is not reliable (according to the python doc), but the best we have at the moment
-        while not self._subprocess_info['termination_lock'].acquire(block=False) or not self._subprocess_info['message_queue'].empty():
+        while not self._subprocess_info['termination_lock'].acquire(block=False) or not self._subprocess_info['message_to_subprocess'].empty():
             # block until signaled that we have new data
             # as we might receive not data after having received a termination
             #      -> we'll just poll, so that on termination we do terminate after no longer than 0.1seconds
             try:
-                self._subprocess_info['message_queue'].get(block=True, timeout=0.1)
+                self._subprocess_info['message_to_subprocess'].get(block=True, timeout=0.1)
             except queue.Empty:
                 continue
 
@@ -447,7 +447,7 @@ class Node ():
             self._process()
         elif self._compute_on in [Location.PROCESS]:
             # signal subprocess that new data has arrived by adding an item to the signal queue, 
-            self._subprocess_info['message_queue'].put(1)
+            self._subprocess_info['message_to_subprocess'].put(1)
         else:
             raise Exception(f'Location {self._compute_on} not implemented yet.')
 
@@ -575,7 +575,7 @@ class Node ():
 
         return update
 
-    def init_draw_mpl(self):
+    def init_draw_mpl(self, subfigure):
         """
         Similar to init_draw, but specific to matplotlib animations
         Should be either or, not sure how to check that...
@@ -587,17 +587,56 @@ class Node ():
 
 
 
-class Transform(Node):
-    """
-    The default node.
-    Takes input and produces output
-    """
-    pass
+# class Transform(Node):
+#     """
+#     The default node.
+#     Takes input and produces output
+#     """
+#     pass
 
 
 class Sender(Node):
     """
-    Loops the process function indefenitely
-    TODO: find better name!
+    Loops the process function until it returns false, indicating that no more data is to be sent
     """
-    pass
+
+    channels_in = [] # must be empty!
+
+    def run(self):
+        """
+        should be implemented instead of the standard process function
+        should be a generator
+        """
+        pass
+
+    def _process_on_proc(self):
+        self._log('Started subprocess')
+
+        runner = self.run()
+        try:
+            # as long as we do not receive a termination signal and there is data, we will send data
+            while not self._subprocess_info['termination_lock'].acquire(block=False) and next(runner):
+                self._clock.tick()
+        except StopIteration:
+                self._log('Reached end of run')
+        self._log('Finished subprocess')
+
+
+    def start(self, children=True):
+        super().start(children)
+        
+        if self._compute_on in [Location.PROCESS]:
+            self._subprocess_info['process'].join()
+        elif self._compute_on in [Location.SAME]:
+            # iterate until the generator that is run() returns false, ie no further data is to be processed
+            runner = self.run()
+            try:
+                while next(runner):
+                    self._clock.tick()
+            except StopIteration:
+                self._log('Reached end of run')
+    
+
+
+
+    
