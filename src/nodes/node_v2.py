@@ -1,6 +1,7 @@
 
 from enum import Enum
 import json
+from re import L
 from socket import timeout
 import numpy as np
 import time 
@@ -141,7 +142,12 @@ class Node ():
                 "message_to_subprocess": mp.Queue(),
                 "termination_lock": mp.Lock()
             }
-
+        elif self._compute_on in [Location.THREAD]:
+            self._subprocess_info = {
+                "process": threading.Thread(target=self._process_on_proc),
+                "message_to_subprocess": mp.Queue(),
+                "termination_lock": threading.Lock()
+            }
 
     def __repr__(self):
         return str(self)
@@ -361,10 +367,10 @@ class Node ():
             self._running = True
 
             # TODO: consider moving this in the node constructor, so that we do not have this nested behaviour processeses due to parents calling their childs start()
-            if self._compute_on in [Location.PROCESS]:
+            if self._compute_on in [Location.PROCESS, Location.THREAD]:
                 # self._subprocess_info['process'] = mp.Process(target=self._process_on_proc)
                 self._log('create subprocess')
-                self._subprocess_info['termination_lock'].acquire()
+                self._acquire_lock(self._subprocess_info['termination_lock'])
                 self._log('start subprocess')
                 self._subprocess_info['process'].start()
 
@@ -374,15 +380,28 @@ class Node ():
         if self._running == True: # the node might be child to multiple parents, but we just want to stop once
             self._running = False
 
-            if self._compute_on in [Location.PROCESS]:
+            if self._compute_on in [Location.PROCESS, Location.THREAD]:
                 self._subprocess_info['termination_lock'].release()
                 self._subprocess_info['process'].join(3)
-                self._subprocess_info['process'].terminate()
+
+                if self._compute_on in [Location.PROCESS]:
+                    self._subprocess_info['process'].terminate()
 
         # now stop children
         if children:
             for con in self.output_connections:
                 con._receiving_node.stop()
+
+    def _acquire_lock(self, lock, block=True, timeout=None):
+        if self._compute_on in [Location.PROCESS]:
+            return lock.acquire(block=block, timeout=timeout)
+        elif self._compute_on in [Location.THREAD]:
+            if block:
+                return lock.acquire(blocking=True, timeout=-1 if timeout is None else timeout)
+            else:
+                return lock.acquire(blocking=False) # forbidden to specify timeout
+        else:
+            raise Exception('Cannot acquire lock in non multi process/threading environment')
 
 
     # === Data Stuff =================
@@ -407,7 +426,7 @@ class Node ():
 
         # as long as we do not receive a termination signal, we will wait for data to be processed
         # the .empty() is not reliable (according to the python doc), but the best we have at the moment
-        while not self._subprocess_info['termination_lock'].acquire(block=False) or not self._subprocess_info['message_to_subprocess'].empty():
+        while not self._acquire_lock(self._subprocess_info['termination_lock'], block=False) or not self._subprocess_info['message_to_subprocess'].empty():
             # block until signaled that we have new data
             # as we might receive not data after having received a termination
             #      -> we'll just poll, so that on termination we do terminate after no longer than 0.1seconds
@@ -445,7 +464,7 @@ class Node ():
         if self._compute_on in [Location.SAME]:
             # same and threads both may be called directly and do not require a notification
             self._process()
-        elif self._compute_on in [Location.PROCESS]:
+        elif self._compute_on in [Location.PROCESS, Location.THREAD]:
             # signal subprocess that new data has arrived by adding an item to the signal queue, 
             self._subprocess_info['message_to_subprocess'].put(1)
         else:
@@ -602,12 +621,18 @@ class Sender(Node):
 
     channels_in = [] # must be empty!
 
+    def __init_subclass__(cls):
+        super().__init_subclass__()
+        if len(cls.channels_in) > 0:
+            # This is a design choice. Technically this might even be possible, but at the time of writing i do not forsee a usefull case.
+            raise ValueError('Sender nodes cannot have input')
+
     def run(self):
         """
         should be implemented instead of the standard process function
         should be a generator
         """
-        pass
+        return False
 
     def _process_on_proc(self):
         self._log('Started subprocess')
@@ -615,7 +640,7 @@ class Sender(Node):
         runner = self.run()
         try:
             # as long as we do not receive a termination signal and there is data, we will send data
-            while not self._subprocess_info['termination_lock'].acquire(block=False) and next(runner):
+            while not self._acquire_lock(self._subprocess_info['termination_lock'], block=False) and next(runner):
                 self._clock.tick()
         except StopIteration:
                 self._log('Reached end of run')
@@ -625,7 +650,7 @@ class Sender(Node):
     def start(self, children=True):
         super().start(children)
         
-        if self._compute_on in [Location.PROCESS]:
+        if self._compute_on in [Location.PROCESS, Location.THREAD]:
             self._subprocess_info['process'].join()
         elif self._compute_on in [Location.SAME]:
             # iterate until the generator that is run() returns false, ie no further data is to be processed

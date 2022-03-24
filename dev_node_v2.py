@@ -48,10 +48,10 @@ class Save(Node):
         return res
 
 if __name__ == "__main__":
-    data = Data(name="A", compute_on=Location.PROCESS)
-    quadratic = Quadratic(name="B", compute_on=Location.SAME)
+    data = Data(name="A", compute_on=Location.THREAD)
+    quadratic = Quadratic(name="B", compute_on=Location.PROCESS)
     out1 = Save(name="C", compute_on=Location.SAME)
-    out2 = Save(name="D", compute_on=Location.SAME)
+    out2 = Save(name="D", compute_on=Location.THREAD)
     
     out1.connect_inputs_to(data)
     quadratic.connect_inputs_to(data)
