@@ -12,8 +12,8 @@ import multiprocessing as mp
 
 
 class Draw_search_graph(Node):
-    def __init__(self, n_hypos = 3, name = "Search Graph", dont_time = False):
-        super().__init__(name=name, has_outputs=False, dont_time=dont_time)
+    def __init__(self, n_hypos = 3, name = "Search Graph", **kwargs):
+        super().__init__(name=name, **kwargs)
 
         self.queue_meta = mp.Queue()
         self.queue_hypo = mp.Queue()
@@ -52,7 +52,7 @@ class Draw_search_graph(Node):
             "Hypothesis": self.receive_hypo
         }
 
-    def _get_setup(self):
+    def _settings(self):
         return {\
             "name": self.name,
             "n_hypos": self.n_hypos

@@ -405,14 +405,14 @@ class Node ():
 
 
     # === Data Stuff =================
-    def _emit_data(self, data, stream="Data"):
+    def _emit_data(self, data, channel="Data"):
         """
         Called in computation process, ie self.process
         Emits data to childs, ie child.receive_data
         """
         for con in self.output_connections:
-            if con._receiving_channel == stream:
-                con._receiving_node.receive_data(self._clock, payload={stream: data})
+            if con._receiving_channel == channel:
+                con._receiving_node.receive_data(self._clock, payload={channel: data})
 
     def _emit_draw(self, **kwargs):
         """
@@ -440,6 +440,9 @@ class Node ():
 
         self._log('Finished subprocess')
         
+    @staticmethod
+    def _channel_name_to_key(name):
+        return name.replace(' ', '_').lower()
             
     def _process(self):
         """
@@ -450,7 +453,8 @@ class Node ():
             # discard everything, that was before our own current clock
             found_value, cur_value = queue.get(self._clock.ctr)
             if found_value:
-                self._current_data[key] = cur_value
+                # TODO: instead of this transformation consider actually using classes for data types...
+                self._current_data[self._channel_name_to_key(key)] = cur_value
 
         self._log(self._current_data, self._clock.ctr)
         # check if all required data to proceed is available and then call process
@@ -459,6 +463,8 @@ class Node ():
             self.process(**self._current_data)
             self._current_data = {}
             self._clock.tick()
+        else:
+            self._log('Decided not to process', self._current_data)
 
     def trigger_process(self):
         if self._compute_on in [Location.SAME]:
@@ -559,6 +565,7 @@ class Node ():
 
     # === Node Specific Stuff =================
     # (Computation, Render)
+    # TODO: consider changing this to follow the pickle conventions
     def _settings(self):
         return {"name": self.name}
 
@@ -568,7 +575,7 @@ class Node ():
         params: **channels_in
         returns bool (if process should be called with these inputs)
         """
-        return set(self.channels_in) <= set(list(kwargs.keys()))
+        return set(list(map(self._channel_name_to_key, self.channels_in))) <= set(list(kwargs.keys()))
     
     def process(self):
         """
@@ -627,17 +634,17 @@ class Sender(Node):
             # This is a design choice. Technically this might even be possible, but at the time of writing i do not forsee a usefull case.
             raise ValueError('Sender nodes cannot have input')
 
-    def run(self):
+    def _run(self):
         """
         should be implemented instead of the standard process function
         should be a generator
         """
-        return False
+        yield False
 
     def _process_on_proc(self):
         self._log('Started subprocess')
 
-        runner = self.run()
+        runner = self._run()
         try:
             # as long as we do not receive a termination signal and there is data, we will send data
             while not self._acquire_lock(self._subprocess_info['termination_lock'], block=False) and next(runner):
@@ -654,7 +661,7 @@ class Sender(Node):
             self._subprocess_info['process'].join()
         elif self._compute_on in [Location.SAME]:
             # iterate until the generator that is run() returns false, ie no further data is to be processed
-            runner = self.run()
+            runner = self._run()
             try:
                 while next(runner):
                     self._clock.tick()
@@ -663,5 +670,47 @@ class Sender(Node):
     
 
 
+class BlockingSender(Sender):
 
-    
+    def _onstart(self):
+        pass
+
+    def _onstop(self):
+        pass
+
+    def _emit_data(self, data, channel="Data"):
+        super()._emit_data(data, channel)
+        # as we are a blocking sender / a sensore everytime we emit a sample, we advance our clock
+        self._clock.tick()
+
+    def _process_on_proc(self):
+        self._log('Started subprocess')
+        try:
+            self._onstart()
+        except KeyboardInterrupt:
+            self._log('Received Termination Signal')
+            self._onstop()
+        self._log('Finished subprocess')
+
+    def start(self, children=True):
+        super().start(children)
+        
+        if self._compute_on in [Location.PROCESS, Location.THREAD]:
+            self._subprocess_info['process'].join()
+        elif self._compute_on in [Location.SAME]:
+            self._onstart()
+
+    def stop(self, children=True):
+        # first stop self, so that non-existing children don't receive inputs
+        if self._running == True: # the node might be child to multiple parents, but we just want to stop once
+            self._running = False
+
+            if self._compute_on in [Location.SAME, Location.THREAD]:
+                self._onstop()
+            elif self._compute_on in [Location.PROCESS]:
+                self._subprocess_info['process'].terminate()
+
+        # now stop children
+        if children:
+            for con in self.output_connections:
+                con._receiving_node.stop()

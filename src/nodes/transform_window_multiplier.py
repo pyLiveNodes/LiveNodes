@@ -2,29 +2,26 @@ import numpy as np
 from .node import Node
 
 class Transform_window_multiplier(Node):
-    def __init__(self, function, name = "Window", dont_time = False):
-        super().__init__(name=name, dont_time=dont_time)
+    channels_in = ['Data']
+    channels_out = ['Data']
+
+    category = "Transform"
+    description = "" 
+
+    example_init = {'name': 'Name'}
+
+    def __init__(self, function, name = "Window", **kwargs):
+        super().__init__(name=name, **kwargs)
+
         self.function = function
     
-    @staticmethod
-    def info():
-        return {
-            "class": "Transform_window_multiplier",
-            "file": "Transform_window_multiplier.py",
-            "in": ["Data"],
-            "out": ["Data"],
-            "init": {
-                "name": "Name"
-            },
-            "category": "Transform"
-        }
         
-    def _get_setup(self):
+    def _settings(self):
         return {\
             "name": self.name,
             "function": self.function
            }
 
-    def receive_data(self, data_frame, **kwargs):
-        multiplier = getattr(np, function)(len(data_frame))
-        self.send_data(np.multiply(np.array(self.buffer[:self.length]), multiplier))
+    def process(self, data, **kwargs):
+        multiplier = getattr(np, function)(len(data))
+        self._emit_data(np.multiply(np.array(self.buffer[:self.length]), multiplier))

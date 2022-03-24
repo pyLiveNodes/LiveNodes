@@ -18,8 +18,8 @@ class Draw_gmm(Node):
     # (this entails fixing the gmms not being passed in the hmm meta stream but a stream of their own)
 
     # Stopped at: re-implementing plot_names in order to get this f**ing working for tomorrow
-    def __init__(self, plot_names, n_mixtures=2, n_scatter_points = 10, name = "GMM", dont_time = False):
-        super().__init__(name=name, has_outputs=False, dont_time=dont_time)
+    def __init__(self, plot_names, n_mixtures=2, n_scatter_points = 10, name = "GMM", **kwargs):
+        super().__init__(name=name, **kwargs)
 
         self.queue_meta = mp.Queue()
         self.queue_hypo = mp.Queue()
@@ -79,7 +79,7 @@ class Draw_gmm(Node):
             "GMM Weights": self.receive_gmm_weights,
         }
 
-    def _get_setup(self):
+    def _settings(self):
         return {\
             "name": self.name,
             "plot_names": self.plot_names,
@@ -162,7 +162,7 @@ class Draw_gmm(Node):
     def receive_hypo(self, hypo, **kwargs):
         self.queue_hypo.put(hypo)
     
-    def receive_data(self, data, **kwargs):
+    def process(self, data, **kwargs):
         self.queue_data.put(data)
 
     def receive_gmm_models(self, data, **kwargs):

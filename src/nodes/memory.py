@@ -2,31 +2,27 @@ import numpy as np
 from .node import Node
 
 class Memory(Node):
-    def __init__(self, length=None, name = "Memory", dont_time = False):
-        super().__init__(name=name, dont_time=dont_time)
+    channels_in = ['Data']
+    channels_out = ['Data']
+
+    category = "Basic"
+    description = "" 
+
+    example_init = {'name': 'Name'}
+
+    def __init__(self, length=None, name = "Memory", **kwargs):
+        super().__init__(name=name, **kwargs)
         self.length = length
         self.buffer = []
 
-    @staticmethod
-    def info():
-        return {
-            "class": "Memory",
-            "file": "Memory.py",
-            "in": ["Data"],
-            "out": ["Data"],
-            "init": {
-                "name": "Name"
-            },
-            "category": "Basic"
-        }
 
-    def _get_setup(self):
+    def _settings(self):
         return {\
             "length": self.length
            }
 
-    def receive_data(self, data_frame, **kwargs):
+    def process(self, data, **kwargs):
         self.buffer.extend(data_frame)
         if self.length != None:
             self.buffer = self.buffer[-self.length:]
-        self.send_data(self.buffer)
+        self._emit_data(self.buffer)

@@ -39,8 +39,8 @@ def convert_list_pos(itms, x_max, yrange):
 
 class Draw_recognition(Node):
     # TODO: consider removing the filter here and rather putting it into a filter node
-    def __init__(self, xAxisLength=[50, 50, 50, 5000], name = "Recognition", dont_time = False):
-        super().__init__(name=name, has_outputs=False, dont_time=dont_time)
+    def __init__(self, xAxisLength=[50, 50, 50, 5000], name = "Recognition", **kwargs):
+        super().__init__(name=name, **kwargs)
         self.xAxisLength = xAxisLength
 
         self.verts = [[], [], [], []]
@@ -74,7 +74,7 @@ class Draw_recognition(Node):
             "HMM Meta": self.receive_meta
         }
 
-    def _get_setup(self):
+    def _settings(self):
         return {\
             "name": self.name,
             "xAxisLength": self.xAxisLength
@@ -154,7 +154,7 @@ class Draw_recognition(Node):
             return []
         return update
 
-    def receive_data(self, data, **kwargs):
+    def process(self, data, **kwargs):
         self.path_queue.put(data)
 
     def receive_meta(self, meta, **kwargs):

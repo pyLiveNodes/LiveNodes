@@ -14,8 +14,8 @@ import time
 
 class Draw_text_display(Node):
     # TODO: move the sample rate into a data_stream?
-    def __init__(self, initial_text="", name = "Text Output", dont_time = False):
-        super().__init__(name=name, has_outputs=False, dont_time=dont_time)
+    def __init__(self, initial_text="", name = "Text Output", **kwargs):
+        super().__init__(name=name, **kwargs)
 
         self.text_queue = mp.SimpleQueue()
         self.text = initial_text
@@ -74,5 +74,5 @@ class Draw_text_display(Node):
         return update
 
 
-    def receive_data(self, data_frame, **kwargs):
+    def process(self, data, **kwargs):
         self.text_queue.put(data_frame)  

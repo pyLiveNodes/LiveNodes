@@ -1,54 +1,39 @@
-import time
 import numpy as np
-from multiprocessing import Process
 import threading
-from .node import Node
-import glob, random
-import pandas as pd
-import random
+from .node import BlockingSender
 
 from pythonosc.osc_server import AsyncIOOSCUDPServer
 from pythonosc.dispatcher import Dispatcher
 import asyncio
 
 
-class In_riot(Node):
+class In_riot(BlockingSender):
     channels = ["ACC_X", "ACC_Y", "ACC_Z", "GYRO_X", "GYRO_Y", "GYRO_Z", "MAG_X", "MAG_Y", "MAG_Z","TEMP", "IO", "A1", "A2", "C", "Q1", "Q2", "Q3", "Q4", "PITCH", "YAW", "ROLL", "HEAD"]
 
-    def __init__(self, id=0, name="RIoT", listen_ip='192.168.1.101', listen_port=8888, dont_time=False):
-        super().__init__(name, has_inputs=False, dont_time=dont_time)
-        self.feeder_process = None
+    channels_in = []
+    channels_out = ['Data', 'Channel Names']
+
+    category = "Base"
+    description = "" 
+
+    example_init = {'name': 'Name', "id": 0, "listen_ip": '192.168.1.101', "listen_port": 8888}
+
+    def __init__(self, id=0, name="RIoT", listen_ip='192.168.1.101', listen_port=8888, **kwargs):
+        super().__init__(name, **kwargs)
 
         self.id = id
         self.listen_ip = listen_ip
         self.listen_port = listen_port
 
-        # self.feeder_process = None
         self._stop_event = threading.Event()
     
-    def _get_setup(self):
+    def _settings(self):
         return {\
+            "name": self.name,
             "id": self.id,
             "listen_ip": self.listen_ip,
             "listen_port": self.listen_port,
         }
-
-    @staticmethod
-    def info():
-        return {
-            "class": "In_riot",
-            "file": "In_riot.py",
-            "in": [],
-            "out": ["Data", "Channel Names"],
-            "init": {
-                "name": "Name"
-            },
-            "category": "Base"
-        }
-    
-    @property
-    def in_map(self):
-        return {}
 
     async def collect(self):
         factors = np.array([2/x for x in [8, 8, 8, 2, 2, 2, 2, 2, 2, 1, 1, 1, 4095, 4095, 1, 1, 1,  1, 180, 180, 180, 180]])
@@ -57,8 +42,8 @@ class In_riot(Node):
             # nonlocal factors
             # print(addr, data)
             # print(np.array(data).shape)
-            self.send_data([np.array(list(data))*factors])
-            # self.send_data([data])
+            self._emit_data([np.array(list(data))*factors])
+            # self._emit_data([data])
 
         disp = Dispatcher()
         disp.map(f"/{self.id}/raw", onRawFrame)
@@ -71,38 +56,13 @@ class In_riot(Node):
         print("closing transport")
         transport.close()
 
-    def sender_process(self):
+    def _onstop(self):
+        self._stop_event.set()
+
+    def _onstart(self):
         """
         Streams the data and calls frame callbacks for each frame.
         """
 
-        self.send_data(self.channels, data_stream="Channel Names")
-
+        self._emit_data(self.channels, channel="Channel Names")
         asyncio.run(self.collect())
-
-    
-    def start_processing(self, recurse=True):
-        """
-        Starts the streaming process.
-        """
-        if self.feeder_process is None:
-            self.feeder_process = threading.Thread(target=self.sender_process)
-            # self.feeder_process = Process(target=self.sender_process)
-            # self.feeder_process.daemon = True
-            self.feeder_process.start()
-        super().start_processing(recurse)
-        
-    def stop_processing(self, recurse=True):
-        """
-        Stops the streaming process.
-        """
-        print("Stop processed in riot called")
-        if self.feeder_process is not None:
-            # set stop and wait for it to go through
-            self._stop_event.set()
-            self.feeder_process.join(3)
-            print('Closed RIoT input')
-            # self.feeder_process.terminate()
-        self.feeder_process = None
-        # our own close is called first, as we don't want to send data to a closed output
-        super().stop_processing(recurse)

@@ -1,8 +1,5 @@
-import time
 import numpy as np
-from multiprocessing import Process
-import threading
-from .node import Node
+from .node import Sender
 import glob, random
 import h5py
 import pandas as pd
@@ -34,7 +31,7 @@ def read_data(f):
     return data, targs
 
 
-class In_data(Node):
+class In_data(Sender):
     """
     Playsback previously recorded data.
 
@@ -43,10 +40,28 @@ class In_data(Node):
     - sample_rate (number): sample rate to simulate in frames per second
     # - batch_size (int, default=5): number of frames that are sent at the same time -> not implemented yet
     """
+
+    channels_in = []
+    channels_out = ['Data', 'File', 'Annotation', 'Meta', 'Channel Names', 'Termination']
+
+    category = "Data Source"
+    description = "" 
+
+    example_init = {
+        "files": "./files/**/.h5",
+        "meta": {
+            "sample_rate": 100,
+            "targets": ["target 1"],
+            "channels": ["Channel 1"]
+        },
+        "shuffle": True,
+        "batch": 1,
+        "name": "Data input",
+    }
+    
     # TODO: consider using a file for meta data instead of dictionary...
-    def __init__(self, files, meta, shuffle=True, batch=1, name="Data input", dont_time=False):
-        super().__init__(name, has_inputs=False, dont_time=dont_time)
-        self.feeder_process = None
+    def __init__(self, files, meta, shuffle=True, batch=1, name="Data input", **kwargs):
+        super().__init__(name, **kwargs)
 
         self.meta = meta
         self.files = files
@@ -57,30 +72,7 @@ class In_data(Node):
         self.targets = meta.get('targets')
         self.channels = meta.get('channels')
 
-        self._stop_event = threading.Event()
-    
-    @staticmethod
-    def info():
-        return {
-            "class": "In_data",
-            "file": "in_data.py",
-            "in": [],
-            "out": ["Data", "File", "Annotation", "Meta", "Channel Names", "Termination"],
-            "init": {
-                "files": "./files/**/.h5",
-                "meta": {
-                    "sample_rate": 100,
-                    "targets": ["target 1"],
-                    "channels": ["Channel 1"]
-                },
-                "shuffle": True,
-                "batch": 1,
-                "name": "Data input",
-            },
-            "category": "Data Source"
-        }
-
-    def _get_setup(self):
+    def _settings(self):
         return {\
             "batch": self.batch,
             "files": self.files,
@@ -88,11 +80,7 @@ class In_data(Node):
             "shuffle": self.shuffle
         }
 
-    def stop(self):
-        self._stop_event.set()
-        # self.feeder_process.terminate()
-
-    def sender_process(self):
+    def _run(self):
         """
         Streams the data and calls frame callbacks for each frame.
         """
@@ -101,10 +89,10 @@ class In_data(Node):
         if self.shuffle:
             random.shuffle(fs)
 
-        self.send_data(self.meta, data_stream="Meta")
-        self.send_data(self.channels, data_stream="Channel Names")
+        self._emit_data(self.meta, channel="Meta")
+        self._emit_data(self.channels, channel="Channel Names")
 
-        # TODO: create a producer/consumer queue here for best of both worlds ie fixed amount of mem with no hw access delay
+        # TODO: create a producer/consumer (blocking)queue (with fixed items) here for best of both worlds ie fixed amount of mem with no hw access delay
         # for now: just preload everything
         in_mem = Parallel(n_jobs=10)(delayed(read_data)(f) for f in fs)
 
@@ -118,27 +106,10 @@ class In_data(Node):
                 
             for i in range(0, len(data), self.batch):
                 d_len = len(data[i:i+self.batch]) # usefull if i+self.batch > len(data)
-                self.send_data(data[i:i+self.batch])
-                self.send_data(targs[i:i+self.batch], data_stream='Annotation')
-                self.send_data([file_number] * d_len, data_stream="File")
+                self._emit_data(data[i:i+self.batch])
+                self._emit_data(targs[i:i+self.batch], channel='Annotation')
+                self._emit_data([file_number] * d_len, channel="File")
+                yield True
 
-        self.send_data(None, data_stream='Termination') # TODO: maybe we could use something like this for syncing... ie seperate stream with just a counter 
-    
-    def start_processing(self, recurse=True):
-        """
-        Starts the streaming process.
-        """
-        if self.feeder_process is None:
-            self.feeder_process = threading.Thread(target=self.sender_process)
-            # self.feeder_process = Process(target=self.sender_process)
-            self.feeder_process.start()
-        super().start_processing(recurse)
-        
-    def stop_processing(self, recurse=True):
-        """
-        Stops the streaming process.
-        """
-        super().stop_processing(recurse)
-        if self.feeder_process is not None:
-            self.stop()
-        self.feeder_process = None
+        self._emit_data(None, channel='Termination') # TODO: maybe we could use something like this for syncing... ie seperate stream with just a counter 
+        return False

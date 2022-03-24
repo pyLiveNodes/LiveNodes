@@ -4,10 +4,10 @@ from .node import Node
 from .biokit import BioKIT
 
 class Biokit_to_fs(Node):
-    def receive_data(self, data_frame, **kwargs):
+    def process(self, data, **kwargs):
         fs = BioKIT.FeatureSequence()
         fs.setMatrix(np.array(data_frame))
-        self.send_data(fs)
+        self._emit_data(fs)
         
     @staticmethod
     def info():

@@ -45,7 +45,7 @@ class MultipleWrapper (BaseTransformer_eager):
 
 
 class Transform_feature(Node):
-    def __init__(self, name="Features", features=["calc_mean"], feature_args={}, dont_time=False):
+    def __init__(self, name="Features", features=["calc_mean"], feature_args={}, **kwargs):
         super().__init__(name, dont_time)
 
         self.features = features
@@ -91,7 +91,7 @@ class Transform_feature(Node):
             "Channel Names": self.receive_channels
         }
         
-    def _get_setup(self):
+    def _settings(self):
         return {\
             "features": self.features,
             "feature_args": self.feature_args
@@ -101,16 +101,16 @@ class Transform_feature(Node):
         self.channel_names = names
         self.out_channels = None
 
-    def receive_data(self, data_frame, **kwargs):
+    def process(self, data, **kwargs):
         # TODO: update the union stuff etc to not expect a tuple as input
         # TODO: update this to not expect it to be wrapped in a list
         # TODO: update this to not use a map anymore
         # TODO: currently ft.transform is called twice, as the dimensions_ will otherwise not be set -> most of the time we do double the work for no benefit 
         # data, channels = self._union.transform((data_frame, self.channel_names))
         data, channels = self._union.transform(([np.array(data_frame).T], self.channel_names))
-        self.send_data(list(data))
+        self._emit_data(list(data))
 
         if self.out_channels == None and len(channels) != 0:
             print(channels)
             self.out_channels = channels
-            self.send_data(channels, data_stream="Channel Names")
+            self._emit_data(channels, channel="Channel Names")

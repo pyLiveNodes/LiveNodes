@@ -4,18 +4,14 @@ from .node import Node
 from .biokit import BioKIT
 
 class Biokit_from_fs(Node):
-    def receive_data(self, fs, **kwargs):
-        self.send_data(fs.getMatrix())
+    channels_in = ['Data']
+    channels_out = ['Data']
 
-    @staticmethod
-    def info():
-        return {
-            "class": "Biokit_from_fs",
-            "file": "biokit_from_fs.py",
-            "in": ["Data"],
-            "out": ["Data"],
-            "init": {
-                "name": "From Feature Sequence"
-            },
-            "category": "BioKIT"
-        }
+    category = "BioKIT"
+    description = "" 
+
+    example_init = {'name': 'Name'}
+
+    def process(self, data)
+        self._emit_data(fs.getMatrix())
+

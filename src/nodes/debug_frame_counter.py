@@ -4,8 +4,8 @@ import time
 
 class Debug_frame_counter(Node):
 
-    def __init__(self, name="Frame Counter", dont_time = False):
-        super().__init__(name, dont_time=dont_time)
+    def __init__(self, name="Frame Counter", **kwargs):
+        super().__init__(name, **kwargs)
         self.counter = 0
         self.time = None
 
@@ -22,7 +22,7 @@ class Debug_frame_counter(Node):
             "category": "Debug"
         }
         
-    def receive_data(self, data_frame, **kwargs):
+    def process(self, data, **kwargs):
         if self.time is None:
             self.time = time.time()
             
@@ -32,5 +32,5 @@ class Debug_frame_counter(Node):
             fps = self.counter / t2
             print(f"{self.name}; received {self.counter} frames in {t2:.2f} seconds. This equals {fps:.2f}Hz.")
 
-        self.send_data(data_frame)
+        self._emit_data(data_frame)
         

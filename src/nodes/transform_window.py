@@ -2,35 +2,31 @@ import numpy as np
 from .node import Node
 
 class Transform_window(Node):
-    def __init__(self, length, overlap, name = "Window", dont_time = False):
-        super().__init__(name=name, dont_time=dont_time)
+    channels_in = ['Data']
+    channels_out = ['Data']
+
+    category = "Transform"
+    description = "" 
+
+    example_init = {'name': 'Name'}
+    
+    def __init__(self, length, overlap, name = "Window", **kwargs):
+        super().__init__(name=name, **kwargs)
+
         self.length = length
         self.overlap = overlap
 
         self.buffer = []
-    
-    @staticmethod
-    def info():
-        return {
-            "class": "Transform_window",
-            "file": "Transform_window.py",
-            "in": ["Data"],
-            "out": ["Data"],
-            "init": {
-                "name": "Name"
-            },
-            "category": "Transform"
-        }
 
-    def _get_setup(self):
+    def _settings(self):
         return {\
             "length": self.length,
             "overlap": self.overlap,
             "name": self.name,
            }
 
-    def receive_data(self, data_frame, **kwargs):
-        self.buffer.extend(data_frame)
+    def process(self, data):
+        self.buffer.extend(data)
         # TODO: consider if we could send mulitple frames in one send_data call or if that breaks an assumption later on
         # benefits would be more performant feature calculation (for example), but prob. the whole pipline might see minor benefits
         # -> tried, doesn't seem worth the trouble
@@ -40,9 +36,9 @@ class Transform_window(Node):
         while len(self.buffer) >= self.length:
             # print(np.array(self.buffer[:self.length]).shape, self.multiplier.shape)
             # self.buffer should be (time, channels) and now becomes (1, channels, time)
-            self.send_data(self.buffer[:self.length])
-            # self.send_data([np.array(self.buffer[:self.length]).T])
+            self._emit_data(self.buffer[:self.length])
+            # self._emit_data([np.array(self.buffer[:self.length]).T])
             # send.append(np.array(self.buffer[:self.length]).T)
             # send.append(self.buffer[:self.length])
             self.buffer = self.buffer[(self.length - self.overlap):]
-        # self.send_data(send)
+        # self._emit_data(send)

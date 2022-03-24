@@ -14,9 +14,14 @@ import multiprocessing as mp
 
 
 class Out_data(Node):
-    # # TODO: FIX THIS! This is a problem as soon as we have mor than one output!
-    # outputDataset = None
-    # outputFile = None
+    channels_in = ['Data', 'Channel Names', 'Meta', 'Annotation']
+    channels_out = []
+
+    category = "Save"
+    description = "" 
+
+    example_init = {'name': 'Save', 'folder': './data/Debug/'}
+
 
     """
     Playsback previously recorded data.
@@ -27,8 +32,8 @@ class Out_data(Node):
     # - batch_size (int, default=5): number of frames that are sent at the same time -> not implemented yet
     """
     # TODO: consider using a file for meta data instead of dictionary...
-    def __init__(self, folder, name="Save", dont_time=False):
-        super().__init__(name, has_outputs=False, dont_time=dont_time)
+    def __init__(self, folder, name="Save", **kwargs):
+        super().__init__(name, **kwargs)
 
         self.folder = folder
 
@@ -46,20 +51,12 @@ class Out_data(Node):
 
         self.outputFileAnnotation = None
         self.last_annotation = None
+
+        self.received_channels = None
+        self.received_meta = None
+        self.received_annotation = None
+        self.received_channels = None
        
-    @staticmethod
-    def info():
-        return {
-            "class": "Out_data",
-            "file": "Out_data.py",
-            "in": ["Data", "Channel Names", "Meta", "Annotation"],
-            "out": [],
-            "init": {
-                "name": "Save",
-                "folder": "./data/Debug/"
-            },
-            "category": "Save"
-        }
     
     @property
     def in_map(self):
@@ -71,12 +68,18 @@ class Out_data(Node):
         }
 
     
-    def _get_setup(self):
+    def _settings(self):
         return {\
             "folder": self.folder
         }
 
-    def receive_data(self, data_frame, **kwargs):
+    def _should_process(self, **kwargs):
+        pass
+
+    def process(self, data, channel_names, meta, annotation):
+        pass
+
+    def process(self, data, **kwargs):
         if self.outputDataset is None:
             self._wait_queue.put(data_frame)
 

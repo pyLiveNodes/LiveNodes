@@ -7,7 +7,7 @@ from .biokit import BioKIT, logger, recognizer
 
 
 class Biokit_train(Node):
-    def __init__(self, model_path, token_insertion_penalty, atomList, tokenDictionary, train_iterations, name="Train", dont_time=False):
+    def __init__(self, model_path, token_insertion_penalty, atomList, tokenDictionary, train_iterations, name="Train", **kwargs):
         super().__init__(name, dont_time)
 
         self.model_path = model_path
@@ -48,7 +48,7 @@ class Biokit_train(Node):
             "Termination": self.receive_data_end
         }
 
-    def _get_setup(self):
+    def _settings(self):
         return {\
             # "batch": self.batch,
             "token_insertion_penalty": self.token_insertion_penalty,
@@ -137,7 +137,7 @@ class Biokit_train(Node):
     def receive_annotation(self, annotation, **kwargs):
         self.annotations.extend(annotation)
 
-    def receive_data(self, fs, **kwargs):
+    def process(self, data)
         self.data.append(fs)
 
 

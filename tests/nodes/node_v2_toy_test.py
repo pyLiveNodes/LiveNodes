@@ -6,34 +6,36 @@ import multiprocessing as mp
 
 class Data(Sender):
     channels_in = []
-    channels_out = ["Data"]
+    # yes, "Data" would have been fine, but wanted to quickly test the naming parts
+    # TODO: consider
+    channels_out = ["Alternate Data"]
 
-    def run(self):
+    def _run(self):
         for i in range(10):
             self._log(i)
-            self._emit_data(i)
+            self._emit_data(i, channel="Alternate Data")
             yield True
         return False
 
 
 class Quadratic(Node):
-    channels_in = ["Data"]
-    channels_out = ["Data"]
+    channels_in = ["Alternate Data"]
+    channels_out = ["Alternate Data"]
 
-    def process(self, Data):
-        self._emit_data(Data ** 2)
+    def process(self, alternate_data):
+        self._emit_data(alternate_data ** 2, channel="Alternate Data")
 
 
 class Save(Node):
-    channels_in = ["Data"]
+    channels_in = ["Alternate Data"]
     channels_out = []
 
     def __init__(self, name, compute_on=Location.SAME, should_time=False):
         super().__init__(name, compute_on, should_time)
         self.out = mp.SimpleQueue()
 
-    def process(self, Data):
-        self.out.put(Data)
+    def process(self, alternate_data):
+        self.out.put(alternate_data)
 
     def get_state(self):
         res = []

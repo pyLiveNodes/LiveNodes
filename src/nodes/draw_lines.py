@@ -26,8 +26,8 @@ import time
 
 class Draw_lines(Node):
     # TODO: move the sample rate into a data_stream?
-    def __init__(self, n_plots=4, xAxisLength=5000, sample_rate=1000, ylim=(-1.1, 1.1), name = "Draw Output Lines", dont_time = False):
-        super().__init__(name=name, has_outputs=False, dont_time=dont_time)
+    def __init__(self, n_plots=4, xAxisLength=5000, sample_rate=1000, ylim=(-1.1, 1.1), name = "Draw Output Lines", **kwargs):
+        super().__init__(name=name, **kwargs)
         self.xAxisLength = xAxisLength
         self.sample_rate = sample_rate
         self.ylim = ylim
@@ -66,7 +66,7 @@ class Draw_lines(Node):
             "Channel Names": self.receive_channels
         }
 
-    def _get_setup(self):
+    def _settings(self):
         return {\
             "name": self.name,
             "n_plots": self.n_plots, # TODO: consider if we could make this max_plots so that the data stream might also contain less than the specified amount of plots
@@ -134,6 +134,6 @@ class Draw_lines(Node):
     def receive_channels(self, names, **kwargs):
         self.name_queue.put(names)
 
-    def receive_data(self, data_frame, **kwargs):
+    def process(self, data, **kwargs):
         for vec in np.array(data_frame):
             self.data_queue.put(list(vec))  

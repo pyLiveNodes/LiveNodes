@@ -6,8 +6,8 @@ from .node import Node
 from matplotlib.widgets import TextBox, Button
 
 class Annotate_ui_button(Node):
-    def __init__(self, fall_back_target="Unknown", name = "GUI Button Annotation", dont_time = False):
-        super().__init__(name=name, dont_time=dont_time)
+    def __init__(self, fall_back_target="Unknown", name = "GUI Button Annotation", **kwargs):
+        super().__init__(name=name, **kwargs)
 
         self.target_q = mp.Queue()
         self.fall_back_target = fall_back_target
@@ -30,7 +30,7 @@ class Annotate_ui_button(Node):
             "category": "Annotation"
         }
     
-    def _get_setup(self):
+    def _settings(self):
         """
         Get the Nodes setup settings.
         Primarily used for serialization from json files.
@@ -47,14 +47,14 @@ class Annotate_ui_button(Node):
             "Data": self.receive_data
         }
 
-    def receive_data(self, data_frame, **kwargs):
+    def process(self, data, **kwargs):
         # IMPORTANT: we assume that the length of data_frame is always short enough that we do not care about timing issues with the label
-        self.send_data(data_frame)
+        self._emit_data(data_frame)
 
         while not self.target_q.empty():
             self.fall_back_target, self.current_target = self.target_q.get()
 
-        self.send_data([self.current_target] * len(data_frame), data_stream="Annotation")
+        self._emit_data([self.current_target] * len(data_frame), channel="Annotation")
         
 
     def __activity_toggle_rec(self, event):

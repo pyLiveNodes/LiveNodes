@@ -1,8 +1,6 @@
 import time
 import numpy as np
-from multiprocessing import Process
-import threading
-from .node import Node
+from .node import Sender
 import glob, random
 import h5py
 import pandas as pd
@@ -10,7 +8,7 @@ import os
 
 from .in_data import read_data
 
-class In_playback(Node):
+class In_playback(Sender):
     """
     Playsback previously recorded data.
 
@@ -19,10 +17,18 @@ class In_playback(Node):
     - sample_rate (number): sample rate to simulate in frames per second
     # - batch_size (int, default=5): number of frames that are sent at the same time -> not implemented yet
     """
+
+    channels_in = []
+    channels_out = ['Data', 'File', 'Annotation', 'Meta', 'Channel Names']
+
+    category = "Data Source"
+    description = "" 
+
+    example_init = {'name': 'Name'}
+
     # TODO: consider using a file for meta data instead of dictionary...
-    def __init__(self, files, meta, batch=1, annotation_holes="Stand", csv_columns=["act", "start", "end"], name="Playback", dont_time=False):
-        super().__init__(name, has_inputs=False, dont_time=dont_time)
-        self.feeder_process = None
+    def __init__(self, files, meta, batch=1, annotation_holes="Stand", csv_columns=["act", "start", "end"], name="Playback", **kwargs):
+        super().__init__(name, **kwargs)
 
         self.meta = meta
         self.files = files
@@ -34,22 +40,7 @@ class In_playback(Node):
         self.targets = meta.get('targets')
         self.channels = meta.get('channels')
 
-        self._stop_event = threading.Event()
-    
-    @staticmethod
-    def info():
-        return {
-            "class": "In_playback",
-            "file": "In_playback.py",
-            "in": [],
-            "out": ["Data", "File", "Annotation", "Meta", "Channel Names"],
-            "init": {
-                "name": "Name"
-            },
-            "category": "Data Source"
-        }
-
-    def _get_setup(self):
+    def _settings(self):
         return {\
             "batch": self.batch,
             "files": self.files,
@@ -59,7 +50,7 @@ class In_playback(Node):
         }
 
 
-    def sender_process(self):
+    def _run(self):
         """
         Streams the data and calls frame callbacks for each frame.
         """
@@ -69,11 +60,11 @@ class In_playback(Node):
 
         target_to_id = {key: key for i, key in enumerate(self.targets)}
 
-        self.send_data(self.meta, data_stream="Meta")
-        self.send_data(self.channels, data_stream="Channel Names")
+        self._emit_data(self.meta, channel="Meta")
+        self._emit_data(self.channels, channel="Channel Names")
         ctr = -1
 
-        while(not self._stop_event.is_set()):
+        while(True):
             f = random.choice(fs)
             ctr += 1
             print(ctr, f)
@@ -104,13 +95,13 @@ class In_playback(Node):
 
                 for i in range(start, end, self.batch):
                     d_len = len(data[i:i+self.batch]) # usefull if i+self.batch > len(data)
-                    self.send_data(np.array(data[i:i+self.batch]))
+                    self._emit_data(np.array(data[i:i+self.batch]))
                     if len(targs[i:i+self.batch]) > 0:
-                        self.send_data(targs[i:i+self.batch], data_stream='Annotation')
-                    self.send_data([ctr] * d_len, data_stream="File")
+                        self._emit_data(targs[i:i+self.batch], channel='Annotation')
+                    self._emit_data([ctr] * d_len, channel="File")
                     
-                    # self.clock_tick()
                     time.sleep(sleep_time)
+                    yield True
 
         # TODO: look at this implementation again, seems to be the more precise one
         # samples_per_frame = int(self.sample_rate / 1000 * self.frame_size_ms)
@@ -122,24 +113,5 @@ class In_playback(Node):
         #     while time.time() - time_val < (1.0 / 1000.0) * self.frame_size_ms:
         #         time.sleep(0.000001)
         #     time_val = time_val_init + sample_cnt / self.sample_rate
-        #     self.send_data(np.array(samples))
+        #     self._emit_data(np.array(samples))
     
-    def start_processing(self, recurse=True):
-        """
-        Starts the streaming process.
-        """
-        if self.feeder_process is None:
-            self.feeder_process = threading.Thread(target=self.sender_process)
-            # self.feeder_process = Process(target=self.sender_process)
-            self.feeder_process.start()
-        super().start_processing(recurse)
-        
-    def stop_processing(self, recurse=True):
-        """
-        Stops the streaming process.
-        """
-        super().stop_processing(recurse)
-        if self.feeder_process is not None:
-            self._stop_event.set()
-            # self.feeder_process.terminate()
-        self.feeder_process = None

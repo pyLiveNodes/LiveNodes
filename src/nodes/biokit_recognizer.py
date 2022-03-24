@@ -10,8 +10,16 @@ import json
 # TODO: figure out if needed (!) how we can train this as well...
 
 class Biokit_recognizer(Node):
-    def __init__(self, model_path, token_insertion_penalty, name="Recognizer", dont_time=False):
-        super().__init__(name, dont_time)
+    channels_in = ['Data', 'File']
+    channels_out = ['Recognition', 'HMM Meta', 'Hypothesis']
+
+    category = "BioKIT"
+    description = "" 
+
+    example_init = {'name': 'Recognizer', 'model_path': './models/', 'token_insertion_penalty': 0}
+
+    def __init__(self, model_path, token_insertion_penalty, name="Recognizer", **kwargs):
+        super().__init__(name, **kwargs)
 
         self.model_path = model_path
         self.token_insertion_penalty = token_insertion_penalty
@@ -25,29 +33,7 @@ class Biokit_recognizer(Node):
         self._initial = True
         self.file = None
 
-    @staticmethod
-    def info():
-        return {
-            "class": "Biokit_recognizer",
-            "file": "biokit_recognizer.py",
-            "in": ["Data", "File"],
-            "out": ["Recognition", "HMM Meta", "Hypothesis", "Hypo States", "GMM Models", "GMM Means", "GMM Covariances", "GMM Weights"],
-            "init": {
-                "name": "Recognizer",
-                "model_path": "./models/",
-                "token_insertion_penalty": 0,
-            },
-            "category": "BioKIT"
-        }
-    
-    @property
-    def in_map(self):
-        return {
-            "Data": self.receive_data,
-            "File": self.receive_file,
-        }
-
-    def _get_setup(self):
+    def _settings(self):
         return {\
             # "batch": self.batch,
             "token_insertion_penalty": self.token_insertion_penalty,
@@ -59,11 +45,15 @@ class Biokit_recognizer(Node):
             self._initial = True
             self.file = file[0]
 
-    def receive_data(self, fs, **kwargs):
+    def process(self, data, file):
+        STOPPED WORKING HERE: check if this is equivalent to the previous behaviour,ie if we always receive the file together with the data
+        self._initial = self.file != file
+        self.file = file
+
         am = self.reco.getAtomManager()
         dc = self.reco.getDictionary()
 
-        _, path, _ = self.reco.decode(fs, generatepath=True, initialize=self._initial) # not sure if we need to initialize this on the first call?
+        _, path, _ = self.reco.decode(data, generatepath=True, initialize=self._initial) # not sure if we need to initialize this on the first call?
 
         if self._initial:
             # get search graph
@@ -95,11 +85,11 @@ class Biokit_recognizer(Node):
                 }
 
             # send meta data
-            self.send_data({"topology": self.topology, "search_graph": graph, 'gmms': gmms}, data_stream="HMM Meta") 
-            self.send_data(gmm_models, data_stream="GMM Models")
-            self.send_data(gmm_means, data_stream="GMM Means")
-            self.send_data(gmm_cov, data_stream="GMM Covariances")
-            self.send_data(gmm_weights, data_stream="GMM Weights")
+            self._emit_data({"topology": self.topology, "search_graph": graph, 'gmms': gmms}, channel="HMM Meta") 
+            self._emit_data(gmm_models, channel="GMM Models")
+            self._emit_data(gmm_means, channel="GMM Means")
+            self._emit_data(gmm_cov, channel="GMM Covariances")
+            self._emit_data(gmm_weights, channel="GMM Weights")
             
             self._initial = False
 
@@ -110,12 +100,12 @@ class Biokit_recognizer(Node):
                     dc.getToken(r.mTokenId)
                 ) for r in path]
             # print(res)
-            self.send_data(res, data_stream="Recognition")
+            self._emit_data(res, channel="Recognition")
 
             # Maybe consider adding a mechanism that only calcs/gets this if someone requested it?
             # TODO: check this again and see if we can merge the streams somehow...
-            self.send_data(self.reco.handler.getCurrentHypoNodeIds(), data_stream="Hypothesis")
-            self.send_data(self.reco.handler.getCurrentHypoStates(), data_stream="Hypo States")
+            self._emit_data(self.reco.handler.getCurrentHypoNodeIds(), channel="Hypothesis")
+            self._emit_data(self.reco.handler.getCurrentHypoStates(), channel="Hypo States")
 
     def _get_topology(self):
         dc = self.reco.getDictionary()

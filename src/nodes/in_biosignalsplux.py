@@ -1,15 +1,22 @@
-import time
-import numpy as np
-from multiprocessing import Process
-import threading
-from .node import Node
-import glob, random
-import pandas as pd
-import random
+from .node import BlockingSender
 
 import plux
 
 class NewDevice(plux.SignalsDev):
+    channels_in = []
+    channels_out = ['Data', 'Channel Names']
+
+    category = "Base"
+    description = "" 
+
+    example_init = {
+        "adr": "mac address",
+        "freq": 100,
+        "channel_names": ["Channel 1"],
+        "n_bits": 16,
+        "name": "Biosignalsplux",
+    }
+
     def __init__(self, address):
         plux.MemoryDev.__init__(address)
 
@@ -30,20 +37,19 @@ class NewDevice(plux.SignalsDev):
     # DEBUG NOTE:
     # It seems to work best when activating the plux hub and shortly after starting the pipline in qt interface
     # (which is weird) as on command line the timing is not important at all...
-class In_biosignalsplux(Node):
-    def __init__(self, adr, freq, channel_names=[], n_bits=16, name="Biosignalsplux", dont_time=False):
-        super().__init__(name, has_inputs=False, dont_time=dont_time)
-        self.feeder_process = None
+class In_biosignalsplux(BlockingSender):
+    def __init__(self, adr, freq, channel_names=[], n_bits=16, name="Biosignalsplux", **kwargs):
+        super().__init__(name, **kwargs)
 
         self.adr = adr
         self.freq = freq
         self.n_bits = n_bits
         self.channel_names = channel_names
 
-        # self.feeder_process = None
-        self._stop_event = threading.Event()
+        self.device = None
+
     
-    def _get_setup(self):
+    def _settings(self):
         return {\
             "adr": self.adr,
             "freq": self.freq,
@@ -51,35 +57,12 @@ class In_biosignalsplux(Node):
             "channel_names": self.channel_names
         }
 
-    @staticmethod
-    def info():
-        return {
-            "class": "In_biosignalsplux",
-            "file": "In_biosignalsplux.py",
-            "in": [],
-            "out": ["Data", "Channel Names"],
-            "init": {
-                "adr": "mac address",
-                "freq": 100,
-                "channel_names": ["Channel 1"],
-                "n_bits": 16,
-                "name": "Biosignalsplux",
-            },
-            "category": "Base"
-        }
-    
-    @property
-    def in_map(self):
-        return {}
 
-    def stop(self):
-        self._stop_event.set()
-        # self.feeder_process.terminate()
-
+    def _onstop(self):
         self.device.stop()
         self.device.close()
 
-    def sender_process(self):
+    def _onstart(self):
         """
         Streams the data and calls frame callbacks for each frame.
         """
@@ -87,9 +70,9 @@ class In_biosignalsplux(Node):
             # d = np.array(data)
             # if nSeq % 1000 == 0:
             #     print(nSeq, d, d.shape)
-            self.send_data([data])
+            self._emit_data([data])
 
-        self.send_data(self.channel_names, data_stream="Channel Names")
+        self._emit_data(self.channel_names, channel="Channel Names")
 
         self.device = NewDevice(self.adr)
         self.device.frequency = self.freq
@@ -103,22 +86,3 @@ class In_biosignalsplux(Node):
         self.device.start(self.device.frequency, 2 ** len(self.channel_names) - 1, self.n_bits)
         self.device.loop()  # calls self.device.onRawFrame until it returns True
         
-    
-    def start_processing(self, recurse=True):
-        """
-        Starts the streaming process.
-        """
-        if self.feeder_process is None:
-            self.feeder_process = threading.Thread(target=self.sender_process)
-            # self.feeder_process = Process(target=self.sender_process)
-            self.feeder_process.start()
-        super().start_processing(recurse)
-        
-    def stop_processing(self, recurse=True):
-        """
-        Stops the streaming process.
-        """
-        super().stop_processing(recurse)
-        if self.feeder_process is not None:
-            self.stop()
-        self.feeder_process = None
