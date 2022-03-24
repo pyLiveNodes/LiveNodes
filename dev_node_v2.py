@@ -1,4 +1,4 @@
-from src.nodes.node_v2 import Sender, Node, Location
+from src.nodes.node import Sender, Node, Location
 import json
 import time
 import multiprocessing as mp

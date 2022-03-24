@@ -1,5 +1,5 @@
 import pytest
-from src.nodes.node_v2 import Node
+from src.nodes.node import Node
 import json
 
 class SimpleNode(Node):
