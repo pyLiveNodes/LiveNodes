@@ -128,7 +128,10 @@ class Node ():
         self._compute_on = compute_on
 
         self._received_data = {key: QueueHelperHack() for key in self.channels_in}
-        self._draw_state = mp.SimpleQueue()
+        # TODO: evaluate if one or two is better as maxsize (the difference should be barely noticable, but not entirely sure)
+        # -> one: most up to date, but might just miss each other? probably only applicable if sensor sampling rate is vastly different from render fps?
+        # -> two: always one frame behind, but might not jump then
+        self._draw_state = mp.Queue(maxsize=2)
         self._current_data = {}
 
         self._clock = Clock(node=self, should_time=should_time)
@@ -419,7 +422,8 @@ class Node ():
         Called in computation process, ie self.process
         Emits data to draw process, ie draw_inits update fn
         """
-        self._draw_state.put(kwargs)
+        if not self._draw_state.full():
+            self._draw_state.put(kwargs)
 
     def _process_on_proc(self):
         self._log('Started subprocess')
@@ -592,16 +596,18 @@ class Node ():
         """
         pass
 
-    def init_draw(self):
-        """
-        Heart of the nodes drawing, should be a functional function
-        """
-        def update():
-            pass
+    # def init_draw(self):
+    #     """
+    #     Heart of the nodes drawing, should be a functional function
+    #     """
+    #     def update():
+    #         pass
 
-        return update
+    #     return update
 
-    def init_draw_mpl(self, subfigure):
+    # for now we only support matplotlib
+    # TODO: should be updated later on
+    def init_draw(self, subfig):
         """
         Similar to init_draw, but specific to matplotlib animations
         Should be either or, not sure how to check that...

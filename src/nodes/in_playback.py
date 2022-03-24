@@ -102,6 +102,7 @@ class In_playback(Sender):
                     
                     time.sleep(sleep_time)
                     yield True
+        yield False
 
         # TODO: look at this implementation again, seems to be the more precise one
         # samples_per_frame = int(self.sample_rate / 1000 * self.frame_size_ms)

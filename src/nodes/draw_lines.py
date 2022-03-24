@@ -1,16 +1,7 @@
-import collections
-from queue import Queue
-from tkinter import N
 import numpy as np
 
 from .node import Node
 
-import matplotlib.patches as mpatches
-
-import multiprocessing as mp
-import ctypes as c
-
-import time
 
 # The draw pattern works as follows:
 # 1. init_draw is called externally by matplotlib or qt and provides access to the subfig. 
@@ -25,46 +16,35 @@ import time
 
 
 class Draw_lines(Node):
+    channels_in = ['Data', 'Channel Names']
+    channels_out = []
+
+    category = "Draw"
+    description = "" 
+
+    example_init = {
+        "name": "Draw Data Lines",
+        "n_plots": 4,
+        "xAxisLength": 5000,
+        "sample_rate": 1000,
+        "ylim": (-1.1, 1.1)
+    }
+
     # TODO: move the sample rate into a data_stream?
     def __init__(self, n_plots=4, xAxisLength=5000, sample_rate=1000, ylim=(-1.1, 1.1), name = "Draw Output Lines", **kwargs):
         super().__init__(name=name, **kwargs)
+
         self.xAxisLength = xAxisLength
         self.sample_rate = sample_rate
         self.ylim = ylim
         self.n_plots = n_plots
 
+        # computation process
+        # yData follows the structure (time, channel)
+        self.yData = np.zeros(self.xAxisLength * n_plots).reshape((self.xAxisLength, n_plots))
+
         # render process
-        self.yData = [[0] * self.xAxisLength] * n_plots
-        # data generation process
-        self.data_queue = mp.SimpleQueue()
-        self.name_queue = mp.SimpleQueue()
-
         self.names = list(map(str, range(n_plots)))
-        # self.axes = []
-
-    @staticmethod
-    def info():
-        return {
-            "class": "Draw_lines",
-            "file": "draw_lines.py",
-            "in": ["Data", "Channel Names"],
-            "out": [],
-            "init": {
-                "name": "Draw Data Lines",
-                "n_plots": 4,
-                "xAxisLength": 5000,
-                "sample_rate": 1000,
-                "ylim": (-1.1, 1.1)
-            },
-            "category": "Draw"
-        }
-        
-    @property
-    def in_map(self):
-        return {
-            "Data": self.receive_data,
-            "Channel Names": self.receive_channels
-        }
 
     def _settings(self):
         return {\
@@ -100,40 +80,42 @@ class Draw_lines(Node):
         self.labels = [ax.text(0.005, 0.95, name, zorder=100, fontproperties=ax.xaxis.label.get_font_properties(), rotation='horizontal', va='top', ha='left', transform = ax.transAxes) for name, ax in zip(self.names, axes)]
         # self.labels = [ax.text(0, 0.5, name, fontproperties=ax.xaxis.label.get_font_properties(), rotation='vertical', va='center', ha='right', transform = ax.transAxes) for name, ax in zip(self.names, axes)]
 
-        def update (**kwargs):
+        def update (data, channel_names):
             nonlocal self
             # Not sure why the changes part doesn't work, (not even with zorder)
             # -> could make stuff more efficient, but well...
             # changes = []
 
-            # update axis names
-            if not self.name_queue.empty():
-                while not self.name_queue.empty():
-                    self.names = self.name_queue.get()
+            if self.names != channel_names:
+                self.names = channel_names
 
                 for i, label in enumerate(self.labels):
                     label.set_text(self.names[i])
-                    # changes.append(label)
 
-            # update axis values
-            while not self.data_queue.empty():
-                data = self.data_queue.get()
-                for i in range(self.n_plots):
-                    self.yData[i].append(data[i])
-            
             for i in range(self.n_plots):
-                # this is weird in behaviour as we need to overwrite this for some reason and cannot just use the view in the set_data part...
-                self.yData[i] = self.yData[i][-self.xAxisLength:]
-                self.lines[i].set_ydata(self.yData[i])
-                # changes.append(self.lines[i])
+                self.lines[i].set_ydata(data[i])
 
             return list(np.concatenate([self.lines, self.labels]))
 
         return update
 
-    def receive_channels(self, names, **kwargs):
-        self.name_queue.put(names)
 
-    def process(self, data, **kwargs):
-        for vec in np.array(data_frame):
-            self.data_queue.put(list(vec))  
+    def _should_process(self, data, channel_names):
+        return data is not None and (self.channel_names is not None or channel_names is not None)
+
+    # data should follow the (batch/file, time, channel) format
+    def process(self, data, channel_names):
+        if channel_names is not None:
+            self.channel_names = channel_names
+
+        # if (batch/file, time, channel)
+        # d = np.vstack(np.transpose(data, (0, -1, -2)))
+        
+        # currently this is still (time, channel)
+        d = np.vstack(np.transpose(data, (-1, 0)))
+
+        self.yData = np.roll(self.yData, d.shape[0])
+        self.yData[:d.shape[0]] = d
+
+        # TODO: consider if we really always want to send the channel names? -> seems an unecessary overhead (but cleaner code atm, maybe massage later...)
+        self._emit_draw(data=list(self.yData.T), channel_names=self.channel_names)

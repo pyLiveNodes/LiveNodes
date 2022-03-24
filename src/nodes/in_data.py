@@ -112,4 +112,4 @@ class In_data(Sender):
                 yield True
 
         self._emit_data(None, channel='Termination') # TODO: maybe we could use something like this for syncing... ie seperate stream with just a counter 
-        return False
+        yield False

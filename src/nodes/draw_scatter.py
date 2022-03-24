@@ -12,16 +12,6 @@ import ctypes as c
 
 import time
 
-# The draw pattern works as follows:
-# 1. init_draw is called externally by matplotlib or qt and provides access to the subfig. 
-#   -> use this to setup axes, paths etc
-# 2. init_draw returns a update function which is also called externally and does not receive any inputs
-#   -> this should only interface the update calls on matplotlib using data stored in the attributes of the class instance
-# 3. receive_data is called by the pipeline and receives the data as well as potential meta information or other data channels
-#   -> calculate the data you will render in the update fn from draw_init
-#
-# The main advantage of this is, that the pipeline and render loops are separated and one doesn't slow down the other
-#  
 
 
 # TODO: this doesn't work yet!

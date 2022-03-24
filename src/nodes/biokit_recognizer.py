@@ -31,7 +31,7 @@ class Biokit_recognizer(Node):
         self.topology = self._get_topology()
 
         self._initial = True
-        self.file = None
+        self.file = -1
 
     def _settings(self):
         return {\
@@ -40,13 +40,12 @@ class Biokit_recognizer(Node):
             "model_path": self.model_path
         }
 
-    def receive_file(self, file, **kwargs):
-        if self.file != file[0]:
-            self._initial = True
-            self.file = file[0]
+    def _should_process(self, data, file):
+        return data is not None
 
     def process(self, data, file):
-        STOPPED WORKING HERE: check if this is equivalent to the previous behaviour,ie if we always receive the file together with the data
+        # IMPORTANT/TODO: check if this is equivalent to the previous behaviour,ie if we always receive the file together with the data
+        # file is optional, if it is not passed (ie None) it doesn't change except in the first send
         self._initial = self.file != file
         self.file = file
 

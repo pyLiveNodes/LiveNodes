@@ -13,38 +13,21 @@ import ctypes as c
 import time
 
 class Draw_text_display(Node):
-    # TODO: move the sample rate into a data_stream?
+    channels_in = []
+    channels_out = ['Text']
+
+    category = "Draw"
+    description = "" 
+
+    example_init = {
+        "name": "Text Outpuy",
+        "initial_text": "",
+    }
+
     def __init__(self, initial_text="", name = "Text Output", **kwargs):
         super().__init__(name=name, **kwargs)
 
-        self.text_queue = mp.SimpleQueue()
         self.text = initial_text
-
-    @staticmethod
-    def info():
-        return {
-            "class": "Draw_text_display",
-            "file": "Draw_text_display.py",
-            "in": ["Text",],
-            "out": [],
-            "init": {
-                "name": "Text Outpuy",
-                "initial_text": "",
-            },
-            "category": "Draw"
-        }
-        
-    @property
-    def in_map(self):
-        return {
-            "Text": self.receive_data,
-        }
-
-    def _empty_queue(self, queue):
-        res = None
-        while not queue.empty():
-            res = queue.get()
-        return res
 
 
     def init_draw(self, subfig):
@@ -57,22 +40,20 @@ class Draw_text_display(Node):
         ax.set_xticks([])
         ax.set_yticks([])
 
+        label = ax.text(0.005, 0.95, self.text, zorder=100, fontproperties=ax.xaxis.label.get_font_properties(), rotation='horizontal', va='top', ha='left', transform = ax.transAxes)
+        old_text = self.text
 
-        self.label = ax.text(0.005, 0.95, self.text, zorder=100, fontproperties=ax.xaxis.label.get_font_properties(), rotation='horizontal', va='top', ha='left', transform = ax.transAxes)
+        def update (text):
+            nonlocal label, old_text
 
-        def update (**kwargs):
-            nonlocal self
+            old_text = text
 
-            old_text = self.text
-            while not self.text_queue.empty():
-                self.text = self.text_queue.get()
+            # TODO: confidentelly assume that at some point we get the "only return label reference if it actually changed" to work (currenlty this causes troubles with matplotlib)
+            if old_text != text:
+                label.set_text(text)
 
-            if old_text != self.text:
-                self.label.set_text(self.text)
-
-            return [self.label]
+            return [label]
         return update
 
-
-    def process(self, data, **kwargs):
-        self.text_queue.put(data_frame)  
+    def process(self, text):
+        self._emit_draw(text=text)  
