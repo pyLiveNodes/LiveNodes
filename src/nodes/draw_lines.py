@@ -39,12 +39,13 @@ class Draw_lines(Node):
         self.ylim = ylim
         self.n_plots = n_plots
 
+
         # computation process
         # yData follows the structure (time, channel)
         self.yData = np.zeros(self.xAxisLength * n_plots).reshape((self.xAxisLength, n_plots))
 
         # render process
-        self.names = list(map(str, range(n_plots)))
+        self.channel_names = list(map(str, range(n_plots)))
 
     def _settings(self):
         return {\
@@ -55,14 +56,14 @@ class Draw_lines(Node):
             "ylim": self.ylim
            }
 
-    def init_draw(self, subfig):
+    def _init_draw(self, subfig):
         subfig.suptitle(self.name, fontsize=14)
 
         axes = subfig.subplots(self.n_plots, 1, sharex=True)
         if self.n_plots <= 1:
             axes = [axes]
 
-        for name, ax in zip(self.names, axes):
+        for name, ax in zip(self.channel_names, axes):
             ax.set_ylim(*self.ylim)
             ax.set_xlim(0, self.xAxisLength)
             ax.set_yticks([])
@@ -74,11 +75,11 @@ class Draw_lines(Node):
 
         axes[-1].set_xlabel("Time [sec]")
         xData = range(0, self.xAxisLength)  
-        self.lines = [axes[i].plot(xData, self.yData[i], lw=2, animated=True)[0] for i in range(self.n_plots)]
+        self.lines = [axes[i].plot(xData, np.zeros((self.xAxisLength)), lw=2, animated=True)[0] for i in range(self.n_plots)]
 
         # self.labels = []
-        self.labels = [ax.text(0.005, 0.95, name, zorder=100, fontproperties=ax.xaxis.label.get_font_properties(), rotation='horizontal', va='top', ha='left', transform = ax.transAxes) for name, ax in zip(self.names, axes)]
-        # self.labels = [ax.text(0, 0.5, name, fontproperties=ax.xaxis.label.get_font_properties(), rotation='vertical', va='center', ha='right', transform = ax.transAxes) for name, ax in zip(self.names, axes)]
+        self.labels = [ax.text(0.005, 0.95, name, zorder=100, fontproperties=ax.xaxis.label.get_font_properties(), rotation='horizontal', va='top', ha='left', transform = ax.transAxes) for name, ax in zip(self.channel_names, axes)]
+        # self.labels = [ax.text(0, 0.5, name, fontproperties=ax.xaxis.label.get_font_properties(), rotation='vertical', va='center', ha='right', transform = ax.transAxes) for name, ax in zip(self.channel_names, axes)]
 
         def update (data, channel_names):
             nonlocal self
@@ -86,11 +87,11 @@ class Draw_lines(Node):
             # -> could make stuff more efficient, but well...
             # changes = []
 
-            if self.names != channel_names:
-                self.names = channel_names
+            if self.channel_names != channel_names:
+                self.channel_names = channel_names
 
                 for i, label in enumerate(self.labels):
-                    label.set_text(self.names[i])
+                    label.set_text(self.channel_names[i])
 
             for i in range(self.n_plots):
                 self.lines[i].set_ydata(data[i])
@@ -100,11 +101,11 @@ class Draw_lines(Node):
         return update
 
 
-    def _should_process(self, data, channel_names):
+    def _should_process(self, data=None, channel_names=None):
         return data is not None and (self.channel_names is not None or channel_names is not None)
 
     # data should follow the (batch/file, time, channel) format
-    def process(self, data, channel_names):
+    def process(self, data, channel_names=None):
         if channel_names is not None:
             self.channel_names = channel_names
 

@@ -13,7 +13,7 @@ import threading
 
 # this fix is for macos (https://docs.python.org/3.8/library/multiprocessing.html#contexts-and-start-methods) 
 # TODO: test/validate this works in all cases (ie increase test cases, coverage and machines to be tested on) 
-mp.set_start_method('fork')
+# mp.set_start_method('fork')
 
 class NumpyEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -439,7 +439,7 @@ class Node ():
             except queue.Empty:
                 continue
 
-            self._log('processing')
+            # self._log('processing')
             self._process()
 
         self._log('Finished subprocess')
@@ -460,7 +460,7 @@ class Node ():
                 # TODO: instead of this transformation consider actually using classes for data types...
                 self._current_data[self._channel_name_to_key(key)] = cur_value
 
-        self._log(self._current_data, self._clock.ctr)
+        # self._log(self._current_data, self._clock.ctr)
         # check if all required data to proceed is available and then call process
         # then cleanup aggregated data and advance our own clock
         if self._should_process(**self._current_data):
@@ -596,18 +596,27 @@ class Node ():
         """
         pass
 
-    # def init_draw(self):
-    #     """
-    #     Heart of the nodes drawing, should be a functional function
-    #     """
-    #     def update():
-    #         pass
+    def init_draw(self, *args, **kwargs):
+        """
+        Heart of the nodes drawing, should be a functional function
+        """
+        
+        update_fn = self._init_draw(*args, **kwargs)
 
-    #     return update
+        def update():
+            nonlocal update_fn
+            try:
+                cur_state = self._draw_state.get_nowait()
+                return update_fn(**cur_state)
+            except queue.Empty:
+                pass
+            return []
+
+        return update
 
     # for now we only support matplotlib
     # TODO: should be updated later on
-    def init_draw(self, subfig):
+    def _init_draw(self, subfig):
         """
         Similar to init_draw, but specific to matplotlib animations
         Should be either or, not sure how to check that...
@@ -633,6 +642,13 @@ class Sender(Node):
     """
 
     channels_in = [] # must be empty!
+
+    def __init__(self, name, block=True, compute_on=Location.SAME, should_time=False):
+        super().__init__(name, compute_on, should_time)
+        
+        # TODO: consider how to not block this in Location.Same?
+        # TODO: also consider if this is better suited as parameter to start?
+        self.block = block
 
     def __init_subclass__(cls):
         super().__init_subclass__()
@@ -663,7 +679,7 @@ class Sender(Node):
     def start(self, children=True):
         super().start(children)
         
-        if self._compute_on in [Location.PROCESS, Location.THREAD]:
+        if self._compute_on in [Location.PROCESS, Location.THREAD] and self.block:
             self._subprocess_info['process'].join()
         elif self._compute_on in [Location.SAME]:
             # iterate until the generator that is run() returns false, ie no further data is to be processed

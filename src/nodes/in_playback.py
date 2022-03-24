@@ -64,6 +64,7 @@ class In_playback(Sender):
         self._emit_data(self.channels, channel="Channel Names")
         ctr = -1
 
+        # TODO: add sigkill handler
         while(True):
             f = random.choice(fs)
             ctr += 1
