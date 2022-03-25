@@ -22,16 +22,6 @@ class Out_data(Node):
 
     example_init = {'name': 'Save', 'folder': './data/Debug/'}
 
-
-    """
-    Playsback previously recorded data.
-
-    Expects the following setup variables:
-    - file (str): glob pattern for files 
-    - sample_rate (number): sample rate to simulate in frames per second
-    # - batch_size (int, default=5): number of frames that are sent at the same time -> not implemented yet
-    """
-    # TODO: consider using a file for meta data instead of dictionary...
     def __init__(self, folder, name="Save", **kwargs):
         super().__init__(name, **kwargs)
 
@@ -47,49 +37,58 @@ class Out_data(Node):
 
         self.outputFile = None
         self.outputDataset = None
-        self._wait_queue = mp.Queue()
 
         self.outputFileAnnotation = None
         self.last_annotation = None
 
-        self.received_channels = None
-        self.received_meta = None
-        self.received_annotation = None
-        self.received_channels = None
+        self.channels = None
        
-    
-    @property
-    def in_map(self):
-        return {
-            "Data": self.receive_data,
-            "Channel Names": self.receive_channels,
-            "Meta": self.receive_meta,
-            "Annotation": self.receive_annotation,
-        }
-
     
     def _settings(self):
         return {\
             "folder": self.folder
         }
 
-    def _should_process(self, **kwargs):
-        pass
+    def _onstart(self):
+        self.outputFile = h5py.File(self.outputFilename + '.h5', 'w')
+        self.outputFileAnnotation = open(f"{self.outputFilename}.csv", "w")
 
-    def process(self, data, channel_names, meta, annotation):
-        pass
+    def _onstop(self):
+        self.outputFile.close()
+        if self.last_annotation is not None:
+            self.outputFileAnnotation.write(f"{self.last_annotation[1]},{self.last_annotation[2]},{self.last_annotation[0]}")
+        self.outputFileAnnotation.close()
+        self._log('Stopped Writing out')
 
-    def process(self, data, **kwargs):
-        if self.outputDataset is None:
-            self._wait_queue.put(data_frame)
+    def _should_process(self, data=None, channel_names=None, meta=None, annotation=None):
+        return data is not None and \
+            (self.channels is not None or channel_names is not None)
 
-            # Assume that we don't have any changes in the channels over time
-            if self.channels is not None and self.outputFile is not None:
+    def process(self, data, channel_names=None, meta=None, annotation=None):
+        if channel_names is not None:
+            self.channels = channel_names
+
+            m_dict = self._read_meta()
+            m_dict['channels'] = channel_names
+            self._write_meta(m_dict)
+
+            if self.outputDataset is not None:
                 self.outputDataset = self.outputFile.create_dataset("data", (1, len(self.channels)), maxshape = (None, len(self.channels)), dtype = "float32")
-        else:
-            # feels weird, but i haven't found an extend or append api
-            self.outputDataset.resize(self.outputDataset.shape[0] + len(data_frame), axis = 0)
-            self.outputDataset[-len(data_frame):] = data_frame
+
+        if meta is not None:
+            m_dict = self._read_meta()
+            for key, val in meta.items():
+                # We'll assume that the channels are always hooked up
+                if key != "channels":
+                    m_dict[key] = val
+            self._write_meta(m_dict)
+
+        if annotation is not None:
+            self.receive_annotation(annotation)
+
+        self.outputDataset.resize(self.outputDataset.shape[0] + len(data), axis = 0)
+        self.outputDataset[-len(data):] = data
+
 
     def receive_annotation(self, data_frame, **kwargs):
         # For now lets assume the file is always open before this is called.
@@ -105,32 +104,6 @@ class Out_data(Node):
                 self.last_annotation = (annotation, self.last_annotation[2] + 1, self.last_annotation[2] + 1)
 
 
-
-    def start_processing(self, recurse=True):
-        """
-        Starts the streaming process.
-        """
-        if self.outputFile is None:
-            self.outputFile = h5py.File(self.outputFilename + '.h5', 'w')
-            self.outputFileAnnotation = open(f"{self.outputFilename}.csv", "w")
-        super().start_processing(recurse)
-        
-    def stop_processing(self, recurse=True):
-        """
-        Stops the streaming process.
-        """
-        super().stop_processing(recurse)
-        if self.outputFile is not None:
-            self.outputFile.close()
-            if self.last_annotation is not None:
-                self.outputFileAnnotation.write(f"{self.last_annotation[1]},{self.last_annotation[2]},{self.last_annotation[0]}")
-            self.outputFileAnnotation.close()
-            print('Stopped Writing out')
-        self.outputFile = None
-        self.outputDataset = None
-        self.outputFileAnnotation = None
-
-
     def _read_meta(self):
         if not os.path.exists(f"{self.outputFilename}.json"):
             return {}
@@ -140,18 +113,3 @@ class Out_data(Node):
     def _write_meta(self, setting):
         with open(f"{self.outputFilename}.json", 'w') as f:
             json.dump(setting, f, indent=2) 
-
-    def receive_channels(self, channels, **kwargs):
-        self.channels = channels
-
-        m_dict = self._read_meta()
-        m_dict['channels'] = channels
-        self._write_meta(m_dict)
-
-    def receive_meta(self, meta, **kwargs):
-        m_dict = self._read_meta()
-        for key, val in meta.items():
-            # We'll assume that the channels are always hooked up
-            if not (key == "channels"):
-                m_dict[key] = val
-        self._write_meta(m_dict)

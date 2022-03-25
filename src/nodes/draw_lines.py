@@ -39,10 +39,9 @@ class Draw_lines(View):
         self.ylim = ylim
         self.n_plots = n_plots
 
-
         # computation process
         # yData follows the structure (time, channel)
-        self.yData = np.zeros(self.xAxisLength * n_plots).reshape((self.xAxisLength, n_plots))
+        self.yData = np.zeros(xAxisLength * n_plots).reshape((xAxisLength, n_plots))
 
         # render process
         self.channel_names = list(map(str, range(n_plots)))
@@ -70,7 +69,8 @@ class Draw_lines(View):
 
             ticks = np.linspace(0, self.xAxisLength, 11).astype(np.int)
             ax.set_xticks(ticks)
-            ax.set_xticklabels((ticks - self.xAxisLength) / self.sample_rate)
+            ax.set_xticklabels(- ticks / self.sample_rate)
+            ax.invert_xaxis()
             # ax.xaxis.grid(False)
 
         axes[-1].set_xlabel("Time [sec]")
@@ -113,10 +113,10 @@ class Draw_lines(View):
         # d = np.vstack(np.transpose(data, (0, -1, -2)))
         
         # currently this is still (time, channel)
-        d = np.vstack(np.transpose(data, (-1, 0)))
-        # self._log(d.shape)
+        d = np.vstack(np.array(data)[:, :self.n_plots])
+        # self._log(np.array(data).shape, d.shape, self.yData.shape)
 
-        self.yData = np.roll(self.yData, d.shape[0])
+        self.yData = np.roll(self.yData, d.shape[0], axis=0)
         self.yData[:d.shape[0]] = d
 
         # TODO: consider if we really always want to send the channel names? -> seems an unecessary overhead (but cleaner code atm, maybe massage later...)

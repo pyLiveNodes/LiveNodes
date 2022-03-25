@@ -61,12 +61,10 @@ if __name__ == '__main__':
     print('=== Start main loops ====')
 
     font={'size': 6}
+    plt.rc('font', **font)
 
-    # TODO: maybe do consider having a special node, that signifies it wants to draw...
     draws = {str(n): n.init_draw for n in Node.discover_childs(pipeline) if isinstance(n, View)}.values()
     print(draws)
-
-    plt.rc('font', **font)
 
     fig = plt.figure(num=0, figsize=(12, 7.5))
     # fig.suptitle("ASK", fontsize='x-large')

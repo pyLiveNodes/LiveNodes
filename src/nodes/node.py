@@ -356,14 +356,14 @@ class Node ():
 
     # === Start/Stop Stuff =================
     def start(self, children=True):
-        # first start children, so they are ready to receive inputs
-        # children cannot not have inputs, ie they are always relying on this node to send them data if they want to progress their clock
-        if children:
-            for con in self.output_connections:
-                con._receiving_node.start()
-
-        # now start self
         if self._running == False: # the node might be child to multiple parents, but we just want to start once
+            # first start children, so they are ready to receive inputs
+            # children cannot not have inputs, ie they are always relying on this node to send them data if they want to progress their clock
+            if children:
+                for con in self.output_connections:
+                    con._receiving_node.start()
+
+            # now start self
             self._running = True
 
             # TODO: consider moving this in the node constructor, so that we do not have this nested behaviour processeses due to parents calling their childs start()
@@ -373,6 +373,9 @@ class Node ():
                 self._acquire_lock(self._subprocess_info['termination_lock'])
                 self._log('start subprocess')
                 self._subprocess_info['process'].start()
+            elif self._compute_on in [Location.SAME]:
+                self._onstart()
+                self._log('Executed _onstart')
 
 
     def stop(self, children=True):
@@ -389,6 +392,9 @@ class Node ():
                 if self._compute_on in [Location.PROCESS]:
                     self._subprocess_info['process'].terminate()
                     self._log(self._subprocess_info['process'].is_alive(), self._subprocess_info['process'].name)
+            elif self._compute_on in [Location.SAME]:
+                self._log('Executing _onstop')
+                self._onstop()
             self._log('Stopped')
 
             # now stop children
@@ -421,6 +427,9 @@ class Node ():
 
     def _process_on_proc(self):
         self._log('Started subprocess')
+        
+        self._onstart()
+        self._log('Executed _onstart')
 
         # as long as we do not receive a termination signal, we will wait for data to be processed
         # the .empty() is not reliable (according to the python doc), but the best we have at the moment
@@ -441,9 +450,12 @@ class Node ():
                 continue
 
             self._process()
-
-        self._log('Finished subprocess')
         
+        self._log('Executing _onstop')
+        self._onstop()
+        
+        self._log('Finished subprocess')
+
     @staticmethod
     def _channel_name_to_key(name):
         return name.replace(' ', '_').lower()
@@ -596,6 +608,18 @@ class Node ():
         """
         pass
 
+    def _onstart(self):
+        """
+        executed on start, should return! (if you need always running -> blockingSender)
+        """
+        pass
+
+    def _onstop(self):
+        """
+        executed on stop, should return! (if you need always running -> blockingSender)
+        """
+        pass
+
 
 
 
@@ -624,10 +648,11 @@ class View(Node):
             nonlocal update_fn
             try:
                 cur_state = self._draw_state.get_nowait()
-                return update_fn(**cur_state)
             except queue.Empty:
                 pass
-            return []
+            # always execute the update, even if no new data is added, as a view might want to update not based on the self emited data
+            # this happens for instance if the view wants to update based on user interaction (and not data)
+            return update_fn(**cur_state)
 
         return update
 
