@@ -1,18 +1,7 @@
-import collections
-from queue import Queue
-from tkinter import N
-import numpy as np
+from .node import View
 
-from .node import Node
 
-import matplotlib.patches as mpatches
-
-import multiprocessing as mp
-import ctypes as c
-
-import time
-
-class Draw_text_display(Node):
+class Draw_text_display(View):
     channels_in = []
     channels_out = ['Text']
 

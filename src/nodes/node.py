@@ -10,6 +10,7 @@ import queue
 from collections import defaultdict
 import datetime
 import threading
+import queue
 
 # this fix is for macos (https://docs.python.org/3.8/library/multiprocessing.html#contexts-and-start-methods) 
 # TODO: test/validate this works in all cases (ie increase test cases, coverage and machines to be tested on) 
@@ -115,7 +116,6 @@ class Node ():
 
     example_init = {}
 
-    canvas = Canvas.MPL
 
     # === Basic Stuff =================
     def __init__(self, name, compute_on=Location.SAME, should_time=False):
@@ -128,10 +128,7 @@ class Node ():
         self._compute_on = compute_on
 
         self._received_data = {key: QueueHelperHack() for key in self.channels_in}
-        # TODO: evaluate if one or two is better as maxsize (the difference should be barely noticable, but not entirely sure)
-        # -> one: most up to date, but might just miss each other? probably only applicable if sensor sampling rate is vastly different from render fps?
-        # -> two: always one frame behind, but might not jump then
-        self._draw_state = mp.Queue(maxsize=2)
+
         self._current_data = {}
 
         self._clock = Clock(node=self, should_time=should_time)
@@ -148,8 +145,8 @@ class Node ():
         elif self._compute_on in [Location.THREAD]:
             self._subprocess_info = {
                 "process": threading.Thread(target=self._process_on_proc),
-                "message_to_subprocess": mp.Queue(),
-                "termination_lock": threading.Lock()
+                "message_to_subprocess": mp.Queue(), # as this might be called from another process (ie called when receive_data is called in node form another process)
+                "termination_lock": threading.Lock() # as this is called from the main process
             }
 
     def __repr__(self):
@@ -384,16 +381,20 @@ class Node ():
             self._running = False
 
             if self._compute_on in [Location.PROCESS, Location.THREAD]:
+                self._log(self._subprocess_info['process'].is_alive(), self._subprocess_info['process'].name)
                 self._subprocess_info['termination_lock'].release()
                 self._subprocess_info['process'].join(3)
+                self._log(self._subprocess_info['process'].is_alive(), self._subprocess_info['process'].name)
 
                 if self._compute_on in [Location.PROCESS]:
                     self._subprocess_info['process'].terminate()
+                    self._log(self._subprocess_info['process'].is_alive(), self._subprocess_info['process'].name)
+            self._log('Stopped')
 
-        # now stop children
-        if children:
-            for con in self.output_connections:
-                con._receiving_node.stop()
+            # now stop children
+            if children:
+                for con in self.output_connections:
+                    con._receiving_node.stop()
 
     def _acquire_lock(self, lock, block=True, timeout=None):
         if self._compute_on in [Location.PROCESS]:
@@ -417,29 +418,28 @@ class Node ():
             if con._receiving_channel == channel:
                 con._receiving_node.receive_data(self._clock, payload={channel: data})
 
-    def _emit_draw(self, **kwargs):
-        """
-        Called in computation process, ie self.process
-        Emits data to draw process, ie draw_inits update fn
-        """
-        if not self._draw_state.full():
-            self._draw_state.put(kwargs)
 
     def _process_on_proc(self):
         self._log('Started subprocess')
 
         # as long as we do not receive a termination signal, we will wait for data to be processed
         # the .empty() is not reliable (according to the python doc), but the best we have at the moment
-        while not self._acquire_lock(self._subprocess_info['termination_lock'], block=False) or not self._subprocess_info['message_to_subprocess'].empty():
+        was_queue_empty_last_iteration = True
+        was_terminated = False
+
+        while not was_terminated or not was_queue_empty_last_iteration:
+            was_terminated = was_terminated or self._acquire_lock(self._subprocess_info['termination_lock'], block=False)
             # block until signaled that we have new data
             # as we might receive not data after having received a termination
             #      -> we'll just poll, so that on termination we do terminate after no longer than 0.1seconds
+            # self._log(was_terminated, was_queue_empty_last_iteration)
             try:
                 self._subprocess_info['message_to_subprocess'].get(block=True, timeout=0.1)
+                was_queue_empty_last_iteration = False
             except queue.Empty:
+                was_queue_empty_last_iteration = True
                 continue
 
-            # self._log('processing')
             self._process()
 
         self._log('Finished subprocess')
@@ -596,6 +596,23 @@ class Node ():
         """
         pass
 
+
+
+
+class View(Node):
+    canvas = Canvas.MPL
+
+    def __init__(self, name, compute_on=Location.SAME, should_time=False):
+        super().__init__(name, compute_on, should_time)
+        
+        # TODO: consider if/how to disable the visualization of a node?
+        # self.display = display
+
+        # TODO: evaluate if one or two is better as maxsize (the difference should be barely noticable, but not entirely sure)
+        # -> one: most up to date, but might just miss each other? probably only applicable if sensor sampling rate is vastly different from render fps?
+        # -> two: always one frame behind, but might not jump then
+        self._draw_state = mp.Queue(maxsize=2)
+
     def init_draw(self, *args, **kwargs):
         """
         Heart of the nodes drawing, should be a functional function
@@ -614,6 +631,14 @@ class Node ():
 
         return update
 
+
+    def stop(self, children=True):
+        # we need to clear the draw state, as otherwise the feederqueue never returns and the whole script never returns
+        while not self._draw_state.empty():
+            self._draw_state.get()
+
+        super().stop(children)
+
     # for now we only support matplotlib
     # TODO: should be updated later on
     def _init_draw(self, subfig):
@@ -626,6 +651,13 @@ class Node ():
 
         return update
 
+    def _emit_draw(self, **kwargs):
+        """
+        Called in computation process, ie self.process
+        Emits data to draw process, ie draw_inits update fn
+        """
+        if not self._draw_state.full():
+            self._draw_state.put(kwargs)
 
 
 # class Transform(Node):
@@ -634,7 +666,6 @@ class Node ():
 #     Takes input and produces output
 #     """
 #     pass
-
 
 class Sender(Node):
     """
@@ -646,7 +677,10 @@ class Sender(Node):
     def __init__(self, name, block=True, compute_on=Location.SAME, should_time=False):
         super().__init__(name, compute_on, should_time)
         
-        # TODO: consider how to not block this in Location.Same?
+        if not block and compute_on == Location.SAME:
+            # TODO: consider how to not block this in Location.Same?
+            raise ValueError('Block cannot be false if location=same')
+
         # TODO: also consider if this is better suited as parameter to start?
         self.block = block
 

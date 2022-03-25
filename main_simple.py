@@ -1,6 +1,6 @@
 from src.nodes.in_playback import In_playback
 from src.nodes.draw_lines import Draw_lines
-from src.nodes.node import Location
+from src.nodes.node import Location, View
 
 from src.nodes.node import Node
 
@@ -42,13 +42,15 @@ if __name__ == '__main__':
         "targets": ['cspin-ll', 'run', 'jump-2', 'shuffle-l', 'sit', 'cstep-r', 'vcut-rr', 'stair-down', 'stand-sit', 'jump-1', 'sit-stand', 'stand', 'cspin-lr', 'cspin-rr', 'cstep-l', 'vcut-ll', 'vcut-rl', 'shuffle-r', 'stair-up', 'walk', 'cspin-rl', 'vcut-lr']
     }
 
-    pipeline = In_playback(files="./data/KneeBandageCSL2018/**/*.h5", meta=meta, compute_on=Location.THREAD, block=False)
+    # pipeline = In_playback(compute_on=Location.THREAD, block=False, files="./data/KneeBandageCSL2018/**/*.h5", meta=meta)
+    pipeline = In_playback(compute_on=Location.PROCESS, block=False, files="./data/KneeBandageCSL2018/**/*.h5", meta=meta)
 
     channel_names = ['Gonio2', 'GyroLow1', 'GyroLow2', 'GyroLow3']
     idx = np.isin(recorded_channels, channel_names).nonzero()[0]
 
-    fig, ax = plt.subplots()
-    draw = Draw_lines(name='Raw Data', compute_on=Location.THREAD)
+    # draw = Draw_lines(name='Raw Data', compute_on=Location.THREAD)
+    draw = Draw_lines(name='Raw Data', compute_on=Location.PROCESS)
+    # draw = Draw_lines(name='Raw Data', compute_on=Location.SAME)
     draw.add_input(pipeline)
 
 
@@ -61,7 +63,7 @@ if __name__ == '__main__':
     font={'size': 6}
 
     # TODO: maybe do consider having a special node, that signifies it wants to draw...
-    draws = {str(n): n.init_draw for n in Node.discover_childs(pipeline) if hasattr(n, 'init_draw')}.values()
+    draws = {str(n): n.init_draw for n in Node.discover_childs(pipeline) if isinstance(n, View)}.values()
     print(draws)
 
     plt.rc('font', **font)
@@ -100,7 +102,16 @@ if __name__ == '__main__':
 
     timer = time.time()
     pipeline.start()
+    # time.sleep(1)
     # pipeline.stop()
+
+    # time.sleep(4)
+    # print('test')
+    # def stop(*args):
+    #     print('closing')
+    #     pipeline.stop()
+    #     print('closed')
+    #     return True
 
     animationProcess = animation.FuncAnimation(fig=fig, func=draw_update, interval=0, blit=True)
     fig.canvas.mpl_connect("close_event", pipeline.stop)

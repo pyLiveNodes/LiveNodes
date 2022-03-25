@@ -75,8 +75,8 @@ def create_simple_graph_mp():
 @pytest.fixture
 def create_simple_graph_mixed():
     data = Data(name="A", compute_on=Location.PROCESS)
-    quadratic = Quadratic(name="B", compute_on=Location.SAME)
-    out1 = Save(name="C", compute_on=Location.THREAD)
+    quadratic = Quadratic(name="B", compute_on=Location.THREAD)
+    out1 = Save(name="C", compute_on=Location.SAME)
     out2 = Save(name="D", compute_on=Location.THREAD)
     
     out1.connect_inputs_to(data)

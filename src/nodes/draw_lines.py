@@ -1,6 +1,6 @@
 import numpy as np
 
-from .node import Node
+from .node import View
 
 
 # The draw pattern works as follows:
@@ -15,7 +15,7 @@ from .node import Node
 #  
 
 
-class Draw_lines(Node):
+class Draw_lines(View):
     channels_in = ['Data', 'Channel Names']
     channels_out = []
 
@@ -114,6 +114,7 @@ class Draw_lines(Node):
         
         # currently this is still (time, channel)
         d = np.vstack(np.transpose(data, (-1, 0)))
+        # self._log(d.shape)
 
         self.yData = np.roll(self.yData, d.shape[0])
         self.yData[:d.shape[0]] = d
