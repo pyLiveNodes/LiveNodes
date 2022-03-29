@@ -1,6 +1,4 @@
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'biokitPython')))
+import os
 
 from .biokit import BioKIT, logger
 
@@ -29,7 +27,7 @@ else:
     else:
         path = "plux-api/Win32_37"
 
-print('Using Plux:', path)
-sys.path.append(f"src/nodes/{path}")
-# sys.path.append(path)
-# print(sys.path)
+full_path = os.path.join(os.path.dirname(__file__), path)
+print('Using Plux:', full_path)
+sys.path.append(full_path)
+

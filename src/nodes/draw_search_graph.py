@@ -12,16 +12,29 @@ import multiprocessing as mp
 
 
 class Draw_search_graph(Node):
+    channels_in = ['HMM Meta', 'Hypothesis']
+    channels_out = []
+
+    category = "Draw"
+    description = "" 
+
+    example_init = {
+        "n_hypos": 3, 
+        "name": "Search Graph",
+    }
+
     def __init__(self, n_hypos = 3, name = "Search Graph", **kwargs):
         super().__init__(name=name, **kwargs)
 
-        self.queue_meta = mp.Queue()
-        self.queue_hypo = mp.Queue()
+        # process
+        self.name = name
+        
+        self.hmm_meta = None
 
+        # renderer
         self.graph = None
         self.topology = None
 
-        self.name = name
         self._axes_setup = False
         self.n_hypos = n_hypos
 
@@ -30,27 +43,6 @@ class Draw_search_graph(Node):
         self.previous_alphas = []
         self.token_node_map = {}
 
-    
-    @staticmethod
-    def info():
-        return {
-            "class": "Draw_search_graph",
-            "file": "draw_search_graph.py",
-            "in": ["HMM Meta", "Hypothesis"],
-            "out": [],
-            "init": {
-                "n_hypos": 3, 
-                "name": "Search Graph",
-            },
-            "category": "Draw"
-        }
-        
-    @property
-    def in_map(self):
-        return {
-            "HMM Meta": self.receive_meta,
-            "Hypothesis": self.receive_hypo
-        }
 
     def _settings(self):
         return {\
@@ -99,28 +91,9 @@ class Draw_search_graph(Node):
 
 
     def init_draw(self, subfig):
-        # self.axes = subfig.subplots(self.n_plots, 1)
-        # if self.n_plots == 1:
-        #     self.axes = [self.axes]
-
-        # for ax in self.axes:
-        #     ax.set_ylim(0, 1)
-        #     ax.set_xticks([])
-        #     ax.set_yticks([])
-        #     ax.spines['top'].set_visible(False)
-        #     ax.spines['right'].set_visible(False)
-        #     ax.spines['bottom'].set_visible(False)
-        #     ax.spines['left'].set_visible(False)
-
         subfig.suptitle("Search Graph", fontsize=14)
         
-        # TODO: can we cleanly move more stuff out of the update function? this feels unperformant and hacky...
-        
-        # axes = subfig.subplots(self.nr_plots, 1)
-        # if self.nr_plots == 1:
-        #     axes = [axes]
-        
-        def update (**kwargs):
+        def update (hypothesis, hmm_meta):
             nonlocal self, subfig
     
             alpha_val = 0.5
@@ -128,7 +101,8 @@ class Draw_search_graph(Node):
             meta = self._empty_queue(self.queue_meta)
             hypo = self._empty_queue(self.queue_hypo)
 
-            if meta is not None and not self._axes_setup:
+            # TODO: allow for this to change even if axes is already setup
+            if hmm_meta is not None and not self._axes_setup:
                 self.graph = meta.get('search_graph')
                 self.topology = meta.get('topology')
                 self.tokens = list(self.topology.keys())
@@ -141,8 +115,8 @@ class Draw_search_graph(Node):
             
             # print('Update', self._axes_setup, self.graph is not None)
             
-            if self._axes_setup and hypo is not None:
-                state_ids = hypo[:self.n_hypos]
+            if self._axes_setup and hypothesis is not None:
+                state_ids = hypothesis[:self.n_hypos]
 
                 res_changed_bars = [] # faster if only few bars are changed, albeit less elegant than before
                 for i, bar in enumerate(self.bar_objs):
@@ -159,11 +133,18 @@ class Draw_search_graph(Node):
             # return []
         return update
 
-    def receive_meta(self, meta, **kwargs):
-        self.queue_meta.put(meta)
 
-    def receive_hypo(self, hypo, **kwargs):
-        self.queue_hypo.put(hypo)
+    def _should_process(self, hypothesis=None, hmm_meta=None):
+        return hypothesis is not None and \
+            (self.hmm_meta is not None or hmm_meta is not None)
+
+    def process(self, hypothesis, hmm_meta=None):
+        if hmm_meta is not None:
+            self.hmm_meta = hmm_meta
+
+        self._emit_draw({'hypothesis': hypothesis, 'colors': self.hmm_meta})
+
+
 
     # TODO: share these between the different hmm draws...
     def _init_colors(self, topology):

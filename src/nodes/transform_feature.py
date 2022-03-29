@@ -45,8 +45,16 @@ class MultipleWrapper (BaseTransformer_eager):
 
 
 class Transform_feature(Node):
+    channels_in = ['Data', "Channel Names"]
+    channels_out = ['Data', 'Channel Names']
+
+    category = "Transform"
+    description = "" 
+
+    example_init = {"name": "Name"}
+
     def __init__(self, name="Features", features=["calc_mean"], feature_args={}, **kwargs):
-        super().__init__(name, dont_time)
+        super().__init__(name, **kwargs)
 
         self.features = features
         self.feature_args = feature_args
@@ -68,28 +76,8 @@ class Transform_feature(Node):
         self._union = FeatureUnion(self.featureList, featureNames=self.features)
         # self._union = FeatureUnion(self.featureList, featureNames=self.features, **self.unionParams)
 
-        self.channel_names = []
-        self.out_channels = None
+        self.channel_names = None
 
-    @staticmethod
-    def info():
-        return {
-            "class": "Transform_feature",
-            "file": "Transform_feature.py",
-            "in": ["Data", "Channel Names"],
-            "out": ["Data", "Channel Names"],
-            "init": {
-                "name": "Name"
-            },
-            "category": "Transform"
-        }
-        
-    @property
-    def in_map(self):
-        return {
-            "Data": self.receive_data,
-            "Channel Names": self.receive_channels
-        }
         
     def _settings(self):
         return {\
@@ -97,20 +85,23 @@ class Transform_feature(Node):
             "feature_args": self.feature_args
         }
 
-    def receive_channels(self, names, **kwargs):
-        self.channel_names = names
-        self.out_channels = None
+    def _should_process(self, data=None, channel_names=None):
+        return data is not None and \
+            (self.channel_names is not None or channel_names is not None)
 
-    def process(self, data, **kwargs):
+
+    def process(self, data, channel_names=None):
+        if channel_names is not None:
+            self.channel_names = channel_names
+
         # TODO: update the union stuff etc to not expect a tuple as input
         # TODO: update this to not expect it to be wrapped in a list
         # TODO: update this to not use a map anymore
         # TODO: currently ft.transform is called twice, as the dimensions_ will otherwise not be set -> most of the time we do double the work for no benefit 
         # data, channels = self._union.transform((data_frame, self.channel_names))
-        data, channels = self._union.transform(([np.array(data_frame).T], self.channel_names))
+        data, channels = self._union.transform(([np.array(data).T], self.channel_names))
         self._emit_data(list(data))
 
-        if self.out_channels == None and len(channels) != 0:
-            print(channels)
-            self.out_channels = channels
+        if set(self.channels) != set(channels):
+            self.channels = channels
             self._emit_data(channels, channel="Channel Names")

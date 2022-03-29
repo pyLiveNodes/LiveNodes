@@ -102,7 +102,8 @@ class Draw_lines(View):
 
 
     def _should_process(self, data=None, channel_names=None):
-        return data is not None and (self.channel_names is not None or channel_names is not None)
+        return data is not None and \
+            (self.channel_names is not None or channel_names is not None)
 
     # data should follow the (batch/file, time, channel) format
     def process(self, data, channel_names=None):

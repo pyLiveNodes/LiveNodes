@@ -1,0 +1,773 @@
+{
+  "Data input [In_data]": {
+    "class": "In_data",
+    "settings": {
+      "batch": 2000,
+      "files": "./data/KneeBandageCSL2018/part*/*.h5",
+      "meta": {
+        "sample_rate": 1000,
+        "channels": [
+          "EMG1",
+          "EMG2",
+          "EMG3",
+          "EMG4",
+          "Airborne",
+          "AccUp1",
+          "AccUp2",
+          "AccUp3",
+          "Gonio1",
+          "AccLow1",
+          "AccLow2",
+          "AccLow3",
+          "Gonio2",
+          "GyroUp1",
+          "GyroUp2",
+          "GyroUp3",
+          "GyroLow1",
+          "GyroLow2",
+          "GyroLow3"
+        ],
+        "targets": [
+          "cspin-ll",
+          "run",
+          "jump-2",
+          "shuffle-l",
+          "sit",
+          "cstep-r",
+          "vcut-rr",
+          "stair-down",
+          "stand-sit",
+          "jump-1",
+          "sit-stand",
+          "stand",
+          "cspin-lr",
+          "cspin-rr",
+          "cstep-l",
+          "vcut-ll",
+          "vcut-rl",
+          "shuffle-r",
+          "stair-up",
+          "walk",
+          "cspin-rl",
+          "vcut-lr"
+        ]
+      },
+      "shuffle": true
+    },
+    "inputs": [],
+    "outputs": [
+      {
+        "emitting_node": "Data input [In_data]",
+        "receiving_node": "Window [Transform_window]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "Data input [In_data]",
+        "receiving_node": "Features [Transform_feature]",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "Data input [In_data]",
+        "receiving_node": "Train [Biokit_train]",
+        "emitting_channel": "Termination",
+        "receiving_channel": "Termination",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "Data input [In_data]",
+        "receiving_node": "File [Transform_window]",
+        "emitting_channel": "File",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "Data input [In_data]",
+        "receiving_node": "Annotation [Transform_window]",
+        "emitting_channel": "Annotation",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      }
+    ]
+  },
+  "Window [Transform_window]": {
+    "class": "Transform_window",
+    "settings": {
+      "length": 100,
+      "overlap": 0,
+      "name": "Window"
+    },
+    "inputs": [
+      {
+        "emitting_node": "Data input [In_data]",
+        "receiving_node": "Window [Transform_window]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      }
+    ],
+    "outputs": [
+      {
+        "emitting_node": "Window [Transform_window]",
+        "receiving_node": "Features [Transform_feature]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      }
+    ]
+  },
+  "Features [Transform_feature]": {
+    "class": "Transform_feature",
+    "settings": {
+      "features": [
+        "calc_mean",
+        "rms"
+      ],
+      "feature_args": {
+        "samplingfrequency": 1000
+      }
+    },
+    "inputs": [
+      {
+        "emitting_node": "Window [Transform_window]",
+        "receiving_node": "Features [Transform_feature]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "Data input [In_data]",
+        "receiving_node": "Features [Transform_feature]",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
+        "connection_counter": 0
+      }
+    ],
+    "outputs": [
+      {
+        "emitting_node": "Features [Transform_feature]",
+        "receiving_node": "Name [Biokit_to_fs]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      }
+    ]
+  },
+  "Name [Biokit_to_fs]": {
+    "class": "Biokit_to_fs",
+    "settings": {
+      "name": "Name"
+    },
+    "inputs": [
+      {
+        "emitting_node": "Features [Transform_feature]",
+        "receiving_node": "Name [Biokit_to_fs]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      }
+    ],
+    "outputs": [
+      {
+        "emitting_node": "Name [Biokit_to_fs]",
+        "receiving_node": "Norm [Biokit_norm]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      }
+    ]
+  },
+  "Norm [Biokit_norm]": {
+    "class": "Biokit_norm",
+    "settings": {
+      "name": "Norm"
+    },
+    "inputs": [
+      {
+        "emitting_node": "Name [Biokit_to_fs]",
+        "receiving_node": "Norm [Biokit_norm]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      }
+    ],
+    "outputs": [
+      {
+        "emitting_node": "Norm [Biokit_norm]",
+        "receiving_node": "Train [Biokit_train]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      }
+    ]
+  },
+  "Train [Biokit_train]": {
+    "class": "Biokit_train",
+    "settings": {
+      "token_insertion_penalty": 50,
+      "model_path": "./models/KneeBandageCSL2018/partition-stand/sequence/",
+      "atomList": {
+        "cspin-ll_ISt": [
+          "0"
+        ],
+        "cspin-ll_MSt": [
+          "0"
+        ],
+        "cspin-ll_TSt": [
+          "0"
+        ],
+        "cspin-ll_ISw": [
+          "0"
+        ],
+        "cspin-ll_TSw": [
+          "0"
+        ],
+        "cspin-lr_ISt": [
+          "0"
+        ],
+        "cspin-lr_MSt": [
+          "0"
+        ],
+        "cspin-lr_TSt": [
+          "0"
+        ],
+        "cspin-lr_ISw": [
+          "0"
+        ],
+        "cspin-lr_TSw": [
+          "0"
+        ],
+        "cspin-rl_ISt": [
+          "0"
+        ],
+        "cspin-rl_MSt": [
+          "0"
+        ],
+        "cspin-rl_TSt": [
+          "0"
+        ],
+        "cspin-rl_ISw": [
+          "0"
+        ],
+        "cspin-rl_TSw": [
+          "0"
+        ],
+        "cspin-rr_ISt": [
+          "0"
+        ],
+        "cspin-rr_MSt": [
+          "0"
+        ],
+        "cspin-rr_TSt": [
+          "0"
+        ],
+        "cspin-rr_ISw": [
+          "0"
+        ],
+        "cspin-rr_TSw": [
+          "0"
+        ],
+        "cstep-l_ISt": [
+          "0"
+        ],
+        "cstep-l_MSt": [
+          "0"
+        ],
+        "cstep-l_TSt": [
+          "0"
+        ],
+        "cstep-l_ISw": [
+          "0"
+        ],
+        "cstep-l_TSw": [
+          "0"
+        ],
+        "cstep-r_ISt": [
+          "0"
+        ],
+        "cstep-r_MSt": [
+          "0"
+        ],
+        "cstep-r_TSt": [
+          "0"
+        ],
+        "cstep-r_ISw": [
+          "0"
+        ],
+        "cstep-r_TSw": [
+          "0"
+        ],
+        "jump-1_ITO": [
+          "0"
+        ],
+        "jump-1_TTO": [
+          "0"
+        ],
+        "jump-1_F": [
+          "0"
+        ],
+        "jump-1_IL": [
+          "0"
+        ],
+        "jump-1_TL": [
+          "0"
+        ],
+        "jump-2_ITO": [
+          "0"
+        ],
+        "jump-2_TTO": [
+          "0"
+        ],
+        "jump-2_F": [
+          "0"
+        ],
+        "jump-2_IL": [
+          "0"
+        ],
+        "jump-2_TL": [
+          "0"
+        ],
+        "run_ISt": [
+          "0"
+        ],
+        "run_MSt": [
+          "0"
+        ],
+        "run_TSt": [
+          "0"
+        ],
+        "run_ISw": [
+          "0"
+        ],
+        "run_TSw": [
+          "0"
+        ],
+        "shuffle-l_ISt": [
+          "0"
+        ],
+        "shuffle-l_MSt": [
+          "0"
+        ],
+        "shuffle-l_TSt": [
+          "0"
+        ],
+        "shuffle-l_ISw": [
+          "0"
+        ],
+        "shuffle-l_TSw": [
+          "0"
+        ],
+        "shuffle-r_ISt": [
+          "0"
+        ],
+        "shuffle-r_MSt": [
+          "0"
+        ],
+        "shuffle-r_TSt": [
+          "0"
+        ],
+        "shuffle-r_ISw": [
+          "0"
+        ],
+        "shuffle-r_TSw": [
+          "0"
+        ],
+        "sit_sitting": [
+          "0"
+        ],
+        "sit-stand_sit2s": [
+          "0"
+        ],
+        "stair-down_ISt": [
+          "0"
+        ],
+        "stair-down_MSt": [
+          "0"
+        ],
+        "stair-down_TSt": [
+          "0"
+        ],
+        "stair-down_ISw": [
+          "0"
+        ],
+        "stair-down_TSw": [
+          "0"
+        ],
+        "stair-up_ISt": [
+          "0"
+        ],
+        "stair-up_MSt": [
+          "0"
+        ],
+        "stair-up_TSt": [
+          "0"
+        ],
+        "stair-up_ISw": [
+          "0"
+        ],
+        "stair-up_TSw": [
+          "0"
+        ],
+        "stand_standing": [
+          "0"
+        ],
+        "stand-sit_stand2s": [
+          "0"
+        ],
+        "vcut-ll_ISt": [
+          "0"
+        ],
+        "vcut-ll_MSt": [
+          "0"
+        ],
+        "vcut-ll_TSt": [
+          "0"
+        ],
+        "vcut-ll_ISw": [
+          "0"
+        ],
+        "vcut-ll_TSw": [
+          "0"
+        ],
+        "vcut-lr_ISt": [
+          "0"
+        ],
+        "vcut-lr_MSt": [
+          "0"
+        ],
+        "vcut-lr_TSt": [
+          "0"
+        ],
+        "vcut-lr_ISw": [
+          "0"
+        ],
+        "vcut-lr_TSw": [
+          "0"
+        ],
+        "vcut-rl_ISt": [
+          "0"
+        ],
+        "vcut-rl_MSt": [
+          "0"
+        ],
+        "vcut-rl_TSt": [
+          "0"
+        ],
+        "vcut-rl_ISw": [
+          "0"
+        ],
+        "vcut-rl_TSw": [
+          "0"
+        ],
+        "vcut-rr_ISt": [
+          "0"
+        ],
+        "vcut-rr_MSt": [
+          "0"
+        ],
+        "vcut-rr_TSt": [
+          "0"
+        ],
+        "vcut-rr_ISw": [
+          "0"
+        ],
+        "vcut-rr_TSw": [
+          "0"
+        ],
+        "walk_ISt": [
+          "0"
+        ],
+        "walk_MSt": [
+          "0"
+        ],
+        "walk_TSt": [
+          "0"
+        ],
+        "walk_ISw": [
+          "0"
+        ],
+        "walk_TSw": [
+          "0"
+        ]
+      },
+      "tokenDictionary": {
+        "cspin-ll": [
+          "cspin-ll_ISt",
+          "cspin-ll_MSt",
+          "cspin-ll_TSt",
+          "cspin-ll_ISw",
+          "cspin-ll_TSw"
+        ],
+        "cspin-lr": [
+          "cspin-lr_ISt",
+          "cspin-lr_MSt",
+          "cspin-lr_TSt",
+          "cspin-lr_ISw",
+          "cspin-lr_TSw"
+        ],
+        "cspin-rl": [
+          "cspin-rl_ISt",
+          "cspin-rl_MSt",
+          "cspin-rl_TSt",
+          "cspin-rl_ISw",
+          "cspin-rl_TSw"
+        ],
+        "cspin-rr": [
+          "cspin-rr_ISt",
+          "cspin-rr_MSt",
+          "cspin-rr_TSt",
+          "cspin-rr_ISw",
+          "cspin-rr_TSw"
+        ],
+        "cstep-l": [
+          "cstep-l_ISt",
+          "cstep-l_MSt",
+          "cstep-l_TSt",
+          "cstep-l_ISw",
+          "cstep-l_TSw"
+        ],
+        "cstep-r": [
+          "cstep-r_ISt",
+          "cstep-r_MSt",
+          "cstep-r_TSt",
+          "cstep-r_ISw",
+          "cstep-r_TSw"
+        ],
+        "jump-1": [
+          "jump-1_ITO",
+          "jump-1_TTO",
+          "jump-1_F",
+          "jump-1_IL",
+          "jump-1_TL"
+        ],
+        "jump-2": [
+          "jump-2_ITO",
+          "jump-2_TTO",
+          "jump-2_F",
+          "jump-2_IL",
+          "jump-2_TL"
+        ],
+        "run": [
+          "run_ISt",
+          "run_MSt",
+          "run_TSt",
+          "run_ISw",
+          "run_TSw"
+        ],
+        "shuffle-l": [
+          "shuffle-l_ISt",
+          "shuffle-l_MSt",
+          "shuffle-l_TSt",
+          "shuffle-l_ISw",
+          "shuffle-l_TSw"
+        ],
+        "shuffle-r": [
+          "shuffle-r_ISt",
+          "shuffle-r_MSt",
+          "shuffle-r_TSt",
+          "shuffle-r_ISw",
+          "shuffle-r_TSw"
+        ],
+        "sit": [
+          "sit_sitting"
+        ],
+        "sit-stand": [
+          "sit-stand_sit2s"
+        ],
+        "stair-down": [
+          "stair-down_ISt",
+          "stair-down_MSt",
+          "stair-down_TSt",
+          "stair-down_ISw",
+          "stair-down_TSw"
+        ],
+        "stair-up": [
+          "stair-up_ISt",
+          "stair-up_MSt",
+          "stair-up_TSt",
+          "stair-up_ISw",
+          "stair-up_TSw"
+        ],
+        "stand": [
+          "stand_standing"
+        ],
+        "stand-sit": [
+          "stand-sit_stand2s"
+        ],
+        "vcut-ll": [
+          "vcut-ll_ISt",
+          "vcut-ll_MSt",
+          "vcut-ll_TSt",
+          "vcut-ll_ISw",
+          "vcut-ll_TSw"
+        ],
+        "vcut-lr": [
+          "vcut-lr_ISt",
+          "vcut-lr_MSt",
+          "vcut-lr_TSt",
+          "vcut-lr_ISw",
+          "vcut-lr_TSw"
+        ],
+        "vcut-rl": [
+          "vcut-rl_ISt",
+          "vcut-rl_MSt",
+          "vcut-rl_TSt",
+          "vcut-rl_ISw",
+          "vcut-rl_TSw"
+        ],
+        "vcut-rr": [
+          "vcut-rr_ISt",
+          "vcut-rr_MSt",
+          "vcut-rr_TSt",
+          "vcut-rr_ISw",
+          "vcut-rr_TSw"
+        ],
+        "walk": [
+          "walk_ISt",
+          "walk_MSt",
+          "walk_TSt",
+          "walk_ISw",
+          "walk_TSw"
+        ]
+      },
+      "train_iterations": [
+        5,
+        10
+      ]
+    },
+    "inputs": [
+      {
+        "emitting_node": "Norm [Biokit_norm]",
+        "receiving_node": "Train [Biokit_train]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "Data input [In_data]",
+        "receiving_node": "Train [Biokit_train]",
+        "emitting_channel": "Termination",
+        "receiving_channel": "Termination",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "File [Transform_majority_select]",
+        "receiving_node": "Train [Biokit_train]",
+        "emitting_channel": "Data",
+        "receiving_channel": "File",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "Annotation [Transform_majority_select]",
+        "receiving_node": "Train [Biokit_train]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Annotation",
+        "connection_counter": 0
+      }
+    ],
+    "outputs": []
+  },
+  "File [Transform_window]": {
+    "class": "Transform_window",
+    "settings": {
+      "length": 100,
+      "overlap": 0,
+      "name": "File"
+    },
+    "inputs": [
+      {
+        "emitting_node": "Data input [In_data]",
+        "receiving_node": "File [Transform_window]",
+        "emitting_channel": "File",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      }
+    ],
+    "outputs": [
+      {
+        "emitting_node": "File [Transform_window]",
+        "receiving_node": "File [Transform_majority_select]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      }
+    ]
+  },
+  "File [Transform_majority_select]": {
+    "class": "Transform_majority_select",
+    "settings": {
+      "name": "File"
+    },
+    "inputs": [
+      {
+        "emitting_node": "File [Transform_window]",
+        "receiving_node": "File [Transform_majority_select]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      }
+    ],
+    "outputs": [
+      {
+        "emitting_node": "File [Transform_majority_select]",
+        "receiving_node": "Train [Biokit_train]",
+        "emitting_channel": "Data",
+        "receiving_channel": "File",
+        "connection_counter": 0
+      }
+    ]
+  },
+  "Annotation [Transform_window]": {
+    "class": "Transform_window",
+    "settings": {
+      "length": 100,
+      "overlap": 0,
+      "name": "Annotation"
+    },
+    "inputs": [
+      {
+        "emitting_node": "Data input [In_data]",
+        "receiving_node": "Annotation [Transform_window]",
+        "emitting_channel": "Annotation",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      }
+    ],
+    "outputs": [
+      {
+        "emitting_node": "Annotation [Transform_window]",
+        "receiving_node": "Annotation [Transform_majority_select]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      }
+    ]
+  },
+  "Annotation [Transform_majority_select]": {
+    "class": "Transform_majority_select",
+    "settings": {
+      "name": "Annotation"
+    },
+    "inputs": [
+      {
+        "emitting_node": "Annotation [Transform_window]",
+        "receiving_node": "Annotation [Transform_majority_select]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      }
+    ],
+    "outputs": [
+      {
+        "emitting_node": "Annotation [Transform_majority_select]",
+        "receiving_node": "Train [Biokit_train]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Annotation",
+        "connection_counter": 0
+      }
+    ]
+  }
+}
