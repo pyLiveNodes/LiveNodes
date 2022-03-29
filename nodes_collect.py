@@ -3,21 +3,31 @@ import importlib
 import json
 import traceback
 
+IGNORE = ['utils', 'node', '__init__', 'debug_frame_counter', 'biokit_update_model']
+
 def discover_nodes():
-    ignore = ['utils', 'node', '__init__']
-    files = [f.replace('/', '.').replace('.py', '') for f in list(glob.glob("src/nodes/*.py"))]
-    imports = [(f, f.split('.')[-1].capitalize()) for f in files if f.split('.')[-1] not in ignore]
+    ignore = IGNORE
+    files = [(f, f.replace('/', '.').replace('.py', '')) for f in list(glob.glob("src/nodes/*.py"))]
+    imports = [(file, f, f.split('.')[-1].capitalize()) for file, f in files if f.split('.')[-1] not in ignore]
     return imports
 
 def discover_infos():
     nodes = discover_nodes()
    
     info = []
-    for pth, cls_name in nodes:
+    for file_path, pth, cls_name in nodes:
         try:
             module = importlib.import_module(pth)
             cls = getattr(module, cls_name)
-            info.append(cls.info())    
+            info.append({
+                "class": cls.__name__,
+                "file": file_path,
+                "channels_in": cls.channels_in,
+                "channels_out": cls.channels_out,
+                "category": cls.category,
+                "description": cls.description,
+                "init": cls.example_init,
+            })    
         except Exception as err:
             print(f'Could not load {cls_name} from {pth}')
             print(err)
