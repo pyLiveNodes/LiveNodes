@@ -479,7 +479,7 @@ class Node ():
             # discard everything, that was before our own current clock
             found_value, cur_value = queue.get(self._clock.ctr)
             if found_value:
-                # TODO: instead of this transformation consider actually using classes for data types...
+                # TODO: instead of this key transformation/tolower consider actually using classes for data types... (allows for gui names alongside dev names and not converting between the two)
                 res[self._channel_name_to_key(key)] = cur_value
         return res
 
@@ -495,8 +495,8 @@ class Node ():
         # then cleanup aggregated data and advance our own clock
         if self._should_process(**_current_data):
             # yes, ```if self.process``` is shorter, but as long as the documentation isn't there this is also very clear on the api
-            should_tick = self.process(**_current_data)
-            if should_tick:
+            prevent_tick = self.process(**_current_data)
+            if not prevent_tick:
                 self._clock.tick()
         else:
             self._log('Decided not to process', self._clock.ctr, _current_data.keys())
@@ -668,9 +668,10 @@ class View(Node):
         """
         
         update_fn = self._init_draw(*args, **kwargs)
+        artis_storage = {'returns': []}
 
         def update():
-            nonlocal update_fn
+            nonlocal update_fn, artis_storage
             cur_state = {}
 
             try:
@@ -680,9 +681,8 @@ class View(Node):
             # always execute the update, even if no new data is added, as a view might want to update not based on the self emited data
             # this happens for instance if the view wants to update based on user interaction (and not data)
             if self._should_draw(cur_state):
-                return update_fn(**cur_state)
-            return []
-
+                artis_storage['returns'] = update_fn(**cur_state)
+            return artis_storage['returns']
         return update
 
 

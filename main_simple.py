@@ -51,7 +51,7 @@ if __name__ == '__main__':
     # draw = Draw_lines(name='Raw Data', compute_on=Location.THREAD)
     draw = Draw_lines(name='Raw Data', compute_on=Location.PROCESS)
     # draw = Draw_lines(name='Raw Data', compute_on=Location.SAME)
-    draw.add_input(pipeline)
+    draw.connect_inputs_to(pipeline)
 
 
     print('=== Load Pipeline ====')

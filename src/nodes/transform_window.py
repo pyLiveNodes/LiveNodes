@@ -55,4 +55,4 @@ class Transform_window(Node):
 
             ctr += 1
         # self._emit_data(send)
-        return ctr > 0
+        return ctr == 0

@@ -15,7 +15,7 @@ class In_playback(Sender):
     Expects the following setup variables:
     - files (str): glob pattern for files 
     - sample_rate (number): sample rate to simulate in frames per second
-    # - batch_size (int, default=5): number of frames that are sent at the same time -> not implemented yet
+    - batch_size (int, default=5): number of frames that are sent at the same time -> not implemented yet
     """
 
     channels_in = []
@@ -27,7 +27,7 @@ class In_playback(Sender):
     example_init = {'name': 'Name'}
 
     # TODO: consider using a file for meta data instead of dictionary...
-    def __init__(self, files, meta, batch=1, annotation_holes="Stand", csv_columns=["act", "start", "end"], name="Playback", compute_on=Location.THREAD, **kwargs):
+    def __init__(self, files, meta, batch=1, annotation_holes="Stand", csv_columns=["act", "start", "end"], name="Playback", compute_on=Location.SAME, **kwargs):
         super().__init__(name, compute_on=compute_on, **kwargs)
 
         self.meta = meta
