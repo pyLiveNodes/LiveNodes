@@ -588,6 +588,11 @@ class Node ():
     # TODO: Look at the original timing code, ideas and plots
 
 
+    ## TODO: this is an absolute hack. remove! consider how to do this, maybe consider the pickle/sklearn interfaces?
+    def _set_attr(self, **kwargs):
+        for key, val in kwargs.items():
+            setattr(self, key, val)
+
     # === Node Specific Stuff =================
     # (Computation, Render)
     # TODO: consider changing this to follow the pickle conventions

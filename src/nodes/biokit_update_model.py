@@ -283,7 +283,7 @@ class Biokit_update_model(Node):
     def receive_annotation(self, annotation, **kwargs):
         self.annotations_q.put(annotation)
 
-    def process(self, data)
+    def process(self, data):
         self.data_q.put(fs)
 
     def sender_process(self):
