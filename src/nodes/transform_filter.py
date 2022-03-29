@@ -26,14 +26,15 @@ class Transform_filter(Node):
             "names": self.names
            }
 
-    def _should_process(self, data, channel_names):
+    def _should_process(self, data=None, channel_names=None):
         # any data received before the clock in which we receive the channel names will be discarded
         # we could consider a wait_queue as before, but not sure if needed -> TODO write tests!
         #   -> pro: would allow to 100% not loose data
         #   -> con: if channels change (possible with user input in parent nodes) ...? think this through! 
-        return (data is not None) and (self.received_channel_names or channel_names is not None)
+        return data is not None and \
+            (self.received_channel_names or channel_names is not None)
 
-    def process(self, data, channel_names):
+    def process(self, data, channel_names=None):
         if channel_names is not None:
             # yes, seems less efficient than np.isin, but implicitly re-orders the channels of the output to match the provided names
             self.idx = [channel_names.index(x) for x in self.names]

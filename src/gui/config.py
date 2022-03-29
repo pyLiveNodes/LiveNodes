@@ -35,32 +35,36 @@ class CustomNodeDataModel(NodeDataModel, verify=False):
     def _get_port_infos(self, connection):
         # TODO: yes, the naming here is confusing, as qtpynode is the other way round that livenodes
         in_port, out_port = connection.ports
-        emitting_chanel = out_port.model.data_type[out_port.port_type][out_port.index].id
+        emitting_channel = out_port.model.data_type[out_port.port_type][out_port.index].id
         receiving_channel = in_port.model.data_type[in_port.port_type][in_port.index].id
 
         smart_emitting_node = in_port.model.association_to_node
         smart_receicing_node = out_port.model.association_to_node
         
-        return smart_emitting_node, smart_receicing_node, emitting_chanel, receiving_channel
+        return smart_emitting_node, smart_receicing_node, emitting_channel, receiving_channel
 
     def output_connection_created(self, connection):
         # HACK: this currently works because of the three passes below (ie create node, create conneciton, associate pl node)
         # TODO: fix this by checking if the connection already exists and if so ignore the call
         if self.association_to_node is not None:
-            smart_emitting_node, smart_receicing_node, emitting_chanel, receiving_channel = self._get_port_infos(connection)
+            smart_emitting_node, smart_receicing_node, emitting_channel, receiving_channel = self._get_port_infos(connection)
 
             if smart_emitting_node is not None and smart_receicing_node is not None:
                 # occours when a node was deleted, in which case this is not important anyway
-                smart_receicing_node.add_input(smart_emitting_node, emitting_chanel=emitting_chanel, receiving_channel=receiving_channel)
+                smart_receicing_node.add_input(smart_emitting_node, emitting_channel=emitting_channel, receiving_channel=receiving_channel)
 
 
     def output_connection_deleted(self, connection):
         if self.association_to_node is not None:
-            smart_emitting_node, smart_receicing_node, emitting_chanel, receiving_channel = self._get_port_infos(connection)
+            smart_emitting_node, smart_receicing_node, emitting_channel, receiving_channel = self._get_port_infos(connection)
             
             if smart_emitting_node is not None and smart_receicing_node is not None:
                 # occours when a node was deleted, in which case this is not important anyway
-                smart_receicing_node.remove_input(smart_emitting_node, emitting_chanel=emitting_chanel, receiving_channel=receiving_channel)
+                try:
+                    smart_receicing_node.remove_input(smart_emitting_node, emitting_channel=emitting_channel, receiving_channel=receiving_channel)
+                except ValueError:
+                    pass
+                    # TODO: see nodes above on created...
 
 
 
@@ -220,7 +224,7 @@ class NodeConfigureContainer(QWidget):
 
     def set_pl_node(self, node, *args):
         self._title.setText(str(node))
-        self._category.setText(node.info()['category'])
+        self._category.setText(node.category)
 
         new_params = NodeParameterSetter(node)
 
@@ -243,7 +247,7 @@ class CustomDialog(QDialog):
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
 
-        self.edit_dict = node.model.constructor.info()['init']
+        self.edit_dict = node.model.constructor.example_init
         edit_form = EditDict(self.edit_dict)
 
         self.layout = QVBoxLayout(self)
@@ -306,9 +310,10 @@ class Config(QWidget):
           # self.scene.auto_arrange('graphviz_layout', scale=3)
 
     def _remove_pl_node(self, node):
-        if node.model.association_to_node is not None: 
-            node.model.association_to_node.remove_from_graph()
-
+        smart_node = node.model.association_to_node
+        if smart_node is not None: 
+            smart_node.remove_all_inputs()
+            
     def _create_pl_node(self, node):
         print("Added:", node)
         # TODO: make this more in line with the qtpynodeetitor style
@@ -418,17 +423,14 @@ class Config(QWidget):
                     # TODO: actually check if it has
                     s_nodes[name] = self.scene.restore_node(layout_nodes[name])
                 else:
-                    s_nodes[name] = self.scene.create_node(self.known_classes[n.info()['class']])
+                    s_nodes[name] = self.scene.create_node(self.known_classes[n.__class__.__name__])
 
             # second pass: create all connectins
             for name, n in p_nodes.items():
                 # node_output refers to the node in which n is inputing data, ie n's output
-                # for node_output, output_id, emitting_chanel, receiving_channel in n.output_classes:
+                # for node_output, output_id, emitting_channel, receiving_channel in n.output_classes:
                 for con in n.output_connections:
                     # print('=====')
-                    # print(name, node_output, output_id, emitting_chanel, receiving_channel)
-                    # print(emitting_chanel, n.info()['out'], node_output.info()['in'])
-                    # print(name, n.info())
                     out_idx = n.channels_out.index(con._emitting_channel)
                     in_idx = con._receiving_node.channels_in.index(con._receiving_channel)
                     # print(out_idx, in_idx)
@@ -465,5 +467,5 @@ class Config(QWidget):
 
         # TODO: For the moment, lets assume the start node stays the same, otherwise we'll have a problem...
         pipeline.save(self.pipeline_path)
-        pipeline.make_dot_graph(transparent_bg=True).save(self.pipeline_gui_path.replace('.json', '.png'), 'PNG')
-        pipeline.make_dot_graph(transparent_bg=False).save(self.pipeline_path.replace('.json', '.png'), 'PNG')
+        pipeline.dot_graph_full(transparent_bg=True).save(self.pipeline_gui_path.replace('.json', '.png'), 'PNG')
+        pipeline.dot_graph_full(transparent_bg=False).save(self.pipeline_path.replace('.json', '.png'), 'PNG')

@@ -24,7 +24,7 @@ from src.nodes.node import Node
 
 def add_features(pl_in, x_raw, x_processed, vis=(True, True)):
     if vis[0]:
-        filter1 =Transform_filter(name="Raw Filter", names=channel_names_raw)
+        filter1 = Transform_filter(name="Raw Filter", names=channel_names_raw)
         filter1.connect_inputs_to(pl_in)
         
         draw_raw = Draw_lines(name='Raw Data', n_plots=len(channel_names_raw), xAxisLength=x_raw)
@@ -61,6 +61,7 @@ def add_processing(pl_in, x_raw, x_processed, vis=(True, True, True)):
 
         filter3 =Transform_filter(name="Normed Feature Filter", names=channel_names_fts)
         filter3.connect_inputs_to(from_fs)
+        filter3.add_input(pl_in, emitting_channel="Channel Names", receiving_channel="Channel Names")
 
         draw_normed = Draw_lines(name='Normed Features', n_plots=len(channel_names_fts), ylim=(-5, 5), xAxisLength=x_processed)
         draw_normed.connect_inputs_to(filter3)

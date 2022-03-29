@@ -22,6 +22,6 @@ class Transform_window_multiplier(Node):
             "function": self.function
            }
 
-    def process(self, data, **kwargs):
+    def process(self, data):
         multiplier = getattr(np, function)(len(data))
         self._emit_data(np.multiply(np.array(self.buffer[:self.length]), multiplier))

@@ -40,10 +40,10 @@ class Biokit_recognizer(Node):
             "model_path": self.model_path
         }
 
-    def _should_process(self, data, file):
+    def _should_process(self, data=None, file=None):
         return data is not None
 
-    def process(self, data, file):
+    def process(self, data, file=None):
         # IMPORTANT/TODO: check if this is equivalent to the previous behaviour,ie if we always receive the file together with the data
         # file is optional, if it is not passed (ie None) it doesn't change except in the first send
         self._initial = self.file != file

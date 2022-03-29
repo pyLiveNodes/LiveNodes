@@ -1,6 +1,6 @@
 import time
 import numpy as np
-from .node import Sender
+from .node import Sender, Location
 import glob, random
 import h5py
 import pandas as pd
@@ -27,8 +27,8 @@ class In_playback(Sender):
     example_init = {'name': 'Name'}
 
     # TODO: consider using a file for meta data instead of dictionary...
-    def __init__(self, files, meta, batch=1, annotation_holes="Stand", csv_columns=["act", "start", "end"], name="Playback", **kwargs):
-        super().__init__(name, **kwargs)
+    def __init__(self, files, meta, batch=1, annotation_holes="Stand", csv_columns=["act", "start", "end"], name="Playback", compute_on=Location.THREAD, **kwargs):
+        super().__init__(name, compute_on=compute_on, **kwargs)
 
         self.meta = meta
         self.files = files

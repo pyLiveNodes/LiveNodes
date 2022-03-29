@@ -77,6 +77,7 @@ class Transform_feature(Node):
         # self._union = FeatureUnion(self.featureList, featureNames=self.features, **self.unionParams)
 
         self.channel_names = None
+        self.channels = []
 
         
     def _settings(self):

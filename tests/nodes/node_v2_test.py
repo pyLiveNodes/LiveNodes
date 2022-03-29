@@ -88,7 +88,7 @@ class TestNodeOperations():
     def test_settings(self, node_a):
         # check direct serialization
         d = node_a.get_settings()
-        assert set(d.keys()) == set(["settings", "outputs", "inputs"])
+        assert set(d.keys()) == set(["class", "settings", "outputs", "inputs"])
         assert json.dumps(d['settings']) == json.dumps({"name": "A"})
         assert len(d['outputs']) == 0
         assert len(d['inputs']) == 0

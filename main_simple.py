@@ -55,7 +55,7 @@ if __name__ == '__main__':
 
 
     print('=== Load Pipeline ====')
-    # pipeline = Node.load('pipelines/features.json')
+    # pipeline = Node.load('pipelines/preprocess_raw.json')
 
 
     print('=== Start main loops ====')

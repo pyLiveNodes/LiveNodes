@@ -50,7 +50,7 @@ class QueueHelperHack():
             res = self._read[ctr]
             
             if discard_before:
-                self._read = {key: val for key, val in self._read.items() if key > ctr}
+                self._read = {key: val for key, val in self._read.items() if key >= ctr}
                 
             return True, res
         return False, None
@@ -129,8 +129,6 @@ class Node ():
         self._compute_on = compute_on
 
         self._received_data = {key: QueueHelperHack() for key in self.channels_in}
-
-        self._current_data = {}
 
         self._clock = Clock(node=self, should_time=should_time)
 
@@ -315,6 +313,11 @@ class Node ():
         self.input_connections.append(connection)
 
 
+    def remove_all_inputs(self):
+        for con in self.input_connections:
+            self.remove_input_by_connection(con)
+
+
     def remove_input(self, emitting_node, emitting_channel="Data", receiving_channel="Data", connection_counter=0):
         """
         Remove an input from self via attributes
@@ -354,7 +357,7 @@ class Node ():
         """
         cons = list(filter(connection.__eq__, self.output_connections))
         if len(cons) == 0:
-            raise ValueError("Passed connection is not in inputs. Got", connection)
+            raise ValueError("Passed connection is not in outputs. Got", connection)
         self.output_connections.remove(connection)
 
     def _is_input_connected(self, receiving_channel='Data'):
@@ -468,28 +471,35 @@ class Node ():
     @staticmethod
     def _channel_name_to_key(name):
         return name.replace(' ', '_').lower()
-            
-    def _process(self):
-        """
-        called in location of self
-        """
+
+    def _retrieve_current_data(self):
+        res = {}
         # update current state, based on own clock
         for key, queue in self._received_data.items():
             # discard everything, that was before our own current clock
             found_value, cur_value = queue.get(self._clock.ctr)
             if found_value:
                 # TODO: instead of this transformation consider actually using classes for data types...
-                self._current_data[self._channel_name_to_key(key)] = cur_value
+                res[self._channel_name_to_key(key)] = cur_value
+        return res
 
-        # self._log(self._current_data, self._clock.ctr)
+
+    def _process(self):
+        """
+        called in location of self
+        """
+        # update current state, based on own clock
+        _current_data = self._retrieve_current_data()
+
         # check if all required data to proceed is available and then call process
         # then cleanup aggregated data and advance our own clock
-        if self._should_process(**self._current_data):
-            self.process(**self._current_data)
-            self._current_data = {}
-            self._clock.tick()
+        if self._should_process(**_current_data):
+            # yes, ```if self.process``` is shorter, but as long as the documentation isn't there this is also very clear on the api
+            should_tick = self.process(**_current_data)
+            if should_tick:
+                self._clock.tick()
         else:
-            self._log('Decided not to process', self._current_data)
+            self._log('Decided not to process', self._clock.ctr, _current_data.keys())
 
     def trigger_process(self):
         if self._compute_on in [Location.SAME]:
@@ -507,6 +517,7 @@ class Node ():
         """
         # store all received data in their according mp.simplequeues
         for key, val in payload.items():
+            # self._log('Received Data', key, clock.ctr)
             self._received_data[key].put(clock.ctr, val)
 
         self.trigger_process()
@@ -660,13 +671,17 @@ class View(Node):
 
         def update():
             nonlocal update_fn
+            cur_state = {}
+
             try:
                 cur_state = self._draw_state.get_nowait()
             except queue.Empty:
                 pass
             # always execute the update, even if no new data is added, as a view might want to update not based on the self emited data
             # this happens for instance if the view wants to update based on user interaction (and not data)
-            return update_fn(**cur_state)
+            if self._should_draw(cur_state):
+                return update_fn(**cur_state)
+            return []
 
         return update
 
@@ -689,6 +704,9 @@ class View(Node):
             pass
 
         return update
+
+    def _should_draw(self, cur_state):
+        return bool(cur_state)
 
     def _emit_draw(self, **kwargs):
         """

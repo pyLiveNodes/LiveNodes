@@ -89,3 +89,7 @@ class Annotate_ui_button(Node):
             return axes
 
         return update
+    
+    def _should_draw(self, cur_state):
+        return True
+    
