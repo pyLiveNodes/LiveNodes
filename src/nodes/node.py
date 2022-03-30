@@ -121,7 +121,7 @@ class Node ():
 
 
     # === Basic Stuff =================
-    def __init__(self, name="Name", compute_on=Location.SAME, should_time=False):
+    def __init__(self, name="Name", compute_on=Location.THREAD, should_time=False):
 
         self.name = name
         
@@ -139,13 +139,13 @@ class Node ():
         self._subprocess_info = {}
         if self.compute_on in [Location.PROCESS]:
             self._subprocess_info = {
-                "process": mp.Process(target=self._process_on_proc),
+                "process": None,
                 "message_to_subprocess": mp.Queue(),
                 "termination_lock": mp.Lock()
             }
         elif self.compute_on in [Location.THREAD]:
             self._subprocess_info = {
-                "process": threading.Thread(target=self._process_on_proc),
+                "process": None,
                 "message_to_subprocess": mp.Queue(), # as this might be called from another process (ie called when receive_data is called in node form another process)
                 "termination_lock": threading.Lock() # as this is called from the main process
             }
@@ -170,6 +170,9 @@ class Node ():
 
     def debug(self, *text):
         logger.debug(self._prep_log(*text))
+
+    def verbose(self, *text):
+        logger.verbose(self._prep_log(*text))
 
     def _prep_log(self, *text):
         node = str(self)
@@ -380,7 +383,11 @@ class Node ():
 
             # TODO: consider moving this in the node constructor, so that we do not have this nested behaviour processeses due to parents calling their childs start()
             if self.compute_on in [Location.PROCESS, Location.THREAD]:
-                # self._subprocess_info['process'] = mp.Process(target=self._process_on_proc)
+                if self.compute_on == Location.PROCESS:
+                    self._subprocess_info['process'] = mp.Process(target=self._process_on_proc)
+                elif self.compute_on == Location.THREAD:
+                    self._subprocess_info['process'] = threading.Thread(target=self._process_on_proc)
+
                 self.info('create subprocess')
                 self._acquire_lock(self._subprocess_info['termination_lock'])
                 self.info('start subprocess')
@@ -478,6 +485,7 @@ class Node ():
         for key, queue in self._received_data.items():
             # discard everything, that was before our own current clock
             found_value, cur_value = queue.get(self._clock.ctr)
+            self.verbose(key, found_value, queue._read.keys(), self._clock.ctr)
             if found_value:
                 # TODO: instead of this key transformation/tolower consider actually using classes for data types... (allows for gui names alongside dev names and not converting between the two)
                 res[self._channel_name_to_key(key)] = cur_value
@@ -496,6 +504,7 @@ class Node ():
         if self._should_process(**_current_data):
             # yes, ```if self.process``` is shorter, but as long as the documentation isn't there this is also very clear on the api
             prevent_tick = self.process(**_current_data)
+            self.verbose('Decided to process', self._clock.ctr, _current_data.keys(), 'prevent tick?', bool(prevent_tick))
             if not prevent_tick:
                 self._clock.tick()
         else:
@@ -520,6 +529,16 @@ class Node ():
             self.debug(f'Received: "{key}" with clock {clock.ctr}')
             self._received_data[key].put(clock.ctr, val)
 
+        # FIX ME! TODO: this is a pain in the butt
+        # Basically: 
+        # 1. node A runs in a thread
+        # 2. node B runs on another thread
+        # 3. A calls emit_data in its own process()
+        # 4. this triggers a call of B.receive_data, but in the context of As thread
+        # which means, that suddently B is not running in another thread, but this one.
+        # this clashes if b also waits for an input from yet another thread
+        # mainly this also means, that the QueueHelper hack reads from it's queues at different threads and therefore cannot combine the information
+        # not sure how to fix this though :/ for now: we'll just not execute anything in Location.SAME and fix this later
         self.trigger_process()
 
     # === Connection Discovery Stuff =================

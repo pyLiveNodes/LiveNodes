@@ -3,6 +3,7 @@
 from asyncore import write
 from enum import IntEnum
 import multiprocessing as mp
+from re import VERBOSE
 import threading
 import datetime
 
@@ -34,9 +35,10 @@ class LogLevel(IntEnum):
     WARN = 1
     INFO = 2
     DEBUG = 3
+    VERBOSE = 4
 
 class Logger():
-    _log_level = LogLevel.INFO
+    _log_level = LogLevel.DEBUG
     _lock = mp.Lock()
 
     cbs = []
@@ -56,6 +58,9 @@ class Logger():
     def debug(self, *args):
         self._log(LogLevel.DEBUG, *args)
 
+    def verbose(self, *args):
+        self._log(LogLevel.VERBOSE, *args)
+
     def _log(self, level, *text):
         if level <= self._log_level:
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d %X")
@@ -63,7 +68,7 @@ class Logger():
             cur_thread = threading.current_thread().name
             txt = " ".join(str(t) for t in text)
 
-            level_str = ["Warning", "Information", "Debug"][level]
+            level_str = ["Warning", "Information", "Debug", "Verbose"][level - 1]
 
             msg = f"{timestamp} | {cur_proc: <11} | {cur_thread: <11} | {level_str: <11} | {txt}"
 
@@ -71,6 +76,7 @@ class Logger():
             self._lock.acquire(True)
 
             print(msg, flush=True)
+
             for cb in self.cbs:
                 cb(msg)
             

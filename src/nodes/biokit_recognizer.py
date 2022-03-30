@@ -54,6 +54,7 @@ class Biokit_recognizer(Node):
 
         _, path, _ = self.reco.decode(data, generatepath=True, initialize=self._initial) # not sure if we need to initialize this on the first call?
 
+        self.info(self._initial, path)
         if self._initial:
             # get search graph
             graph_json = self.reco.getSearchGraph().createGraphJson(self.reco.getDictionary(), False)
@@ -90,8 +91,6 @@ class Biokit_recognizer(Node):
             self._emit_data(gmm_cov, channel="GMM Covariances")
             self._emit_data(gmm_weights, channel="GMM Weights")
             
-            self._initial = False
-
         if path != None:
             res = [( \
                     r.mStateId, 
