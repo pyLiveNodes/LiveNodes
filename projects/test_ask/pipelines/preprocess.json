@@ -2,8 +2,11 @@
   "Playback [In_playback]": {
     "class": "In_playback",
     "settings": {
+      "block": true,
+      "name": "Playback",
+      "compute_on": 2,
       "batch": 20,
-      "files": "./data/KneeBandageCSL2018/part00/01.h5",
+      "files": "./projects/test_ask/data/KneeBandageCSL2018/part00/01.h5",
       "meta": {
         "sample_rate": 1000,
         "channels": [
@@ -64,15 +67,15 @@
       {
         "emitting_node": "Playback [In_playback]",
         "receiving_node": "Raw Filter [Transform_filter]",
-        "emitting_channel": "Channel Names",
-        "receiving_channel": "Channel Names",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
         "connection_counter": 0
       },
       {
         "emitting_node": "Playback [In_playback]",
         "receiving_node": "Raw Filter [Transform_filter]",
-        "emitting_channel": "Data",
-        "receiving_channel": "Data",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
         "connection_counter": 0
       },
       {
@@ -95,6 +98,7 @@
     "class": "Transform_filter",
     "settings": {
       "name": "Raw Filter",
+      "compute_on": 3,
       "names": [
         "EMG1",
         "Gonio2",
@@ -105,15 +109,15 @@
       {
         "emitting_node": "Playback [In_playback]",
         "receiving_node": "Raw Filter [Transform_filter]",
-        "emitting_channel": "Channel Names",
-        "receiving_channel": "Channel Names",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
         "connection_counter": 0
       },
       {
         "emitting_node": "Playback [In_playback]",
         "receiving_node": "Raw Filter [Transform_filter]",
-        "emitting_channel": "Data",
-        "receiving_channel": "Data",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
         "connection_counter": 0
       }
     ],
@@ -121,15 +125,15 @@
       {
         "emitting_node": "Raw Filter [Transform_filter]",
         "receiving_node": "Raw Data [Draw_lines]",
-        "emitting_channel": "Channel Names",
-        "receiving_channel": "Channel Names",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
         "connection_counter": 0
       },
       {
         "emitting_node": "Raw Filter [Transform_filter]",
         "receiving_node": "Raw Data [Draw_lines]",
-        "emitting_channel": "Data",
-        "receiving_channel": "Data",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
         "connection_counter": 0
       }
     ]
@@ -138,6 +142,7 @@
     "class": "Draw_lines",
     "settings": {
       "name": "Raw Data",
+      "compute_on": 1,
       "n_plots": 3,
       "xAxisLength": 5000,
       "sample_rate": 1000,
@@ -150,15 +155,15 @@
       {
         "emitting_node": "Raw Filter [Transform_filter]",
         "receiving_node": "Raw Data [Draw_lines]",
-        "emitting_channel": "Channel Names",
-        "receiving_channel": "Channel Names",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
         "connection_counter": 0
       },
       {
         "emitting_node": "Raw Filter [Transform_filter]",
         "receiving_node": "Raw Data [Draw_lines]",
-        "emitting_channel": "Data",
-        "receiving_channel": "Data",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
         "connection_counter": 0
       }
     ],
@@ -167,9 +172,10 @@
   "Window [Transform_window]": {
     "class": "Transform_window",
     "settings": {
+      "name": "Window",
+      "compute_on": 3,
       "length": 100,
-      "overlap": 0,
-      "name": "Window"
+      "overlap": 0
     },
     "inputs": [
       {
@@ -193,6 +199,8 @@
   "Features [Transform_feature]": {
     "class": "Transform_feature",
     "settings": {
+      "name": "Features",
+      "compute_on": 3,
       "features": [
         "calc_mean",
         "rms"
@@ -221,15 +229,15 @@
       {
         "emitting_node": "Features [Transform_feature]",
         "receiving_node": "Feature Filter [Transform_filter]",
-        "emitting_channel": "Channel Names",
-        "receiving_channel": "Channel Names",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
         "connection_counter": 0
       },
       {
         "emitting_node": "Features [Transform_feature]",
         "receiving_node": "Feature Filter [Transform_filter]",
-        "emitting_channel": "Data",
-        "receiving_channel": "Data",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
         "connection_counter": 0
       },
       {
@@ -238,6 +246,13 @@
         "emitting_channel": "Data",
         "receiving_channel": "Data",
         "connection_counter": 0
+      },
+      {
+        "emitting_node": "Features [Transform_feature]",
+        "receiving_node": "Normed Feature Filter [Transform_filter]",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
+        "connection_counter": 0
       }
     ]
   },
@@ -245,6 +260,7 @@
     "class": "Transform_filter",
     "settings": {
       "name": "Feature Filter",
+      "compute_on": 3,
       "names": [
         "EMG1__rms",
         "Gonio2__calc_mean",
@@ -255,15 +271,15 @@
       {
         "emitting_node": "Features [Transform_feature]",
         "receiving_node": "Feature Filter [Transform_filter]",
-        "emitting_channel": "Channel Names",
-        "receiving_channel": "Channel Names",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
         "connection_counter": 0
       },
       {
         "emitting_node": "Features [Transform_feature]",
         "receiving_node": "Feature Filter [Transform_filter]",
-        "emitting_channel": "Data",
-        "receiving_channel": "Data",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
         "connection_counter": 0
       }
     ],
@@ -271,15 +287,15 @@
       {
         "emitting_node": "Feature Filter [Transform_filter]",
         "receiving_node": "Features [Draw_lines]",
-        "emitting_channel": "Channel Names",
-        "receiving_channel": "Channel Names",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
         "connection_counter": 0
       },
       {
         "emitting_node": "Feature Filter [Transform_filter]",
         "receiving_node": "Features [Draw_lines]",
-        "emitting_channel": "Data",
-        "receiving_channel": "Data",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
         "connection_counter": 0
       }
     ]
@@ -288,6 +304,7 @@
     "class": "Draw_lines",
     "settings": {
       "name": "Features",
+      "compute_on": 1,
       "n_plots": 3,
       "xAxisLength": 50,
       "sample_rate": 1000,
@@ -300,15 +317,15 @@
       {
         "emitting_node": "Feature Filter [Transform_filter]",
         "receiving_node": "Features [Draw_lines]",
-        "emitting_channel": "Channel Names",
-        "receiving_channel": "Channel Names",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
         "connection_counter": 0
       },
       {
         "emitting_node": "Feature Filter [Transform_filter]",
         "receiving_node": "Features [Draw_lines]",
-        "emitting_channel": "Data",
-        "receiving_channel": "Data",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
         "connection_counter": 0
       }
     ],
@@ -317,7 +334,8 @@
   "Name [Biokit_to_fs]": {
     "class": "Biokit_to_fs",
     "settings": {
-      "name": "Name"
+      "name": "Name",
+      "compute_on": 3
     },
     "inputs": [
       {
@@ -341,7 +359,8 @@
   "Norm [Biokit_norm]": {
     "class": "Biokit_norm",
     "settings": {
-      "name": "Norm"
+      "name": "Norm",
+      "compute_on": 3
     },
     "inputs": [
       {
@@ -365,7 +384,8 @@
   "Name [Biokit_from_fs]": {
     "class": "Biokit_from_fs",
     "settings": {
-      "name": "Name"
+      "name": "Name",
+      "compute_on": 3
     },
     "inputs": [
       {
@@ -390,6 +410,7 @@
     "class": "Transform_filter",
     "settings": {
       "name": "Normed Feature Filter",
+      "compute_on": 3,
       "names": [
         "EMG1__rms",
         "Gonio2__calc_mean",
@@ -403,21 +424,28 @@
         "emitting_channel": "Data",
         "receiving_channel": "Data",
         "connection_counter": 0
+      },
+      {
+        "emitting_node": "Features [Transform_feature]",
+        "receiving_node": "Normed Feature Filter [Transform_filter]",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
+        "connection_counter": 0
       }
     ],
     "outputs": [
       {
         "emitting_node": "Normed Feature Filter [Transform_filter]",
         "receiving_node": "Normed Features [Draw_lines]",
-        "emitting_channel": "Channel Names",
-        "receiving_channel": "Channel Names",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
         "connection_counter": 0
       },
       {
         "emitting_node": "Normed Feature Filter [Transform_filter]",
         "receiving_node": "Normed Features [Draw_lines]",
-        "emitting_channel": "Data",
-        "receiving_channel": "Data",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
         "connection_counter": 0
       }
     ]
@@ -426,6 +454,7 @@
     "class": "Draw_lines",
     "settings": {
       "name": "Normed Features",
+      "compute_on": 1,
       "n_plots": 3,
       "xAxisLength": 50,
       "sample_rate": 1000,
@@ -438,15 +467,15 @@
       {
         "emitting_node": "Normed Feature Filter [Transform_filter]",
         "receiving_node": "Normed Features [Draw_lines]",
-        "emitting_channel": "Channel Names",
-        "receiving_channel": "Channel Names",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
         "connection_counter": 0
       },
       {
         "emitting_node": "Normed Feature Filter [Transform_filter]",
         "receiving_node": "Normed Features [Draw_lines]",
-        "emitting_channel": "Data",
-        "receiving_channel": "Data",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
         "connection_counter": 0
       }
     ],

@@ -93,7 +93,7 @@ class Draw_gmm(Node):
             res = queue.get()
         return res
 
-    def init_draw(self, subfig):
+    def _init_draw(self, subfig):
         self.ax = subfig.subplots(1, 1)
         self.ax.set_xlim(-0.5, 0.5)
         self.ax.set_ylim(-0.5, 0.5)

@@ -2,8 +2,11 @@
   "Data input [In_data]": {
     "class": "In_data",
     "settings": {
+      "block": true,
+      "name": "Data input",
+      "compute_on": 3,
       "batch": 2000,
-      "files": "./data/KneeBandageCSL2018/part*/*.h5",
+      "files": "./projects/test_ask/data/KneeBandageCSL2018/part*/*.h5",
       "meta": {
         "sample_rate": 1000,
         "channels": [
@@ -75,9 +78,10 @@
   "Window [Transform_window]": {
     "class": "Transform_window",
     "settings": {
+      "name": "Window",
+      "compute_on": 3,
       "length": 100,
-      "overlap": 0,
-      "name": "Window"
+      "overlap": 0
     },
     "inputs": [
       {
@@ -101,6 +105,8 @@
   "Features [Transform_feature]": {
     "class": "Transform_feature",
     "settings": {
+      "name": "Features",
+      "compute_on": 3,
       "features": [
         "calc_mean",
         "rms"
@@ -138,7 +144,8 @@
   "Name [Biokit_to_fs]": {
     "class": "Biokit_to_fs",
     "settings": {
-      "name": "Name"
+      "name": "Name",
+      "compute_on": 3
     },
     "inputs": [
       {
@@ -162,7 +169,8 @@
   "Norm [Biokit_norm]": {
     "class": "Biokit_norm",
     "settings": {
-      "name": "Norm"
+      "name": "Norm",
+      "compute_on": 3
     },
     "inputs": [
       {

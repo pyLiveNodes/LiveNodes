@@ -43,6 +43,13 @@ class Logger():
 
     cbs = []
 
+    def __init__(self, stdout=True):
+        if stdout:
+            self.cbs.append(self._print)
+
+    def _print(self, msg):
+        print(msg, flush=True)
+
     def register_cb(self, cb):
         self.cbs.append(cb)
     
@@ -70,12 +77,10 @@ class Logger():
 
             level_str = ["Warning", "Information", "Debug", "Verbose"][level - 1]
 
-            msg = f"{timestamp} | {cur_proc: <11} | {cur_thread: <11} | {level_str: <11} | {txt}"
+            msg = f"{timestamp} | {cur_proc: <12} | {cur_thread: <11} | {level_str: <11} | {txt}"
 
             # acquire blocking log
             self._lock.acquire(True)
-
-            print(msg, flush=True)
 
             for cb in self.cbs:
                 cb(msg)
@@ -87,4 +92,4 @@ class Logger():
         self._log_level = level
 
 
-logger = Logger()
+logger = Logger(stdout=False)

@@ -84,6 +84,7 @@ class Biokit_recognizer(Node):
                     "covariances": [gmm.getCovariance(i).getData() for i in range(len(means))]
                 }
 
+            self.info('trying to send infos')
             # send meta data
             self._emit_data({"topology": self.topology, "search_graph": graph, 'gmms': gmms}, channel="HMM Meta") 
             self._emit_data(gmm_models, channel="GMM Models")
@@ -91,6 +92,7 @@ class Biokit_recognizer(Node):
             self._emit_data(gmm_cov, channel="GMM Covariances")
             self._emit_data(gmm_weights, channel="GMM Weights")
             
+        self.info('Finished initial')
         if path != None:
             res = [( \
                     r.mStateId, 

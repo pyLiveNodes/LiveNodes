@@ -139,7 +139,7 @@ class Draw_recognition(View):
             token_colors, atom_colors, state_colors = self._init_colors(hmm_meta.get('topology'))
             self.colors = [state_colors, atom_colors, token_colors, token_colors]
 
-        self._emit_draw({'data': data, 'colors': self.colors, 'annotation': annotation})
+        self._emit_draw(data=data, colors=self.colors, annotation=annotation)
 
 
     # TODO: move this to utils or something...

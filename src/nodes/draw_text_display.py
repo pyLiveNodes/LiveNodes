@@ -19,7 +19,7 @@ class Draw_text_display(View):
         self.text = initial_text
 
 
-    def init_draw(self, subfig):
+    def _init_draw(self, subfig):
         subfig.suptitle(self.name, fontsize=14)
         ax = subfig.subplots(1, 1)
         ax.spines['top'].set_visible(False)
@@ -32,7 +32,7 @@ class Draw_text_display(View):
         label = ax.text(0.005, 0.95, self.text, zorder=100, fontproperties=ax.xaxis.label.get_font_properties(), rotation='horizontal', va='top', ha='left', transform = ax.transAxes)
         old_text = self.text
 
-        def update (text):
+        def update (text=None):
             nonlocal label, old_text
 
             old_text = text

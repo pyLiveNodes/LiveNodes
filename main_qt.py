@@ -59,7 +59,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # self.central_widget.setProperty("cssClass", "home")
         # self.widget_home.setProperty("cssClass", "home")
     
-    def closeEvent(self, event):
+    def stop(self):
         cur = self.central_widget.currentWidget()
         if hasattr(cur, 'stop'):
             cur.stop()
@@ -68,6 +68,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.log_file.close()
                 self.log_file = None
 
+    def closeEvent(self, event):
+        self.stop()
         return super().closeEvent(event)
 
     def return_home(self):
@@ -81,9 +83,9 @@ class MainWindow(QtWidgets.QMainWindow):
             # for n in cur.child.get_nodes().values():
             #     print(n.__getstate__())
         
+        self.stop()
         self.central_widget.setCurrentWidget(self.widget_home)
         self.central_widget.removeWidget(cur)
-        cur.stop()
         print("Nr of views: ", self.central_widget.count())
 
     def _log_helper(self, msg):

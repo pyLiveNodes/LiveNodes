@@ -1,7 +1,7 @@
 import collections
 import numpy as np
 
-from .node import Node
+from .node import View
 
 import time
 from itertools import groupby
@@ -11,7 +11,7 @@ import multiprocessing as mp
 
 
 
-class Draw_search_graph(Node):
+class Draw_search_graph(View):
     channels_in = ['HMM Meta', 'Hypothesis']
     channels_out = []
 
@@ -83,28 +83,19 @@ class Draw_search_graph(Node):
             verts = [(start, 1) for start in range(n_atoms)]
             self.bar_objs.append(ax.broken_barh(verts, yrange=(0, 1), facecolors=token_sub_colors[token]))
 
-    def _empty_queue(self, queue):
-        res = None
-        while not queue.empty():
-            res = queue.get()
-        return res
-
-
-    def init_draw(self, subfig):
+    def _init_draw(self, subfig):
         subfig.suptitle("Search Graph", fontsize=14)
         
-        def update (hypothesis, hmm_meta):
+        def update (hypothesis=None, hmm_meta=None):
             nonlocal self, subfig
     
             alpha_val = 0.5
 
-            meta = self._empty_queue(self.queue_meta)
-            hypo = self._empty_queue(self.queue_hypo)
-
+            self.verbose('drawing', hypothesis, hmm_meta)
             # TODO: allow for this to change even if axes is already setup
             if hmm_meta is not None and not self._axes_setup:
-                self.graph = meta.get('search_graph')
-                self.topology = meta.get('topology')
+                self.graph = hmm_meta.get('search_graph')
+                self.topology = hmm_meta.get('topology')
                 self.tokens = list(self.topology.keys())
 
                 self.token_colors, self.atom_colors, self.state_colors = self._init_colors(self.topology)
@@ -142,7 +133,7 @@ class Draw_search_graph(Node):
         if hmm_meta is not None:
             self.hmm_meta = hmm_meta
 
-        self._emit_draw({'hypothesis': hypothesis, 'colors': self.hmm_meta})
+        self._emit_draw(hypothesis=hypothesis, hmm_meta=self.hmm_meta)
 
 
 

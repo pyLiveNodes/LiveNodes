@@ -90,6 +90,6 @@ class Annotate_ui_button(Node):
 
         return update
     
-    def _should_draw(self, cur_state):
+    def _should_draw(self, **kwargs):
         return True
     

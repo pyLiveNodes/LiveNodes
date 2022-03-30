@@ -12,6 +12,7 @@ import datetime
 import threading
 import queue
 import importlib
+import sys
 
 from .utils import logger, LogLevel
 
@@ -37,11 +38,13 @@ class Canvas(IntEnum):
 
 class QueueHelperHack():
     def __init__(self):
-        self.queue = mp.SimpleQueue()
+        self.queue = mp.Queue()
+        # self.queue = mp.SimpleQueue()
         self._read = {}
 
     def put(self, ctr, item):
-        self.queue.put((ctr, item))
+        # self.queue.put((ctr, item))
+        self.queue.put_nowait((ctr, item))
 
     def get(self, ctr, discard_before=True):
         while not self.queue.empty():
@@ -121,7 +124,7 @@ class Node ():
 
 
     # === Basic Stuff =================
-    def __init__(self, name="Name", compute_on=Location.THREAD, should_time=False):
+    def __init__(self, name="Name", compute_on=Location.PROCESS, should_time=False):
 
         self.name = name
         
@@ -231,7 +234,12 @@ class Node ():
         # first pass: create nodes
         for name, itm in items.items():
             # HACK! TODO: fix this proper
-            module = importlib.import_module(f"src.nodes.{itm['class'].lower()}")
+            # this whole import thing here is a huge hack, there should be a registry or something similar!
+            module_name = f"src.nodes.{itm['class'].lower()}"
+            if module_name not in sys.modules:
+                module = importlib.import_module(module_name)
+            else: 
+                module = importlib.reload(sys.modules[module_name])
             tmp = (getattr(module, itm['class'])(**itm['settings']))
 
             items_instc[name] = tmp
@@ -439,6 +447,7 @@ class Node ():
         Called in computation process, ie self.process
         Emits data to childs, ie child.receive_data
         """
+        self.verbose('emitting', channel)
         for con in self.output_connections:
             if con._receiving_channel == channel:
                 con._receiving_node.receive_data(self._clock, payload={channel: data})
@@ -496,6 +505,8 @@ class Node ():
         """
         called in location of self
         """
+        self.verbose('_Process triggered')
+        
         # update current state, based on own clock
         _current_data = self._retrieve_current_data()
 
@@ -696,11 +707,16 @@ class View(Node):
             try:
                 cur_state = self._draw_state.get_nowait()
             except queue.Empty:
+                self.debug('Draw Queue was empty')
                 pass
             # always execute the update, even if no new data is added, as a view might want to update not based on the self emited data
             # this happens for instance if the view wants to update based on user interaction (and not data)
-            if self._should_draw(cur_state):
+            if self._should_draw(**cur_state):
                 artis_storage['returns'] = update_fn(**cur_state)
+                self.verbose('Decided to draw', cur_state.keys())
+            else:
+                self.debug('Decided not to draw', cur_state.keys())
+
             return artis_storage['returns']
         return update
 
@@ -731,7 +747,7 @@ class View(Node):
 
         return update
 
-    def _should_draw(self, cur_state):
+    def _should_draw(self, **cur_state):
         return bool(cur_state)
 
     def _emit_draw(self, **kwargs):
@@ -740,6 +756,7 @@ class View(Node):
         Emits data to draw process, ie draw_inits update fn
         """
         if not self._draw_state.full():
+            self.verbose('Storing for draw:', kwargs.keys())
             self._draw_state.put(kwargs)
 
 
@@ -757,7 +774,7 @@ class Sender(Node):
 
     channels_in = [] # must be empty!
 
-    def __init__(self, name, block=True, compute_on=Location.SAME, should_time=False):
+    def __init__(self, name, block=True, compute_on=Location.PROCESS, should_time=False):
         super().__init__(name, compute_on, should_time)
         
         if not block and compute_on == Location.SAME:
