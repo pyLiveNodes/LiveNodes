@@ -77,6 +77,30 @@
       "out_index": 0
     },
     {
+      "in_id": "013a6e50-5489-44b4-9a80-2bee6c11c23b",
+      "in_index": 0,
+      "out_id": "69b88061-5dcd-49d7-9d3e-6ec57682dd9a",
+      "out_index": 0
+    },
+    {
+      "in_id": "0f43ddc2-e388-41f8-8d10-ddd42bdfa413",
+      "in_index": 0,
+      "out_id": "69b88061-5dcd-49d7-9d3e-6ec57682dd9a",
+      "out_index": 0
+    },
+    {
+      "in_id": "ffd8d264-336d-404b-b92c-954c3345c872",
+      "in_index": 0,
+      "out_id": "69b88061-5dcd-49d7-9d3e-6ec57682dd9a",
+      "out_index": 0
+    },
+    {
+      "in_id": "21d4a4ca-4db0-4fe2-8b43-85057808a414",
+      "in_index": 0,
+      "out_id": "69b88061-5dcd-49d7-9d3e-6ec57682dd9a",
+      "out_index": 0
+    },
+    {
       "in_id": "edd66aac-44d7-4c5c-b8ee-dc4d6e28fd8b",
       "in_index": 0,
       "out_id": "013a6e50-5489-44b4-9a80-2bee6c11c23b",
@@ -161,30 +185,6 @@
           "name": "Data"
         }
       }
-    },
-    {
-      "in_id": "013a6e50-5489-44b4-9a80-2bee6c11c23b",
-      "in_index": 0,
-      "out_id": "69b88061-5dcd-49d7-9d3e-6ec57682dd9a",
-      "out_index": 0
-    },
-    {
-      "in_id": "0f43ddc2-e388-41f8-8d10-ddd42bdfa413",
-      "in_index": 0,
-      "out_id": "69b88061-5dcd-49d7-9d3e-6ec57682dd9a",
-      "out_index": 0
-    },
-    {
-      "in_id": "ffd8d264-336d-404b-b92c-954c3345c872",
-      "in_index": 0,
-      "out_id": "69b88061-5dcd-49d7-9d3e-6ec57682dd9a",
-      "out_index": 0
-    },
-    {
-      "in_id": "21d4a4ca-4db0-4fe2-8b43-85057808a414",
-      "in_index": 0,
-      "out_id": "69b88061-5dcd-49d7-9d3e-6ec57682dd9a",
-      "out_index": 0
     }
   ],
   "nodes": [
@@ -294,8 +294,8 @@
         "association_to_node": "GMM Y [Draw_gmm]"
       },
       "position": {
-        "x": 1268.0,
-        "y": 624.0
+        "x": 1300.8319999999999,
+        "y": 620.5439999999999
       }
     },
     {

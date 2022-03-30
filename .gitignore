@@ -2,3 +2,6 @@ __pycache__
 venv/
 
 data/Debug/
+
+logs/
+smart.egg-info/
