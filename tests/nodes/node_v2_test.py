@@ -100,6 +100,6 @@ class TestNodeOperations():
 
     def test_json(self, node_a):
         # check json format
-        assert node_a.to_json() == json.dumps({str(node_a): node_a.get_settings()})
+        assert json.dumps(node_a.to_dict()) == json.dumps({str(node_a): node_a.get_settings()})
 
-        assert node_a.to_json() == SimpleNode.from_json(json_str=node_a.to_json()).to_json()
+        assert json.dumps(node_a.to_dict()) == json.dumps(SimpleNode.from_dict(node_a.to_dict()).to_dict())
