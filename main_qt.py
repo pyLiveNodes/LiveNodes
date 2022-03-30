@@ -55,6 +55,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.widget_home = Home(onconfig=self.onconfig, onstart=self.onstart)
         self.central_widget.addWidget(self.widget_home)
 
+        self.log_file = None
+
         # for some fucking reason i cannot figure out how to set the css class only on the home class... so hacking this by adding and removign the class on view change...
         # self.central_widget.setProperty("cssClass", "home")
         # self.widget_home.setProperty("cssClass", "home")
@@ -63,10 +65,11 @@ class MainWindow(QtWidgets.QMainWindow):
         cur = self.central_widget.currentWidget()
         if hasattr(cur, 'stop'):
             cur.stop()
-            if self.log_file is not None:
-                logger.remove_cb(self._log_helper)
-                self.log_file.close()
-                self.log_file = None
+            
+        if self.log_file is not None:
+            logger.remove_cb(self._log_helper)
+            self.log_file.close()
+            self.log_file = None
 
     def closeEvent(self, event):
         self.stop()

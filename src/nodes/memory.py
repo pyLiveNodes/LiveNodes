@@ -25,4 +25,5 @@ class Memory(Node):
         self.buffer.extend(data)
         if self.length != None:
             self.buffer = self.buffer[-self.length:]
+        self.debug('emitting', len(self.buffer))
         self._emit_data(self.buffer)

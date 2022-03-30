@@ -81,12 +81,11 @@ def add_recognition(pl,fts, norm, x_raw, x_processed, vis=True):
 
     if vis:
         draw_recognition_path = Draw_recognition(xAxisLength=[x_processed, x_processed, x_processed, x_raw])
-        draw_recognition_path.add_input(recog, emitting_channel="Recognition")
-        draw_recognition_path.add_input(recog, emitting_channel='HMM Meta', receiving_channel='HMM Meta')
+        draw_recognition_path.connect_inputs_to(recog)
 
         memory = Memory(x_raw)
-        memory.add_input(pl, emitting_channel='Annotation')
-        draw_recognition_path.add_input(memory, receiving_channel='Annotation')
+        memory.add_input(pl, emitting_channel='Annotation', receiving_channel='Data')
+        draw_recognition_path.add_input(memory, emitting_channel='Data', receiving_channel='Annotation')
 
     if vis:
         draw_search_graph = Draw_search_graph()

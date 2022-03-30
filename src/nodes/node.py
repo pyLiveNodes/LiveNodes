@@ -297,10 +297,10 @@ class Node ():
             raise ValueError("Emitting Node must be of instance Node. Got:", emitting_node)
         
         if emitting_channel not in emitting_node.channels_out:
-            raise ValueError("Emitting Channel not present on given emitting node. Got", emitting_channel)
+            raise ValueError(f"Emitting Channel not present on given emitting node ({str(emitting_node)}). Got", emitting_channel)
 
         if receiving_channel not in self.channels_in:
-            raise ValueError("Receiving Channel not present on node. Got", receiving_channel)
+            raise ValueError(f"Receiving Channel not present on node ({str(self)}). Got", receiving_channel)
         
         # This is too simple, as when connecting two nodes, we really are connecting two sub-graphs, which need to be checked
         # TODO: implement this proper
@@ -707,7 +707,6 @@ class View(Node):
             try:
                 cur_state = self._draw_state.get_nowait()
             except queue.Empty:
-                self.debug('Draw Queue was empty')
                 pass
             # always execute the update, even if no new data is added, as a view might want to update not based on the self emited data
             # this happens for instance if the view wants to update based on user interaction (and not data)

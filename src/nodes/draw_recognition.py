@@ -35,7 +35,7 @@ def convert_list_pos(itms, x_max, yrange):
 
 
 class Draw_recognition(View):
-    channels_in = ['Data', 'Annotation', 'HMM Meta']
+    channels_in = ['Recognition', 'Annotation', 'HMM Meta']
     channels_out = []
 
     category = "Draw"
@@ -99,14 +99,14 @@ class Draw_recognition(View):
         # legend.set_alpha(0) # TODO: for some reason the legend is transparent, no matter what i set here...
         # legend.set_zorder(100)
 
-        def update (data, annotation, colors):
+        def update (recognition, annotation, colors):
             nonlocal self, bar_objs, txt_fout_objs, txt_fin_objs
 
             if colors is not None:
                 self._bar_colors = colors
 
 
-            states, atoms, tokens = zip(*data)
+            states, atoms, tokens = zip(*recognition)
 
             self.names[0], self.verts[0] = convert_list_pos(states[-self.xAxisLength[0]:], self.xAxisLength[0], (0, 0.7))
             self.names[1], self.verts[1] = convert_list_pos(atoms[-self.xAxisLength[1]:], self.xAxisLength[1], (0, 0.7))
@@ -128,18 +128,18 @@ class Draw_recognition(View):
         return update
 
 
-    def _should_process(self, data=None, hmm_meta=None, annotation=None):
-        return data is not None and \
+    def _should_process(self, recognition=None, hmm_meta=None, annotation=None):
+        return recognition is not None and \
             (self.colors is not None or hmm_meta is not None) and \
             (annotation is not None or not self._is_input_connected('annotation'))
             # if the annotation input is connected it must be present for processing
 
-    def process(self, data, hmm_meta=None, annotation=None):
+    def process(self, recognition, hmm_meta=None, annotation=None):
         if hmm_meta is not None:
             token_colors, atom_colors, state_colors = self._init_colors(hmm_meta.get('topology'))
             self.colors = [state_colors, atom_colors, token_colors, token_colors]
 
-        self._emit_draw(data=data, colors=self.colors, annotation=annotation)
+        self._emit_draw(recognition=recognition, colors=self.colors, annotation=annotation)
 
 
     # TODO: move this to utils or something...
