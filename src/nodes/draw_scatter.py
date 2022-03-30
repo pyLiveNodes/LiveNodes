@@ -103,7 +103,7 @@ class Draw_scatter(Node):
         
         # currently this is still (time, channel)
         d = np.vstack(np.array(data)[:, :2])
-        # self._log(np.array(data).shape, d.shape, self.yData.shape)
+        # self.info(np.array(data).shape, d.shape, self.yData.shape)
 
         self.data = np.roll(self.data, d.shape[0], axis=0)
         self.data[:d.shape[0]] = d

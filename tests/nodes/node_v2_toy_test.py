@@ -12,7 +12,7 @@ class Data(Sender):
 
     def _run(self):
         for i in range(10):
-            self._log(i)
+            self.info(i)
             self._emit_data(i, channel="Alternate Data")
             yield True
         return False

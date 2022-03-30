@@ -61,7 +61,7 @@ class Run(FigureCanvasQTAgg):
     def stop(self, *args, **kwargs):
         # Tell the process to terminate, then wait until it returns
         self.worker_term_lock.release()
-        self.worker.join(3)
+        self.worker.join(2)
 
         print('Termination time in view!')
         self.worker.terminate()

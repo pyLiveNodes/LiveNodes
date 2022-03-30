@@ -27,8 +27,8 @@ class In_playback(Sender):
     example_init = {'name': 'Name'}
 
     # TODO: consider using a file for meta data instead of dictionary...
-    def __init__(self, files, meta, batch=1, annotation_holes="Stand", csv_columns=["act", "start", "end"], name="Playback", compute_on=Location.SAME, **kwargs):
-        super().__init__(name, compute_on=compute_on, **kwargs)
+    def __init__(self, files, meta, batch=1, annotation_holes="Stand", csv_columns=["act", "start", "end"], name="Playback", compute_on=Location.THREAD, block=True, **kwargs):
+        super().__init__(name, compute_on=compute_on, block=block, **kwargs)
 
         self.meta = meta
         self.files = files

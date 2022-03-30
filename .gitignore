@@ -6,3 +6,5 @@ data/Debug/
 SMART.egg-info/
 smart.egg-info/
 .pytest_cache/
+
+logs/

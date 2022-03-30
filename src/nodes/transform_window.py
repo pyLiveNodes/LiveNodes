@@ -35,7 +35,7 @@ class Transform_window(Node):
 
     def process(self, data):
         self.buffer.extend(data)
-        # self._log(data.shape, np.array(self.buffer).shape)
+        # self.info(data.shape, np.array(self.buffer).shape)
         # TODO: consider if we could send mulitple frames in one send_data call or if that breaks an assumption later on
         # benefits would be more performant feature calculation (for example), but prob. the whole pipline might see minor benefits
         # -> tried, doesn't seem worth the trouble
@@ -46,7 +46,7 @@ class Transform_window(Node):
         while len(self.buffer) >= self.length:
             # print(np.array(self.buffer[:self.length]).shape, self.multiplier.shape)
             # self.buffer should be (time, channels) and now becomes (1, channels, time)
-            # self._log('Emitting', self.buffer[:self.length])
+            # self.info('Emitting', self.buffer[:self.length])
             self._emit_data(self.buffer[:self.length])
             # self._emit_data([np.array(self.buffer[:self.length]).T])
             # send.append(np.array(self.buffer[:self.length]).T)

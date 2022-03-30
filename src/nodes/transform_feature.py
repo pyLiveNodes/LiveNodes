@@ -103,6 +103,8 @@ class Transform_feature(Node):
         data, channels = self._union.transform(([np.array(data).T], self.channel_names))
         self._emit_data(list(data))
 
+        self.info(channels, set(self.channels) != set(channels))
         if set(self.channels) != set(channels):
             self.channels = channels
+            self.info('Send channel names')
             self._emit_data(channels, channel="Channel Names")

@@ -38,8 +38,8 @@ class CustomNodeDataModel(NodeDataModel, verify=False):
         emitting_channel = out_port.model.data_type[out_port.port_type][out_port.index].id
         receiving_channel = in_port.model.data_type[in_port.port_type][in_port.index].id
 
-        smart_emitting_node = in_port.model.association_to_node
-        smart_receicing_node = out_port.model.association_to_node
+        smart_receicing_node = in_port.model.association_to_node
+        smart_emitting_node = out_port.model.association_to_node
         
         return smart_emitting_node, smart_receicing_node, emitting_channel, receiving_channel
 
@@ -62,8 +62,8 @@ class CustomNodeDataModel(NodeDataModel, verify=False):
                 # occours when a node was deleted, in which case this is not important anyway
                 try:
                     smart_receicing_node.remove_input(smart_emitting_node, emitting_channel=emitting_channel, receiving_channel=receiving_channel)
-                except ValueError:
-                    pass
+                except ValueError as err:
+                    print(err)
                     # TODO: see nodes above on created...
 
 

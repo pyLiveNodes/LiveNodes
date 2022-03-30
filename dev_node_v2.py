@@ -9,7 +9,7 @@ class Data(Sender):
 
     def run(self):
         for i in range(10):
-            self._log(i)
+            self.info(i)
             self._emit_data(i)
             yield True
         return False

@@ -10,5 +10,5 @@ class Log_data(Node):
     example_init = {'name': 'Name'}
 
     def process(self, data):
-        self._log(data)
+        self.info(data)
         self._emit_data(data)

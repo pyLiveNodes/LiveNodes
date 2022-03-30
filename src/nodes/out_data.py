@@ -58,7 +58,7 @@ class Out_data(Node):
         if self.last_annotation is not None:
             self.outputFileAnnotation.write(f"{self.last_annotation[1]},{self.last_annotation[2]},{self.last_annotation[0]}")
         self.outputFileAnnotation.close()
-        self._log('Stopped Writing out')
+        self.info('Stopped Writing out')
 
     def _should_process(self, data=None, channel_names=None, meta=None, annotation=None):
         return data is not None and \

@@ -1,5 +1,5 @@
 
-from enum import Enum
+from enum import IntEnum
 import json
 from re import L
 from socket import timeout
@@ -13,6 +13,8 @@ import threading
 import queue
 import importlib
 
+from .utils import logger, LogLevel
+
 # this fix is for macos (https://docs.python.org/3.8/library/multiprocessing.html#contexts-and-start-methods) 
 # TODO: test/validate this works in all cases (ie increase test cases, coverage and machines to be tested on) 
 # mp.set_start_method('fork')
@@ -23,13 +25,13 @@ class NumpyEncoder(json.JSONEncoder):
             return obj.tolist()
         return json.JSONEncoder.default(self, obj)
 
-class Location(Enum):
+class Location(IntEnum):
     SAME = 1
     THREAD = 2
     PROCESS = 3
     # SOCKET = 4
 
-class Canvas(Enum):
+class Canvas(IntEnum):
     MPL = 1
     # QT = 2
 
@@ -44,6 +46,7 @@ class QueueHelperHack():
     def get(self, ctr, discard_before=True):
         while not self.queue.empty():
             itm_ctr, item = self.queue.get()
+            # TODO: if itm_ctr already exists, should we not rather extend than overwrite it? (thinking of the mulitple emit_data per process call examples (ie window))
             self._read[itm_ctr] = item
 
         if ctr in self._read:
@@ -104,7 +107,6 @@ class Connection ():
 # class LogLevels(Enum):
 #     Debug 
 
-LOGGER_LOCK = mp.Lock()
 
 
 class Node ():
@@ -126,7 +128,7 @@ class Node ():
         self.input_connections = []
         self.output_connections = []
 
-        self._compute_on = compute_on
+        self.compute_on = compute_on
 
         self._received_data = {key: QueueHelperHack() for key in self.channels_in}
 
@@ -135,18 +137,20 @@ class Node ():
         self._running = False
 
         self._subprocess_info = {}
-        if self._compute_on in [Location.PROCESS]:
+        if self.compute_on in [Location.PROCESS]:
             self._subprocess_info = {
                 "process": mp.Process(target=self._process_on_proc),
                 "message_to_subprocess": mp.Queue(),
                 "termination_lock": mp.Lock()
             }
-        elif self._compute_on in [Location.THREAD]:
+        elif self.compute_on in [Location.THREAD]:
             self._subprocess_info = {
                 "process": threading.Thread(target=self._process_on_proc),
                 "message_to_subprocess": mp.Queue(), # as this might be called from another process (ie called when receive_data is called in node form another process)
                 "termination_lock": threading.Lock() # as this is called from the main process
             }
+
+        self.info('Computing on: ', self.compute_on)
 
     def __repr__(self):
         return str(self)
@@ -158,27 +162,20 @@ class Node ():
 
     # === Logging Stuff =================
     # TODO: move this into it's own module/file?
-    def _log(self, *text):
-        # if 4 <= level:
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %X")
-        cur_proc = mp.current_process().name
-        cur_thread = threading.current_thread().name
-        level = "Debug"
+    def warn(self, *text):
+        logger.warn(self._prep_log(*text))
+
+    def info(self, *text):
+        logger.info(self._prep_log(*text))
+
+    def debug(self, *text):
+        logger.debug(self._prep_log(*text))
+
+    def _prep_log(self, *text):
         node = str(self)
         txt = " ".join(str(t) for t in text)
-
-        msg = f"{timestamp} | {cur_proc: <11} | {cur_thread: <11} | {level: >11} | {node: >15} | {txt}"
-
-        # acquire blocking log
-        LOGGER_LOCK.acquire(True)
-
-        print(msg, flush=True)
-
-        # release log
-        LOGGER_LOCK.release()
-
-    # def set_log_level(self, level):
-    #     self._log_level = level
+        msg = f"{node: <40} | {txt}"
+        return msg
 
 
     # # === Subclass Validation Stuff =================
@@ -198,10 +195,13 @@ class Node ():
         # not sure if this will work, as from_dict expects a cls not self...
         return self.from_dict(self.to_dict(children=children, parents=parents)) #, children=children, parents=parents)
 
+    def _node_settings(self):
+        return {"name": self.name, "compute_on": self.compute_on}
+
     def get_settings(self):
         return { \
             "class": self.__class__.__name__,
-            "settings": self._settings(),
+            "settings": dict(self._node_settings(), **self._settings()),
             "inputs": [con.to_dict() for con in self.input_connections],
             "outputs": [con.to_dict() for con in self.output_connections]
         }
@@ -379,15 +379,15 @@ class Node ():
             self._running = True
 
             # TODO: consider moving this in the node constructor, so that we do not have this nested behaviour processeses due to parents calling their childs start()
-            if self._compute_on in [Location.PROCESS, Location.THREAD]:
+            if self.compute_on in [Location.PROCESS, Location.THREAD]:
                 # self._subprocess_info['process'] = mp.Process(target=self._process_on_proc)
-                self._log('create subprocess')
+                self.info('create subprocess')
                 self._acquire_lock(self._subprocess_info['termination_lock'])
-                self._log('start subprocess')
+                self.info('start subprocess')
                 self._subprocess_info['process'].start()
-            elif self._compute_on in [Location.SAME]:
+            elif self.compute_on in [Location.SAME]:
                 self._onstart()
-                self._log('Executed _onstart')
+                self.info('Executed _onstart')
 
 
     def stop(self, children=True):
@@ -395,19 +395,19 @@ class Node ():
         if self._running == True: # the node might be child to multiple parents, but we just want to stop once
             self._running = False
 
-            if self._compute_on in [Location.PROCESS, Location.THREAD]:
-                self._log(self._subprocess_info['process'].is_alive(), self._subprocess_info['process'].name)
+            if self.compute_on in [Location.PROCESS, Location.THREAD]:
+                self.info(self._subprocess_info['process'].is_alive(), self._subprocess_info['process'].name)
                 self._subprocess_info['termination_lock'].release()
-                self._subprocess_info['process'].join(3)
-                self._log(self._subprocess_info['process'].is_alive(), self._subprocess_info['process'].name)
+                self._subprocess_info['process'].join(1)
+                self.info(self._subprocess_info['process'].is_alive(), self._subprocess_info['process'].name)
 
-                if self._compute_on in [Location.PROCESS]:
+                if self.compute_on in [Location.PROCESS]:
                     self._subprocess_info['process'].terminate()
-                    self._log(self._subprocess_info['process'].is_alive(), self._subprocess_info['process'].name)
-            elif self._compute_on in [Location.SAME]:
-                self._log('Executing _onstop')
+                    self.info(self._subprocess_info['process'].is_alive(), self._subprocess_info['process'].name)
+            elif self.compute_on in [Location.SAME]:
+                self.info('Executing _onstop')
                 self._onstop()
-            self._log('Stopped')
+            self.info('Stopped')
 
             # now stop children
             if children:
@@ -415,9 +415,9 @@ class Node ():
                     con._receiving_node.stop()
 
     def _acquire_lock(self, lock, block=True, timeout=None):
-        if self._compute_on in [Location.PROCESS]:
+        if self.compute_on in [Location.PROCESS]:
             return lock.acquire(block=block, timeout=timeout)
-        elif self._compute_on in [Location.THREAD]:
+        elif self.compute_on in [Location.THREAD]:
             if block:
                 return lock.acquire(blocking=True, timeout=-1 if timeout is None else timeout)
             else:
@@ -438,10 +438,10 @@ class Node ():
 
 
     def _process_on_proc(self):
-        self._log('Started subprocess')
+        self.info('Started subprocess')
         
         self._onstart()
-        self._log('Executed _onstart')
+        self.info('Executed _onstart')
 
         # as long as we do not receive a termination signal, we will wait for data to be processed
         # the .empty() is not reliable (according to the python doc), but the best we have at the moment
@@ -453,7 +453,7 @@ class Node ():
             # block until signaled that we have new data
             # as we might receive not data after having received a termination
             #      -> we'll just poll, so that on termination we do terminate after no longer than 0.1seconds
-            # self._log(was_terminated, was_queue_empty_last_iteration)
+            # self.info(was_terminated, was_queue_empty_last_iteration)
             try:
                 self._subprocess_info['message_to_subprocess'].get(block=True, timeout=0.1)
                 was_queue_empty_last_iteration = False
@@ -463,10 +463,10 @@ class Node ():
 
             self._process()
         
-        self._log('Executing _onstop')
+        self.info('Executing _onstop')
         self._onstop()
         
-        self._log('Finished subprocess')
+        self.info('Finished subprocess')
 
     @staticmethod
     def _channel_name_to_key(name):
@@ -499,17 +499,17 @@ class Node ():
             if not prevent_tick:
                 self._clock.tick()
         else:
-            self._log('Decided not to process', self._clock.ctr, _current_data.keys())
+            self.debug('Decided not to process', self._clock.ctr, _current_data.keys())
 
     def trigger_process(self):
-        if self._compute_on in [Location.SAME]:
+        if self.compute_on in [Location.SAME]:
             # same and threads both may be called directly and do not require a notification
             self._process()
-        elif self._compute_on in [Location.PROCESS, Location.THREAD]:
+        elif self.compute_on in [Location.PROCESS, Location.THREAD]:
             # signal subprocess that new data has arrived by adding an item to the signal queue, 
             self._subprocess_info['message_to_subprocess'].put(1)
         else:
-            raise Exception(f'Location {self._compute_on} not implemented yet.')
+            raise Exception(f'Location {self.compute_on} not implemented yet.')
 
     def receive_data(self, clock, payload):
         """
@@ -517,7 +517,7 @@ class Node ():
         """
         # store all received data in their according mp.simplequeues
         for key, val in payload.items():
-            # self._log('Received Data', key, clock.ctr)
+            self.debug(f'Received: "{key}" with clock {clock.ctr}')
             self._received_data[key].put(clock.ctr, val)
 
         self.trigger_process()
@@ -687,11 +687,18 @@ class View(Node):
 
 
     def stop(self, children=True):
-        # we need to clear the draw state, as otherwise the feederqueue never returns and the whole script never returns
-        while not self._draw_state.empty():
-            self._draw_state.get()
+        if self._running == True: # -> seems important as the processes otherwise not always return (especially on fast machines, seems to be a race condition somewhere, not sure i've fully understood whats happening here, but seems to work so far)
+            # we need to clear the draw state, as otherwise the feederqueue never returns and the whole script never returns
+            while not self._draw_state.empty():
+                self._draw_state.get()
 
-        super().stop(children)
+            # should throw an error if anyone tries to insert anything into the queue after we emptied it
+            # also should allow the queue to be garbage collected 
+            # seems not be important though...
+            self._draw_state.close()
+
+            # sets _running to false
+            super().stop(children)
 
     # for now we only support matplotlib
     # TODO: should be updated later on
@@ -741,6 +748,9 @@ class Sender(Node):
         # TODO: also consider if this is better suited as parameter to start?
         self.block = block
 
+    def _node_settings(self):
+        return dict({"block": self.block}, **super()._node_settings())
+
     def __init_subclass__(cls):
         super().__init_subclass__()
         if len(cls.channels_in) > 0:
@@ -755,7 +765,7 @@ class Sender(Node):
         yield False
 
     def _process_on_proc(self):
-        self._log('Started subprocess')
+        self.info('Started subprocess')
 
         runner = self._run()
         try:
@@ -763,23 +773,23 @@ class Sender(Node):
             while not self._acquire_lock(self._subprocess_info['termination_lock'], block=False) and next(runner):
                 self._clock.tick()
         except StopIteration:
-                self._log('Reached end of run')
-        self._log('Finished subprocess')
+                self.info('Reached end of run')
+        self.info('Finished subprocess')
 
 
     def start(self, children=True):
         super().start(children)
         
-        if self._compute_on in [Location.PROCESS, Location.THREAD] and self.block:
+        if self.compute_on in [Location.PROCESS, Location.THREAD] and self.block:
             self._subprocess_info['process'].join()
-        elif self._compute_on in [Location.SAME]:
+        elif self.compute_on in [Location.SAME]:
             # iterate until the generator that is run() returns false, ie no further data is to be processed
             runner = self._run()
             try:
                 while next(runner):
                     self._clock.tick()
             except StopIteration:
-                self._log('Reached end of run')
+                self.info('Reached end of run')
     
 
 
@@ -797,20 +807,20 @@ class BlockingSender(Sender):
         self._clock.tick()
 
     def _process_on_proc(self):
-        self._log('Started subprocess')
+        self.info('Started subprocess')
         try:
             self._onstart()
         except KeyboardInterrupt:
-            self._log('Received Termination Signal')
+            self.info('Received Termination Signal')
             self._onstop()
-        self._log('Finished subprocess')
+        self.info('Finished subprocess')
 
     def start(self, children=True):
         super().start(children)
         
-        if self._compute_on in [Location.PROCESS, Location.THREAD]:
+        if self.compute_on in [Location.PROCESS, Location.THREAD]:
             self._subprocess_info['process'].join()
-        elif self._compute_on in [Location.SAME]:
+        elif self.compute_on in [Location.SAME]:
             self._onstart()
 
     def stop(self, children=True):
@@ -818,9 +828,9 @@ class BlockingSender(Sender):
         if self._running == True: # the node might be child to multiple parents, but we just want to stop once
             self._running = False
 
-            if self._compute_on in [Location.SAME, Location.THREAD]:
+            if self.compute_on in [Location.SAME, Location.THREAD]:
                 self._onstop()
-            elif self._compute_on in [Location.PROCESS]:
+            elif self.compute_on in [Location.PROCESS]:
                 self._subprocess_info['process'].terminate()
 
         # now stop children
