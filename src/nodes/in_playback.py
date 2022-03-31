@@ -27,12 +27,12 @@ class In_playback(Sender):
     example_init = {'name': 'Name'}
 
     # TODO: consider using a file for meta data instead of dictionary...
-    def __init__(self, files, meta, batch=1, annotation_holes="Stand", csv_columns=["act", "start", "end"], name="Playback", compute_on=Location.THREAD, block=True, **kwargs):
+    def __init__(self, files, meta, emit_at_once=1, annotation_holes="Stand", csv_columns=["act", "start", "end"], name="Playback", compute_on=Location.THREAD, block=True, **kwargs):
         super().__init__(name, compute_on=compute_on, block=block, **kwargs)
 
         self.meta = meta
         self.files = files
-        self.batch = batch
+        self.emit_at_once = emit_at_once
         self.annotation_holes = annotation_holes
         self.csv_columns = csv_columns # TODO: remove theses asap and rather convert the old datasets to a consistent format!
 
@@ -42,7 +42,7 @@ class In_playback(Sender):
 
     def _settings(self):
         return {\
-            "batch": self.batch,
+            "emit_at_once": self.emit_at_once,
             "files": self.files,
             "meta": self.meta,
             "annotation_holes": self.annotation_holes,
@@ -55,8 +55,9 @@ class In_playback(Sender):
         Streams the data and calls frame callbacks for each frame.
         """
         fs = glob.glob(self.files)
-        sleep_time = 1. / (self.sample_rate / self.batch)
-        print(sleep_time, self.sample_rate, self.batch)
+        sleep_time = 1. / (self.sample_rate / self.emit_at_once)
+        print(sleep_time, self.sample_rate, self.emit_at_once)
+        last_time = time.time()
 
         target_to_id = {key: key for i, key in enumerate(self.targets)}
 
@@ -93,27 +94,22 @@ class In_playback(Sender):
                         targs += [target_to_id[self.annotation_holes]] * (len(data) - j)
 
                 # TODO: for some reason i have no fucking clue about using read_data results in the annotation plot in draw recog to be wrong, although the targs are exactly the same (yes, if checked read_data()[1] == targs)...
-
-                for i in range(start, end, self.batch):
-                    d_len = len(data[i:i+self.batch]) # usefull if i+self.batch > len(data)
-                    self._emit_data(np.array(data[i:i+self.batch]))
-                    if len(targs[i:i+self.batch]) > 0:
-                        self._emit_data(targs[i:i+self.batch], channel='Annotation')
-                    self._emit_data([ctr] * d_len, channel="File")
+                for i in range(start, end, self.emit_at_once):
+                    d_len = len(data[i:i+self.emit_at_once]) # usefull if i+self.emit_at_once > len(data), as then all the rest will be read into one batch
                     
-                    time.sleep(sleep_time)
+                    # The data format is always: (batch/file, time, channel)
+                    # self.debug(data[i:i+self.emit_at_once][0])
+                    self._emit_data(np.array([data[i:i+self.emit_at_once]]))
+
+                    if len(targs[i:i+self.emit_at_once]) > 0:
+                        self._emit_data([targs[i:i+self.emit_at_once]], channel='Annotation')
+                    
+                    self._emit_data([[ctr] * d_len], channel="File")
+                    
+                    while time.time() < last_time + sleep_time:
+                        time.sleep(0.00001)
+
+                    last_time = time.time()
+
                     yield True
         yield False
-
-        # TODO: look at this implementation again, seems to be the more precise one
-        # samples_per_frame = int(self.sample_rate / 1000 * self.frame_size_ms)
-        # time_val = time.time()
-        # time_val_init = time_val
-        # for sample_cnt in range(0, len(self.data), samples_per_frame):
-        #     samples = self.data[sample_cnt:sample_cnt+samples_per_frame]
-        #     # if not self.asap:
-        #     while time.time() - time_val < (1.0 / 1000.0) * self.frame_size_ms:
-        #         time.sleep(0.000001)
-        #     time_val = time_val_init + sample_cnt / self.sample_rate
-        #     self._emit_data(np.array(samples))
-    

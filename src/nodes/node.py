@@ -114,8 +114,8 @@ class Connection ():
 
 class Node ():
     # === Information Stuff =================
-    channels_in = []
-    channels_out = []
+    channels_in = ["Data"]
+    channels_out = ["Data"]
 
     category = "Default"
     description = ""
@@ -448,6 +448,9 @@ class Node ():
         Emits data to childs, ie child.receive_data
         """
         self.verbose('emitting', channel)
+        if channel == 'Data':
+            self.debug('Emitting Data of shape:', np.array(data).shape)
+
         for con in self.output_connections:
             if con._receiving_channel == channel:
                 con._receiving_node.receive_data(self._clock, payload={channel: data})
@@ -537,7 +540,7 @@ class Node ():
         """
         # store all received data in their according mp.simplequeues
         for key, val in payload.items():
-            self.debug(f'Received: "{key}" with clock {clock.ctr}')
+            self.verbose(f'Received: "{key}" with clock {clock.ctr}')
             self._received_data[key].put(clock.ctr, val)
 
         # FIX ME! TODO: this is a pain in the butt
@@ -648,7 +651,10 @@ class Node ():
         """
         return set(list(map(self._channel_name_to_key, self.channels_in))) <= set(list(kwargs.keys()))
     
-    def process(self):
+    def process_time_series(self, ts):
+        return ts
+
+    def process(self, data):
         """
         Heart of the nodes processing, should be a stateless(/functional) processing function, 
         ie "self" should only be used to call _emit_[data|draw]. 
@@ -661,7 +667,8 @@ class Node ():
         params: **channels_in
         returns None
         """
-        pass
+        res = list(map(self.process_time_series, data))
+        self._emit_data(res)
 
     def _onstart(self):
         """

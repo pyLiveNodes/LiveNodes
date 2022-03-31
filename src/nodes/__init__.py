@@ -30,5 +30,3 @@ else:
 full_path = os.path.join(os.path.dirname(__file__), path)
 print('Using Plux:', full_path)
 sys.path.append(full_path)
-
-import plux

@@ -42,4 +42,4 @@ class Transform_filter(Node):
 
             self._emit_data(self.names, channel="Channel Names")
         
-        self._emit_data(np.array(data)[:,self.idx])
+        self._emit_data(np.array(data)[:,:,self.idx])

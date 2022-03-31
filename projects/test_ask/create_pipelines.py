@@ -215,22 +215,22 @@ if __name__ == "__main__":
     print('=== Build Processing Pipeline ===')
     # TODO: currently the saving and everything else assumes we have a single node as entry, not sure if that is always true. consider multi indepdendent sensors, that are synced in the second node 
     #   -> might be solveable with "pipeline nodes" or similar, where a node acts as container for a node system -> might be good for paralellisation anyway 
-    pl = In_playback(files="./projects/test_ask/data/KneeBandageCSL2018/part00/01.h5", meta=meta, batch=20)
-    # pl = Playback(files="./projects/test_ask/data/KneeBandageCSL2018/**/*.h5", meta=meta, batch=20)
+    pl = In_playback(files="./projects/test_ask/data/KneeBandageCSL2018/part00/01.h5", meta=meta, emit_at_once=20)
+    # pl = Playback(files="./projects/test_ask/data/KneeBandageCSL2018/**/*.h5", meta=meta, emit_at_once=20)
 
     norm, fts = add_processing(pl, x_raw=x_raw, x_processed=x_processed, vis=(True, True, True))
     save(pl, "preprocess.json")
 
 
     print('=== Build Recognition Pipeline ===')
-    pl = In_playback(files="./projects/test_ask/data/KneeBandageCSL2018/part00/01.h5", meta=meta, batch=20)
+    pl = In_playback(files="./projects/test_ask/data/KneeBandageCSL2018/part00/01.h5", meta=meta, emit_at_once=20)
     norm, fts = add_processing(pl, x_raw=x_raw, x_processed=x_processed, vis=(False, False, True))
     recog = add_recognition(pl, fts, norm, x_raw=x_raw, x_processed=x_processed, vis=True)
     save(pl, "recognize.json")
 
 
     print('=== Build Recognition Pipeline (no vis) ===')
-    pl = In_data(files="./projects/test_ask/data/KneeBandageCSL2018/part00/*.h5", meta=meta, batch=2000)
+    pl = In_data(files="./projects/test_ask/data/KneeBandageCSL2018/part00/*.h5", meta=meta, emit_at_once=2000)
     norm, fts = add_processing(pl, x_raw=x_raw, x_processed=x_processed, vis=(False, False, False))
     recog = add_recognition(pl, fts, norm, x_raw=x_raw, x_processed=x_processed, vis=False)
     save(pl, "recognize_no_vis.json")
@@ -238,7 +238,7 @@ if __name__ == "__main__":
 
     print('=== Build Train Pipeline ===')
 
-    pl = In_data(files="./projects/test_ask/data/KneeBandageCSL2018/part*/*.h5", meta=meta, batch=2000)
+    pl = In_data(files="./projects/test_ask/data/KneeBandageCSL2018/part*/*.h5", meta=meta, emit_at_once=2000)
     norm, fts = add_processing(pl, x_raw=x_raw, x_processed=x_processed, vis=(False, False, False))
     save(pl, "preprocess_no_vis.json")
 

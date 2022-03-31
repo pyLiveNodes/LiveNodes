@@ -91,6 +91,7 @@ class Transform_feature(Node):
             (self.channel_names is not None or channel_names is not None)
 
 
+    # input shape: (batch/file, time, channel)
     def process(self, data, channel_names=None):
         if channel_names is not None:
             self.channel_names = channel_names
@@ -100,8 +101,16 @@ class Transform_feature(Node):
         # TODO: update this to not use a map anymore
         # TODO: currently ft.transform is called twice, as the dimensions_ will otherwise not be set -> most of the time we do double the work for no benefit 
         # data, channels = self._union.transform((data_frame, self.channel_names))
-        data, channels = self._union.transform(([np.array(data).T], self.channel_names))
-        self._emit_data(list(data))
+
+        # the union implementation is from mkr and expects (batch, channel, time)
+        fts, channels = self._union.transform((np.array(data).transpose((0, 2, 1)), self.channel_names))
+        
+        # as we've folded the original time axis into the features, let's insert it with size one, to fulfill the (batch, time, channel) expectation
+        # STOPPED HERE: TODO: rething the insertion as well as the channels put out by window. As the current idea doens't make much sense for normalization, as we would normalize on sequences of length 1... or should we normalize over batches? that feels quite wrong tho...
+        # -> nvm: the norm is a running norm anyway, ie updates with every frame.
+        # -> still makes sense to consider, but is less pressing
+        res = np.expand_dims(np.array(list(fts)), axis=1)
+        self._emit_data(res)
 
         if set(self.channels) != set(channels):
             self.channels = channels
