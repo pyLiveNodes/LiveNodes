@@ -37,14 +37,17 @@ class Canvas(IntEnum):
     # QT = 2
 
 class QueueHelperHack():
-    def __init__(self):
-        self.queue = mp.Queue()
+    def __init__(self, compute_on=Location.PROCESS):
+        if compute_on in [Location.PROCESS, Location.THREAD]:
+            self.queue = mp.Queue()
+        elif compute_on in [Location.SAME]:
+            self.queue = queue.Queue()
         # self.queue = mp.SimpleQueue()
         self._read = {}
 
     def put(self, ctr, item):
-        # self.queue.put((ctr, item))
-        self.queue.put_nowait((ctr, item))
+        self.queue.put((ctr, item))
+        # self.queue.put_nowait((ctr, item))
 
     def get(self, ctr, discard_before=True):
         while not self.queue.empty():
@@ -76,9 +79,12 @@ class Clock():
     def _tick_with_time(self):
         self.ctr += 1
         self.times.append(time.time())
+        return self.ctr
 
     def _tick(self):
         self.ctr += 1
+        return self.ctr
+
 
 class Connection ():
     # TODO: consider creating a channel registry instead of using strings?
@@ -133,9 +139,9 @@ class Node ():
 
         self.compute_on = compute_on
 
-        self._received_data = {key: QueueHelperHack() for key in self.channels_in}
+        self._received_data = {key: QueueHelperHack(compute_on=compute_on) for key in self.channels_in}
 
-        self._clock = Clock(node=self, should_time=should_time)
+        self._ctr = None
 
         self._running = False
 
@@ -442,7 +448,7 @@ class Node ():
 
 
     # === Data Stuff =================
-    def _emit_data(self, data, channel="Data"):
+    def _emit_data(self, data, channel="Data", ctr=None):
         """
         Called in computation process, ie self.process
         Emits data to childs, ie child.receive_data
@@ -453,7 +459,7 @@ class Node ():
 
         for con in self.output_connections:
             if con._emitting_channel == channel:
-                con._receiving_node.receive_data(self._clock, payload={con._receiving_channel: data})
+                con._receiving_node.receive_data(self._ctr if ctr is None else ctr, payload={con._receiving_channel: data})
 
 
     def _process_on_proc(self):
@@ -474,13 +480,13 @@ class Node ():
             #      -> we'll just poll, so that on termination we do terminate after no longer than 0.1seconds
             # self.info(was_terminated, was_queue_empty_last_iteration)
             try:
-                self._subprocess_info['message_to_subprocess'].get(block=True, timeout=0.1)
+                ctr = self._subprocess_info['message_to_subprocess'].get(block=True, timeout=0.1)
                 was_queue_empty_last_iteration = False
             except queue.Empty:
                 was_queue_empty_last_iteration = True
                 continue
 
-            self._process()
+            self._process(ctr)
         
         self.info('Executing _onstop')
         self._onstop()
@@ -512,52 +518,51 @@ class Node ():
     #         self.debug('next tick data:', self._retrieve_current_data(ctr=ctr + 1).keys())
     #     return False
 
-    def _process(self):
+    def _process(self, ctr):
         """
         called in location of self
         called every time something is put into the queue / we received some data (ie if there are three inputs, we expect this to be called three times, before the clock should advance)
         """
         self.verbose('_Process triggered')
-
-        # if self.discard_previous_tick(ctr=self._clock.ctr):
-        #     self.debug('Discarding Tick', self._clock.ctr)
-        #     self._clock.tick()
         
         # update current state, based on own clock
-        _current_data = self._retrieve_current_data(ctr=self._clock.ctr)
+        _current_data = self._retrieve_current_data(ctr=ctr)
 
         # check if all required data to proceed is available and then call process
         # then cleanup aggregated data and advance our own clock
         if self._should_process(**_current_data):
-            self.verbose('Decided to process', self._clock.ctr, _current_data.keys())
+            self.verbose('Decided to process', ctr, _current_data.keys())
             # yes, ```if self.process``` is shorter, but as long as the documentation isn't there this is also very clear on the api
-            prevent_tick = self.process(**_current_data)
-            if not prevent_tick:
-                # TODO: IMPORTANT: every node it's own clock seems to have been a mistake: go back to the original idea of "senders and syncs implement clocks and everyone else just passes them along"
-                self._clock.tick()
-            else:
-                self.debug('Prevented tick')
+            # prevent_tick = self.process(**_current_data)
+            # IMPORTANT: this is possible, due to the fact that only sender and syncs have their own clock
+            # sender will never receive inputs and therefore will never have 
+            # TODO: IMPORTANT: every node it's own clock seems to have been a mistake: go back to the original idea of "senders and syncs implement clocks and everyone else just passes them along"
+            self._ctr = ctr
+            self.process(**_current_data)
+            # if not prevent_tick:
+            # else:
+            #     self.debug('Prevented tick')
         else:
-            self.debug('Decided not to process', self._clock.ctr, _current_data.keys())
+            self.debug('Decided not to process', ctr, _current_data.keys())
 
-    def trigger_process(self):
+    def trigger_process(self, ctr):
         if self.compute_on in [Location.SAME]:
             # same and threads both may be called directly and do not require a notification
-            self._process()
+            self._process(ctr)
         elif self.compute_on in [Location.PROCESS, Location.THREAD]:
             # signal subprocess that new data has arrived by adding an item to the signal queue, 
-            self._subprocess_info['message_to_subprocess'].put(1)
+            self._subprocess_info['message_to_subprocess'].put(ctr)
         else:
             raise Exception(f'Location {self.compute_on} not implemented yet.')
 
-    def receive_data(self, clock, payload):
+    def receive_data(self, ctr, payload):
         """
         called in location of emitting node
         """
         # store all received data in their according mp.simplequeues
         for key, val in payload.items():
-            self.verbose(f'Received: "{key}" with clock {clock.ctr}')
-            self._received_data[key].put(clock.ctr, val)
+            self.verbose(f'Received: "{key}" with clock {ctr}')
+            self._received_data[key].put(ctr, val)
 
         # FIX ME! TODO: this is a pain in the butt
         # Basically: 
@@ -569,7 +574,7 @@ class Node ():
         # this clashes if b also waits for an input from yet another thread
         # mainly this also means, that the QueueHelper hack reads from it's queues at different threads and therefore cannot combine the information
         # not sure how to fix this though :/ for now: we'll just not execute anything in Location.SAME and fix this later
-        self.trigger_process()
+        self.trigger_process(ctr)
 
     # === Connection Discovery Stuff =================
     @staticmethod
@@ -806,6 +811,9 @@ class Sender(Node):
         # TODO: also consider if this is better suited as parameter to start?
         self.block = block
 
+        self._clock = Clock(node=self, should_time=should_time)
+        self._ctr = self._clock.ctr
+
     def _node_settings(self):
         return dict({"block": self.block}, **super()._node_settings())
 
@@ -824,12 +832,11 @@ class Sender(Node):
 
     def _process_on_proc(self):
         self.info('Started subprocess')
-
         runner = self._run()
         try:
             # as long as we do not receive a termination signal and there is data, we will send data
-            while not self._acquire_lock(self._subprocess_info['termination_lock'], block=False) and next(runner):
-                self._clock.tick()
+            while not self._acquire_lock(self._subprocess_info['termination_lock'], block=False) and runner():
+                self._ctr = self._clock.tick()
         except StopIteration:
                 self.info('Reached end of run')
         self.info('Finished subprocess')
@@ -842,16 +849,22 @@ class Sender(Node):
             self._subprocess_info['process'].join()
         elif self.compute_on in [Location.SAME]:
             # iterate until the generator that is run() returns false, ie no further data is to be processed
-            runner = self._run()
             try:
-                while next(runner):
-                    self._clock.tick()
+                runner = self._run()
+                while runner():
+                    self._ctr = self._clock.tick()
             except StopIteration:
                 self.info('Reached end of run')
     
 
 
 class BlockingSender(Sender):
+
+    def __init__(self, name, block=True, compute_on=Location.PROCESS, should_time=False):
+        super().__init__(name, block, compute_on, should_time)
+
+        self._clock = Clock(node=self, should_time=should_time)
+        self._ctr = self._clock.ctr
 
     def _onstart(self):
         pass
@@ -862,7 +875,7 @@ class BlockingSender(Sender):
     def _emit_data(self, data, channel="Data"):
         super()._emit_data(data, channel)
         # as we are a blocking sender / a sensore everytime we emit a sample, we advance our clock
-        self._clock.tick()
+        self._ctr = self._clock.tick()
 
     def _process_on_proc(self):
         self.info('Started subprocess')

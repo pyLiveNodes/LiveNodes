@@ -1,41 +1,42 @@
 import pytest
 from src.nodes.node import Node, Location, Sender
-import json
-import time
 import multiprocessing as mp
 
 class Data(Sender):
     channels_in = []
     # yes, "Data" would have been fine, but wanted to quickly test the naming parts
     # TODO: consider
-    channels_out = ["Alternate Data"]
+    channels_out = ["Data"]
 
     def _run(self):
-        for i in range(10):
-            self.info(i)
-            self._emit_data(i, channel="Alternate Data")
-            yield True
-        return False
+        ctr = 0
+        def call():
+            nonlocal ctr
+            self.info(ctr)
+            self._emit_data(ctr)
+            ctr += 1
+            return ctr < 10
+        return call
 
 
 class Quadratic(Node):
-    channels_in = ["Alternate Data"]
-    channels_out = ["Alternate Data"]
+    channels_in = ["Data"]
+    channels_out = ["Data"]
 
-    def process(self, alternate_data):
-        self._emit_data(alternate_data ** 2, channel="Alternate Data")
+    def process(self, data):
+        self._emit_data(data ** 2, channel="Data")
 
 
 class Save(Node):
-    channels_in = ["Alternate Data"]
+    channels_in = ["Data"]
     channels_out = []
 
-    def __init__(self, name, compute_on=Location.SAME, should_time=False):
-        super().__init__(name, compute_on, should_time)
+    def __init__(self, name, **kwargs):
+        super().__init__(name, **kwargs)
         self.out = mp.SimpleQueue()
 
-    def process(self, alternate_data):
-        self.out.put(alternate_data)
+    def process(self, data):
+        self.out.put(data)
 
     def get_state(self):
         res = []
@@ -47,10 +48,10 @@ class Save(Node):
 # Arrange
 @pytest.fixture
 def create_simple_graph():
-    data = Data(name="A")
-    quadratic = Quadratic(name="B")
-    out1 = Save(name="C")
-    out2 = Save(name="D")
+    data = Data(name="A", compute_on=Location.SAME)
+    quadratic = Quadratic(name="B", compute_on=Location.SAME)
+    out1 = Save(name="C", compute_on=Location.SAME)
+    out2 = Save(name="D", compute_on=Location.SAME)
     
     out1.connect_inputs_to(data)
     quadratic.connect_inputs_to(data)
@@ -74,9 +75,9 @@ def create_simple_graph_mp():
 
 @pytest.fixture
 def create_simple_graph_mixed():
-    data = Data(name="A", compute_on=Location.PROCESS)
+    data = Data(name="A", compute_on=Location.THREAD)
     quadratic = Quadratic(name="B", compute_on=Location.THREAD)
-    out1 = Save(name="C", compute_on=Location.SAME)
+    out1 = Save(name="C", compute_on=Location.THREAD)
     out2 = Save(name="D", compute_on=Location.THREAD)
     
     out1.connect_inputs_to(data)

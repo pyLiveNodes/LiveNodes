@@ -38,7 +38,7 @@ class LogLevel(IntEnum):
     VERBOSE = 4
 
 class Logger():
-    _log_level = LogLevel.DEBUG
+    _log_level = LogLevel.VERBOSE
     _lock = mp.Lock()
 
     cbs = []
@@ -92,4 +92,4 @@ class Logger():
         self._log_level = level
 
 
-logger = Logger(stdout=False)
+logger = Logger(stdout=True)
