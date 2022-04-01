@@ -1,4 +1,5 @@
 from .node import BlockingSender
+import numpy as np
 
 import plux
 
@@ -67,9 +68,9 @@ class In_biosignalsplux(BlockingSender):
         Streams the data and calls frame callbacks for each frame.
         """
         def onRawFrame (nSeq, data):
-            # d = np.array(data)
-            # if nSeq % 1000 == 0:
-            #     print(nSeq, d, d.shape)
+            d = np.array(data)
+            if nSeq % 1000 == 0:
+                print(nSeq, d, d.shape)
             self._emit_data([data])
 
         self._emit_data(self.channel_names, channel="Channel Names")

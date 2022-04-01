@@ -111,11 +111,12 @@ class Draw_lines(View):
             self.channel_names = channel_names
 
         # if (batch/file, time, channel)
-        # d = np.vstack(np.transpose(data, (0, -1, -2)))
-        
-        # currently this is still (time, channel)
-        d = np.vstack(np.array(data)[:, :self.n_plots])
-        # self.info(np.array(data).shape, d.shape, self.yData.shape)
+        d = np.vstack(np.array(data)[:, :, :self.n_plots])
+
+        # if (batch/file, time, channel)
+        # d = np.vstack(np.array(data)[:, :self.n_plots])
+
+        self.info(np.array(data).shape, d.shape, self.yData.shape)
 
         self.yData = np.roll(self.yData, d.shape[0], axis=0)
         self.yData[:d.shape[0]] = d
