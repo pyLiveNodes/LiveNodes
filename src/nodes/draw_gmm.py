@@ -13,6 +13,19 @@ import matplotlib as mpl
 
 
 class Draw_gmm(Node):
+    channels_in = ["Data", "Channel Names", "HMM Meta", "Hypo States", "GMM Models", "GMM Means", "GMM Covariances", "GMM Weights"],
+    channels_out = []
+
+    category = "Draw"
+    description = "" 
+
+    example_init = {
+        "name": "GMM",
+            "plot_names": ["Channel 1", "Channel 2"],
+            "n_mixtures": 2,
+            "n_scatter_points": 10,
+            "name": "GMM"
+    }
 
     # TODO: remove the plot_names filter! this should just be a step in the pipeline
     # (this entails fixing the gmms not being passed in the hmm meta stream but a stream of their own)
@@ -48,36 +61,6 @@ class Draw_gmm(Node):
         self.token_colors, self.atom_colors, self.state_colors = None, None, None
         self.gmms = None
 
-    
-    @staticmethod
-    def info():
-        return {
-            "class": "Draw_gmm",
-            "file": "draw_gmm.py",
-            "in": ["Data", "Channel Names", "HMM Meta", "Hypo States", "GMM Models", "GMM Means", "GMM Covariances", "GMM Weights"],
-            "out": [],
-            "init": {
-                "name": "GMM",
-                 "plot_names": ["Channel 1", "Channel 2"],
-                 "n_mixtures": 2,
-                 "n_scatter_points": 10,
-                 "name": "GMM"
-            },
-            "category": "Draw"
-        }
-        
-    @property
-    def in_map(self):
-        return {
-            "HMM Meta": self.receive_meta,
-            "Hypo States": self.receive_hypo,
-            "Data": self.receive_data,
-            "Channel Names": self.receive_channels,
-            "GMM Models": self.receive_gmm_models, 
-            "GMM Means": self.receive_gmm_means, 
-            "GMM Covariances": self.receive_gmm_covs, 
-            "GMM Weights": self.receive_gmm_weights,
-        }
 
     def _settings(self):
         return {\
@@ -86,12 +69,6 @@ class Draw_gmm(Node):
             "n_scatter_points": self.n_scatter_points,
             "n_mixtures": self.n_mixtures
            }
-
-    def _empty_queue(self, queue):
-        res = None
-        while not queue.empty():
-            res = queue.get()
-        return res
 
     def _init_draw(self, subfig):
         self.ax = subfig.subplots(1, 1)
@@ -156,29 +133,7 @@ class Draw_gmm(Node):
             return []
         return update
 
-    def receive_meta(self, meta, **kwargs):
-        self.queue_meta.put(meta)
 
-    def receive_hypo(self, hypo, **kwargs):
-        self.queue_hypo.put(hypo)
-    
-    def process(self, data, **kwargs):
-        self.queue_data.put(data)
-
-    def receive_gmm_models(self, data, **kwargs):
-        self.queue_gmm_models.put(data)
-
-    def receive_gmm_means(self, data, **kwargs):
-        self.queue_gmm_means.put(data)
-
-    def receive_gmm_covs(self, data, **kwargs):
-        self.queue_gmm_covs.put(data)
-
-    def receive_gmm_weights(self, data, **kwargs):
-        self.queue_gmm_weights.put(data)
-
-    def receive_channels(self, data, **kwargs):
-        self.queue_channels.put(data)
 
     # TODO: share these between the different hmm draws...
     def _init_colors(self, topology):
