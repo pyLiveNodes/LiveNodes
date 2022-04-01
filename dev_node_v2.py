@@ -1,45 +1,39 @@
 from src.nodes.node import Sender, Node, Location
-import json
-import time
 import multiprocessing as mp
 
 class Data(Sender):
     channels_in = []
     channels_out = ["Data"]
 
-    def run(self):
-        for i in range(10):
-            self.info(i)
-            self._emit_data(i)
-            yield True
-        return False
+    def _run(self):
+        ctr = 0
+        def call():
+            nonlocal ctr
+            self.info(ctr)
+            self._emit_data(ctr)
+            ctr += 1
+            return ctr < 10
+        return call
 
 class Quadratic(Node):
     channels_in = ["Data"]
     channels_out = ["Data"]
 
-    def _should_process(self, **kwargs):
-        return 'Data' in kwargs
-
-    def process(self, Data):
-        self._emit_data(Data ** 2)
+    def process(self, data):
+        self._emit_data(data ** 2)
 
 
 class Save(Node):
     channels_in = ["Data"]
     channels_out = []
 
-    def __init__(self, name, compute_on=Location.SAME, should_time=False):
-        super().__init__(name, compute_on, should_time)
+    def __init__(self, name, **kwargs):
+        super().__init__(name, **kwargs)
+
         self.out = mp.SimpleQueue()
 
-    def _should_process(self, **kwargs):
-        # print(str(self), kwargs)
-        return 'Data' in kwargs
-
-    def process(self, Data):
-        # print(str(self), Data)
-        self.out.put(Data)
+    def process(self, data):
+        self.out.put(data)
 
     def get_state(self):
         res = []
@@ -48,10 +42,10 @@ class Save(Node):
         return res
 
 if __name__ == "__main__":
-    data = Data(name="A", compute_on=Location.THREAD)
-    quadratic = Quadratic(name="B", compute_on=Location.PROCESS)
+    data = Data(name="A", compute_on=Location.SAME)
+    quadratic = Quadratic(name="B", compute_on=Location.SAME)
     out1 = Save(name="C", compute_on=Location.SAME)
-    out2 = Save(name="D", compute_on=Location.THREAD)
+    out2 = Save(name="D", compute_on=Location.SAME)
     
     out1.connect_inputs_to(data)
     quadratic.connect_inputs_to(data)
