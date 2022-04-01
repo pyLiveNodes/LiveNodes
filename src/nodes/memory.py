@@ -10,20 +10,35 @@ class Memory(Node):
 
     example_init = {'name': 'Name'}
 
-    def __init__(self, length=None, name = "Memory", **kwargs):
+    def __init__(self, length=None,  concat_batches=True, name = "Memory", **kwargs):
         super().__init__(name=name, **kwargs)
+
         self.length = length
         self.buffer = []
+        self.concat_batches = concat_batches
 
 
     def _settings(self):
         return {\
-            "length": self.length
+            "length": self.length,
+            "concat_batches": self.concat_batches
            }
 
     def process(self, data):
-        self.buffer.extend(data)
+        d = np.array(data)
+
+        if self.buffer.size == 0:
+            self.buffer = d
+        else:
+            # TODO: in case of self.length != none, a np.roll is probably a more efficient
+            self.buffer = np.vstack([self.buffer, d])
+
         if self.length != None:
             self.buffer = self.buffer[-self.length:]
-        self.debug('emitting', len(self.buffer))
-        self._emit_data(self.buffer)
+
+        if self.concat_batches:
+            self._emit_data([np.vstack(self.buffer)])
+        else:
+            # self.buffer.extend(data)
+            raise NotImplementedError('No offline file based routine implemented yet for windowing.')
+

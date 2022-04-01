@@ -10,7 +10,7 @@ class Transform_majority_select(Node):
 
     example_init = {'name': 'Name'}
     
-    def process(self, data):
-        val, counts = np.unique(data, axis=-1, return_counts=True)
-        self._emit_data([val[np.argmax(counts, axis=-1)]]) # TODO: not sure if this is fully correct, maybe write some tests, but works for now
+    def process_time_series(self, ts):
+        val, counts = np.unique(ts, axis=-1, return_counts=True)
+        return [val[np.argmax(counts, axis=-1)]] # TODO: not sure if this is fully correct, maybe write some tests, but works for now
         

@@ -39,7 +39,7 @@ class Annotate_ui_button(Node):
         }
     
     def process(self, data):
-        # IMPORTANT: we assume that the length of data_frame is always short enough that we do not care about timing issues with the label
+        # IMPORTANT: we assume that the length of data is always short enough that we do not care about timing issues with the label
         self._emit_data(data)
 
         while not self.target_q.empty():

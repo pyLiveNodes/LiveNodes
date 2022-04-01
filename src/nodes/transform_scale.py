@@ -25,6 +25,5 @@ class Transform_scale(Node):
             "name": self.name,
            }
 
-    def process(self, data):
-        res = (np.array(data) - self.in_min) / self.divisor - 1
-        self._emit_data(res)
+    def process_time_series(self, ts):
+        return (np.array(ts) - self.in_min) / self.divisor - 1

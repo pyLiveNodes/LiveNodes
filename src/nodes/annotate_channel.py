@@ -38,7 +38,7 @@ class Annotate_channel(Node):
             self._emit_data(np.array(channel_names)[~self.idx], channel="Channel Names")
         
         d = np.array(data)
-        self._emit_data(d[:,~self.idx])
-        self._emit_data(np.where(d[:,self.idx] >= 0, self.targets[1], self.targets[0]), channel="Annotation")
+        self._emit_data(d[:,:,~self.idx])
+        self._emit_data(np.where(d[:,:,self.idx] >= 0, self.targets[1], self.targets[0]), channel="Annotation")
 
         

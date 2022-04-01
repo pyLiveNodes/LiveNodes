@@ -533,6 +533,7 @@ class Node ():
             # yes, ```if self.process``` is shorter, but as long as the documentation isn't there this is also very clear on the api
             prevent_tick = self.process(**_current_data)
             if not prevent_tick:
+                # TODO: IMPORTANT: every node it's own clock seems to have been a mistake: go back to the original idea of "senders and syncs implement clocks and everyone else just passes them along"
                 self._clock.tick()
             else:
                 self.debug('Prevented tick')
