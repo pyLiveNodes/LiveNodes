@@ -99,11 +99,10 @@ class Draw_scatter(Node):
             self.channel_names = channel_names
 
         # if (batch/file, time, channel)
-        # d = np.vstack(np.transpose(data, (0, -1, -2)))
-        
-        # currently this is still (time, channel)
-        d = np.vstack(np.array(data)[:, :2])
-        # self.info(np.array(data).shape, d.shape, self.yData.shape)
+        d = np.vstack(np.array(data)[:, :, :2])
+
+        # if (batch/file, time, channel)
+        # d = np.vstack(np.array(data)[:, :2])
 
         self.data = np.roll(self.data, d.shape[0], axis=0)
         self.data[:d.shape[0]] = d

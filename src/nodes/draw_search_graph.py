@@ -91,7 +91,7 @@ class Draw_search_graph(View):
     
             alpha_val = 0.5
 
-            self.verbose('drawing', hypothesis, hmm_meta)
+            # self.verbose('drawing', hypothesis, hmm_meta)
             # TODO: allow for this to change even if axes is already setup
             if hmm_meta is not None and not self._axes_setup:
                 self.graph = hmm_meta.get('search_graph')
@@ -133,7 +133,8 @@ class Draw_search_graph(View):
         if hmm_meta is not None:
             self.hmm_meta = hmm_meta
 
-        self._emit_draw(hypothesis=hypothesis, hmm_meta=self.hmm_meta)
+        if len(hypothesis) > 0:
+            self._emit_draw(hypothesis=hypothesis, hmm_meta=self.hmm_meta)
 
 
 

@@ -21,6 +21,8 @@ class Transform_window(Node):
 
         self.buffer = np.array([])
 
+        self.storage = {}
+
     def _settings(self):
         return {\
             "length": self.length,
@@ -29,12 +31,21 @@ class Transform_window(Node):
             "concat_batches": self.concat_batches
            }
 
-    def _retrieve_current_data(self):
+    # def discard_previous_tick(self, ctr):
+    #     return False
+
+    def _retrieve_current_data(self, ctr):
+        # TODO: maybe there is a version where it makes sense to take the clock into account (seems that would be more robust...)?
+        # This kinda only works, as the function is ever only called once atm...
+        # -> self storage helps against multiple calls, but not against out of order calls...
+        if not ctr in self.storage:
+            self.storage[ctr] = self._received_data['Data'].queue.get()[1]
+
         return { 
             # as we have only one input that may be connected and this function is only ever called if _process is called, we can this this way
             # TODO: test the heck out of this and the clock system! This still feels hacky
             # TODO: we currently are assuming, that the item we are getting here is also the last one put into the queue....
-            'data': self._received_data['Data'].queue.get()[1]
+            'data': self.storage[ctr]
         }
 
     # from: https://gist.github.com/nils-werner/9d321441006b112a4b116a8387c2280c

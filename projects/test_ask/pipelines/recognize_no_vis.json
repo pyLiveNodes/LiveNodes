@@ -4,8 +4,8 @@
     "settings": {
       "block": true,
       "name": "Data input",
-      "compute_on": 3,
-      "batch": 2000,
+      "compute_on": 1,
+      "emit_at_once": 2000,
       "files": "./projects/test_ask/data/KneeBandageCSL2018/part00/*.h5",
       "meta": {
         "sample_rate": 1000,
@@ -86,9 +86,10 @@
     "class": "Transform_window",
     "settings": {
       "name": "Window",
-      "compute_on": 3,
+      "compute_on": 1,
       "length": 100,
-      "overlap": 0
+      "overlap": 0,
+      "concat_batches": true
     },
     "inputs": [
       {
@@ -113,7 +114,7 @@
     "class": "Transform_feature",
     "settings": {
       "name": "Features",
-      "compute_on": 3,
+      "compute_on": 1,
       "features": [
         "calc_mean",
         "rms"
@@ -152,7 +153,7 @@
     "class": "Biokit_to_fs",
     "settings": {
       "name": "Name",
-      "compute_on": 3
+      "compute_on": 1
     },
     "inputs": [
       {
@@ -177,7 +178,7 @@
     "class": "Biokit_norm",
     "settings": {
       "name": "Norm",
-      "compute_on": 3
+      "compute_on": 1
     },
     "inputs": [
       {
@@ -202,7 +203,7 @@
     "class": "Biokit_recognizer",
     "settings": {
       "name": "Recognizer",
-      "compute_on": 3,
+      "compute_on": 1,
       "token_insertion_penalty": 50,
       "model_path": "./models/KneeBandageCSL2018/partition-stand/sequence/"
     },
@@ -228,9 +229,10 @@
     "class": "Transform_window",
     "settings": {
       "name": "File",
-      "compute_on": 3,
+      "compute_on": 1,
       "length": 100,
-      "overlap": 0
+      "overlap": 0,
+      "concat_batches": true
     },
     "inputs": [
       {
@@ -255,7 +257,7 @@
     "class": "Transform_majority_select",
     "settings": {
       "name": "File",
-      "compute_on": 3
+      "compute_on": 1
     },
     "inputs": [
       {

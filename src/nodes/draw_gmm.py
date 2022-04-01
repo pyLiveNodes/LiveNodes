@@ -13,7 +13,7 @@ import matplotlib as mpl
 
 
 class Draw_gmm(Node):
-    channels_in = ["Data", "Channel Names", "HMM Meta", "Hypo States", "GMM Models", "GMM Means", "GMM Covariances", "GMM Weights"],
+    channels_in = ["Data", "Channel Names", "HMM Meta", "Hypo States", "GMM Models", "GMM Means", "GMM Covariances", "GMM Weights"]
     channels_out = []
 
     category = "Draw"

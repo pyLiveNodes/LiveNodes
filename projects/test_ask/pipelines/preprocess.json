@@ -5,7 +5,7 @@
       "block": true,
       "name": "Playback",
       "compute_on": 2,
-      "batch": 20,
+      "emit_at_once": 20,
       "files": "./projects/test_ask/data/KneeBandageCSL2018/part00/01.h5",
       "meta": {
         "sample_rate": 1000,
@@ -175,7 +175,8 @@
       "name": "Window",
       "compute_on": 3,
       "length": 100,
-      "overlap": 0
+      "overlap": 0,
+      "concat_batches": true
     },
     "inputs": [
       {

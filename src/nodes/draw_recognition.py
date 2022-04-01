@@ -134,12 +134,13 @@ class Draw_recognition(View):
             (annotation is not None or not self._is_input_connected('annotation'))
             # if the annotation input is connected it must be present for processing
 
-    def process(self, recognition, hmm_meta=None, annotation=None):
+    def process(self, recognition=None, hmm_meta=None, annotation=None):
         if hmm_meta is not None:
             token_colors, atom_colors, state_colors = self._init_colors(hmm_meta.get('topology'))
             self.colors = [state_colors, atom_colors, token_colors, token_colors]
 
-        self._emit_draw(recognition=recognition, colors=self.colors, annotation=annotation)
+        if len(recognition) > 0:
+            self._emit_draw(recognition=recognition, colors=self.colors, annotation=annotation)
 
 
     # TODO: move this to utils or something...

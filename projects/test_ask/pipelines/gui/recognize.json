@@ -88,14 +88,26 @@
     },
     {
       "in_id": "1e6fc78e-15f3-4133-b224-f54723cacae3",
+      "in_index": 0,
+      "out_id": "4abd1933-d9bb-4cd3-9491-9e0cae7ee343",
+      "out_index": 0
+    },
+    {
+      "in_id": "1e6fc78e-15f3-4133-b224-f54723cacae3",
       "in_index": 1,
       "out_id": "4abd1933-d9bb-4cd3-9491-9e0cae7ee343",
       "out_index": 1
     },
     {
-      "in_id": "1e6fc78e-15f3-4133-b224-f54723cacae3",
+      "in_id": "29c24c8b-edde-40f4-8ab0-55fe0499175c",
+      "in_index": 2,
+      "out_id": "ff3ac6bf-2090-423a-a6f1-b4911b3bf308",
+      "out_index": 1
+    },
+    {
+      "in_id": "29c24c8b-edde-40f4-8ab0-55fe0499175c",
       "in_index": 0,
-      "out_id": "4abd1933-d9bb-4cd3-9491-9e0cae7ee343",
+      "out_id": "ff3ac6bf-2090-423a-a6f1-b4911b3bf308",
       "out_index": 0
     },
     {
@@ -125,6 +137,22 @@
         "in": {
           "id": "File",
           "name": "File"
+        },
+        "out": {
+          "id": "Data",
+          "name": "Data"
+        }
+      }
+    },
+    {
+      "in_id": "29c24c8b-edde-40f4-8ab0-55fe0499175c",
+      "in_index": 1,
+      "out_id": "4c0125e7-5a5e-4435-8315-a198dccc52ee",
+      "out_index": 0,
+      "converter": {
+        "in": {
+          "id": "Annotation",
+          "name": "Annotation"
         },
         "out": {
           "id": "Data",
@@ -234,14 +262,25 @@
       }
     },
     {
+      "id": "29c24c8b-edde-40f4-8ab0-55fe0499175c",
+      "model": {
+        "name": "Draw_recognition",
+        "association_to_node": "Recognition [Draw_recognition]"
+      },
+      "position": {
+        "x": 1566.0,
+        "y": 465.0
+      }
+    },
+    {
       "id": "a9e9b2a8-e2bc-49d4-b891-f40ee06d24c7",
       "model": {
         "name": "Draw_search_graph",
         "association_to_node": "Search Graph [Draw_search_graph]"
       },
       "position": {
-        "x": 1529.0,
-        "y": 308.0
+        "x": 1562.0,
+        "y": 318.0
       }
     },
     {

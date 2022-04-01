@@ -5,7 +5,7 @@
       "block": true,
       "name": "Playback",
       "compute_on": 2,
-      "batch": 20,
+      "emit_at_once": 20,
       "files": "./projects/test_ask/data/KneeBandageCSL2018/part00/01.h5",
       "meta": {
         "sample_rate": 1000,
@@ -100,7 +100,8 @@
       "name": "Window",
       "compute_on": 3,
       "length": 100,
-      "overlap": 0
+      "overlap": 0,
+      "concat_batches": true
     },
     "inputs": [
       {
@@ -352,15 +353,15 @@
       {
         "emitting_node": "Recognizer [Biokit_recognizer]",
         "receiving_node": "Recognition [Draw_recognition]",
-        "emitting_channel": "Recognition",
-        "receiving_channel": "Data",
+        "emitting_channel": "HMM Meta",
+        "receiving_channel": "HMM Meta",
         "connection_counter": 0
       },
       {
         "emitting_node": "Recognizer [Biokit_recognizer]",
         "receiving_node": "Recognition [Draw_recognition]",
-        "emitting_channel": "HMM Meta",
-        "receiving_channel": "HMM Meta",
+        "emitting_channel": "Recognition",
+        "receiving_channel": "Recognition",
         "connection_counter": 0
       },
       {
@@ -395,15 +396,15 @@
       {
         "emitting_node": "Recognizer [Biokit_recognizer]",
         "receiving_node": "Recognition [Draw_recognition]",
-        "emitting_channel": "Recognition",
-        "receiving_channel": "Data",
+        "emitting_channel": "HMM Meta",
+        "receiving_channel": "HMM Meta",
         "connection_counter": 0
       },
       {
         "emitting_node": "Recognizer [Biokit_recognizer]",
         "receiving_node": "Recognition [Draw_recognition]",
-        "emitting_channel": "HMM Meta",
-        "receiving_channel": "HMM Meta",
+        "emitting_channel": "Recognition",
+        "receiving_channel": "Recognition",
         "connection_counter": 0
       },
       {
@@ -447,7 +448,8 @@
       "name": "File",
       "compute_on": 3,
       "length": 100,
-      "overlap": 0
+      "overlap": 0,
+      "concat_batches": true
     },
     "inputs": [
       {

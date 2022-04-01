@@ -491,36 +491,51 @@ class Node ():
     def _channel_name_to_key(name):
         return name.replace(' ', '_').lower()
 
-    def _retrieve_current_data(self):
+    def _retrieve_current_data(self, ctr):
         res = {}
         # update current state, based on own clock
         for key, queue in self._received_data.items():
             # discard everything, that was before our own current clock
-            found_value, cur_value = queue.get(self._clock.ctr)
-            self.verbose(key, found_value, queue._read.keys(), self._clock.ctr)
+            found_value, cur_value = queue.get(ctr)
+            self.verbose('retreiving current data', key, found_value, queue._read.keys(), ctr)
             if found_value:
                 # TODO: instead of this key transformation/tolower consider actually using classes for data types... (allows for gui names alongside dev names and not converting between the two)
                 res[self._channel_name_to_key(key)] = cur_value
         return res
 
+    # Most of the time when we already receive data from the next tick of some of the inputs AND the current tick would not be processed, we are likely to want to skip the tick where data was missing
+    # basically: if a frame was dropped before this node, we will also drop it and not block
+    # def discard_previous_tick(self, ctr):
+    #     res = bool(self._retrieve_current_data(ctr=ctr + 1))
+    #     if res:
+    #         self.debug('cur tick data:', self._retrieve_current_data(ctr=ctr).keys())
+    #         self.debug('next tick data:', self._retrieve_current_data(ctr=ctr + 1).keys())
+    #     return False
 
     def _process(self):
         """
         called in location of self
+        called every time something is put into the queue / we received some data (ie if there are three inputs, we expect this to be called three times, before the clock should advance)
         """
         self.verbose('_Process triggered')
+
+        # if self.discard_previous_tick(ctr=self._clock.ctr):
+        #     self.debug('Discarding Tick', self._clock.ctr)
+        #     self._clock.tick()
         
         # update current state, based on own clock
-        _current_data = self._retrieve_current_data()
+        _current_data = self._retrieve_current_data(ctr=self._clock.ctr)
 
         # check if all required data to proceed is available and then call process
         # then cleanup aggregated data and advance our own clock
         if self._should_process(**_current_data):
+            self.verbose('Decided to process', self._clock.ctr, _current_data.keys())
             # yes, ```if self.process``` is shorter, but as long as the documentation isn't there this is also very clear on the api
             prevent_tick = self.process(**_current_data)
-            self.verbose('Decided to process', self._clock.ctr, _current_data.keys(), 'prevent tick?', bool(prevent_tick))
             if not prevent_tick:
                 self._clock.tick()
+            else:
+                self.debug('Prevented tick')
         else:
             self.debug('Decided not to process', self._clock.ctr, _current_data.keys())
 

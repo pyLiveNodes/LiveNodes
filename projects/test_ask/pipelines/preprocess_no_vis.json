@@ -5,7 +5,7 @@
       "block": true,
       "name": "Data input",
       "compute_on": 3,
-      "batch": 2000,
+      "emit_at_once": 2000,
       "files": "./projects/test_ask/data/KneeBandageCSL2018/part*/*.h5",
       "meta": {
         "sample_rate": 1000,
@@ -81,7 +81,8 @@
       "name": "Window",
       "compute_on": 3,
       "length": 100,
-      "overlap": 0
+      "overlap": 0,
+      "concat_batches": true
     },
     "inputs": [
       {

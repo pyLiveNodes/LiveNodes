@@ -352,8 +352,8 @@ class Config(QWidget):
 
         # Collect and create Datatypes
         for node in nodes:
-          for val in node['channels_in'] + node['channels_out']:
-            self.known_dtypes[val] = NodeDataType(id=val, name=val)
+            for val in node['channels_in'] + node['channels_out']:
+                self.known_dtypes[val] = NodeDataType(id=val, name=val)
 
         # Collect and create Node-Classes
         for node in nodes:

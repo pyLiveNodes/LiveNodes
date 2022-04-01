@@ -38,7 +38,7 @@ class In_data(Sender):
     Expects the following setup variables:
     - files (str): glob pattern for files 
     - sample_rate (number): sample rate to simulate in frames per second
-    # - batch_size (int, default=5): number of frames that are sent at the same time -> not implemented yet
+    # - emit_at_once_size (int, default=5): number of frames that are sent at the same time -> not implemented yet
     """
 
     channels_in = []
@@ -55,17 +55,17 @@ class In_data(Sender):
             "channels": ["Channel 1"]
         },
         "shuffle": True,
-        "batch": 1,
+        "emit_at_once": 1,
         "name": "Data input",
     }
     
     # TODO: consider using a file for meta data instead of dictionary...
-    def __init__(self, files, meta, shuffle=True, batch=1, name="Data input", **kwargs):
+    def __init__(self, files, meta, shuffle=True, emit_at_once=1, name="Data input", **kwargs):
         super().__init__(name, **kwargs)
 
         self.meta = meta
         self.files = files
-        self.batch = batch
+        self.emit_at_once = emit_at_once
         self.shuffle = shuffle
 
         self.sample_rate = meta.get('sample_rate')
@@ -74,7 +74,7 @@ class In_data(Sender):
 
     def _settings(self):
         return {\
-            "batch": self.batch,
+            "emit_at_once": self.emit_at_once,
             "files": self.files,
             "meta": self.meta,
             "shuffle": self.shuffle
@@ -104,11 +104,11 @@ class In_data(Sender):
 
             # data, targs = read_data(f)
                 
-            for i in range(0, len(data), self.batch):
-                d_len = len(data[i:i+self.batch]) # usefull if i+self.batch > len(data)
-                self._emit_data(data[i:i+self.batch])
-                self._emit_data(targs[i:i+self.batch], channel='Annotation')
-                self._emit_data([file_number] * d_len, channel="File")
+            for i in range(0, len(data), self.emit_at_once):
+                d_len = len(data[i:i+self.emit_at_once]) # usefull if i+self.emit_at_once > len(data)
+                self._emit_data([data[i:i+self.emit_at_once]])
+                self._emit_data([targs[i:i+self.emit_at_once]], channel='Annotation')
+                self._emit_data([[file_number] * d_len], channel="File")
                 yield True
 
         self._emit_data(None, channel='Termination') # TODO: maybe we could use something like this for syncing... ie seperate stream with just a counter 
