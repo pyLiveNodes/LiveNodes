@@ -14,7 +14,7 @@ class Memory(Node):
         super().__init__(name=name, **kwargs)
 
         self.length = length
-        self.buffer = []
+        self.buffer = np.array([])
         self.concat_batches = concat_batches
 
 

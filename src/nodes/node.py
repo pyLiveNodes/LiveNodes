@@ -452,8 +452,8 @@ class Node ():
             self.debug('Emitting Data of shape:', np.array(data).shape)
 
         for con in self.output_connections:
-            if con._receiving_channel == channel:
-                con._receiving_node.receive_data(self._clock, payload={channel: data})
+            if con._emitting_channel == channel:
+                con._receiving_node.receive_data(self._clock, payload={con._receiving_channel: data})
 
 
     def _process_on_proc(self):
@@ -704,7 +704,7 @@ class Node ():
 class View(Node):
     canvas = Canvas.MPL
 
-    def __init__(self, name, compute_on=Location.SAME, should_time=False):
+    def __init__(self, name, compute_on=Location.PROCESS, should_time=False):
         super().__init__(name, compute_on, should_time)
         
         # TODO: consider if/how to disable the visualization of a node?

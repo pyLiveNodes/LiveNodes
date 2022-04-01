@@ -102,9 +102,9 @@ class In_playback(Sender):
                     self._emit_data(np.array([data[i:i+self.emit_at_once]]))
 
                     if len(targs[i:i+self.emit_at_once]) > 0:
-                        self._emit_data([targs[i:i+self.emit_at_once]], channel='Annotation')
+                        self._emit_data(np.array(targs[i:i+self.emit_at_once]).reshape((1, self.emit_at_once, 1)), channel='Annotation')
                     
-                    self._emit_data([[ctr] * d_len], channel="File")
+                    self._emit_data(np.array([ctr] * d_len).reshape((1, d_len, 1)), channel="File")
                     
                     while time.time() < last_time + sleep_time:
                         time.sleep(0.00001)

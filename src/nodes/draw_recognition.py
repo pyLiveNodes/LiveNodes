@@ -113,7 +113,6 @@ class Draw_recognition(View):
             self.names[2], self.verts[2] = convert_list_pos(tokens[-self.xAxisLength[2]:], self.xAxisLength[2], (0, 0.7))
 
             if annotation is not None:
-                # print('annotation', len(annotation))
                 self.names[3], self.verts[3] = convert_list_pos(annotation[-self.xAxisLength[3]:], self.xAxisLength[3], (0, 0.7))
 
             #TODO: rework this to work properly with missing streams...
@@ -131,7 +130,7 @@ class Draw_recognition(View):
     def _should_process(self, recognition=None, hmm_meta=None, annotation=None):
         return recognition is not None and \
             (self.colors is not None or hmm_meta is not None) and \
-            (annotation is not None or not self._is_input_connected('annotation'))
+            (annotation is not None or not self._is_input_connected('Annotation'))
             # if the annotation input is connected it must be present for processing
 
     def process(self, recognition=None, hmm_meta=None, annotation=None):
@@ -140,7 +139,10 @@ class Draw_recognition(View):
             self.colors = [state_colors, atom_colors, token_colors, token_colors]
 
         if len(recognition) > 0:
-            self._emit_draw(recognition=recognition, colors=self.colors, annotation=annotation)
+            # for the annotaiton, we'll assume it is in the normal (batch/file, time, channel) format and that batch is not relevant here
+            # similarly we expect recognition not to have taken batch into account (ah fu... there is still some trouble there, that is not a true assumption)
+            print(np.array(annotation)[0,:,0].shape, len(recognition))
+            self._emit_draw(recognition=recognition, colors=self.colors, annotation=np.array(annotation)[0,:,0])
 
 
     # TODO: move this to utils or something...
