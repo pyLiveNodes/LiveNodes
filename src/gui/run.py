@@ -17,6 +17,8 @@ import asyncio
 import multiprocessing as mp
 import threading
 
+from src.nodes.node import Node, View
+
 import seaborn as sns
 sns.set_style("darkgrid")
 sns.set_context("paper")
@@ -47,11 +49,12 @@ class Run(FigureCanvasQTAgg):
         self.show()
 
     def worker_start(self):
-        self.pipeline.start_processing()
+        self.pipeline.start()
         self.worker_term_lock.acquire()
 
         print('Termination time in pipeline!')
-        self.pipeline.stop_processing()
+        self.pipeline.stop()
+        self.worker_term_lock.release()
 
 
     # i would have assumed __del__ would be the better fit, but that doesn't seem to be called when using del... for some reason
@@ -59,8 +62,11 @@ class Run(FigureCanvasQTAgg):
     def stop(self, *args, **kwargs):
         # Tell the process to terminate, then wait until it returns
         self.worker_term_lock.release()
-        self.worker.join(3)
+        self.worker.join(2)
 
+        # yes, sometimes the program will then not return, but only if we also really need to kill the subprocesses!
+        self.worker_term_lock.acquire()
+        
         print('Termination time in view!')
         self.worker.terminate()
         self.animation.pause()
@@ -74,7 +80,7 @@ class Run(FigureCanvasQTAgg):
         # TODO: let nodes explizitly declare this! 
         # TODO: while we're at it: let nodes declare available/required input and output streams
         # the following works because the str representation of each node in a pipline must be unique
-        draws = {str(n): n.init_draw for n in pipeline.discover_childs(pipeline) if hasattr(n, 'init_draw')}.values()
+        draws = {str(n): n.init_draw for n in Node.discover_childs(pipeline) if isinstance(n, View)}.values()
         # print(draws)
 
         plt.rc('font', **font)

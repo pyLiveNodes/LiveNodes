@@ -1,53 +1,25 @@
-import collections
-from queue import Queue
-from tkinter import N
-import numpy as np
+from .node import View
 
-from .node import Node
 
-import matplotlib.patches as mpatches
+class Draw_text_display(View):
+    channels_in = []
+    channels_out = ['Text']
 
-import multiprocessing as mp
-import ctypes as c
+    category = "Draw"
+    description = "" 
 
-import time
+    example_init = {
+        "name": "Text Outpuy",
+        "initial_text": "",
+    }
 
-class Draw_text_display(Node):
-    # TODO: move the sample rate into a data_stream?
-    def __init__(self, initial_text="", name = "Text Output", dont_time = False):
-        super().__init__(name=name, has_outputs=False, dont_time=dont_time)
+    def __init__(self, initial_text="", name = "Text Output", **kwargs):
+        super().__init__(name=name, **kwargs)
 
-        self.text_queue = mp.SimpleQueue()
         self.text = initial_text
 
-    @staticmethod
-    def info():
-        return {
-            "class": "Draw_text_display",
-            "file": "Draw_text_display.py",
-            "in": ["Text",],
-            "out": [],
-            "init": {
-                "name": "Text Outpuy",
-                "initial_text": "",
-            },
-            "category": "Draw"
-        }
-        
-    @property
-    def in_map(self):
-        return {
-            "Text": self.receive_data,
-        }
 
-    def _empty_queue(self, queue):
-        res = None
-        while not queue.empty():
-            res = queue.get()
-        return res
-
-
-    def init_draw(self, subfig):
+    def _init_draw(self, subfig):
         subfig.suptitle(self.name, fontsize=14)
         ax = subfig.subplots(1, 1)
         ax.spines['top'].set_visible(False)
@@ -57,22 +29,20 @@ class Draw_text_display(Node):
         ax.set_xticks([])
         ax.set_yticks([])
 
+        label = ax.text(0.005, 0.95, self.text, zorder=100, fontproperties=ax.xaxis.label.get_font_properties(), rotation='horizontal', va='top', ha='left', transform = ax.transAxes)
+        old_text = self.text
 
-        self.label = ax.text(0.005, 0.95, self.text, zorder=100, fontproperties=ax.xaxis.label.get_font_properties(), rotation='horizontal', va='top', ha='left', transform = ax.transAxes)
+        def update (text=None):
+            nonlocal label, old_text
 
-        def update (**kwargs):
-            nonlocal self
+            old_text = text
 
-            old_text = self.text
-            while not self.text_queue.empty():
-                self.text = self.text_queue.get()
+            # TODO: confidentelly assume that at some point we get the "only return label reference if it actually changed" to work (currenlty this causes troubles with matplotlib)
+            if old_text != text:
+                label.set_text(text)
 
-            if old_text != self.text:
-                self.label.set_text(self.text)
-
-            return [self.label]
+            return [label]
         return update
 
-
-    def receive_data(self, data_frame, **kwargs):
-        self.text_queue.put(data_frame)  
+    def process(self, text, **kwargs):
+        self._emit_draw(text=text)  

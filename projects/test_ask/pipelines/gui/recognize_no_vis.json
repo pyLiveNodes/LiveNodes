@@ -1,0 +1,168 @@
+{
+  "connections": [
+    {
+      "in_id": "6bc3bee8-6994-4bae-89b1-8d41b2ee42a2",
+      "in_index": 0,
+      "out_id": "2c6c12c2-429a-4f2d-bf3a-eb6311247243",
+      "out_index": 0
+    },
+    {
+      "in_id": "d62f4517-cc20-4e82-adc6-ec9cf57edb17",
+      "in_index": 1,
+      "out_id": "2c6c12c2-429a-4f2d-bf3a-eb6311247243",
+      "out_index": 4
+    },
+    {
+      "in_id": "20791c48-e8e5-410d-86bf-d8b47b51dc43",
+      "in_index": 0,
+      "out_id": "2c6c12c2-429a-4f2d-bf3a-eb6311247243",
+      "out_index": 1,
+      "converter": {
+        "in": {
+          "id": "Data",
+          "name": "Data"
+        },
+        "out": {
+          "id": "File",
+          "name": "File"
+        }
+      }
+    },
+    {
+      "in_id": "d62f4517-cc20-4e82-adc6-ec9cf57edb17",
+      "in_index": 0,
+      "out_id": "6bc3bee8-6994-4bae-89b1-8d41b2ee42a2",
+      "out_index": 0
+    },
+    {
+      "in_id": "094527fc-3ab4-4f35-b878-6e614c10affa",
+      "in_index": 0,
+      "out_id": "d62f4517-cc20-4e82-adc6-ec9cf57edb17",
+      "out_index": 0
+    },
+    {
+      "in_id": "f100b069-83d0-4aad-b1c7-e983598ed2f2",
+      "in_index": 0,
+      "out_id": "094527fc-3ab4-4f35-b878-6e614c10affa",
+      "out_index": 0
+    },
+    {
+      "in_id": "2d22e176-ef11-42b7-855f-1bcbc6c7066b",
+      "in_index": 0,
+      "out_id": "f100b069-83d0-4aad-b1c7-e983598ed2f2",
+      "out_index": 0
+    },
+    {
+      "in_id": "f4de9a50-5ace-4300-a896-57ab4977a2fb",
+      "in_index": 0,
+      "out_id": "20791c48-e8e5-410d-86bf-d8b47b51dc43",
+      "out_index": 0
+    },
+    {
+      "in_id": "2d22e176-ef11-42b7-855f-1bcbc6c7066b",
+      "in_index": 1,
+      "out_id": "f4de9a50-5ace-4300-a896-57ab4977a2fb",
+      "out_index": 0,
+      "converter": {
+        "in": {
+          "id": "File",
+          "name": "File"
+        },
+        "out": {
+          "id": "Data",
+          "name": "Data"
+        }
+      }
+    }
+  ],
+  "nodes": [
+    {
+      "id": "2c6c12c2-429a-4f2d-bf3a-eb6311247243",
+      "model": {
+        "name": "In_data",
+        "association_to_node": "Data input [In_data]"
+      },
+      "position": {
+        "x": -700.0,
+        "y": -233.33333333333331
+      }
+    },
+    {
+      "id": "6bc3bee8-6994-4bae-89b1-8d41b2ee42a2",
+      "model": {
+        "name": "Transform_window",
+        "association_to_node": "Window [Transform_window]"
+      },
+      "position": {
+        "x": -477.33333333333337,
+        "y": -241.33333333333331
+      }
+    },
+    {
+      "id": "d62f4517-cc20-4e82-adc6-ec9cf57edb17",
+      "model": {
+        "name": "Transform_feature",
+        "association_to_node": "Features [Transform_feature]"
+      },
+      "position": {
+        "x": -254.22222222222223,
+        "y": -243.44444444444446
+      }
+    },
+    {
+      "id": "094527fc-3ab4-4f35-b878-6e614c10affa",
+      "model": {
+        "name": "Biokit_to_fs",
+        "association_to_node": "Name [Biokit_to_fs]"
+      },
+      "position": {
+        "x": 94.88888888888891,
+        "y": -241.55555555555554
+      }
+    },
+    {
+      "id": "f100b069-83d0-4aad-b1c7-e983598ed2f2",
+      "model": {
+        "name": "Biokit_norm",
+        "association_to_node": "Norm [Biokit_norm]"
+      },
+      "position": {
+        "x": 271.0,
+        "y": -242.66666666666669
+      }
+    },
+    {
+      "id": "2d22e176-ef11-42b7-855f-1bcbc6c7066b",
+      "model": {
+        "name": "Biokit_recognizer",
+        "association_to_node": "Recognizer [Biokit_recognizer]"
+      },
+      "position": {
+        "x": 465.1111111111111,
+        "y": -242.77777777777777
+      }
+    },
+    {
+      "id": "20791c48-e8e5-410d-86bf-d8b47b51dc43",
+      "model": {
+        "name": "Transform_window",
+        "association_to_node": "File [Transform_window]"
+      },
+      "position": {
+        "x": -466.66666666666663,
+        "y": -45.0
+      }
+    },
+    {
+      "id": "f4de9a50-5ace-4300-a896-57ab4977a2fb",
+      "model": {
+        "name": "Transform_majority_select",
+        "association_to_node": "File [Transform_majority_select]"
+      },
+      "position": {
+        "x": -74.77777777777777,
+        "y": -46.888888888888914
+      }
+    }
+  ]
+}

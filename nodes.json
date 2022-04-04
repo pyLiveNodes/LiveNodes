@@ -1,122 +1,59 @@
 [
   {
-    "class": "Node",
-    "file": "node.py",
-    "in": [
-      "Data"
+    "class": "In_riot",
+    "file": "src/nodes/in_riot.py",
+    "channels_in": [],
+    "channels_out": [
+      "Data",
+      "Channel Names"
     ],
-    "out": [
-      "Data"
-    ],
+    "category": "Base",
+    "description": "",
     "init": {
-      "name": "Name"
-    },
-    "category": "Base"
+      "name": "Name",
+      "id": 0,
+      "listen_ip": "192.168.1.101",
+      "listen_port": 8888
+    }
   },
   {
-    "class": "Biokit_to_fs",
-    "file": "biokit_to_fs.py",
-    "in": [
-      "Data"
-    ],
-    "out": [
-      "Data"
-    ],
-    "init": {
-      "name": "Name"
-    },
-    "category": "BioKIT"
-  },
-  {
-    "class": "In_data",
-    "file": "in_data.py",
-    "in": [],
-    "out": [
+    "class": "In_playback",
+    "file": "src/nodes/in_playback.py",
+    "channels_in": [],
+    "channels_out": [
       "Data",
       "File",
       "Annotation",
       "Meta",
-      "Channel Names",
-      "Termination"
+      "Channel Names"
     ],
+    "category": "Data Source",
+    "description": "",
     "init": {
       "name": "Name"
-    },
-    "category": "Data Source"
+    }
   },
   {
-    "class": "Biokit_recognizer",
-    "file": "biokit_recognizer.py",
-    "in": [
-      "Data",
-      "File"
-    ],
-    "out": [
-      "Recognition",
-      "HMM Meta",
-      "Hypothesis"
-    ],
-    "init": {
-      "name": "Recognizer",
-      "model_path": "./models/",
-      "token_insertion_penalty": 0
-    },
-    "category": "BioKIT"
-  },
-  {
-    "class": "Log_data",
-    "file": "Log_data.py",
-    "in": [
-      "Data"
-    ],
-    "out": [
-      "Data"
-    ],
-    "init": {
-      "name": "Name"
-    },
-    "category": "Basic"
-  },
-  {
-    "class": "Out_data",
-    "file": "Out_data.py",
-    "in": [
-      "Data",
-      "Channel Names",
-      "Meta",
-      "Annotation"
-    ],
-    "out": [],
-    "init": {
-      "name": "Save",
-      "folder": "./data/Debug/"
-    },
-    "category": "Save"
-  },
-  {
-    "class": "Debug_frame_counter",
-    "file": "Debug_frame_counter.py",
-    "in": [
-      "Data"
-    ],
-    "out": [
-      "Data"
-    ],
-    "init": {
-      "name": "Frame Counter"
-    },
-    "category": "Debug"
+    "class": "In_biosignalsplux",
+    "file": "src/nodes/in_biosignalsplux.py",
+    "channels_in": [],
+    "channels_out": [],
+    "category": "Default",
+    "description": "",
+    "init": {}
   },
   {
     "class": "Biokit_train",
-    "file": "Biokit_train.py",
-    "in": [
+    "file": "src/nodes/biokit_train.py",
+    "channels_in": [
       "Data",
       "File",
       "Annotation",
       "Termination"
     ],
-    "out": [],
+    "channels_out": [],
+    "category": "BioKIT",
+    "description": "",
     "init": {
       "name": "Train",
       "model_path": "./models/",
@@ -127,48 +64,67 @@
         5
       ],
       "token_insertion_penalty": 0
-    },
-    "category": "BioKIT"
+    }
   },
   {
-    "class": "Transform_scale",
-    "file": "Transform_scale.py",
-    "in": [
-      "Data"
-    ],
-    "out": [
-      "Data"
-    ],
-    "init": {
-      "name": "Name"
-    },
-    "category": "Transform"
-  },
-  {
-    "class": "In_riot",
-    "file": "In_riot.py",
-    "in": [],
-    "out": [
+    "class": "In_data",
+    "file": "src/nodes/in_data.py",
+    "channels_in": [],
+    "channels_out": [
       "Data",
-      "Channel Names"
+      "File",
+      "Annotation",
+      "Meta",
+      "Channel Names",
+      "Termination"
     ],
+    "category": "Data Source",
+    "description": "",
+    "init": {
+      "files": "./files/**/.h5",
+      "meta": {
+        "sample_rate": 100,
+        "targets": [
+          "target 1"
+        ],
+        "channels": [
+          "Channel 1"
+        ]
+      },
+      "shuffle": true,
+      "batch": 1,
+      "name": "Data input"
+    }
+  },
+  {
+    "class": "Log_data",
+    "file": "src/nodes/log_data.py",
+    "channels_in": [
+      "Data"
+    ],
+    "channels_out": [
+      "Data"
+    ],
+    "category": "Basic",
+    "description": "",
     "init": {
       "name": "Name"
-    },
-    "category": "Base"
+    }
   },
   {
     "class": "Annotate_channel",
-    "file": "Annotate_channel.py",
-    "in": [
+    "file": "src/nodes/annotate_channel.py",
+    "channels_in": [
       "Data",
       "Channel Names"
     ],
-    "out": [
+    "channels_out": [
       "Data",
       "Channel Names",
       "Annotation"
     ],
+    "category": "Annotation",
+    "description": "",
     "init": {
       "name": "Channel Annotation",
       "channel_name": "Pushbutton",
@@ -176,228 +132,313 @@
         "Pressed",
         "Released"
       ]
-    },
-    "category": "Annotation"
+    }
   },
   {
-    "class": "Transform_window_multiplier",
-    "file": "Transform_window_multiplier.py",
-    "in": [
-      "Data"
-    ],
-    "out": [
-      "Data"
-    ],
-    "init": {
-      "name": "Name"
-    },
-    "category": "Transform"
-  },
-  {
-    "class": "In_biosignalsplux",
-    "file": "In_biosignalsplux.py",
-    "in": [],
-    "out": [
+    "class": "Out_data",
+    "file": "src/nodes/out_data.py",
+    "channels_in": [
       "Data",
-      "Channel Names"
+      "Channel Names",
+      "Meta",
+      "Annotation"
     ],
+    "channels_out": [],
+    "category": "Save",
+    "description": "",
     "init": {
-      "name": "Name"
-    },
-    "category": "Base"
+      "name": "Save",
+      "folder": "./data/Debug/"
+    }
   },
   {
-    "class": "Draw_lines",
-    "file": "draw_lines.py",
-    "in": [
-      "Data",
-      "Channel Names"
-    ],
-    "out": [],
-    "init": {
-      "name": "Name"
-    },
-    "category": "Draw"
-  },
-  {
-    "class": "Transform_majority_select",
-    "file": "Transform_majority_select.py",
-    "in": [
+    "class": "Transform_scale",
+    "file": "src/nodes/transform_scale.py",
+    "channels_in": [
       "Data"
     ],
-    "out": [
+    "channels_out": [
       "Data"
     ],
+    "category": "Transform",
+    "description": "",
     "init": {
       "name": "Name"
-    },
-    "category": "Transform"
-  },
-  {
-    "class": "Biokit_from_fs",
-    "file": "biokit_from_fs.py",
-    "in": [
-      "Data"
-    ],
-    "out": [
-      "Data"
-    ],
-    "init": {
-      "name": "Name"
-    },
-    "category": "BioKIT"
-  },
-  {
-    "class": "Draw_search_graph",
-    "file": "draw_search_graph.py",
-    "in": [
-      "HMM Meta",
-      "Hypothesis"
-    ],
-    "out": [],
-    "init": {
-      "name": "Name"
-    },
-    "category": "Draw"
-  },
-  {
-    "class": "Transform_filter",
-    "file": "Transform_filter.py",
-    "in": [
-      "Data",
-      "Channel Names"
-    ],
-    "out": [
-      "Data",
-      "Channel Names"
-    ],
-    "init": {
-      "name": "Name"
-    },
-    "category": "Transform"
+    }
   },
   {
     "class": "Transform_feature",
-    "file": "Transform_feature.py",
-    "in": [
+    "file": "src/nodes/transform_feature.py",
+    "channels_in": [
       "Data",
       "Channel Names"
     ],
-    "out": [
+    "channels_out": [
       "Data",
       "Channel Names"
     ],
+    "category": "Transform",
+    "description": "",
     "init": {
       "name": "Name"
-    },
-    "category": "Transform"
+    }
   },
   {
-    "class": "In_playback",
-    "file": "In_playback.py",
-    "in": [],
-    "out": [
+    "class": "Biokit_recognizer",
+    "file": "src/nodes/biokit_recognizer.py",
+    "channels_in": [
       "Data",
-      "File",
-      "Annotation",
-      "Meta",
+      "File"
+    ],
+    "channels_out": [
+      "Recognition",
+      "HMM Meta",
+      "Hypothesis"
+    ],
+    "category": "BioKIT",
+    "description": "",
+    "init": {
+      "name": "Recognizer",
+      "model_path": "./models/",
+      "token_insertion_penalty": 0
+    }
+  },
+  {
+    "class": "Transform_filter",
+    "file": "src/nodes/transform_filter.py",
+    "channels_in": [
+      "Data",
       "Channel Names"
     ],
+    "channels_out": [
+      "Data",
+      "Channel Names"
+    ],
+    "category": "Transform",
+    "description": "",
+    "init": {
+      "name": "Channel Filter"
+    }
+  },
+  {
+    "class": "Biokit_norm",
+    "file": "src/nodes/biokit_norm.py",
+    "channels_in": [
+      "Data"
+    ],
+    "channels_out": [
+      "Data"
+    ],
+    "category": "BioKIT",
+    "description": "",
+    "init": {
+      "name": "Norm"
+    }
+  },
+  {
+    "class": "Transform_window_multiplier",
+    "file": "src/nodes/transform_window_multiplier.py",
+    "channels_in": [
+      "Data"
+    ],
+    "channels_out": [
+      "Data"
+    ],
+    "category": "Transform",
+    "description": "",
     "init": {
       "name": "Name"
-    },
-    "category": "Data Source"
+    }
+  },
+  {
+    "class": "Transform_window",
+    "file": "src/nodes/transform_window.py",
+    "channels_in": [
+      "Data"
+    ],
+    "channels_out": [
+      "Data"
+    ],
+    "category": "Transform",
+    "description": "",
+    "init": {
+      "name": "Name"
+    }
+  },
+  {
+    "class": "Memory",
+    "file": "src/nodes/memory.py",
+    "channels_in": [
+      "Data"
+    ],
+    "channels_out": [
+      "Data"
+    ],
+    "category": "Basic",
+    "description": "",
+    "init": {
+      "name": "Name"
+    }
+  },
+  {
+    "class": "Draw_search_graph",
+    "file": "src/nodes/draw_search_graph.py",
+    "channels_in": [
+      "HMM Meta",
+      "Hypothesis"
+    ],
+    "channels_out": [],
+    "category": "Draw",
+    "description": "",
+    "init": {
+      "n_hypos": 3,
+      "name": "Search Graph"
+    }
+  },
+  {
+    "class": "Draw_text_display",
+    "file": "src/nodes/draw_text_display.py",
+    "channels_in": [],
+    "channels_out": [
+      "Text"
+    ],
+    "category": "Draw",
+    "description": "",
+    "init": {
+      "name": "Text Outpuy",
+      "initial_text": ""
+    }
+  },
+  {
+    "class": "Transform_majority_select",
+    "file": "src/nodes/transform_majority_select.py",
+    "channels_in": [
+      "Data"
+    ],
+    "channels_out": [
+      "Data"
+    ],
+    "category": "Transform",
+    "description": "",
+    "init": {
+      "name": "Name"
+    }
+  },
+  {
+    "class": "Draw_scatter",
+    "file": "src/nodes/draw_scatter.py",
+    "channels_in": [
+      "Data",
+      "Channel Names"
+    ],
+    "channels_out": [],
+    "category": "Draw",
+    "description": "",
+    "init": {
+      "name": "Draw Data Scatter",
+      "n_scatter_points": 5000,
+      "ylim": [
+        -1.1,
+        1.1
+      ]
+    }
+  },
+  {
+    "class": "Biokit_from_fs",
+    "file": "src/nodes/biokit_from_fs.py",
+    "channels_in": [
+      "Data"
+    ],
+    "channels_out": [
+      "Data"
+    ],
+    "category": "BioKIT",
+    "description": "",
+    "init": {
+      "name": "Name"
+    }
+  },
+  {
+    "class": "Biokit_to_fs",
+    "file": "src/nodes/biokit_to_fs.py",
+    "channels_in": [
+      "Data"
+    ],
+    "channels_out": [
+      "Data"
+    ],
+    "category": "BioKIT",
+    "description": "",
+    "init": {
+      "name": "Name"
+    }
+  },
+  {
+    "class": "Annotate_ui_button",
+    "file": "src/nodes/annotate_ui_button.py",
+    "channels_in": [
+      "Data"
+    ],
+    "channels_out": [
+      "Data",
+      "Annotation"
+    ],
+    "category": "Annotation",
+    "description": "",
+    "init": {
+      "name": "GUI Button Annotation",
+      "fall_back_target": "Unknown"
+    }
+  },
+  {
+    "class": "Draw_lines",
+    "file": "src/nodes/draw_lines.py",
+    "channels_in": [
+      "Data",
+      "Channel Names"
+    ],
+    "channels_out": [],
+    "category": "Draw",
+    "description": "",
+    "init": {
+      "name": "Draw Data Lines",
+      "n_plots": 4,
+      "xAxisLength": 5000,
+      "sample_rate": 1000,
+      "ylim": [
+        -1.1,
+        1.1
+      ]
+    }
+  },
+  {
+    "class": "Draw_gmm",
+    "file": "src/nodes/draw_gmm.py",
+    "channels_in": [],
+    "channels_out": [],
+    "category": "Default",
+    "description": "",
+    "init": {}
   },
   {
     "class": "Draw_recognition",
-    "file": "draw_recognition.py",
-    "in": [
+    "file": "src/nodes/draw_recognition.py",
+    "channels_in": [
       "Data",
       "Annotation",
       "HMM Meta"
     ],
-    "out": [],
+    "channels_out": [],
+    "category": "Draw",
+    "description": "",
     "init": {
-      "name": "Name"
-    },
-    "category": "Draw"
-  },
-  {
-    "class": "Biokit_update_model",
-    "file": "Biokit_update_model.py",
-    "in": [
-      "Data",
-      "Annotation"
-    ],
-    "out": [],
-    "init": {
-      "name": "Train",
-      "model_path": "./models/",
-      "atomList": [],
-      "tokenDictionary": {},
-      "train_iterations": [
-        5,
-        5
-      ],
-      "token_insertion_penalty": 0
-    },
-    "category": "BioKIT"
-  },
-  {
-    "class": "Annotate_ui_button",
-    "file": "Annotate_ui_button.py",
-    "in": [
-      "Data"
-    ],
-    "out": [
-      "Data",
-      "Annotation"
-    ],
-    "init": {
-      "name": "Name"
-    },
-    "category": "Annotation"
-  },
-  {
-    "class": "Memory",
-    "file": "Memory.py",
-    "in": [
-      "Data"
-    ],
-    "out": [
-      "Data"
-    ],
-    "init": {
-      "name": "Name"
-    },
-    "category": "Basic"
-  },
-  {
-    "class": "Biokit_norm",
-    "file": "biokit_norm.py",
-    "in": [
-      "Data"
-    ],
-    "out": [
-      "Data"
-    ],
-    "init": {
-      "name": "Norm"
-    },
-    "category": "BioKIT"
-  },
-  {
-    "class": "Transform_window",
-    "file": "Transform_window.py",
-    "in": [
-      "Data"
-    ],
-    "out": [
-      "Data"
-    ],
-    "init": {
-      "name": "Name"
-    },
-    "category": "Transform"
+      "name": "Recognition",
+      "xAxisLength": [
+        50,
+        50,
+        50,
+        5000
+      ]
+    }
   }
 ]

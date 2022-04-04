@@ -4,50 +4,41 @@ import multiprocessing as mp
 from .node import Node
 
 class Annotate_channel(Node):
-    def __init__(self, channel_name, targets, name = "Channel Annotation", dont_time = False):
-        super().__init__(name=name, dont_time=dont_time)
+    channels_in = ['Data', 'Channel Names']
+    channels_out = ['Data', 'Channel Names', 'Annotation']
+
+    category = "Annotation"
+    description = "" 
+
+    example_init = {'name': 'Channel Annotation', 'channel_name': 'Pushbutton', 'targets': ['Pressed', 'Released']}
+
+    def __init__(self, channel_name, targets, name = "Channel Annotation", **kwargs):
+        super().__init__(name=name, **kwargs)
+        
         self.channel_name = channel_name
         self.targets = targets
         self.name = name
 
         self.idx = None
 
-    @staticmethod
-    def info():
-        return {
-            "class": "Annotate_channel",
-            "file": "Annotate_channel.py",
-            "in": ["Data", "Channel Names"],
-            "out": ["Data", "Channel Names", "Annotation"],
-            "init": {
-                "name": "Channel Annotation",
-                "channel_name": "Pushbutton",
-                "targets": ["Pressed", "Released"],
-            },
-            "category": "Annotation"
-        }
-        
-    @property
-    def in_map(self):
-        return {
-            "Data": self.receive_data,
-            "Channel Names": self.receive_channels
-        }
-
-    def _get_setup(self):
+    def _settings(self):
         return {\
             "name": self.name,
             "channel_name": self.channel_name,
             "targets": self.targets,
            }
+    
+    def _should_process(self, data=None, channel_names=None):
+        return data is not None and \
+            (self.idx is not None or channel_names is not None)
 
-    def receive_channels(self, channel_names, **kwargs):
-        self.idx = np.array(channel_names) == self.channel_name
-        self.send_data(np.array(channel_names)[~self.idx], data_stream="Channel Names")
+    def process(self, data, channel_names=None, **kwargs):
+        if channel_names is not None:
+            self.idx = np.array(channel_names) == self.channel_name
+            self._emit_data(np.array(channel_names)[~self.idx], channel="Channel Names")
+        
+        d = np.array(data)
+        self._emit_data(d[:,:,~self.idx])
+        self._emit_data(np.where(d[:,:,self.idx] >= 0, self.targets[1], self.targets[0]), channel="Annotation")
 
-    def receive_data(self, data_frame, **kwargs):
-        if self.idx is not None:
-            d = np.array(data_frame)
-            self.send_data(d[:,~self.idx])
-            self.send_data(np.where(d[:,self.idx] >= 0, self.targets[1], self.targets[0]), data_stream="Annotation")
         

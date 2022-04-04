@@ -10,7 +10,7 @@ from PyQt5.QtCore import Qt, QSize, pyqtSignal
 
 class Home(QWidget):
 
-    def __init__(self, onstart, onconfig, pipelines="./pipelines/*.json", parent=None):
+    def __init__(self, onstart, onconfig, pipelines="./projects/test_ask/pipelines/*.json", parent=None):
         super().__init__(parent)
 
         # This is somewhat fucked up...
@@ -54,7 +54,7 @@ class Pipline_Selection(QWidget):
         self.mainLayout.addWidget(self.scroll_area)
 
         for itm in pipelines:
-            icon  = QIcon(rreplace(itm, '/', '/gui/', 1).replace('.json', '.png'))
+            icon  = QIcon(rreplace(itm, '/pipelines/', '/gui/', 1).replace('.json', '.png'))
             button = QToolButton()
             button.setText(itm.split('/')[-1].replace('.json', ''))
             button.setIcon(icon)

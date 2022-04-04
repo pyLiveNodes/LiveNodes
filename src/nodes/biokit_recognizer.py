@@ -10,8 +10,16 @@ import json
 # TODO: figure out if needed (!) how we can train this as well...
 
 class Biokit_recognizer(Node):
-    def __init__(self, model_path, token_insertion_penalty, name="Recognizer", dont_time=False):
-        super().__init__(name, dont_time)
+    channels_in = ['Data', 'File']
+    channels_out = ['Recognition', 'HMM Meta', 'Hypothesis']
+
+    category = "BioKIT"
+    description = "" 
+
+    example_init = {'name': 'Recognizer', 'model_path': './models/', 'token_insertion_penalty': 0}
+
+    def __init__(self, model_path, token_insertion_penalty, name="Recognizer", **kwargs):
+        super().__init__(name, **kwargs)
 
         self.model_path = model_path
         self.token_insertion_penalty = token_insertion_penalty
@@ -23,99 +31,90 @@ class Biokit_recognizer(Node):
         self.topology = self._get_topology()
 
         self._initial = True
-        self.file = None
+        self.file = -1
 
-    @staticmethod
-    def info():
-        return {
-            "class": "Biokit_recognizer",
-            "file": "biokit_recognizer.py",
-            "in": ["Data", "File"],
-            "out": ["Recognition", "HMM Meta", "Hypothesis", "Hypo States", "GMM Models", "GMM Means", "GMM Covariances", "GMM Weights"],
-            "init": {
-                "name": "Recognizer",
-                "model_path": "./models/",
-                "token_insertion_penalty": 0,
-            },
-            "category": "BioKIT"
-        }
-    
-    @property
-    def in_map(self):
-        return {
-            "Data": self.receive_data,
-            "File": self.receive_file,
-        }
-
-    def _get_setup(self):
+    def _settings(self):
         return {\
             # "batch": self.batch,
             "token_insertion_penalty": self.token_insertion_penalty,
             "model_path": self.model_path
         }
 
-    def receive_file(self, file, **kwargs):
-        if self.file != file[0]:
-            self._initial = True
-            self.file = file[0]
+    def _should_process(self, data=None, file=None):
+        return data is not None
 
-    def receive_data(self, fs, **kwargs):
+    def process(self, data, file=None, **kwargs):
+        # IMPORTANT/TODO: check if this is equivalent to the previous behaviour,ie if we always receive the file together with the data
+        # file is optional, if it is not passed (ie None) it doesn't change except in the first send
+        if file is not None:
+            file = file[0][0][0]
+            self._initial = self.file != file
+            self.file = file
+
         am = self.reco.getAtomManager()
         dc = self.reco.getDictionary()
 
-        _, path, _ = self.reco.decode(fs, generatepath=True, initialize=self._initial) # not sure if we need to initialize this on the first call?
+        for batch in data:
+            _, path, _ = self.reco.decode(batch, generatepath=True, initialize=bool(self._initial)) # not sure if we need to initialize this on the first call?
 
-        if self._initial:
-            # get search graph
-            graph_json = self.reco.getSearchGraph().createGraphJson(self.reco.getDictionary(), False)
-            graph = json.loads(graph_json)
+            if self._initial:
+                # get search graph
+                graph_json = self.reco.getSearchGraph().createGraphJson(self.reco.getDictionary(), False)
+                graph = json.loads(graph_json)
 
-            # get gaussians
-            gmm_models = []
-            gmm_means = []
-            gmm_cov = []
-            gmm_weights = []
-            gmms = {}
-            for model_name in self.reco.getGaussMixturesSet().getAvailableModelNames():
-                gmm_id = self.reco.getGaussMixturesSet().getModelId(model_name)
-                gmm_container = self.reco.getGaussMixturesSet().getGaussMixture(gmm_id)
-                gmm = gmm_container.getGaussianContainer()
-                means = gmm.getMeanVectors()
-                mixture_weights = gmm_container.getMixtureWeights()
-                n_gaussians = len(means)
-                gmm_models.extend([model_name] * n_gaussians)
-                gmm_means.extend(means)
-                gmm_cov.extend([gmm.getCovariance(i).getData() for i in range(len(means))])
-                gmm_weights.extend(mixture_weights)
+                # get gaussians
+                gmm_models = []
+                gmm_means = []
+                gmm_cov = []
+                gmm_weights = []
+                gmms = {}
+                for model_name in self.reco.getGaussMixturesSet().getAvailableModelNames():
+                    gmm_id = self.reco.getGaussMixturesSet().getModelId(model_name)
+                    gmm_container = self.reco.getGaussMixturesSet().getGaussMixture(gmm_id)
+                    gmm = gmm_container.getGaussianContainer()
+                    means = gmm.getMeanVectors()
+                    mixture_weights = gmm_container.getMixtureWeights()
+                    n_gaussians = len(means)
+                    gmm_models.extend([model_name] * n_gaussians)
+                    gmm_means.extend(means)
+                    gmm_cov.extend([gmm.getCovariance(i).getData() for i in range(len(means))])
+                    gmm_weights.extend(mixture_weights)
 
-                gmms[model_name] = {
-                    "means": means,
-                    "mixture_weights": mixture_weights,
-                    "covariances": [gmm.getCovariance(i).getData() for i in range(len(means))]
-                }
+                    gmms[model_name] = {
+                        "means": means,
+                        "mixture_weights": mixture_weights,
+                        "covariances": [gmm.getCovariance(i).getData() for i in range(len(means))]
+                    }
 
-            # send meta data
-            self.send_data({"topology": self.topology, "search_graph": graph, 'gmms': gmms}, data_stream="HMM Meta") 
-            self.send_data(gmm_models, data_stream="GMM Models")
-            self.send_data(gmm_means, data_stream="GMM Means")
-            self.send_data(gmm_cov, data_stream="GMM Covariances")
-            self.send_data(gmm_weights, data_stream="GMM Weights")
+                # send meta data
+                self._emit_data({"topology": self.topology, "search_graph": graph, 'gmms': gmms}, channel="HMM Meta") 
+                self._emit_data(gmm_models, channel="GMM Models")
+                self._emit_data(gmm_means, channel="GMM Means")
+                self._emit_data(gmm_cov, channel="GMM Covariances")
+                self._emit_data(gmm_weights, channel="GMM Weights")
+                
+            self.info(f'Found path? {path != None} of length: {"" if path == None else len(path)}; was initial? {self._initial}')
             
-            self._initial = False
-
-        if path != None:
-            res = [( \
-                    r.mStateId, 
-                    am.getAtom(r.mAtomId).getName(),
-                    dc.getToken(r.mTokenId)
-                ) for r in path]
-            # print(res)
-            self.send_data(res, data_stream="Recognition")
+            res = []
+            hypothesis = []
+            hypo_states = []
+            
+            if path != None:
+                res = [( \
+                        r.mStateId, 
+                        am.getAtom(r.mAtomId).getName(),
+                        dc.getToken(r.mTokenId)
+                    ) for r in path]
+                hypothesis = self.reco.handler.getCurrentHypoNodeIds()
+                hypo_states = self.reco.handler.getCurrentHypoStates()
+            
+            # We will be proactive and tell subsequent nodes if we failed to 
+            self._emit_data(res, channel="Recognition")
 
             # Maybe consider adding a mechanism that only calcs/gets this if someone requested it?
             # TODO: check this again and see if we can merge the streams somehow...
-            self.send_data(self.reco.handler.getCurrentHypoNodeIds(), data_stream="Hypothesis")
-            self.send_data(self.reco.handler.getCurrentHypoStates(), data_stream="Hypo States")
+            self._emit_data(hypothesis, channel="Hypothesis")
+            self._emit_data(hypo_states, channel="Hypo States")
 
     def _get_topology(self):
         dc = self.reco.getDictionary()

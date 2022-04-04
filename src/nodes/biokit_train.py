@@ -7,8 +7,23 @@ from .biokit import BioKIT, logger, recognizer
 
 
 class Biokit_train(Node):
-    def __init__(self, model_path, token_insertion_penalty, atomList, tokenDictionary, train_iterations, name="Train", dont_time=False):
-        super().__init__(name, dont_time)
+    channels_in = ['Data', 'File', 'Annotation', 'Termination']
+    channels_out = []
+
+    category = "BioKIT"
+    description = "" 
+
+    example_init = {
+        "name": "Train",
+        "model_path": "./models/",
+        "atomList": [],
+        "tokenDictionary": {},
+        "train_iterations": [5, 5],
+        "token_insertion_penalty": 0,
+    }
+
+    def __init__(self, model_path, token_insertion_penalty, atomList, tokenDictionary, train_iterations, name="Train", **kwargs):
+        super().__init__(name, **kwargs)
 
         self.model_path = model_path
         self.atomList = atomList
@@ -20,24 +35,6 @@ class Biokit_train(Node):
         self.annotations = []
         self.files = []
 
-    @staticmethod
-    def info():
-        return {
-            "class": "Biokit_train",
-            "file": "Biokit_train.py",
-            "in": ["Data", "File", "Annotation", "Termination"],
-            "out": [],
-            "init": {
-                "name": "Train",
-                "model_path": "./models/",
-                "atomList": [],
-                "tokenDictionary": {},
-                "train_iterations": [5, 5],
-                "token_insertion_penalty": 0,
-            },
-            "category": "BioKIT"
-        }
-
         
     @property
     def in_map(self):
@@ -48,7 +45,7 @@ class Biokit_train(Node):
             "Termination": self.receive_data_end
         }
 
-    def _get_setup(self):
+    def _settings(self):
         return {\
             # "batch": self.batch,
             "token_insertion_penalty": self.token_insertion_penalty,
@@ -119,7 +116,7 @@ class Biokit_train(Node):
         self.reco.saveToFiles(self.model_path)
 
 
-    def receive_data_end(self, data_frame, **kwargs):
+    def receive_data_end(self, data):
         # assume we never loose data, then these should be the same
         len_d, len_a, len_f = len(self.data), len(self.annotations), len(self.files)
         keep = min(len_d, len_a, len_f) 
@@ -137,8 +134,8 @@ class Biokit_train(Node):
     def receive_annotation(self, annotation, **kwargs):
         self.annotations.extend(annotation)
 
-    def receive_data(self, fs, **kwargs):
-        self.data.append(fs)
+    def process(self, data, **kwargs):
+        self.data.append(data)
 
 
 

@@ -1,13 +1,10 @@
-import collections
 import numpy as np
 
-from .node import Node
+from .node import View
 
-import time
 from itertools import groupby
 import seaborn as sns
 
-import multiprocessing as mp
 
 
 def convert_pos(pos, yrange):
@@ -37,50 +34,45 @@ def convert_list_pos(itms, x_max, yrange):
 
 
 
-class Draw_recognition(Node):
-    # TODO: consider removing the filter here and rather putting it into a filter node
-    def __init__(self, xAxisLength=[50, 50, 50, 5000], name = "Recognition", dont_time = False):
-        super().__init__(name=name, has_outputs=False, dont_time=dont_time)
+class Draw_recognition(View):
+    channels_in = ['Recognition', 'Annotation', 'HMM Meta']
+    channels_out = []
+
+    category = "Draw"
+    description = "" 
+
+    example_init = {
+        "name": "Recognition",
+        "xAxisLength": [50, 50, 50, 5000]
+    }
+
+    def __init__(self, xAxisLength=[50, 50, 50, 5000], name = "Recognition", **kwargs):
+        super().__init__(name=name, **kwargs)
+
+        # process side
+        self.colors = None
+
+        # render side
+        self._bar_colors = []
+
         self.xAxisLength = xAxisLength
 
         self.verts = [[], [], [], []]
         self.names = [[''], [''], [''], ['']]
 
-        self.path_queue = mp.Queue()
-        self.annotation_queue = mp.Queue()
-        self.color_queue = mp.Queue()
 
-        self._bar_colors = []
-    
-    @staticmethod
-    def info():
-        return {
-            "class": "Draw_recognition",
-            "file": "draw_recognition.py",
-            "in": ["Data", "Annotation", "HMM Meta"],
-            "out": [],
-            "init": {
-                "name": "Recognition",
-                "xAxisLength": [50, 50, 50, 5000]
-            },
-            "category": "Draw"
-        }
-        
-    @property
-    def in_map(self):
-        return {
-            "Data": self.receive_data,
-            "Annotation": self.receive_annotation,
-            "HMM Meta": self.receive_meta
-        }
-
-    def _get_setup(self):
+    def _settings(self):
         return {\
             "name": self.name,
             "xAxisLength": self.xAxisLength
            }
 
-    def init_draw(self, subfig):
+    def _should_draw(self, **cur_state):
+        # if not bool(cur_state):
+        #     print('Draw infos', "recognition" in cur_state, "annotation" in cur_state, "colors" in cur_state, bool(cur_state))
+        return bool(cur_state)
+
+    def _init_draw(self, subfig):
         bar_names = ["State", "Atom", "Token", "Reference"]
         yrange = (0, 0.7)
         
@@ -112,60 +104,61 @@ class Draw_recognition(Node):
         # legend.set_alpha(0) # TODO: for some reason the legend is transparent, no matter what i set here...
         # legend.set_zorder(100)
 
-        def update (**kwargs):
+
+        def update (recognition, annotation, colors):
             nonlocal self, bar_objs, txt_fout_objs, txt_fin_objs
 
-            if not self.color_queue.empty():
-                self._bar_colors = self.color_queue.get()
+            if colors is not None:
+                self._bar_colors = colors
 
 
-            if not self.path_queue.empty():
-                path = None
+            states, atoms, tokens = zip(*recognition)
 
-                while not self.path_queue.empty():
-                    path = self.path_queue.get()
-                    # print('path', len(path))
+            self.names[0], self.verts[0] = convert_list_pos(states[-self.xAxisLength[0]:], self.xAxisLength[0], (0, 0.7))
+            self.names[1], self.verts[1] = convert_list_pos(atoms[-self.xAxisLength[1]:], self.xAxisLength[1], (0, 0.7))
+            self.names[2], self.verts[2] = convert_list_pos(tokens[-self.xAxisLength[2]:], self.xAxisLength[2], (0, 0.7))
 
-                    states, atoms, tokens = zip(*path)
-
-                    self.names[0], self.verts[0] = convert_list_pos(states[-self.xAxisLength[0]:], self.xAxisLength[0], (0, 0.7))
-                    self.names[1], self.verts[1] = convert_list_pos(atoms[-self.xAxisLength[1]:], self.xAxisLength[1], (0, 0.7))
-                    self.names[2], self.verts[2] = convert_list_pos(tokens[-self.xAxisLength[2]:], self.xAxisLength[2], (0, 0.7))
-
-
-            if not self.annotation_queue.empty():
-                annotation = None
-
-                while not self.annotation_queue.empty():
-                    annotation = self.annotation_queue.get()
-
-                # print('annotation', len(annotation))
+            if annotation is not None:
                 self.names[3], self.verts[3] = convert_list_pos(annotation[-self.xAxisLength[3]:], self.xAxisLength[3], (0, 0.7))
 
-            
             #TODO: rework this to work properly with missing streams...
-            if len(self.verts) > 0 and len(self._bar_colors) > 0:
-                for bar_obj, tx_out, tx_in, verts, names, colors in zip(bar_objs, txt_fout_objs, txt_fin_objs, self.verts, self.names, self._bar_colors):
-                    bar_obj.set_verts(verts)
-                    bar_obj.set_facecolor([colors[name] for name in names])
-                    tx_out.set_text(names[0])
-                    tx_in.set_text(names[-1])
-                return bar_objs + txt_fout_objs + txt_fin_objs
-            return []
+            # if len(self.verts) > 0 and len(self._bar_colors) > 0:
+            for bar_obj, tx_out, tx_in, verts, names, colors in zip(bar_objs, txt_fout_objs, txt_fin_objs, self.verts, self.names, self._bar_colors):
+                bar_obj.set_verts(verts)
+                bar_obj.set_facecolor([colors[name] for name in names])
+                tx_out.set_text(names[0])
+                tx_in.set_text(names[-1])
+            return bar_objs + txt_fout_objs + txt_fin_objs
+
         return update
 
-    def receive_data(self, data, **kwargs):
-        self.path_queue.put(data)
 
-    def receive_meta(self, meta, **kwargs):
-        topology = meta.get('topology')
-        token_colors, atom_colors, state_colors = self._init_colors(topology)
-        self.color_queue.put([state_colors, atom_colors, token_colors, token_colors])
-    
-    def receive_annotation(self, data, **kwargs):
-        self.annotation_queue.put(data)
+    def _should_process(self, recognition=None, hmm_meta=None, annotation=None):
+
+        res = recognition is not None \
+            and (self.colors is not None or hmm_meta is not None) \
+            and (annotation is not None or not self._is_input_connected('Annotation'))
+        # if not res:
+        #     print(recognition is not None, annotation is not None)
+        return res
+            # if the annotation input is connected it must be present for processing
+
+    def process(self, recognition=None, hmm_meta=None, annotation=None, **kwargs):
+        if hmm_meta is not None:
+            token_colors, atom_colors, state_colors = self._init_colors(hmm_meta.get('topology'))
+            self.colors = [state_colors, atom_colors, token_colors, token_colors]
+
+        if len(recognition) > 0:
+            # for the annotaiton, we'll assume it is in the normal (batch/file, time, channel) format and that batch is not relevant here
+            # similarly we expect recognition not to have taken batch into account (ah fu... there is still some trouble there, that is not a true assumption)
+            # print(np.array(annotation).shape, len(recognition))
+            if annotation is not None:
+                annotation = np.array(annotation)[0,:,0]
+            self._emit_draw(recognition=recognition, colors=self.colors, annotation=annotation)
+            # self._emit_draw(recognition=recognition, colors=self.colors, annotation=None)
 
 
+    # TODO: move this to utils or something...
     def _init_colors(self, topology):
         c = sns.color_palette("deep", len(topology))
         _state_colors = dict(zip(range(3), ['#b9b9b9', '#777777', '#3b3b3b'])) # bold assumption, that there are never more than 3 states

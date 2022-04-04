@@ -35,32 +35,36 @@ class CustomNodeDataModel(NodeDataModel, verify=False):
     def _get_port_infos(self, connection):
         # TODO: yes, the naming here is confusing, as qtpynode is the other way round that livenodes
         in_port, out_port = connection.ports
-        data_stream = out_port.model.data_type[out_port.port_type][out_port.index].id
-        recv_data_stream = in_port.model.data_type[in_port.port_type][in_port.index].id
+        emitting_channel = out_port.model.data_type[out_port.port_type][out_port.index].id
+        receiving_channel = in_port.model.data_type[in_port.port_type][in_port.index].id
 
-        in_pl_node = in_port.model.association_to_node
-        out_pl_node = out_port.model.association_to_node
+        smart_receicing_node = in_port.model.association_to_node
+        smart_emitting_node = out_port.model.association_to_node
         
-        return in_pl_node, out_pl_node, data_stream, recv_data_stream
+        return smart_emitting_node, smart_receicing_node, emitting_channel, receiving_channel
 
     def output_connection_created(self, connection):
         # HACK: this currently works because of the three passes below (ie create node, create conneciton, associate pl node)
         # TODO: fix this by checking if the connection already exists and if so ignore the call
         if self.association_to_node is not None:
-            in_pl_node, out_pl_node, data_stream, recv_data_stream = self._get_port_infos(connection)
+            smart_emitting_node, smart_receicing_node, emitting_channel, receiving_channel = self._get_port_infos(connection)
 
-            if in_pl_node is not None and out_pl_node is not None:
+            if smart_emitting_node is not None and smart_receicing_node is not None:
                 # occours when a node was deleted, in which case this is not important anyway
-                out_pl_node.add_output(new_output=in_pl_node, data_stream=data_stream, recv_data_stream=recv_data_stream)
+                smart_receicing_node.add_input(smart_emitting_node, emitting_channel=emitting_channel, receiving_channel=receiving_channel)
 
 
     def output_connection_deleted(self, connection):
         if self.association_to_node is not None:
-            in_pl_node, out_pl_node, data_stream, recv_data_stream = self._get_port_infos(connection)
+            smart_emitting_node, smart_receicing_node, emitting_channel, receiving_channel = self._get_port_infos(connection)
             
-            if in_pl_node is not None and out_pl_node is not None:
+            if smart_emitting_node is not None and smart_receicing_node is not None:
                 # occours when a node was deleted, in which case this is not important anyway
-                out_pl_node.remove_output(output_node=in_pl_node, data_stream=data_stream, recv_data_stream=recv_data_stream)
+                try:
+                    smart_receicing_node.remove_input(smart_emitting_node, emitting_channel=emitting_channel, receiving_channel=receiving_channel)
+                except ValueError as err:
+                    print(err)
+                    # TODO: see nodes above on created...
 
 
 
@@ -177,9 +181,11 @@ class NodeParameterSetter(QWidget):
         # let's assume we only have class instances here and no classes
         # for classes we would need a combination of info() and something else...
         if node is not None:
-            self.edit = EditDict(in_dict=node._get_setup())
+            self.edit = EditDict(in_dict=node._settings())
             # let's assume the edit interfaces do not overwrite any of the references
             # otherwise we would need to do a recursive set_attr here....
+
+            # TODO: remove _set_attr in node, this is no good design
             self.edit.changed.connect(lambda attrs: node._set_attr(**attrs))
         else:
             self.edit = EditDict(in_dict={})
@@ -218,7 +224,7 @@ class NodeConfigureContainer(QWidget):
 
     def set_pl_node(self, node, *args):
         self._title.setText(str(node))
-        self._category.setText(node.info()['category'])
+        self._category.setText(node.category)
 
         new_params = NodeParameterSetter(node)
 
@@ -241,7 +247,7 @@ class CustomDialog(QDialog):
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
 
-        self.edit_dict = node.model.constructor.info()['init']
+        self.edit_dict = node.model.constructor.example_init
         edit_form = EditDict(self.edit_dict)
 
         self.layout = QVBoxLayout(self)
@@ -304,9 +310,10 @@ class Config(QWidget):
           # self.scene.auto_arrange('graphviz_layout', scale=3)
 
     def _remove_pl_node(self, node):
-        if node.model.association_to_node is not None: 
-            node.model.association_to_node.remove_from_graph()
-
+        smart_node = node.model.association_to_node
+        if smart_node is not None: 
+            smart_node.remove_all_inputs()
+            
     def _create_pl_node(self, node):
         print("Added:", node)
         # TODO: make this more in line with the qtpynodeetitor style
@@ -345,8 +352,8 @@ class Config(QWidget):
 
         # Collect and create Datatypes
         for node in nodes:
-          for val in node['in'] + node['out']:
-            self.known_dtypes[val] = NodeDataType(id=val, name=val)
+            for val in node['channels_in'] + node['channels_out']:
+                self.known_dtypes[val] = NodeDataType(id=val, name=val)
 
         # Collect and create Node-Classes
         for node in nodes:
@@ -360,46 +367,46 @@ class Config(QWidget):
                 'caption': cls_name,
                 'caption_visible': True,
                 'num_ports': {
-                    PortType.input: len(node['in']), 
-                    PortType.output: len(node['out'])
+                    PortType.input: len(node['channels_in']), 
+                    PortType.output: len(node['channels_out'])
                 },
                 'data_type': {
-                    PortType.input: {i: self.known_dtypes[val] for i, val in enumerate(node['in'])},
-                    PortType.output: {i: self.known_dtypes[val] for i, val in enumerate(node['out'])}
+                    PortType.input: {i: self.known_dtypes[val] for i, val in enumerate(node['channels_in'])},
+                    PortType.output: {i: self.known_dtypes[val] for i, val in enumerate(node['channels_out'])}
                 }
                 , 'constructor': getattr(module, node['class'])
                 })
-            self.known_streams.update(set(node['in'] + node['out']))
+            self.known_streams.update(set(node['channels_in'] + node['channels_out']))
             self.known_classes[cls_name] = cls
             self.registry.register_model(cls, category=node.get("category", "Unknown"))
 
         # Create Converters
         # Allow any stream to map onto Data:
         for stream in self.known_streams:
-          converter = TypeConverter(self.known_dtypes[stream], self.known_dtypes["Data"], noop)
-          self.registry.register_type_converter(self.known_dtypes[stream], self.known_dtypes["Data"], converter)
+            converter = TypeConverter(self.known_dtypes[stream], self.known_dtypes["Data"], noop)
+            self.registry.register_type_converter(self.known_dtypes[stream], self.known_dtypes["Data"], converter)
 
-          converter = TypeConverter(self.known_dtypes["Data"], self.known_dtypes[stream], noop)
-          self.registry.register_type_converter(self.known_dtypes["Data"], self.known_dtypes[stream], converter)
+            converter = TypeConverter(self.known_dtypes["Data"], self.known_dtypes[stream], noop)
+            self.registry.register_type_converter(self.known_dtypes["Data"], self.known_dtypes[stream], converter)
 
     def _add_pipeline(self, layout, pipeline):
         ### Reformat Layout for easier use
         # also collect x and y min for repositioning
         layout_nodes = {}
         if layout is not None:
-          min_x, min_y = 2**15, 2**15
-          # first pass, collect mins and add to dict for quicker lookup
-          for l_node in layout['nodes']:
-            layout_nodes[l_node['model']['association_to_node']] = l_node
-            min_x = min(min_x, l_node["position"]['x'])
-            min_y = min(min_y, l_node["position"]['y'])
+            min_x, min_y = 2**15, 2**15
+            # first pass, collect mins and add to dict for quicker lookup
+            for l_node in layout['nodes']:
+                layout_nodes[l_node['model']['association_to_node']] = l_node
+                min_x = min(min_x, l_node["position"]['x'])
+                min_y = min(min_y, l_node["position"]['y'])
 
-          min_x, min_y = min_x - 50, min_y - 50
+            min_x, min_y = min_x - 50, min_y - 50
 
-          # second pass, update x and y
-          for l_node in layout['nodes']:
-            l_node["position"]['x'] = l_node["position"]['x'] - min_x
-            l_node["position"]['y'] = l_node["position"]['y'] - min_y
+            # second pass, update x and y
+            for l_node in layout['nodes']:
+                l_node["position"]['x'] = l_node["position"]['x'] - min_x
+                l_node["position"]['y'] = l_node["position"]['y'] - min_y
 
 
         ### Add nodes
@@ -416,21 +423,19 @@ class Config(QWidget):
                     # TODO: actually check if it has
                     s_nodes[name] = self.scene.restore_node(layout_nodes[name])
                 else:
-                    s_nodes[name] = self.scene.create_node(self.known_classes[n.info()['class']])
+                    s_nodes[name] = self.scene.create_node(self.known_classes[n.__class__.__name__])
 
             # second pass: create all connectins
             for name, n in p_nodes.items():
                 # node_output refers to the node in which n is inputing data, ie n's output
-                for node_output, output_id, data_stream, recv_data_stream in n.output_classes:
+                # for node_output, output_id, emitting_channel, receiving_channel in n.output_classes:
+                for con in n.output_connections:
                     # print('=====')
-                    # print(name, node_output, output_id, data_stream, recv_data_stream)
-                    # print(data_stream, n.info()['out'], node_output.info()['in'])
-                    print(name, n.info())
-                    out_idx = n.info()['out'].index(data_stream)
-                    in_idx = node_output.info()['in'].index(recv_data_stream)
+                    out_idx = n.channels_out.index(con._emitting_channel)
+                    in_idx = con._receiving_node.channels_in.index(con._receiving_channel)
                     # print(out_idx, in_idx)
                     n_out = s_nodes[name][PortType.output][out_idx]
-                    n_in = s_nodes[str(node_output)][PortType.input][in_idx]
+                    n_in = s_nodes[str(con._receiving_node)][PortType.input][in_idx]
                     self.scene.create_connection(n_out, n_in)
             
             # third pass: connect gui nodes to pipeline nodes
@@ -462,5 +467,5 @@ class Config(QWidget):
 
         # TODO: For the moment, lets assume the start node stays the same, otherwise we'll have a problem...
         pipeline.save(self.pipeline_path)
-        pipeline.make_dot_graph(transparent_bg=True).save(self.pipeline_gui_path.replace('.json', '.png'), 'PNG')
-        pipeline.make_dot_graph(transparent_bg=False).save(self.pipeline_path.replace('.json', '.png'), 'PNG')
+        pipeline.dot_graph_full(transparent_bg=True).save(self.pipeline_gui_path.replace('.json', '.png'), 'PNG')
+        pipeline.dot_graph_full(transparent_bg=False).save(self.pipeline_path.replace('.json', '.png'), 'PNG')

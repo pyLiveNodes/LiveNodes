@@ -1,0 +1,22 @@
+cspin-ll {cspin-ll_ISt cspin-ll_MSt cspin-ll_TSt cspin-ll_ISw cspin-ll_TSw} 
+cspin-lr {cspin-lr_ISt cspin-lr_MSt cspin-lr_TSt cspin-lr_ISw cspin-lr_TSw} 
+cspin-rl {cspin-rl_ISt cspin-rl_MSt cspin-rl_TSt cspin-rl_ISw cspin-rl_TSw} 
+cspin-rr {cspin-rr_ISt cspin-rr_MSt cspin-rr_TSt cspin-rr_ISw cspin-rr_TSw} 
+cstep-l {cstep-l_ISt cstep-l_MSt cstep-l_TSt cstep-l_ISw cstep-l_TSw} 
+cstep-r {cstep-r_ISt cstep-r_MSt cstep-r_TSt cstep-r_ISw cstep-r_TSw} 
+jump-1 {jump-1_ITO jump-1_TTO jump-1_F jump-1_IL jump-1_TL} 
+jump-2 {jump-2_ITO jump-2_TTO jump-2_F jump-2_IL jump-2_TL} 
+run {run_ISt run_MSt run_TSt run_ISw run_TSw} 
+shuffle-l {shuffle-l_ISt shuffle-l_MSt shuffle-l_TSt shuffle-l_ISw shuffle-l_TSw} 
+shuffle-r {shuffle-r_ISt shuffle-r_MSt shuffle-r_TSt shuffle-r_ISw shuffle-r_TSw} 
+sit {sit_sitting} 
+sit-stand {sit-stand_sit2s} 
+stair-down {stair-down_ISt stair-down_MSt stair-down_TSt stair-down_ISw stair-down_TSw} 
+stair-up {stair-up_ISt stair-up_MSt stair-up_TSt stair-up_ISw stair-up_TSw} 
+stand {stand_standing} 
+stand-sit {stand-sit_stand2s} 
+vcut-ll {vcut-ll_ISt vcut-ll_MSt vcut-ll_TSt vcut-ll_ISw vcut-ll_TSw} 
+vcut-lr {vcut-lr_ISt vcut-lr_MSt vcut-lr_TSt vcut-lr_ISw vcut-lr_TSw} 
+vcut-rl {vcut-rl_ISt vcut-rl_MSt vcut-rl_TSt vcut-rl_ISw vcut-rl_TSw} 
+vcut-rr {vcut-rr_ISt vcut-rr_MSt vcut-rr_TSt vcut-rr_ISw vcut-rr_TSw} 
+walk {walk_ISt walk_MSt walk_TSt walk_ISw walk_TSw} 

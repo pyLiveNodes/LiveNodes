@@ -34,54 +34,53 @@ from src.nodes.debug_frame_counter import Debug_frame_counter
 
 from src.nodes.node import Node
 
-
-
-def add_processing(pl_in, x_raw, x_processed, vis=(True, True, True)):
-    # This output will not be saved, as it cannot be reconstructed
-    pl_in.add_output(lambda data: print(data))
-
+def add_features(pl_in, x_raw, x_processed, vis=(True, True)):
     if vis[0]:
         filter1 =Transform_filter(name="Raw Filter", names=channel_names_raw)
-        pl_in.add_output(filter1)
-        pl_in.add_output(filter1, data_stream="Channel Names", recv_data_stream="Channel Names")
+        filter1.add_input(pl_in)
+        filter1.add_input(pl_in, emitting_channel="Channel Names", receiving_channel="Channel Names")
 
         draw_raw = Draw_lines(name='Raw Data', n_plots=len(channel_names_raw), xAxisLength=x_raw)
-        filter1.add_output(draw_raw)
-        filter1.add_output(draw_raw, data_stream="Channel Names", recv_data_stream="Channel Names")
+        draw_raw.add_input(filter1)
+        draw_raw.add_input(filter1, emitting_channel="Channel Names", receiving_channel="Channel Names")
 
     window = Transform_window(100, 0)
-    pl_in.add_output(window)
+    window.add_input(pl_in)
 
     fts = Transform_feature(features=['calc_mean', 'rms'], feature_args={"samplingfrequency": meta['sample_rate']})
-    window.add_output(fts)
-    pl_in.add_output(fts, data_stream="Channel Names", recv_data_stream="Channel Names")
+    fts.add_input(window)
+    fts.add_input(pl_in, emitting_channel="Channel Names", receiving_channel="Channel Names")
 
     if vis[1]:
         filter2 =Transform_filter(name="Feature Filter", names=channel_names_fts)
-        fts.add_output(filter2)
-        fts.add_output(filter2, data_stream="Channel Names", recv_data_stream="Channel Names")
+        filter2.add_input(fts)
+        filter2.add_input(fts, emitting_channel="Channel Names", receiving_channel="Channel Names")
 
         draw_fts = Draw_lines(name='Features', n_plots=len(channel_names_fts), xAxisLength=x_processed)
-        filter2.add_output(draw_fts)
-        filter2.add_output(draw_fts, data_stream="Channel Names", recv_data_stream="Channel Names")
+        draw_fts.add_input(filter2)
+        draw_fts.add_input(filter2, emitting_channel="Channel Names", receiving_channel="Channel Names")
+    return 
+
+def add_processing(pl_in, x_raw, x_processed, vis=(True, True, True)):
+    fts = add_features(pl_in, x_raw, x_processed, vis[:2])
 
     to_fs = Biokit_to_fs()
-    fts.add_output(to_fs)
+    to_fs.add_input(fts)
 
     norm = Biokit_norm()
-    to_fs.add_output(norm)
+    norm.add_input(to_fs)
 
     if vis[2]:
         from_fs = Biokit_from_fs()
-        norm.add_output(from_fs)
+        from_fs.add_input(norm)
 
         filter3 =Transform_filter(name="Normed Feature Filter", names=channel_names_fts)
-        from_fs.add_output(filter3)
-        fts.add_output(filter3, data_stream="Channel Names", recv_data_stream="Channel Names")
+        filter3.add_input(from_fs)
+        filter3.add_input(fts, emitting_channel="Channel Names", receiving_channel="Channel Names")
 
         draw_normed = Draw_lines(name='Normed Features', n_plots=len(channel_names_fts), ylim=(-5, 5), xAxisLength=x_processed)
-        filter3.add_output(draw_normed)
-        filter3.add_output(draw_normed, data_stream="Channel Names", recv_data_stream="Channel Names")
+        draw_normed.add_input(filter3)
+        draw_normed.add_input(filter3, emitting_channel="Channel Names", receiving_channel="Channel Names")
 
     return norm, fts
 
@@ -89,33 +88,33 @@ def add_processing(pl_in, x_raw, x_processed, vis=(True, True, True)):
 def add_recognition(pl,fts, norm, x_raw, x_processed, vis=True):
     window1 = Transform_window(100, 0, name="File")
     select1 = Transform_majority_select(name="File")
-    pl.add_output(window1, data_stream="File")
-    window1.add_output(select1)
+    window1.add_input(pl, emitting_channel="File")
+    select1.add_input(window1)
 
     recog = Biokit_recognizer(model_path="./models/KneeBandageCSL2018/partition-stand/sequence/", token_insertion_penalty=50)
-    norm.add_output(recog)
-    select1.add_output(recog, recv_data_stream="File")
+    recog.add_input(norm)
+    recog.add_input(select1, receiving_channel="File")
 
     if vis:
         draw_recognition_path = Draw_recognition(xAxisLength=[x_processed, x_processed, x_processed, x_raw])
-        recog.add_output(draw_recognition_path, data_stream="Recognition")
-        recog.add_output(draw_recognition_path, data_stream='HMM Meta', recv_data_stream='HMM Meta')
+        draw_recognition_path.add_input(recog, emitting_channel="Recognition")
+        draw_recognition_path.add_input(recog, data_stream='HMM Meta', recv_data_stream='HMM Meta')
 
         memory = Memory(x_raw)
-        pl.add_output(memory, data_stream='Annotation')
-        memory.add_output(draw_recognition_path, recv_data_stream='Annotation')
+        memory.add_input(pl, data_stream='Annotation')
+        draw_recognition_path.add_input(memory, recv_data_stream='Annotation')
 
     if vis:
         draw_search_graph = Draw_search_graph()
-        recog.add_output(draw_search_graph, data_stream="HMM Meta", recv_data_stream="HMM Meta")
-        recog.add_output(draw_search_graph, data_stream="Hypothesis", recv_data_stream="Hypothesis")
+        draw_search_graph.add_input(recog, emitting_channel="HMM Meta", receiving_channel="HMM Meta")
+        draw_search_graph.add_input(recog, emitting_channel="Hypothesis", receiving_channel="Hypothesis")
 
     if vis:
         draw_gmm = Draw_gmm(name="GMM", plot_names=channel_names_fts[:2])
-        norm.add_output(draw_gmm, data_stream="Data", recv_data_stream="Data")
-        fts.add_output(draw_gmm, data_stream="Channel Names", recv_data_stream="Channel Names")
-        recog.add_output(draw_gmm, data_stream="HMM Meta", recv_data_stream="HMM Meta")
-        recog.add_output(draw_gmm, data_stream="Hypo States", recv_data_stream="Hypo States")
+        draw_gmm.add_input(norm, emitting_channel="Data", receiving_channel="Data")
+        draw_gmm.add_input(fts, emitting_channel="Channel Names", receiving_channel="Channel Names")
+        draw_gmm.add_input(recog, emitting_channel="HMM Meta", receiving_channel="HMM Meta")
+        draw_gmm.add_input(recog, emitting_channel="Hypo States", receiving_channel="Hypo States")
 
 
     return recog
@@ -165,20 +164,20 @@ def add_train(pl, norm):
         tokenDictionary=tokenDictionary,
         train_iterations=(5, 10)
         )
-    norm.add_output(train)
-    pl.add_output(train, data_stream="Termination", recv_data_stream='Termination')
+    train.add_input(norm)
+    train.add_input(pl, emitting_channel="Termination", recv_data_stream='Termination')
     
     window1 = Transform_window(100, 0, name="File")
     select1 = Transform_majority_select(name="File")
-    pl.add_output(window1, data_stream="File")
-    window1.add_output(select1)
-    select1.add_output(train, recv_data_stream='File')
+    window1.add_input(pl, emitting_channel="File")
+    select1.add_input(window1)
+    train.add_input(select1, recv_data_stream='File')
 
     window2 = Transform_window(100, 0, name="Annotation")
     select2 = Transform_majority_select(name="Annotation")
-    pl.add_output(window2, data_stream="Annotation")
-    window2.add_output(select2)
-    select2.add_output(train, recv_data_stream='Annotation')
+    window2.add_input(pl, emitting_channel="Annotation")
+    select2.add_input(window2)
+    train.add_input(select2, recv_data_stream='Annotation')
     
     return train
 
@@ -195,59 +194,59 @@ def add_riot_draw(pl, subset=2):
         f = ["ACC_X", "ACC_Y", "ACC_Z", "GYRO_X", "GYRO_Y", "GYRO_Z", "MAG_X", "MAG_Y", "MAG_Z","TEMP", "IO", "A1", "A2", "C", "Q1", "Q2", "Q3", "Q4", "PITCH", "YAW", "ROLL", "HEAD"]
 
     filter1 =Transform_filter(name="Raw Filter", names=f)
-    pl.add_output(filter1)
-    pl.add_output(filter1, data_stream="Channel Names", recv_data_stream="Channel Names")
+    filter1.add_input(pl)
+    filter1.add_input(pl, emitting_channel="Channel Names", receiving_channel="Channel Names")
 
     draw_raw = Draw_lines(name='Raw Data', n_plots=len(f), sample_rate=100, xAxisLength=x_raw)
-    filter1.add_output(draw_raw)
-    filter1.add_output(draw_raw, data_stream="Channel Names", recv_data_stream="Channel Names")
+    draw_raw.add_input(filter1)
+    draw_raw.add_input(filter1, emitting_channel="Channel Names", receiving_channel="Channel Names")
 
     return pl
 
 def riot_add_recog(pl, has_annotation=False):
     filter1 =Transform_filter(name="Annot Filter", names=["ACC_X", "ACC_Y", "ACC_Z", "GYRO_X", "GYRO_Y", "GYRO_Z"])
-    pl.add_output(filter1)
-    pl.add_output(filter1, data_stream="Channel Names", recv_data_stream="Channel Names")
+    filter1.add_input(pl)
+    filter1.add_input(pl, emitting_channel="Channel Names", receiving_channel="Channel Names")
 
     to_fs = Biokit_to_fs()
-    filter1.add_output(to_fs)
+    to_fs.add_input(filter1)
 
     norm = Biokit_norm()
-    to_fs.add_output(norm)
+    norm.add_input(to_fs)
 
     recog = Biokit_recognizer(model_path="./models/RIoT/sequence/", token_insertion_penalty=50)
-    norm.add_output(recog)
+    recog.add_input(norm)
 
     draw_recognition_path = Draw_recognition(xAxisLength=[x_raw, x_raw, x_raw, x_raw])
-    recog.add_output(draw_recognition_path, data_stream="Recognition")
-    recog.add_output(draw_recognition_path, data_stream='HMM Meta', recv_data_stream='HMM Meta')
+    draw_recognition_path.add_input(recog, emitting_channel="Recognition")
+    draw_recognition_path.add_input(recog, data_stream='HMM Meta', recv_data_stream='HMM Meta')
 
     if has_annotation:
         memory = Memory(x_raw)
-        pl.add_output(memory, data_stream='Annotation')
-        memory.add_output(draw_recognition_path, recv_data_stream='Annotation')
+        memory.add_input(pl, data_stream='Annotation')
+        draw_recognition_path.add_input(memory, recv_data_stream='Annotation')
 
     draw_search_graph = Draw_search_graph(n_hypos=1)
-    recog.add_output(draw_search_graph, data_stream="HMM Meta", recv_data_stream="HMM Meta")
-    recog.add_output(draw_search_graph, data_stream="Hypothesis", recv_data_stream="Hypothesis")
+    draw_search_graph.add_input(recog, emitting_channel="HMM Meta", receiving_channel="HMM Meta")
+    draw_search_graph.add_input(recog, emitting_channel="Hypothesis", receiving_channel="Hypothesis")
 
     draw_gmm = Draw_gmm(name="GMM X", plot_names=["ACC_X", "GYRO_X"], n_mixtures=1, n_scatter_points=15)
-    norm.add_output(draw_gmm, data_stream="Data", recv_data_stream="Data")
-    pl.add_output(draw_gmm, data_stream="Channel Names", recv_data_stream="Channel Names")
-    recog.add_output(draw_gmm, data_stream="HMM Meta", recv_data_stream="HMM Meta")
-    recog.add_output(draw_gmm, data_stream="Hypo States", recv_data_stream="Hypo States")
+    draw_gmm.add_input(norm, emitting_channel="Data", receiving_channel="Data")
+    draw_gmm.add_input(pl, emitting_channel="Channel Names", receiving_channel="Channel Names")
+    draw_gmm.add_input(recog, emitting_channel="HMM Meta", receiving_channel="HMM Meta")
+    draw_gmm.add_input(recog, emitting_channel="Hypo States", receiving_channel="Hypo States")
 
     draw_gmm = Draw_gmm(name="GMM Y", plot_names=["ACC_Y", "GYRO_Y"], n_mixtures=1, n_scatter_points=15)
-    norm.add_output(draw_gmm, data_stream="Data", recv_data_stream="Data")
-    pl.add_output(draw_gmm, data_stream="Channel Names", recv_data_stream="Channel Names")
-    recog.add_output(draw_gmm, data_stream="HMM Meta", recv_data_stream="HMM Meta")
-    recog.add_output(draw_gmm, data_stream="Hypo States", recv_data_stream="Hypo States")
+    draw_gmm.add_input(norm, emitting_channel="Data", receiving_channel="Data")
+    draw_gmm.add_input(pl, emitting_channel="Channel Names", receiving_channel="Channel Names")
+    draw_gmm.add_input(recog, emitting_channel="HMM Meta", receiving_channel="HMM Meta")
+    draw_gmm.add_input(recog, emitting_channel="Hypo States", receiving_channel="Hypo States")
 
     draw_gmm = Draw_gmm(name="GMM Z", plot_names=["ACC_Z", "GYRO_Z"], n_mixtures=1, n_scatter_points=15)
-    norm.add_output(draw_gmm, data_stream="Data", recv_data_stream="Data")
-    pl.add_output(draw_gmm, data_stream="Channel Names", recv_data_stream="Channel Names")
-    recog.add_output(draw_gmm, data_stream="HMM Meta", recv_data_stream="HMM Meta")
-    recog.add_output(draw_gmm, data_stream="Hypo States", recv_data_stream="Hypo States")
+    draw_gmm.add_input(norm, emitting_channel="Data", receiving_channel="Data")
+    draw_gmm.add_input(pl, emitting_channel="Channel Names", receiving_channel="Channel Names")
+    draw_gmm.add_input(recog, emitting_channel="HMM Meta", receiving_channel="HMM Meta")
+    draw_gmm.add_input(recog, emitting_channel="Hypo States", receiving_channel="Hypo States")
 
     return pl
 
@@ -268,8 +267,8 @@ def save(pl, file):
     # print()
 
     print('--- Visualize Pipeline ---')
-    pl_val.make_dot_graph(transparent_bg=True).save(rreplace(file, '/', '/gui/', 1).replace('.json', '.png'), 'PNG')
-    pl_val.make_dot_graph(transparent_bg=False).save(file.replace('.json', '.png'), 'PNG')
+    pl_val.dot_graph_full(transparent_bg=True).save(rreplace(file, '/', '/gui/', 1).replace('.json', '.png'), 'PNG')
+    pl_val.dot_graph_full(transparent_bg=False).save(file.replace('.json', '.png'), 'PNG')
 
 
 if __name__ == "__main__":
@@ -301,17 +300,17 @@ if __name__ == "__main__":
 
     print('=== Build Live Connection Pipeline ===')
     pl = In_biosignalsplux("00:07:80:B3:83:ED", 1000, n_bits=n_bits, channel_names=["Pushbutton", "EDA"])
-    # pl.add_output(Log_data())
+    Log_data().add_input(pl)
     scaler = Transform_scale(0, 2**n_bits)
-    pl.add_output(scaler)
+    scaler.add_input(pl)
     draw_raw = Draw_lines(name='Raw Data', n_plots=1, xAxisLength=x_raw)
-    scaler.add_output(draw_raw)
-    pl.add_output(draw_raw, data_stream="Channel Names", recv_data_stream="Channel Names")
+    draw_raw.add_input(scaler)
+    draw_raw.add_input(pl, emitting_channel="Channel Names", receiving_channel="Channel Names")
     annotate_channel = Annotate_channel("Pushbutton", [1, -1])
-    pl.add_output(annotate_channel, data_stream="Channel Names", recv_data_stream="Channel Names")
-    scaler.add_output(annotate_channel)
+    annotate_channel.add_input(pl, emitting_channel="Channel Names", receiving_channel="Channel Names")
+    annotate_channel.add_input(scaler)
     draw_raw2 = Draw_lines(name='Annotation', n_plots=1, xAxisLength=x_raw)
-    annotate_channel.add_output(draw_raw2, data_stream="Annotation")
+    draw_raw2.add_input(annotate_channel, emitting_channel="Annotation")
     save(pl, "pipelines/process_live.json")
 
 
@@ -359,30 +358,30 @@ if __name__ == "__main__":
     print('=== Build RIoT Record Pipeline ===')
     pl = In_riot(id=0)
     # frm_ctr = Debug_frame_counter()
-    # pl.add_output(frm_ctr)
+    # pl.add_input(frm_ctr)
     pl = add_riot_draw(pl, subset=0.5)
     save(pl, "pipelines/riot_vis.json")
 
     annot = Annotate_ui_button(fall_back_target='None')
-    pl.add_output(annot)
+    annot.add_input(pl)
 
     out_data = Out_data(folder="./data/Debug/")
-    annot.add_output(out_data)
-    annot.add_output(out_data, data_stream="Annotation", recv_data_stream="Annotation")
-    pl.add_output(out_data, data_stream="Channel Names", recv_data_stream="Channel Names")
+    out_data.add_input(annot)
+    out_data.add_input(annot, emitting_channel="Annotation", receiving_channel="Annotation")
+    out_data.add_input(pl, emitting_channel="Channel Names", receiving_channel="Channel Names")
     save(pl, "pipelines/riot_record.json")
 
 
     print('=== Build RIoT Record and Update Pipeline ===')
     filter1 =Transform_filter(name="Annot Filter", names=["ACC_X", "ACC_Y", "ACC_Z", "GYRO_X", "GYRO_Y", "GYRO_Z"])
-    annot.add_output(filter1)
-    pl.add_output(filter1, data_stream="Channel Names", recv_data_stream="Channel Names")
+    filter1.add_input(annot)
+    filter1.add_input(pl, emitting_channel="Channel Names", receiving_channel="Channel Names")
 
     to_fs = Biokit_to_fs()
-    filter1.add_output(to_fs)
+    to_fs.add_input(filter1)
 
     norm = Biokit_norm()
-    to_fs.add_output(norm)
+    norm.add_input(to_fs)
 
     pl_train_new = Biokit_update_model(model_path="./models/RIoT/sequence", \
         token_insertion_penalty=20,
@@ -390,11 +389,11 @@ if __name__ == "__main__":
         train_iterations=(7, 10),
         catch_all="None"
         )
-    norm.add_output(pl_train_new)
-    annot.add_output(pl_train_new, data_stream="Annotation", recv_data_stream="Annotation")
+    pl_train_new.add_input(norm)
+    pl_train_new.add_input(annot, emitting_channel="Annotation", receiving_channel="Annotation")
 
     status_text = Draw_text_display(name="Training Status")
-    pl_train_new.add_output(status_text, data_stream="Text", recv_data_stream="Text")
+    status_text.add_input(pl_train_new, emitting_channel="Text", receiving_channel="Text")
     save(pl, "pipelines/riot_record_update.json")
     
 

@@ -2,31 +2,46 @@ import numpy as np
 from .node import Node
 
 class Memory(Node):
-    def __init__(self, length=None, name = "Memory", dont_time = False):
-        super().__init__(name=name, dont_time=dont_time)
+    channels_in = ['Data']
+    channels_out = ['Data']
+
+    category = "Basic"
+    description = "" 
+
+    example_init = {'name': 'Name'}
+
+    def __init__(self, length=None,  concat_batches=True, name = "Memory", **kwargs):
+        super().__init__(name=name, **kwargs)
+
         self.length = length
-        self.buffer = []
+        self.buffer = np.array([])
+        self.concat_batches = concat_batches
 
-    @staticmethod
-    def info():
-        return {
-            "class": "Memory",
-            "file": "Memory.py",
-            "in": ["Data"],
-            "out": ["Data"],
-            "init": {
-                "name": "Name"
-            },
-            "category": "Basic"
-        }
 
-    def _get_setup(self):
+    def _settings(self):
         return {\
-            "length": self.length
+            "length": self.length,
+            "concat_batches": self.concat_batches
            }
 
-    def receive_data(self, data_frame, **kwargs):
-        self.buffer.extend(data_frame)
-        if self.length != None:
-            self.buffer = self.buffer[-self.length:]
-        self.send_data(self.buffer)
+    def process(self, data, **kwargs):
+        d = np.array(data)
+
+        if self.concat_batches:
+            d = np.vstack(d)
+
+            if self.buffer.size == 0:
+                self.buffer = d
+            else:
+                # TODO: in case of self.length != none, a np.roll is probably a more efficient
+                self.buffer = np.vstack([self.buffer, d])
+
+            if self.length != None:
+                # self.buffer = self.buffer[-int(self.length / self.buffer.shape[1]):]
+                self.buffer = self.buffer[-self.length:]
+
+            self._emit_data([self.buffer])
+        else:
+            # self.buffer.extend(data)
+            raise NotImplementedError('No offline file based routine implemented yet for windowing.')
+

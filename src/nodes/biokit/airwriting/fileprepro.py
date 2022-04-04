@@ -11,7 +11,7 @@ class PrePro:
     meanSubtraction = BioKIT.ZNormalization()
     channelRecombination = BioKIT.ChannelRecombination()
     
-    def process(self, adcPath):
+    def process(self, adcPath, **kwargs):
         """
         Process one given adc file and return a MultiChannelFeatureSequence
         """

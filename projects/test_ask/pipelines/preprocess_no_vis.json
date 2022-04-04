@@ -1,0 +1,187 @@
+{
+  "Data input [In_data]": {
+    "class": "In_data",
+    "settings": {
+      "block": false,
+      "name": "Data input",
+      "compute_on": 3,
+      "emit_at_once": 2000,
+      "files": "./projects/test_ask/data/KneeBandageCSL2018/part*/*.h5",
+      "meta": {
+        "sample_rate": 1000,
+        "channels": [
+          "EMG1",
+          "EMG2",
+          "EMG3",
+          "EMG4",
+          "Airborne",
+          "AccUp1",
+          "AccUp2",
+          "AccUp3",
+          "Gonio1",
+          "AccLow1",
+          "AccLow2",
+          "AccLow3",
+          "Gonio2",
+          "GyroUp1",
+          "GyroUp2",
+          "GyroUp3",
+          "GyroLow1",
+          "GyroLow2",
+          "GyroLow3"
+        ],
+        "targets": [
+          "cspin-ll",
+          "run",
+          "jump-2",
+          "shuffle-l",
+          "sit",
+          "cstep-r",
+          "vcut-rr",
+          "stair-down",
+          "stand-sit",
+          "jump-1",
+          "sit-stand",
+          "stand",
+          "cspin-lr",
+          "cspin-rr",
+          "cstep-l",
+          "vcut-ll",
+          "vcut-rl",
+          "shuffle-r",
+          "stair-up",
+          "walk",
+          "cspin-rl",
+          "vcut-lr"
+        ]
+      },
+      "shuffle": true
+    },
+    "inputs": [],
+    "outputs": [
+      {
+        "emitting_node": "Data input [In_data]",
+        "receiving_node": "Window [Transform_window]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "Data input [In_data]",
+        "receiving_node": "Features [Transform_feature]",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
+        "connection_counter": 0
+      }
+    ]
+  },
+  "Window [Transform_window]": {
+    "class": "Transform_window",
+    "settings": {
+      "name": "Window",
+      "compute_on": 3,
+      "length": 100,
+      "overlap": 0,
+      "concat_batches": true
+    },
+    "inputs": [
+      {
+        "emitting_node": "Data input [In_data]",
+        "receiving_node": "Window [Transform_window]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      }
+    ],
+    "outputs": [
+      {
+        "emitting_node": "Window [Transform_window]",
+        "receiving_node": "Features [Transform_feature]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      }
+    ]
+  },
+  "Features [Transform_feature]": {
+    "class": "Transform_feature",
+    "settings": {
+      "name": "Features",
+      "compute_on": 3,
+      "features": [
+        "calc_mean",
+        "rms"
+      ],
+      "feature_args": {
+        "samplingfrequency": 1000
+      }
+    },
+    "inputs": [
+      {
+        "emitting_node": "Window [Transform_window]",
+        "receiving_node": "Features [Transform_feature]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "Data input [In_data]",
+        "receiving_node": "Features [Transform_feature]",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
+        "connection_counter": 0
+      }
+    ],
+    "outputs": [
+      {
+        "emitting_node": "Features [Transform_feature]",
+        "receiving_node": "Name [Biokit_to_fs]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      }
+    ]
+  },
+  "Name [Biokit_to_fs]": {
+    "class": "Biokit_to_fs",
+    "settings": {
+      "name": "Name",
+      "compute_on": 3
+    },
+    "inputs": [
+      {
+        "emitting_node": "Features [Transform_feature]",
+        "receiving_node": "Name [Biokit_to_fs]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      }
+    ],
+    "outputs": [
+      {
+        "emitting_node": "Name [Biokit_to_fs]",
+        "receiving_node": "Norm [Biokit_norm]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      }
+    ]
+  },
+  "Norm [Biokit_norm]": {
+    "class": "Biokit_norm",
+    "settings": {
+      "name": "Norm",
+      "compute_on": 3
+    },
+    "inputs": [
+      {
+        "emitting_node": "Name [Biokit_to_fs]",
+        "receiving_node": "Norm [Biokit_norm]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      }
+    ],
+    "outputs": []
+  }
+}

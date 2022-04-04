@@ -24,7 +24,7 @@
             "request": "attach",
             "connect": {
                 "host": "127.0.0.1",
-                "port": 5685
+                "port": 5688
             },
             "pathMappings": [
                 {
@@ -38,6 +38,7 @@
             "type": "python",
             "request": "launch",
             "program": "${file}",
+            "cwd": "${fileDirname}",
             "console": "integratedTerminal"
         }
     ]

@@ -45,8 +45,16 @@ class MultipleWrapper (BaseTransformer_eager):
 
 
 class Transform_feature(Node):
-    def __init__(self, name="Features", features=["calc_mean"], feature_args={}, dont_time=False):
-        super().__init__(name, dont_time)
+    channels_in = ['Data', "Channel Names"]
+    channels_out = ['Data', 'Channel Names']
+
+    category = "Transform"
+    description = "" 
+
+    example_init = {"name": "Name"}
+
+    def __init__(self, name="Features", features=["calc_mean"], feature_args={}, **kwargs):
+        super().__init__(name, **kwargs)
 
         self.features = features
         self.feature_args = feature_args
@@ -68,49 +76,42 @@ class Transform_feature(Node):
         self._union = FeatureUnion(self.featureList, featureNames=self.features)
         # self._union = FeatureUnion(self.featureList, featureNames=self.features, **self.unionParams)
 
-        self.channel_names = []
-        self.out_channels = None
+        self.channel_names = None
+        self.channels = []
 
-    @staticmethod
-    def info():
-        return {
-            "class": "Transform_feature",
-            "file": "Transform_feature.py",
-            "in": ["Data", "Channel Names"],
-            "out": ["Data", "Channel Names"],
-            "init": {
-                "name": "Name"
-            },
-            "category": "Transform"
-        }
         
-    @property
-    def in_map(self):
-        return {
-            "Data": self.receive_data,
-            "Channel Names": self.receive_channels
-        }
-        
-    def _get_setup(self):
+    def _settings(self):
         return {\
             "features": self.features,
             "feature_args": self.feature_args
         }
 
-    def receive_channels(self, names, **kwargs):
-        self.channel_names = names
-        self.out_channels = None
+    def _should_process(self, data=None, channel_names=None):
+        return data is not None and \
+            (self.channel_names is not None or channel_names is not None)
 
-    def receive_data(self, data_frame, **kwargs):
+
+    # input shape: (batch/file, time, channel)
+    def process(self, data, channel_names=None, **kwargs):
+        if channel_names is not None:
+            self.channel_names = channel_names
+
         # TODO: update the union stuff etc to not expect a tuple as input
         # TODO: update this to not expect it to be wrapped in a list
         # TODO: update this to not use a map anymore
         # TODO: currently ft.transform is called twice, as the dimensions_ will otherwise not be set -> most of the time we do double the work for no benefit 
         # data, channels = self._union.transform((data_frame, self.channel_names))
-        data, channels = self._union.transform(([np.array(data_frame).T], self.channel_names))
-        self.send_data(list(data))
 
-        if self.out_channels == None and len(channels) != 0:
-            print(channels)
-            self.out_channels = channels
-            self.send_data(channels, data_stream="Channel Names")
+        # the union implementation is from mkr and expects (batch, channel, time)
+        fts, channels = self._union.transform((np.array(data).transpose((0, 2, 1)), self.channel_names))
+        
+        # as we've folded the original time axis into the features, let's insert it with size one, to fulfill the (batch, time, channel) expectation
+        # STOPPED HERE: TODO: rething the insertion as well as the channels put out by window. As the current idea doens't make much sense for normalization, as we would normalize on sequences of length 1... or should we normalize over batches? that feels quite wrong tho...
+        # -> nvm: the norm is a running norm anyway, ie updates with every frame.
+        # -> still makes sense to consider, but is less pressing
+        res = np.expand_dims(np.array(list(fts)), axis=1)
+        self._emit_data(res)
+
+        if set(self.channels) != set(channels):
+            self.channels = channels
+            self._emit_data(channels, channel="Channel Names")

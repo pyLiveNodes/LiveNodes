@@ -12,6 +12,10 @@ from src.nodes.node import Node
 
 from nodes_collect import discover_infos
 
+from src.nodes.utils import logger
+import datetime
+import time
+
 
 class SubView(QWidget):
     def __init__(self, child, name, back_fn, parent=None):
@@ -51,14 +55,24 @@ class MainWindow(QtWidgets.QMainWindow):
         self.widget_home = Home(onconfig=self.onconfig, onstart=self.onstart)
         self.central_widget.addWidget(self.widget_home)
 
+        self.log_file = None
+
         # for some fucking reason i cannot figure out how to set the css class only on the home class... so hacking this by adding and removign the class on view change...
         # self.central_widget.setProperty("cssClass", "home")
         # self.widget_home.setProperty("cssClass", "home")
     
-    def closeEvent(self, event):
+    def stop(self):
         cur = self.central_widget.currentWidget()
         if hasattr(cur, 'stop'):
             cur.stop()
+            
+        if self.log_file is not None:
+            logger.remove_cb(self._log_helper)
+            self.log_file.close()
+            self.log_file = None
+
+    def closeEvent(self, event):
+        self.stop()
         return super().closeEvent(event)
 
     def return_home(self):
@@ -72,13 +86,22 @@ class MainWindow(QtWidgets.QMainWindow):
             # for n in cur.child.get_nodes().values():
             #     print(n.__getstate__())
         
+        self.stop()
         self.central_widget.setCurrentWidget(self.widget_home)
         self.central_widget.removeWidget(cur)
-        cur.stop()
         print("Nr of views: ", self.central_widget.count())
 
+    def _log_helper(self, msg):
+        self.log_file.write(msg + '\n')
+        self.log_file.flush()
+
     def onstart(self, pipeline_path):
+        log_file=f"./logs/{datetime.datetime.fromtimestamp(time.time())}"
+        self.log_file = open(log_file, 'a')
+        logger.register_cb(self._log_helper)
+
         pipeline = Node.load(pipeline_path)
+        # TODO: make these logs project dependent as well
         widget_run = SubView(child=Run(pipeline=pipeline), name=f"Running: {pipeline_path}", back_fn=self.return_home)
         self.central_widget.addWidget(widget_run)
         self.central_widget.setCurrentWidget(widget_run)

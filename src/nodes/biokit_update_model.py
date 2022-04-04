@@ -17,7 +17,7 @@ import traceback
 # TODO: also figure out how to adapt a model to the current wearer -> should be a standard procedure somewhere...
     # -> have a second look at the MAP tests in biokit
 class Biokit_update_model(Node):
-    def __init__(self, model_path, phases_new_act, token_insertion_penalty, train_iterations, catch_all="None", update_every_s=60, name="Train", dont_time=False):
+    def __init__(self, model_path, phases_new_act, token_insertion_penalty, train_iterations, catch_all="None", update_every_s=60, name="Train", **kwargs):
         super().__init__(name, dont_time)
 
         self.model_path = model_path
@@ -63,7 +63,7 @@ class Biokit_update_model(Node):
             "Annotation": self.receive_annotation,
         }
 
-    def _get_setup(self):
+    def _settings(self):
         return {\
             # "batch": self.batch,
             "token_insertion_penalty": self.token_insertion_penalty,
@@ -283,7 +283,7 @@ class Biokit_update_model(Node):
     def receive_annotation(self, annotation, **kwargs):
         self.annotations_q.put(annotation)
 
-    def receive_data(self, fs, **kwargs):
+    def process(self, data, **kwargs):
         self.data_q.put(fs)
 
     def sender_process(self):
@@ -303,7 +303,7 @@ class Biokit_update_model(Node):
 
             loop_t = time.time()
             if msg_loop_ctr >= 10:
-                self.send_data(f"[{str(self)}]\n     Next training: {self.update_every_s - (loop_t - t):.2f}s.", data_stream="Text") 
+                self._emit_data(f"[{str(self)}]\n     Next training: {self.update_every_s - (loop_t - t):.2f}s.", channel="Text") 
                 msg_loop_ctr = 0
 
             if loop_t - t  >= self.update_every_s:
@@ -311,9 +311,9 @@ class Biokit_update_model(Node):
                 print('Update!', len(self.data))
 
                 try:
-                    self.send_data(f"[{str(self)}]\n      Starting training.", data_stream="Text") 
+                    self._emit_data(f"[{str(self)}]\n      Starting training.", channel="Text") 
                     self._train()
-                    self.send_data(f"[{str(self)}]\n      Finished training.", data_stream="Text") 
+                    self._emit_data(f"[{str(self)}]\n      Finished training.", channel="Text") 
                     print('Trained model')
                 except Exception as err:
                     print(traceback.format_exc())

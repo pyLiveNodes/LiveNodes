@@ -14,7 +14,7 @@ class PrePro:
     def __init__(self):
         self.duration = None
     
-    def process(self, adcPath):
+    def process(self, adcPath, **kwargs):
         """
         Process one given adc file and return a MultiChannelFeatureSequence
         """
