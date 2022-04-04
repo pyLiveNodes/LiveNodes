@@ -6,20 +6,17 @@ class Data(Sender):
     channels_out = ["Data"]
 
     def _run(self):
-        ctr = 0
-        def call():
-            nonlocal ctr
+        for ctr in range(10):
             self.info(ctr)
             self._emit_data(ctr)
-            ctr += 1
-            return ctr < 10
-        return call
+            yield True
+        return False
 
 class Quadratic(Node):
     channels_in = ["Data"]
     channels_out = ["Data"]
 
-    def process(self, data):
+    def process(self, data, **kwargs):
         self._emit_data(data ** 2)
 
 
@@ -32,7 +29,7 @@ class Save(Node):
 
         self.out = mp.SimpleQueue()
 
-    def process(self, data):
+    def process(self, data, **kwargs):
         self.out.put(data)
 
     def get_state(self):
@@ -42,10 +39,10 @@ class Save(Node):
         return res
 
 if __name__ == "__main__":
-    data = Data(name="A", compute_on=Location.SAME)
-    quadratic = Quadratic(name="B", compute_on=Location.SAME)
-    out1 = Save(name="C", compute_on=Location.SAME)
-    out2 = Save(name="D", compute_on=Location.SAME)
+    data = Data(name="A", compute_on=Location.THREAD)
+    quadratic = Quadratic(name="B", compute_on=Location.THREAD)
+    out1 = Save(name="C", compute_on=Location.THREAD)
+    out2 = Save(name="D", compute_on=Location.THREAD)
     
     out1.connect_inputs_to(data)
     quadratic.connect_inputs_to(data)

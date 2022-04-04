@@ -65,19 +65,17 @@ class QueueHelperHack():
             # TODO: if itm_ctr already exists, should we not rather extend than overwrite it? (thinking of the mulitple emit_data per process call examples (ie window))
             self._read[itm_ctr] = item
 
-    def get(self, ctr, discard_before=True):
+    def discard_before(self, ctr):
+        self._read = {key: val for key, val in self._read.items() if key >= ctr}
+
+    def get(self, ctr):
         if self.compute_on == Location.SAME:
             # This is only needed in the location.same case, as in the process and thread case the queue should always be empty if we arrive here
             # This should also never be executed in process or thread, as then the update function does not block and keys are skipped!
             self.empty_queue()
 
-        if ctr in self._read:
-            res = self._read[ctr]
-            
-            if discard_before:
-                self._read = {key: val for key, val in self._read.items() if key >= ctr}
-                
-            return True, res
+        if ctr in self._read:         
+            return True, self._read[ctr]
         return False, None
     
 
@@ -551,7 +549,12 @@ class Node ():
             # sender will never receive inputs and therefore will never have 
             # TODO: IMPORTANT: every node it's own clock seems to have been a mistake: go back to the original idea of "senders and syncs implement clocks and everyone else just passes them along"
             self._ctr = ctr
-            self.process(**_current_data)
+            self.process(**_current_data, _ctr=ctr)
+            for queue in self._received_data.values():
+                queue.discard_before(ctr)
+
+            # if not keep_current_data:
+            #     self.discard_before
             # if not prevent_tick:
             # else:
             #     self.debug('Prevented tick')
@@ -688,7 +691,7 @@ class Node ():
     def process_time_series(self, ts):
         return ts
 
-    def process(self, data):
+    def process(self, data, **kwargs):
         """
         Heart of the nodes processing, should be a stateless(/functional) processing function, 
         ie "self" should only be used to call _emit_[data|draw]. 
@@ -814,7 +817,7 @@ class Sender(Node):
 
     channels_in = [] # must be empty!
 
-    def __init__(self, name, block=True, compute_on=Location.PROCESS, should_time=False):
+    def __init__(self, name, block=False, compute_on=Location.PROCESS, should_time=False):
         super().__init__(name, compute_on, should_time)
         
         if not block and compute_on == Location.SAME:
@@ -848,7 +851,7 @@ class Sender(Node):
         runner = self._run()
         try:
             # as long as we do not receive a termination signal and there is data, we will send data
-            while not self._acquire_lock(self._subprocess_info['termination_lock'], block=False) and runner():
+            while not self._acquire_lock(self._subprocess_info['termination_lock'], block=False) and next(runner):
                 self._ctr = self._clock.tick()
         except StopIteration:
                 self.info('Reached end of run')
@@ -864,7 +867,7 @@ class Sender(Node):
             # iterate until the generator that is run() returns false, ie no further data is to be processed
             try:
                 runner = self._run()
-                while runner():
+                while next(runner):
                     self._ctr = self._clock.tick()
             except StopIteration:
                 self.info('Reached end of run')
@@ -873,7 +876,8 @@ class Sender(Node):
 
 class BlockingSender(Sender):
 
-    def __init__(self, name, block=True, compute_on=Location.PROCESS, should_time=False):
+    # TODO: check if the block parameter even does anything
+    def __init__(self, name, block=False, compute_on=Location.PROCESS, should_time=False):
         super().__init__(name, block, compute_on, should_time)
 
         self._clock = Clock(node=self, should_time=should_time)

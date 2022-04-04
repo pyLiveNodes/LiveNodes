@@ -134,7 +134,7 @@ class Biokit_train(Node):
     def receive_annotation(self, annotation, **kwargs):
         self.annotations.extend(annotation)
 
-    def process(self, data):
+    def process(self, data, **kwargs):
         self.data.append(data)
 
 

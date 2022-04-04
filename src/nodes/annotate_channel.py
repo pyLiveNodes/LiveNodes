@@ -32,7 +32,7 @@ class Annotate_channel(Node):
         return data is not None and \
             (self.idx is not None or channel_names is not None)
 
-    def process(self, data, channel_names=None):
+    def process(self, data, channel_names=None, **kwargs):
         if channel_names is not None:
             self.idx = np.array(channel_names) == self.channel_name
             self._emit_data(np.array(channel_names)[~self.idx], channel="Channel Names")

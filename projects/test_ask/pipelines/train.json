@@ -2,7 +2,7 @@
   "Data input [In_data]": {
     "class": "In_data",
     "settings": {
-      "block": true,
+      "block": false,
       "name": "Data input",
       "compute_on": 3,
       "emit_at_once": 2000,

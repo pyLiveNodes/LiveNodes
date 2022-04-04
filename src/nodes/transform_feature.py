@@ -92,7 +92,7 @@ class Transform_feature(Node):
 
 
     # input shape: (batch/file, time, channel)
-    def process(self, data, channel_names=None):
+    def process(self, data, channel_names=None, **kwargs):
         if channel_names is not None:
             self.channel_names = channel_names
 

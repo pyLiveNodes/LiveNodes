@@ -34,7 +34,7 @@ class Transform_filter(Node):
         return data is not None and \
             (self.received_channel_names or channel_names is not None)
 
-    def process(self, data, channel_names=None):
+    def process(self, data, channel_names=None, **kwargs):
         if channel_names is not None:
             # yes, seems less efficient than np.isin, but implicitly re-orders the channels of the output to match the provided names
             self.idx = [channel_names.index(x) for x in self.names]

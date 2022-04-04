@@ -1,4 +1,5 @@
 from src.nodes.memory import Memory
+from src.nodes.log_data import Log_data
 
 from src.nodes.biokit_norm import Biokit_norm
 from src.nodes.biokit_to_fs import Biokit_to_fs

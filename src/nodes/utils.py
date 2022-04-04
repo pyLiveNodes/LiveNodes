@@ -77,7 +77,7 @@ class Logger():
 
             level_str = ["Warning", "Information", "Debug", "Verbose"][level - 1]
 
-            msg = f"{timestamp} | {cur_proc: <12} | {cur_thread: <11} | {level_str: <11} | {txt}"
+            msg = f"{timestamp} | {cur_proc: <13} | {cur_thread: <13} | {level_str: <11} | {txt}"
 
             # acquire blocking log
             self._lock.acquire(True)
@@ -92,4 +92,4 @@ class Logger():
         self._log_level = level
 
 
-logger = Logger(stdout=True)
+logger = Logger(stdout=False)

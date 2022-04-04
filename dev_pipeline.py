@@ -47,8 +47,9 @@ if __name__ == '__main__':
 
     print('=== Load Pipeline ====')
     # pipeline = Node.load('./projects/test_ask/pipelines/recognize.json')
+    pipeline = Node.load('./projects/test_ask/pipelines/preprocess.json')
     # pipeline = Node.load('./projects/test_ask/pipelines/preprocess_no_vis.json')
-    pipeline = Node.load('./projects/test_ask/pipelines/recognize_no_vis.json')
+    # pipeline = Node.load('./projects/test_ask/pipelines/recognize_no_vis.json')
 
     pipeline.start()
     time.sleep(1000)

@@ -129,7 +129,7 @@ class Draw_search_graph(View):
         return hypothesis is not None and \
             (self.hmm_meta is not None or hmm_meta is not None)
 
-    def process(self, hypothesis, hmm_meta=None):
+    def process(self, hypothesis, hmm_meta=None, **kwargs):
         if hmm_meta is not None:
             self.hmm_meta = hmm_meta
 

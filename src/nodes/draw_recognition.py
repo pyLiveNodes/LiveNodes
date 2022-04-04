@@ -67,6 +67,11 @@ class Draw_recognition(View):
             "xAxisLength": self.xAxisLength
            }
 
+    def _should_draw(self, **cur_state):
+        # if not bool(cur_state):
+        #     print('Draw infos', "recognition" in cur_state, "annotation" in cur_state, "colors" in cur_state, bool(cur_state))
+        return bool(cur_state)
+
     def _init_draw(self, subfig):
         bar_names = ["State", "Atom", "Token", "Reference"]
         yrange = (0, 0.7)
@@ -99,6 +104,7 @@ class Draw_recognition(View):
         # legend.set_alpha(0) # TODO: for some reason the legend is transparent, no matter what i set here...
         # legend.set_zorder(100)
 
+
         def update (recognition, annotation, colors):
             nonlocal self, bar_objs, txt_fout_objs, txt_fin_objs
 
@@ -128,12 +134,16 @@ class Draw_recognition(View):
 
 
     def _should_process(self, recognition=None, hmm_meta=None, annotation=None):
-        return recognition is not None and \
-            (self.colors is not None or hmm_meta is not None) and \
-            (annotation is not None or not self._is_input_connected('Annotation'))
+
+        res = recognition is not None \
+            and (self.colors is not None or hmm_meta is not None) \
+            and (annotation is not None or not self._is_input_connected('Annotation'))
+        # if not res:
+        #     print(recognition is not None, annotation is not None)
+        return res
             # if the annotation input is connected it must be present for processing
 
-    def process(self, recognition=None, hmm_meta=None, annotation=None):
+    def process(self, recognition=None, hmm_meta=None, annotation=None, **kwargs):
         if hmm_meta is not None:
             token_colors, atom_colors, state_colors = self._init_colors(hmm_meta.get('topology'))
             self.colors = [state_colors, atom_colors, token_colors, token_colors]
@@ -141,8 +151,11 @@ class Draw_recognition(View):
         if len(recognition) > 0:
             # for the annotaiton, we'll assume it is in the normal (batch/file, time, channel) format and that batch is not relevant here
             # similarly we expect recognition not to have taken batch into account (ah fu... there is still some trouble there, that is not a true assumption)
-            print(np.array(annotation)[0,:,0].shape, len(recognition))
-            self._emit_draw(recognition=recognition, colors=self.colors, annotation=np.array(annotation)[0,:,0])
+            # print(np.array(annotation).shape, len(recognition))
+            if annotation is not None:
+                annotation = np.array(annotation)[0,:,0]
+            self._emit_draw(recognition=recognition, colors=self.colors, annotation=annotation)
+            # self._emit_draw(recognition=recognition, colors=self.colors, annotation=None)
 
 
     # TODO: move this to utils or something...

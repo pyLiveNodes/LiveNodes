@@ -2,7 +2,7 @@
   "Playback [In_playback]": {
     "class": "In_playback",
     "settings": {
-      "block": true,
+      "block": false,
       "name": "Playback",
       "compute_on": 2,
       "emit_at_once": 20,
@@ -55,7 +55,7 @@
           "vcut-lr"
         ]
       },
-      "annotation_holes": "Stand",
+      "annotation_holes": "stand",
       "csv_columns": [
         "act",
         "start",
@@ -281,15 +281,15 @@
       {
         "emitting_node": "Normed Feature Filter [Transform_filter]",
         "receiving_node": "Normed Features [Draw_lines]",
-        "emitting_channel": "Data",
-        "receiving_channel": "Data",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
         "connection_counter": 0
       },
       {
         "emitting_node": "Normed Feature Filter [Transform_filter]",
         "receiving_node": "Normed Features [Draw_lines]",
-        "emitting_channel": "Channel Names",
-        "receiving_channel": "Channel Names",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
         "connection_counter": 0
       }
     ]
@@ -298,7 +298,7 @@
     "class": "Draw_lines",
     "settings": {
       "name": "Normed Features",
-      "compute_on": 1,
+      "compute_on": 3,
       "n_plots": 3,
       "xAxisLength": 50,
       "sample_rate": 1000,
@@ -311,15 +311,15 @@
       {
         "emitting_node": "Normed Feature Filter [Transform_filter]",
         "receiving_node": "Normed Features [Draw_lines]",
-        "emitting_channel": "Data",
-        "receiving_channel": "Data",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
         "connection_counter": 0
       },
       {
         "emitting_node": "Normed Feature Filter [Transform_filter]",
         "receiving_node": "Normed Features [Draw_lines]",
-        "emitting_channel": "Channel Names",
-        "receiving_channel": "Channel Names",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
         "connection_counter": 0
       }
     ],
@@ -384,7 +384,7 @@
     "class": "Draw_recognition",
     "settings": {
       "name": "Recognition",
-      "compute_on": 1,
+      "compute_on": 3,
       "xAxisLength": [
         50,
         50,
@@ -421,7 +421,7 @@
     "class": "Draw_search_graph",
     "settings": {
       "name": "Search Graph",
-      "compute_on": 1,
+      "compute_on": 3,
       "n_hypos": 3
     },
     "inputs": [
@@ -500,7 +500,8 @@
     "settings": {
       "name": "Memory",
       "compute_on": 3,
-      "length": 5000
+      "length": 5000,
+      "concat_batches": true
     },
     "inputs": [
       {

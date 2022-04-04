@@ -107,8 +107,9 @@ class In_data(Sender):
             for i in range(0, len(data), self.emit_at_once):
                 d_len = len(data[i:i+self.emit_at_once]) # usefull if i+self.emit_at_once > len(data)
                 self._emit_data(np.array([data[i:i+self.emit_at_once]]))
-                self._emit_data(np.array(targs[i:i+self.emit_at_once]).reshape((1, self.emit_at_once, 1)), channel='Annotation')
-                self._emit_data(np.array([file_number] * d_len).reshape((1, d_len, 1)), channel="File")
+                # use reshape -1, as the data can also be shorter than emit_at_once and will be adjusted accordingly
+                self._emit_data(np.array(targs[i:i+self.emit_at_once]).reshape((1, -1, 1)), channel='Annotation')
+                self._emit_data(np.array([file_number] * d_len).reshape((1, -1, 1)), channel="File")
                 yield True
 
         self._emit_data(None, channel='Termination') # TODO: maybe we could use something like this for syncing... ie seperate stream with just a counter 

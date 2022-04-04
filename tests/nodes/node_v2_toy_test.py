@@ -6,37 +6,34 @@ class Data(Sender):
     channels_in = []
     # yes, "Data" would have been fine, but wanted to quickly test the naming parts
     # TODO: consider
-    channels_out = ["Data"]
+    channels_out = ["Alternate Data"]
 
     def _run(self):
-        ctr = 0
-        def call():
-            nonlocal ctr
+        for ctr in range(10):
             self.info(ctr)
-            self._emit_data(ctr)
-            ctr += 1
-            return ctr < 10
-        return call
+            self._emit_data(ctr, channel="Alternate Data")
+            yield True
+        return False
 
 
 class Quadratic(Node):
-    channels_in = ["Data"]
-    channels_out = ["Data"]
+    channels_in = ["Alternate Data"]
+    channels_out = ["Alternate Data"]
 
-    def process(self, data):
-        self._emit_data(data ** 2, channel="Data")
+    def process(self, alternate_data, **kwargs):
+        self._emit_data(alternate_data ** 2, channel="Alternate Data")
 
 
 class Save(Node):
-    channels_in = ["Data"]
+    channels_in = ["Alternate Data"]
     channels_out = []
 
     def __init__(self, name, **kwargs):
         super().__init__(name, **kwargs)
         self.out = mp.SimpleQueue()
 
-    def process(self, data):
-        self.out.put(data)
+    def process(self, alternate_data, **kwargs):
+        self.out.put(alternate_data)
 
     def get_state(self):
         res = []

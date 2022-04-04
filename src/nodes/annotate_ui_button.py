@@ -38,7 +38,7 @@ class Annotate_ui_button(Node):
             "fall_back_target": self.fall_back_target
         }
     
-    def process(self, data):
+    def process(self, data, **kwargs):
         # IMPORTANT: we assume that the length of data is always short enough that we do not care about timing issues with the label
         self._emit_data(data)
 

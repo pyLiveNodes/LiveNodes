@@ -43,17 +43,19 @@ class Biokit_recognizer(Node):
     def _should_process(self, data=None, file=None):
         return data is not None
 
-    def process(self, data, file=None):
+    def process(self, data, file=None, **kwargs):
         # IMPORTANT/TODO: check if this is equivalent to the previous behaviour,ie if we always receive the file together with the data
         # file is optional, if it is not passed (ie None) it doesn't change except in the first send
-        self._initial = self.file != file
-        self.file = file
+        if file is not None:
+            file = file[0][0][0]
+            self._initial = self.file != file
+            self.file = file
 
         am = self.reco.getAtomManager()
         dc = self.reco.getDictionary()
 
         for batch in data:
-            _, path, _ = self.reco.decode(batch, generatepath=True, initialize=self._initial) # not sure if we need to initialize this on the first call?
+            _, path, _ = self.reco.decode(batch, generatepath=True, initialize=bool(self._initial)) # not sure if we need to initialize this on the first call?
 
             if self._initial:
                 # get search graph

@@ -88,15 +88,15 @@
     },
     {
       "in_id": "1e6fc78e-15f3-4133-b224-f54723cacae3",
-      "in_index": 0,
-      "out_id": "4abd1933-d9bb-4cd3-9491-9e0cae7ee343",
-      "out_index": 0
-    },
-    {
-      "in_id": "1e6fc78e-15f3-4133-b224-f54723cacae3",
       "in_index": 1,
       "out_id": "4abd1933-d9bb-4cd3-9491-9e0cae7ee343",
       "out_index": 1
+    },
+    {
+      "in_id": "1e6fc78e-15f3-4133-b224-f54723cacae3",
+      "in_index": 0,
+      "out_id": "4abd1933-d9bb-4cd3-9491-9e0cae7ee343",
+      "out_index": 0
     },
     {
       "in_id": "29c24c8b-edde-40f4-8ab0-55fe0499175c",
@@ -180,7 +180,7 @@
         "association_to_node": "Window [Transform_window]"
       },
       "position": {
-        "x": 330.729411764706,
+        "x": 331.729411764706,
         "y": 279.97647058823577
       }
     },
@@ -257,8 +257,8 @@
         "association_to_node": "Recognizer [Biokit_recognizer]"
       },
       "position": {
-        "x": 1260.070588235294,
-        "y": 366.5647058823531
+        "x": 1259.070588235294,
+        "y": 365.5647058823531
       }
     },
     {
@@ -269,7 +269,7 @@
       },
       "position": {
         "x": 1566.0,
-        "y": 465.0
+        "y": 464.0
       }
     },
     {
@@ -312,8 +312,8 @@
         "association_to_node": "Memory [Memory]"
       },
       "position": {
-        "x": 315.48235294117626,
-        "y": 517.858823529412
+        "x": 316.48235294117626,
+        "y": 518.8588235294119
       }
     }
   ]

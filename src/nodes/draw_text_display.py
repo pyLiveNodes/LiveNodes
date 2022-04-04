@@ -44,5 +44,5 @@ class Draw_text_display(View):
             return [label]
         return update
 
-    def process(self, text):
+    def process(self, text, **kwargs):
         self._emit_draw(text=text)  

@@ -54,6 +54,7 @@ class Run(FigureCanvasQTAgg):
 
         print('Termination time in pipeline!')
         self.pipeline.stop()
+        self.worker_term_lock.release()
 
 
     # i would have assumed __del__ would be the better fit, but that doesn't seem to be called when using del... for some reason
@@ -63,6 +64,9 @@ class Run(FigureCanvasQTAgg):
         self.worker_term_lock.release()
         self.worker.join(2)
 
+        # yes, sometimes the program will then not return, but only if we also really need to kill the subprocesses!
+        self.worker_term_lock.acquire()
+        
         print('Termination time in view!')
         self.worker.terminate()
         self.animation.pause()

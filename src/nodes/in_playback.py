@@ -27,7 +27,7 @@ class In_playback(Sender):
     example_init = {'name': 'Name'}
 
     # TODO: consider using a file for meta data instead of dictionary...
-    def __init__(self, files, meta, emit_at_once=1, annotation_holes="Stand", csv_columns=["act", "start", "end"], name="Playback", compute_on=Location.THREAD, block=True, **kwargs):
+    def __init__(self, files, meta, emit_at_once=1, annotation_holes="stand", csv_columns=["act", "start", "end"], name="Playback", compute_on=Location.THREAD, block=False, **kwargs):
         super().__init__(name, compute_on=compute_on, block=block, **kwargs)
 
         self.meta = meta
@@ -65,6 +65,9 @@ class In_playback(Sender):
         self._emit_data(self.channels, channel="Channel Names")
         ctr = -1
 
+        if self.annotation_holes not in target_to_id:
+            raise Exception('annotation filler must be in known targets. got', self.annotation_holes, target_to_id.keys())
+
         # TODO: add sigkill handler
         while(True):
             f = random.choice(fs)
@@ -97,14 +100,17 @@ class In_playback(Sender):
                 for i in range(start, end, self.emit_at_once):
                     d_len = len(data[i:i+self.emit_at_once]) # usefull if i+self.emit_at_once > len(data), as then all the rest will be read into one batch
                     
+                    # if d_len < self.emit_at_once:
+                    #     print('Interesting')
                     # The data format is always: (batch/file, time, channel)
                     # self.debug(data[i:i+self.emit_at_once][0])
                     self._emit_data(np.array([data[i:i+self.emit_at_once]]))
 
                     if len(targs[i:i+self.emit_at_once]) > 0:
-                        self._emit_data(np.array(targs[i:i+self.emit_at_once]).reshape((1, self.emit_at_once, 1)), channel='Annotation')
+                        # use reshape -1, as the data can also be shorter than emit_at_once and will be adjusted accordingly
+                        self._emit_data(np.array(targs[i:i+self.emit_at_once]).reshape((1, -1, 1)), channel='Annotation')
                     
-                    self._emit_data(np.array([ctr] * d_len).reshape((1, d_len, 1)), channel="File")
+                    self._emit_data(np.array([ctr] * d_len).reshape((1, -1, 1)), channel="File")
                     
                     while time.time() < last_time + sleep_time:
                         time.sleep(0.00001)

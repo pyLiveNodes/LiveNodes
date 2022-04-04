@@ -64,7 +64,7 @@ class Out_data(Node):
         return data is not None and \
             (self.channels is not None or channel_names is not None)
 
-    def process(self, data, channel_names=None, meta=None, annotation=None):
+    def process(self, data, channel_names=None, meta=None, annotation=None, **kwargs):
         if channel_names is not None:
             self.channels = channel_names
 
