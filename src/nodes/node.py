@@ -42,18 +42,34 @@ class QueueHelperHack():
             self.queue = mp.Queue()
         elif compute_on in [Location.SAME]:
             self.queue = queue.Queue()
-        # self.queue = mp.SimpleQueue()
+
+        self.compute_on = compute_on
         self._read = {}
 
     def put(self, ctr, item):
         self.queue.put((ctr, item))
         # self.queue.put_nowait((ctr, item))
 
-    def get(self, ctr, discard_before=True):
+    def update(self, timeout=0.01):
+        try:
+            itm_ctr, item = self.queue.get(block=True, timeout=timeout)
+            self._read[itm_ctr] = item
+            return True, itm_ctr
+        except queue.Empty:
+            pass
+        return False, -1
+
+    def empty_queue(self):
         while not self.queue.empty():
             itm_ctr, item = self.queue.get()
             # TODO: if itm_ctr already exists, should we not rather extend than overwrite it? (thinking of the mulitple emit_data per process call examples (ie window))
             self._read[itm_ctr] = item
+
+    def get(self, ctr, discard_before=True):
+        if self.compute_on == Location.SAME:
+            # This is only needed in the location.same case, as in the process and thread case the queue should always be empty if we arrive here
+            # This should also never be executed in process or thread, as then the update function does not block and keys are skipped!
+            self.empty_queue()
 
         if ctr in self._read:
             res = self._read[ctr]
@@ -149,13 +165,11 @@ class Node ():
         if self.compute_on in [Location.PROCESS]:
             self._subprocess_info = {
                 "process": None,
-                "message_to_subprocess": mp.Queue(),
                 "termination_lock": mp.Lock()
             }
         elif self.compute_on in [Location.THREAD]:
             self._subprocess_info = {
                 "process": None,
-                "message_to_subprocess": mp.Queue(), # as this might be called from another process (ie called when receive_data is called in node form another process)
                 "termination_lock": threading.Lock() # as this is called from the main process
             }
 
@@ -453,13 +467,14 @@ class Node ():
         Called in computation process, ie self.process
         Emits data to childs, ie child.receive_data
         """
-        self.verbose('emitting', channel)
+        clock = self._ctr if ctr is None else ctr
+        self.verbose(f'Emitting channel: "{channel}"', clock)
         if channel == 'Data':
             self.debug('Emitting Data of shape:', np.array(data).shape)
 
         for con in self.output_connections:
             if con._emitting_channel == channel:
-                con._receiving_node.receive_data(self._ctr if ctr is None else ctr, payload={con._receiving_channel: data})
+                con._receiving_node.receive_data(clock, payload={con._receiving_channel: data})
 
 
     def _process_on_proc(self):
@@ -479,14 +494,12 @@ class Node ():
             # as we might receive not data after having received a termination
             #      -> we'll just poll, so that on termination we do terminate after no longer than 0.1seconds
             # self.info(was_terminated, was_queue_empty_last_iteration)
-            try:
-                ctr = self._subprocess_info['message_to_subprocess'].get(block=True, timeout=0.1)
-                was_queue_empty_last_iteration = False
-            except queue.Empty:
-                was_queue_empty_last_iteration = True
-                continue
-
-            self._process(ctr)
+            was_queue_empty_last_iteration = True
+            for queue in self._received_data.values():
+                found_value, ctr = queue.update(timeout=0.00001)
+                if found_value:
+                    self._process(ctr)
+                    was_queue_empty_last_iteration = False
         
         self.info('Executing _onstop')
         self._onstop()
@@ -550,8 +563,8 @@ class Node ():
             # same and threads both may be called directly and do not require a notification
             self._process(ctr)
         elif self.compute_on in [Location.PROCESS, Location.THREAD]:
-            # signal subprocess that new data has arrived by adding an item to the signal queue, 
-            self._subprocess_info['message_to_subprocess'].put(ctr)
+            # Process and thread both activley wait on the _received_data queues and therefore do not require an active trigger to process
+            pass
         else:
             raise Exception(f'Location {self.compute_on} not implemented yet.')
 
