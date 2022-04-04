@@ -892,7 +892,8 @@ class BlockingSender(Sender):
     def _emit_data(self, data, channel="Data"):
         super()._emit_data(data, channel)
         # as we are a blocking sender / a sensore everytime we emit a sample, we advance our clock
-        self._ctr = self._clock.tick()
+        if channel == "Data":
+            self._ctr = self._clock.tick()
 
     def _process_on_proc(self):
         self.info('Started subprocess')

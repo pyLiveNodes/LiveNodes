@@ -39,7 +39,7 @@
           "Left"
         ]
       },
-      "annotation_holes": "",
+      "annotation_holes": "None",
       "csv_columns": [
         "start",
         "end",

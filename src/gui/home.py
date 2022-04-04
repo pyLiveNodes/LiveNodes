@@ -39,6 +39,16 @@ class Home(QWidget):
 
         self.select_project(0)
 
+    def get_state(self):
+        return { \
+            "cur_project": self.cur_project
+        }
+
+    def set_state(self, cur_project):
+        id = self.projects.index(cur_project)
+        self.qt_projects._set_selected(id)
+        self.select_project(id)
+
     def _on_start(self, pipeline_path):
         self.onstart(self.cur_project, pipeline_path.replace(self.cur_project, '.'))
 
@@ -62,13 +72,13 @@ class Project_Selection(QWidget):
     def __init__(self, projects=[], parent = None):
         super().__init__(parent)
 
-        combo = QComboBox()
-        combo.addItems(projects)
-        combo.currentIndexChanged.connect(self._selected)
+        self.combo = QComboBox()
+        self.combo.addItems(projects)
+        self.combo.currentIndexChanged.connect(self._selected)
 
         l2 = QHBoxLayout(self)
         # l2.addWidget(QLabel('S-MART'))
-        l2.addWidget(combo)
+        l2.addWidget(self.combo)
         l2.addStretch(2)
         # for project in projects:
         #     l2.addWidget(QLabel(project))
@@ -76,6 +86,9 @@ class Project_Selection(QWidget):
         # l1 = QVBoxLayout(self)
         # l1.addChildLayout(l2)
         # l1.addStretch(2)
+
+    def _set_selected(self, id):
+        self.combo.setCurrentIndex(id)
     
     def _selected(self, id):
         self.selection.emit(id)

@@ -16,6 +16,7 @@ from src.nodes.utils import logger
 import datetime
 import time
 import os
+import json
 
 
 class SubView(QWidget):
@@ -50,6 +51,7 @@ class SubView(QWidget):
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
+
         self.central_widget = QtWidgets.QStackedWidget()
         self.setCentralWidget(self.central_widget)
 
@@ -61,9 +63,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self.home_dir = os.getcwd()
         print('CWD:', os.getcwd())
 
+        self._save_dict = {}
+        if os.path.exists('smart-state.json'):
+            with open('smart-state.json', 'r') as f:
+                self._save_dict = json.load(f)
+
         # for some fucking reason i cannot figure out how to set the css class only on the home class... so hacking this by adding and removign the class on view change...
         # self.central_widget.setProperty("cssClass", "home")
         # self.widget_home.setProperty("cssClass", "home")
+        self._set_state(self.widget_home)
+
     
     def stop(self):
         cur = self.central_widget.currentWidget()
@@ -77,7 +86,21 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def closeEvent(self, event):
         self.stop()
+
+        self._save_state(self.widget_home)
+        with open('smart-state.json', 'w') as f:
+            json.dump(self._save_dict, f, indent=2)
+            
         return super().closeEvent(event)
+
+    def _set_state(self, view):
+        print(view)
+        if hasattr(view, 'set_state') and view.__class__.__name__ in self._save_dict:
+            view.set_state(**self._save_dict[view.__class__.__name__])
+
+    def _save_state(self, view):
+        if hasattr(view, 'get_state'):
+            self._save_dict[view.__class__.__name__] = view.get_state()
 
     def return_home(self):
         cur = self.central_widget.currentWidget()
@@ -90,6 +113,8 @@ class MainWindow(QtWidgets.QMainWindow):
             # for n in cur.child.get_nodes().values():
             #     print(n.__getstate__())
         
+        self._save_state(cur)
+
         self.stop()
         self.central_widget.setCurrentWidget(self.widget_home)
         self.central_widget.removeWidget(cur)
@@ -120,6 +145,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.central_widget.addWidget(widget_run)
         self.central_widget.setCurrentWidget(widget_run)
 
+        self._set_state(widget_run)
+
+
     def onconfig(self, project_path, pipeline_path):
         # in production we should switch this (no need to always load all modules!), but for now it's easier like this
         # with open("nodes.json", 'r') as f:
@@ -133,6 +161,8 @@ class MainWindow(QtWidgets.QMainWindow):
         widget_run = SubView(child=Config(pipeline=pipeline, nodes=known_nodes, pipeline_path=pipeline_path), name=f"Configuring: {pipeline_path}", back_fn=self.return_home)
         self.central_widget.addWidget(widget_run)
         self.central_widget.setCurrentWidget(widget_run)
+
+        self._set_state(widget_run)
 
 
 
