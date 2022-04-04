@@ -6,7 +6,7 @@
       "name": "Data input",
       "compute_on": 3,
       "emit_at_once": 2000,
-      "files": "./projects/test_ask/data/KneeBandageCSL2018/part00/*.h5",
+      "files": "./data/KneeBandageCSL2018/part00/*.h5",
       "meta": {
         "sample_rate": 1000,
         "channels": [

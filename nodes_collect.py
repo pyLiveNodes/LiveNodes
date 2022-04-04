@@ -3,7 +3,7 @@ import importlib
 import json
 import traceback
 
-IGNORE = ['utils', 'node', '__init__', 'debug_frame_counter', 'biokit_update_model']
+IGNORE = ['utils', 'node', '__init__']
 
 def discover_nodes():
     ignore = IGNORE

@@ -11,7 +11,7 @@ import json
 
 class Biokit_recognizer(Node):
     channels_in = ['Data', 'File']
-    channels_out = ['Recognition', 'HMM Meta', 'Hypothesis']
+    channels_out = ['Recognition', 'HMM Meta', 'Hypothesis', 'Hypo States']
 
     category = "BioKIT"
     description = "" 

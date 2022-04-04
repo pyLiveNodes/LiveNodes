@@ -120,11 +120,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.central_widget.addWidget(widget_run)
         self.central_widget.setCurrentWidget(widget_run)
 
-    def onconfig(self, pipeline_path):
+    def onconfig(self, project_path, pipeline_path):
         # in production we should switch this (no need to always load all modules!), but for now it's easier like this
-        known_nodes = discover_infos()
         # with open("nodes.json", 'r') as f:
         #     known_nodes = json.load(f)
+        known_nodes = discover_infos()
+
+        os.chdir(project_path)
+        print('CWD:', os.getcwd())
 
         pipeline = Node.load(pipeline_path)
         widget_run = SubView(child=Config(pipeline=pipeline, nodes=known_nodes, pipeline_path=pipeline_path), name=f"Configuring: {pipeline_path}", back_fn=self.return_home)

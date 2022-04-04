@@ -17,8 +17,23 @@ import traceback
 # TODO: also figure out how to adapt a model to the current wearer -> should be a standard procedure somewhere...
     # -> have a second look at the MAP tests in biokit
 class Biokit_update_model(Node):
+    channels_in = ["Data", "Annotation"]
+    channels_out = ["Text"]
+
+    category = "BioKIT"
+    description = "" 
+
+    example_init = {
+        "name": "Train",
+        "model_path": "./models/",
+        "atomList": [],
+        "tokenDictionary": {},
+        "train_iterations": [5, 5],
+        "token_insertion_penalty": 0,
+    }
+
     def __init__(self, model_path, phases_new_act, token_insertion_penalty, train_iterations, catch_all="None", update_every_s=60, name="Train", **kwargs):
-        super().__init__(name, dont_time)
+        super().__init__(name, **kwargs)
 
         self.model_path = model_path
         self.train_iterations = train_iterations
@@ -27,41 +42,11 @@ class Biokit_update_model(Node):
         self.update_every_s = update_every_s
         self.catch_all = catch_all
 
-        self.data_q = mp.Queue()
-        self.data = []
+        self.storage_annotation = []
+        self.storage_data = []
 
-        self.annotations_q = mp.Queue()
-        self.annotations = []
-
-        self.worker_term_lock = mp.Lock()
-        self.worker_term_lock.acquire()
-        self.feeder_process = None
-
-    @staticmethod
-    def info():
-        return {
-            "class": "Biokit_update_model",
-            "file": "Biokit_update_model.py",
-            "in": ["Data", "Annotation"],
-            "out": ["Text"],
-            "init": {
-                "name": "Train",
-                "model_path": "./models/",
-                "atomList": [],
-                "tokenDictionary": {},
-                "train_iterations": [5, 5],
-                "token_insertion_penalty": 0,
-            },
-            "category": "BioKIT"
-        }
-
-        
-    @property
-    def in_map(self):
-        return {
-            "Data": self.receive_data,
-            "Annotation": self.receive_annotation,
-        }
+        self.last_training = time.time()
+        self.last_msg = time.time()
 
     def _settings(self):
         return {\
@@ -191,8 +176,6 @@ class Biokit_update_model(Node):
                    tsm,
                    initSearchGraph=True)
 
-
-
     def _train(self):
         len_d, len_a = len(self.data), len(self.annotations)
         keep = min(len_d, len_a) 
@@ -280,76 +263,40 @@ class Biokit_update_model(Node):
             self.reco.finishTrainIteration()
 
 
-    def receive_annotation(self, annotation, **kwargs):
-        self.annotations_q.put(annotation)
+    def _should_process(self, data=None, annotation=None):
+        return data is not None \
+            and annotation is not None
 
-    def process(self, data, **kwargs):
-        self.data_q.put(fs)
-
-    def sender_process(self):
-        t = time.time()
-        msg_loop_ctr = 0
-        # TODO: this design might be a problem if we just started a training (which then takes several seconds/minutes before) and then directly the lock is release, -> main program might not wait as long before terminating the process -> then no model will be saved
-        # way to fix this: implement proper updating of already seen models and then save after each training step instead of only at the end
-        while (not self.worker_term_lock.acquire(block=False)):
-            time.sleep(0.01)
-            msg_loop_ctr += 1
-            # read data from queues
-            while (not self.annotations_q.empty()):
-                self.annotations.extend(self.annotations_q.get())
-
-            while (not self.data_q.empty()):
-                self.data.append(self.data_q.get())
-
-            loop_t = time.time()
-            if msg_loop_ctr >= 10:
-                self._emit_data(f"[{str(self)}]\n     Next training: {self.update_every_s - (loop_t - t):.2f}s.", channel="Text") 
-                msg_loop_ctr = 0
-
-            if loop_t - t  >= self.update_every_s:
-                t = loop_t
-                print('Update!', len(self.data))
-
-                try:
-                    self._emit_data(f"[{str(self)}]\n      Starting training.", channel="Text") 
-                    self._train()
-                    self._emit_data(f"[{str(self)}]\n      Finished training.", channel="Text") 
-                    print('Trained model')
-                except Exception as err:
-                    print(traceback.format_exc())
-                    print(err)
-                msg_loop_ctr = 0
-
-
+    def _onstop(self):
         if self.reco is not None:
             # Save the model when stop_processing is called
             self.reco.saveToFiles(self.model_path)
             print('Saved recognizer to disk')
-        else: 
+        else:
             print('No model was trained')
 
+    def process(self, data, annotation):
+        # TODO: make sure this is proper
+        self.storage_data.extend(data)
+        self.storage_annotation.extend(annotation)
 
-    def start_processing(self, recurse=True):
-        """
-        Starts the streaming process.
-        """
-        if self.feeder_process is None:
-            # self.feeder_process = threading.Thread(target=self.sender_process)
-            self.feeder_process = mp.Process(target=self.sender_process)
-            # self.feeder_process.daemon = True
-            self.feeder_process.start()
-        super().start_processing(recurse)
-        
-    def stop_processing(self, recurse=True):
-        """
-        Stops the streaming process.
-        """
-        super().stop_processing(recurse)
-        if self.feeder_process is not None:
-            print('Terminating updater')
-            self.worker_term_lock.release()
-            self.feeder_process.join(3)
-            self.feeder_process.terminate()
-            print('updater terminated')
+        cur_time = time.time()
+        if self.last_training + 60 >= cur_time:
+            self.last_training = cur_time
+            
+            print('Update!', len(self.data))
 
-        self.feeder_process = None
+            try:
+                self._emit_data(f"[{str(self)}]\n      Starting training.", channel="Text") 
+                self._train()
+                self._emit_data(f"[{str(self)}]\n      Finished training.", channel="Text") 
+
+                print('Trained model')
+            except Exception as err:
+                print(traceback.format_exc())
+                print(err)
+
+        elif self.last_msg + 1 >= cur_time:
+            self._emit_data(f"[{str(self)}]\n     Next training: {self.update_every_s - (self.last_msg - self.last_training):.2f}s.", channel="Text") 
+
+

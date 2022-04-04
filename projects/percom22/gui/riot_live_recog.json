@@ -1,0 +1,288 @@
+{
+  "connections": [
+    {
+      "in_id": "9b06379e-47a5-4389-9504-9f5e70246842",
+      "in_index": 0,
+      "out_id": "1dded94d-f059-4f94-add9-fbd5ae847757",
+      "out_index": 0
+    },
+    {
+      "in_id": "9b06379e-47a5-4389-9504-9f5e70246842",
+      "in_index": 1,
+      "out_id": "1dded94d-f059-4f94-add9-fbd5ae847757",
+      "out_index": 1
+    },
+    {
+      "in_id": "e7ab0bd1-a8ad-4fee-b377-d5d417a64ba5",
+      "in_index": 0,
+      "out_id": "1dded94d-f059-4f94-add9-fbd5ae847757",
+      "out_index": 0
+    },
+    {
+      "in_id": "e7ab0bd1-a8ad-4fee-b377-d5d417a64ba5",
+      "in_index": 1,
+      "out_id": "1dded94d-f059-4f94-add9-fbd5ae847757",
+      "out_index": 1
+    },
+    {
+      "in_id": "eca40c14-2f5b-44e6-8b03-496b30768f5a",
+      "in_index": 1,
+      "out_id": "1dded94d-f059-4f94-add9-fbd5ae847757",
+      "out_index": 1
+    },
+    {
+      "in_id": "e078e6d9-e84c-4305-a71b-a1776734ff0b",
+      "in_index": 1,
+      "out_id": "1dded94d-f059-4f94-add9-fbd5ae847757",
+      "out_index": 1
+    },
+    {
+      "in_id": "e232fd17-2b29-45ca-9215-a63e106bc757",
+      "in_index": 1,
+      "out_id": "1dded94d-f059-4f94-add9-fbd5ae847757",
+      "out_index": 1
+    },
+    {
+      "in_id": "0ed09513-2891-4a7f-8006-197b332fb7a3",
+      "in_index": 0,
+      "out_id": "9b06379e-47a5-4389-9504-9f5e70246842",
+      "out_index": 0
+    },
+    {
+      "in_id": "0ed09513-2891-4a7f-8006-197b332fb7a3",
+      "in_index": 1,
+      "out_id": "9b06379e-47a5-4389-9504-9f5e70246842",
+      "out_index": 1
+    },
+    {
+      "in_id": "958499be-41a8-4b19-a73c-53c411395225",
+      "in_index": 0,
+      "out_id": "e7ab0bd1-a8ad-4fee-b377-d5d417a64ba5",
+      "out_index": 0
+    },
+    {
+      "in_id": "54dc5504-b49d-4fb7-95a7-fadbd9e23234",
+      "in_index": 0,
+      "out_id": "958499be-41a8-4b19-a73c-53c411395225",
+      "out_index": 0
+    },
+    {
+      "in_id": "0b5503da-493a-4ba3-b4de-7120f79692a0",
+      "in_index": 0,
+      "out_id": "54dc5504-b49d-4fb7-95a7-fadbd9e23234",
+      "out_index": 0
+    },
+    {
+      "in_id": "eca40c14-2f5b-44e6-8b03-496b30768f5a",
+      "in_index": 0,
+      "out_id": "54dc5504-b49d-4fb7-95a7-fadbd9e23234",
+      "out_index": 0
+    },
+    {
+      "in_id": "e078e6d9-e84c-4305-a71b-a1776734ff0b",
+      "in_index": 0,
+      "out_id": "54dc5504-b49d-4fb7-95a7-fadbd9e23234",
+      "out_index": 0
+    },
+    {
+      "in_id": "e232fd17-2b29-45ca-9215-a63e106bc757",
+      "in_index": 0,
+      "out_id": "54dc5504-b49d-4fb7-95a7-fadbd9e23234",
+      "out_index": 0
+    },
+    {
+      "in_id": "038a2ab5-c2a6-4402-9243-5573da0ae7a7",
+      "in_index": 2,
+      "out_id": "0b5503da-493a-4ba3-b4de-7120f79692a0",
+      "out_index": 1
+    },
+    {
+      "in_id": "038a2ab5-c2a6-4402-9243-5573da0ae7a7",
+      "in_index": 0,
+      "out_id": "0b5503da-493a-4ba3-b4de-7120f79692a0",
+      "out_index": 0
+    },
+    {
+      "in_id": "53b593d8-453e-4eec-889f-7ad1df2ff16d",
+      "in_index": 0,
+      "out_id": "0b5503da-493a-4ba3-b4de-7120f79692a0",
+      "out_index": 1
+    },
+    {
+      "in_id": "53b593d8-453e-4eec-889f-7ad1df2ff16d",
+      "in_index": 1,
+      "out_id": "0b5503da-493a-4ba3-b4de-7120f79692a0",
+      "out_index": 2
+    },
+    {
+      "in_id": "eca40c14-2f5b-44e6-8b03-496b30768f5a",
+      "in_index": 2,
+      "out_id": "0b5503da-493a-4ba3-b4de-7120f79692a0",
+      "out_index": 1
+    },
+    {
+      "in_id": "eca40c14-2f5b-44e6-8b03-496b30768f5a",
+      "in_index": 3,
+      "out_id": "0b5503da-493a-4ba3-b4de-7120f79692a0",
+      "out_index": 3
+    },
+    {
+      "in_id": "e078e6d9-e84c-4305-a71b-a1776734ff0b",
+      "in_index": 2,
+      "out_id": "0b5503da-493a-4ba3-b4de-7120f79692a0",
+      "out_index": 1
+    },
+    {
+      "in_id": "e078e6d9-e84c-4305-a71b-a1776734ff0b",
+      "in_index": 3,
+      "out_id": "0b5503da-493a-4ba3-b4de-7120f79692a0",
+      "out_index": 3
+    },
+    {
+      "in_id": "e232fd17-2b29-45ca-9215-a63e106bc757",
+      "in_index": 2,
+      "out_id": "0b5503da-493a-4ba3-b4de-7120f79692a0",
+      "out_index": 1
+    },
+    {
+      "in_id": "e232fd17-2b29-45ca-9215-a63e106bc757",
+      "in_index": 3,
+      "out_id": "0b5503da-493a-4ba3-b4de-7120f79692a0",
+      "out_index": 3
+    }
+  ],
+  "nodes": [
+    {
+      "id": "1dded94d-f059-4f94-add9-fbd5ae847757",
+      "model": {
+        "name": "In_riot",
+        "association_to_node": "RIoT [In_riot]"
+      },
+      "position": {
+        "x": 50.0,
+        "y": 209.68836472687602
+      }
+    },
+    {
+      "id": "9b06379e-47a5-4389-9504-9f5e70246842",
+      "model": {
+        "name": "Transform_filter",
+        "association_to_node": "Raw Filter [Transform_filter]"
+      },
+      "position": {
+        "x": 282.772216285337,
+        "y": 407.0169368212829
+      }
+    },
+    {
+      "id": "0ed09513-2891-4a7f-8006-197b332fb7a3",
+      "model": {
+        "name": "Draw_lines",
+        "association_to_node": "Raw Data [Draw_lines]"
+      },
+      "position": {
+        "x": 648.8702405117559,
+        "y": 407.34751878371037
+      }
+    },
+    {
+      "id": "e7ab0bd1-a8ad-4fee-b377-d5d417a64ba5",
+      "model": {
+        "name": "Transform_filter",
+        "association_to_node": "Annot Filter [Transform_filter]"
+      },
+      "position": {
+        "x": 276.28825708663146,
+        "y": 95.95586378090164
+      }
+    },
+    {
+      "id": "958499be-41a8-4b19-a73c-53c411395225",
+      "model": {
+        "name": "Biokit_to_fs",
+        "association_to_node": "Name [Biokit_to_fs]"
+      },
+      "position": {
+        "x": 605.9978418573087,
+        "y": 105.36844468264053
+      }
+    },
+    {
+      "id": "54dc5504-b49d-4fb7-95a7-fadbd9e23234",
+      "model": {
+        "name": "Biokit_norm",
+        "association_to_node": "Norm [Biokit_norm]"
+      },
+      "position": {
+        "x": 776.9837928208822,
+        "y": 107.58949874876194
+      }
+    },
+    {
+      "id": "0b5503da-493a-4ba3-b4de-7120f79692a0",
+      "model": {
+        "name": "Biokit_recognizer",
+        "association_to_node": "Recognizer [Biokit_recognizer]"
+      },
+      "position": {
+        "x": 957.280279707303,
+        "y": 267.5253386273673
+      }
+    },
+    {
+      "id": "038a2ab5-c2a6-4402-9243-5573da0ae7a7",
+      "model": {
+        "name": "Draw_recognition",
+        "association_to_node": "Recognition [Draw_recognition]"
+      },
+      "position": {
+        "x": 1469.9204524701167,
+        "y": 638.8433320518692
+      }
+    },
+    {
+      "id": "53b593d8-453e-4eec-889f-7ad1df2ff16d",
+      "model": {
+        "name": "Draw_search_graph",
+        "association_to_node": "Search Graph [Draw_search_graph]"
+      },
+      "position": {
+        "x": 1469.9372260070736,
+        "y": 471.07009489151585
+      }
+    },
+    {
+      "id": "eca40c14-2f5b-44e6-8b03-496b30768f5a",
+      "model": {
+        "name": "Draw_gmm",
+        "association_to_node": "GMM X [Draw_gmm]"
+      },
+      "position": {
+        "x": 1729.1812119841493,
+        "y": 54.62030168206098
+      }
+    },
+    {
+      "id": "e078e6d9-e84c-4305-a71b-a1776734ff0b",
+      "model": {
+        "name": "Draw_gmm",
+        "association_to_node": "GMM Y [Draw_gmm]"
+      },
+      "position": {
+        "x": 1968.8848754172088,
+        "y": 55.66698450010108
+      }
+    },
+    {
+      "id": "e232fd17-2b29-45ca-9215-a63e106bc757",
+      "model": {
+        "name": "Draw_gmm",
+        "association_to_node": "GMM Z [Draw_gmm]"
+      },
+      "position": {
+        "x": 1499.8890354936316,
+        "y": 50.0
+      }
+    }
+  ]
+}

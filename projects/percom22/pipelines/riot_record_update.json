@@ -1,0 +1,356 @@
+{
+  "RIoT [In_riot]": {
+    "class": "In_riot",
+    "settings": {
+      "block": false,
+      "name": "RIoT",
+      "compute_on": 3,
+      "id": 0,
+      "listen_ip": "192.168.1.101",
+      "listen_port": 8888
+    },
+    "inputs": [],
+    "outputs": [
+      {
+        "emitting_node": "RIoT [In_riot]",
+        "receiving_node": "Raw Filter [Transform_filter]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "RIoT [In_riot]",
+        "receiving_node": "Raw Filter [Transform_filter]",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "RIoT [In_riot]",
+        "receiving_node": "GUI Button Annotation [Annotate_ui_button]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "RIoT [In_riot]",
+        "receiving_node": "Save [Out_data]",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "RIoT [In_riot]",
+        "receiving_node": "Annot Filter [Transform_filter]",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
+        "connection_counter": 0
+      }
+    ]
+  },
+  "Raw Filter [Transform_filter]": {
+    "class": "Transform_filter",
+    "settings": {
+      "name": "Raw Filter",
+      "compute_on": 3,
+      "names": [
+        "ACC_X",
+        "ACC_Y",
+        "ACC_Z",
+        "GYRO_X",
+        "GYRO_Y",
+        "GYRO_Z"
+      ]
+    },
+    "inputs": [
+      {
+        "emitting_node": "RIoT [In_riot]",
+        "receiving_node": "Raw Filter [Transform_filter]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "RIoT [In_riot]",
+        "receiving_node": "Raw Filter [Transform_filter]",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
+        "connection_counter": 0
+      }
+    ],
+    "outputs": [
+      {
+        "emitting_node": "Raw Filter [Transform_filter]",
+        "receiving_node": "Raw Data [Draw_lines]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "Raw Filter [Transform_filter]",
+        "receiving_node": "Raw Data [Draw_lines]",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
+        "connection_counter": 0
+      }
+    ]
+  },
+  "Raw Data [Draw_lines]": {
+    "class": "Draw_lines",
+    "settings": {
+      "name": "Raw Data",
+      "compute_on": 3,
+      "n_plots": 6,
+      "xAxisLength": 1000,
+      "sample_rate": 100,
+      "ylim": [
+        -1.1,
+        1.1
+      ]
+    },
+    "inputs": [
+      {
+        "emitting_node": "Raw Filter [Transform_filter]",
+        "receiving_node": "Raw Data [Draw_lines]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "Raw Filter [Transform_filter]",
+        "receiving_node": "Raw Data [Draw_lines]",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
+        "connection_counter": 0
+      }
+    ],
+    "outputs": []
+  },
+  "GUI Button Annotation [Annotate_ui_button]": {
+    "class": "Annotate_ui_button",
+    "settings": {
+      "name": "GUI Button Annotation",
+      "compute_on": 3,
+      "fall_back_target": "None"
+    },
+    "inputs": [
+      {
+        "emitting_node": "RIoT [In_riot]",
+        "receiving_node": "GUI Button Annotation [Annotate_ui_button]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      }
+    ],
+    "outputs": [
+      {
+        "emitting_node": "GUI Button Annotation [Annotate_ui_button]",
+        "receiving_node": "Save [Out_data]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "GUI Button Annotation [Annotate_ui_button]",
+        "receiving_node": "Save [Out_data]",
+        "emitting_channel": "Annotation",
+        "receiving_channel": "Annotation",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "GUI Button Annotation [Annotate_ui_button]",
+        "receiving_node": "Annot Filter [Transform_filter]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "GUI Button Annotation [Annotate_ui_button]",
+        "receiving_node": "Train [Biokit_update_model]",
+        "emitting_channel": "Annotation",
+        "receiving_channel": "Annotation",
+        "connection_counter": 0
+      }
+    ]
+  },
+  "Save [Out_data]": {
+    "class": "Out_data",
+    "settings": {
+      "name": "Save",
+      "compute_on": 3,
+      "folder": "./data/Debug/"
+    },
+    "inputs": [
+      {
+        "emitting_node": "GUI Button Annotation [Annotate_ui_button]",
+        "receiving_node": "Save [Out_data]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "GUI Button Annotation [Annotate_ui_button]",
+        "receiving_node": "Save [Out_data]",
+        "emitting_channel": "Annotation",
+        "receiving_channel": "Annotation",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "RIoT [In_riot]",
+        "receiving_node": "Save [Out_data]",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
+        "connection_counter": 0
+      }
+    ],
+    "outputs": []
+  },
+  "Annot Filter [Transform_filter]": {
+    "class": "Transform_filter",
+    "settings": {
+      "name": "Annot Filter",
+      "compute_on": 3,
+      "names": [
+        "ACC_X",
+        "ACC_Y",
+        "ACC_Z",
+        "GYRO_X",
+        "GYRO_Y",
+        "GYRO_Z"
+      ]
+    },
+    "inputs": [
+      {
+        "emitting_node": "GUI Button Annotation [Annotate_ui_button]",
+        "receiving_node": "Annot Filter [Transform_filter]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "RIoT [In_riot]",
+        "receiving_node": "Annot Filter [Transform_filter]",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
+        "connection_counter": 0
+      }
+    ],
+    "outputs": [
+      {
+        "emitting_node": "Annot Filter [Transform_filter]",
+        "receiving_node": "Name [Biokit_to_fs]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      }
+    ]
+  },
+  "Name [Biokit_to_fs]": {
+    "class": "Biokit_to_fs",
+    "settings": {
+      "name": "Name",
+      "compute_on": 3
+    },
+    "inputs": [
+      {
+        "emitting_node": "Annot Filter [Transform_filter]",
+        "receiving_node": "Name [Biokit_to_fs]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      }
+    ],
+    "outputs": [
+      {
+        "emitting_node": "Name [Biokit_to_fs]",
+        "receiving_node": "Norm [Biokit_norm]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      }
+    ]
+  },
+  "Norm [Biokit_norm]": {
+    "class": "Biokit_norm",
+    "settings": {
+      "name": "Norm",
+      "compute_on": 3
+    },
+    "inputs": [
+      {
+        "emitting_node": "Name [Biokit_to_fs]",
+        "receiving_node": "Norm [Biokit_norm]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      }
+    ],
+    "outputs": [
+      {
+        "emitting_node": "Norm [Biokit_norm]",
+        "receiving_node": "Train [Biokit_update_model]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      }
+    ]
+  },
+  "Train [Biokit_update_model]": {
+    "class": "Biokit_update_model",
+    "settings": {
+      "name": "Train",
+      "compute_on": 3,
+      "token_insertion_penalty": 20,
+      "model_path": "./models/RIoT/sequence",
+      "train_iterations": [
+        7,
+        10
+      ],
+      "phases_new_act": 1,
+      "update_every_s": 60,
+      "catch_all": "None"
+    },
+    "inputs": [
+      {
+        "emitting_node": "Norm [Biokit_norm]",
+        "receiving_node": "Train [Biokit_update_model]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "GUI Button Annotation [Annotate_ui_button]",
+        "receiving_node": "Train [Biokit_update_model]",
+        "emitting_channel": "Annotation",
+        "receiving_channel": "Annotation",
+        "connection_counter": 0
+      }
+    ],
+    "outputs": [
+      {
+        "emitting_node": "Train [Biokit_update_model]",
+        "receiving_node": "Training Status [Draw_text_display]",
+        "emitting_channel": "Text",
+        "receiving_channel": "Text",
+        "connection_counter": 0
+      }
+    ]
+  },
+  "Training Status [Draw_text_display]": {
+    "class": "Draw_text_display",
+    "settings": {
+      "name": "Training Status",
+      "compute_on": 3
+    },
+    "inputs": [
+      {
+        "emitting_node": "Train [Biokit_update_model]",
+        "receiving_node": "Training Status [Draw_text_display]",
+        "emitting_channel": "Text",
+        "receiving_channel": "Text",
+        "connection_counter": 0
+      }
+    ],
+    "outputs": []
+  }
+}

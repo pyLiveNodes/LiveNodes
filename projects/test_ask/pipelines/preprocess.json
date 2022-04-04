@@ -6,7 +6,7 @@
       "name": "Playback",
       "compute_on": 2,
       "emit_at_once": 20,
-      "files": "./projects/test_ask/data/KneeBandageCSL2018/part00/01.h5",
+      "files": "./data/KneeBandageCSL2018/part00/01.h5",
       "meta": {
         "sample_rate": 1000,
         "channels": [

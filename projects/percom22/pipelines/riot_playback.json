@@ -1,0 +1,145 @@
+{
+  "Playback [In_playback]": {
+    "class": "In_playback",
+    "settings": {
+      "block": false,
+      "name": "Playback",
+      "compute_on": 2,
+      "emit_at_once": 1,
+      "files": "./data/RIoT/*.h5",
+      "meta": {
+        "sample_rate": 100,
+        "channels": [
+          "ACC_X",
+          "ACC_Y",
+          "ACC_Z",
+          "GYRO_X",
+          "GYRO_Y",
+          "GYRO_Z",
+          "MAG_X",
+          "MAG_Y",
+          "MAG_Z",
+          "TEMP",
+          "IO",
+          "A1",
+          "A2",
+          "C",
+          "Q1",
+          "Q2",
+          "Q3",
+          "Q4",
+          "PITCH",
+          "YAW",
+          "ROLL",
+          "HEAD"
+        ],
+        "targets": [
+          "None",
+          "Right",
+          "Left"
+        ]
+      },
+      "annotation_holes": "",
+      "csv_columns": [
+        "start",
+        "end",
+        "act"
+      ]
+    },
+    "inputs": [],
+    "outputs": [
+      {
+        "emitting_node": "Playback [In_playback]",
+        "receiving_node": "Raw Filter [Transform_filter]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "Playback [In_playback]",
+        "receiving_node": "Raw Filter [Transform_filter]",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
+        "connection_counter": 0
+      }
+    ]
+  },
+  "Raw Filter [Transform_filter]": {
+    "class": "Transform_filter",
+    "settings": {
+      "name": "Raw Filter",
+      "compute_on": 3,
+      "names": [
+        "ACC_X",
+        "ACC_Y",
+        "ACC_Z",
+        "GYRO_X",
+        "GYRO_Y",
+        "GYRO_Z"
+      ]
+    },
+    "inputs": [
+      {
+        "emitting_node": "Playback [In_playback]",
+        "receiving_node": "Raw Filter [Transform_filter]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "Playback [In_playback]",
+        "receiving_node": "Raw Filter [Transform_filter]",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
+        "connection_counter": 0
+      }
+    ],
+    "outputs": [
+      {
+        "emitting_node": "Raw Filter [Transform_filter]",
+        "receiving_node": "Raw Data [Draw_lines]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "Raw Filter [Transform_filter]",
+        "receiving_node": "Raw Data [Draw_lines]",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
+        "connection_counter": 0
+      }
+    ]
+  },
+  "Raw Data [Draw_lines]": {
+    "class": "Draw_lines",
+    "settings": {
+      "name": "Raw Data",
+      "compute_on": 3,
+      "n_plots": 6,
+      "xAxisLength": 1000,
+      "sample_rate": 100,
+      "ylim": [
+        -1.1,
+        1.1
+      ]
+    },
+    "inputs": [
+      {
+        "emitting_node": "Raw Filter [Transform_filter]",
+        "receiving_node": "Raw Data [Draw_lines]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "Raw Filter [Transform_filter]",
+        "receiving_node": "Raw Data [Draw_lines]",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
+        "connection_counter": 0
+      }
+    ],
+    "outputs": []
+  }
+}

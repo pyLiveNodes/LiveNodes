@@ -33,67 +33,6 @@ from src.nodes.draw_text_display import Draw_text_display
 from src.nodes.node import Node
 
 
-def add_train(pl, norm):
-    tokenDictionary = \
-        { "cspin-ll": [ "cspin-ll_ISt", "cspin-ll_MSt", "cspin-ll_TSt", "cspin-ll_ISw", "cspin-ll_TSw"]
-        , "cspin-lr": [ "cspin-lr_ISt", "cspin-lr_MSt", "cspin-lr_TSt", "cspin-lr_ISw", "cspin-lr_TSw"]
-
-        , "cspin-rl": [ "cspin-rl_ISt", "cspin-rl_MSt", "cspin-rl_TSt", "cspin-rl_ISw", "cspin-rl_TSw"]
-        , "cspin-rr": [ "cspin-rr_ISt", "cspin-rr_MSt", "cspin-rr_TSt", "cspin-rr_ISw", "cspin-rr_TSw"]
-        , "cstep-l": [ "cstep-l_ISt", "cstep-l_MSt", "cstep-l_TSt", "cstep-l_ISw", "cstep-l_TSw"]
-
-        , "cstep-r": [ "cstep-r_ISt", "cstep-r_MSt", "cstep-r_TSt", "cstep-r_ISw", "cstep-r_TSw"]
-        , "jump-1": [ "jump-1_ITO", "jump-1_TTO", "jump-1_F", "jump-1_IL", "jump-1_TL"]
-
-        , "jump-2": [ "jump-2_ITO", "jump-2_TTO", "jump-2_F", "jump-2_IL", "jump-2_TL"]
-
-        , "run": [ "run_ISt", "run_MSt", "run_TSt", "run_ISw", "run_TSw"]
-
-        , "shuffle-l": [ "shuffle-l_ISt", "shuffle-l_MSt", "shuffle-l_TSt", "shuffle-l_ISw", "shuffle-l_TSw"]
-        , "shuffle-r": [ "shuffle-r_ISt", "shuffle-r_MSt", "shuffle-r_TSt", "shuffle-r_ISw", "shuffle-r_TSw"]
-
-        , "sit": [ "sit_sitting" ]
-        , "sit-stand": [ "sit-stand_sit2s" ]
-        , "stair-down": [ "stair-down_ISt", "stair-down_MSt", "stair-down_TSt", "stair-down_ISw", "stair-down_TSw"]
-
-        , "stair-up": [ "stair-up_ISt", "stair-up_MSt", "stair-up_TSt", "stair-up_ISw", "stair-up_TSw"]
-        , "stand": [ "stand_standing" ]
-        , "stand-sit": [ "stand-sit_stand2s"]
-
-        , "vcut-ll": [ "vcut-ll_ISt", "vcut-ll_MSt", "vcut-ll_TSt", "vcut-ll_ISw", "vcut-ll_TSw"]
-        , "vcut-lr": [ "vcut-lr_ISt", "vcut-lr_MSt", "vcut-lr_TSt", "vcut-lr_ISw", "vcut-lr_TSw"]
-
-        , "vcut-rl": [ "vcut-rl_ISt", "vcut-rl_MSt", "vcut-rl_TSt", "vcut-rl_ISw", "vcut-rl_TSw"]
-        , "vcut-rr": [ "vcut-rr_ISt", "vcut-rr_MSt", "vcut-rr_TSt", "vcut-rr_ISw", "vcut-rr_TSw"]
-        , "walk": [ "walk_ISt", "walk_MSt", "walk_TSt", "walk_ISw", "walk_TSw"]
-        }
-
-    atomList = {val: list(map(str, range(1))) for atoms in tokenDictionary.values() for val in atoms}
-    
-        
-    train = Biokit_train(model_path="./models/KneeBandageCSL2018/partition-stand/sequence/", \
-        token_insertion_penalty=50,
-        atomList=atomList,
-        tokenDictionary=tokenDictionary,
-        train_iterations=(5, 10)
-        )
-    train.add_input(norm)
-    train.add_input(pl, emitting_channel="Termination", recv_data_stream='Termination')
-    
-    window1 = Transform_window(100, 0, name="File")
-    select1 = Transform_majority_select(name="File")
-    window1.add_input(pl, emitting_channel="File")
-    select1.add_input(window1)
-    train.add_input(select1, recv_data_stream='File')
-
-    window2 = Transform_window(100, 0, name="Annotation")
-    select2 = Transform_majority_select(name="Annotation")
-    window2.add_input(pl, emitting_channel="Annotation")
-    select2.add_input(window2)
-    train.add_input(select2, recv_data_stream='Annotation')
-    
-    return train
-
 def add_riot_draw(pl, subset=2):
     if subset == 0:
         f = ["ACC_X", "ACC_Y", "ACC_Z"]
@@ -131,13 +70,12 @@ def riot_add_recog(pl, has_annotation=False):
     recog.add_input(norm)
 
     draw_recognition_path = Draw_recognition(xAxisLength=[x_raw, x_raw, x_raw, x_raw])
-    draw_recognition_path.add_input(recog, emitting_channel="Recognition")
-    draw_recognition_path.add_input(recog, data_stream='HMM Meta', recv_data_stream='HMM Meta')
+    draw_recognition_path.connect_inputs_to(recog)
 
     if has_annotation:
         memory = Memory(x_raw)
-        memory.add_input(pl, data_stream='Annotation')
-        draw_recognition_path.add_input(memory, recv_data_stream='Annotation')
+        memory.add_input(pl, emitting_channel='Annotation')
+        draw_recognition_path.add_input(memory, receiving_channel='Annotation')
 
     draw_search_graph = Draw_search_graph(n_hypos=1)
     draw_search_graph.add_input(recog, emitting_channel="HMM Meta", receiving_channel="HMM Meta")
@@ -251,7 +189,7 @@ if __name__ == "__main__":
         "targets": ["None", "Right", "Left"]
     }
 
-    pl = In_playback(files="./data/RIoT/*.h5", csv_columns=["start", "end", "act"], annotation_holes="", meta=riot_meta, batch=1)
+    pl = In_playback(files="./data/RIoT/*.h5", csv_columns=["start", "end", "act"], annotation_holes="", meta=riot_meta, emit_at_once=1)
     pl = add_riot_draw(pl, subset=0.5)
     save(pl, "riot_playback.json")
 

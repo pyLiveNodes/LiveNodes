@@ -305,7 +305,13 @@ class Config(QWidget):
         self._add_pipeline(layout, self.pipeline)
 
         if layout is None:
-          self.scene.auto_arrange('planar_layout')
+            try:
+                self.scene.auto_arrange('planar_layout')
+            except Exception:
+                try:
+                    self.scene.auto_arrange('spring_layout')
+                except Exception:
+                    pass
           # self.scene.auto_arrange('graphviz_layout', prog='dot', scale=1)
           # self.scene.auto_arrange('graphviz_layout', scale=3)
 

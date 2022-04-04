@@ -2,8 +2,8 @@ from .node import View
 
 
 class Draw_text_display(View):
-    channels_in = []
-    channels_out = ['Text']
+    channels_in = ['Text']
+    channels_out = []
 
     category = "Draw"
     description = "" 

@@ -42,10 +42,14 @@ class Home(QWidget):
     def _on_start(self, pipeline_path):
         self.onstart(self.cur_project, pipeline_path.replace(self.cur_project, '.'))
 
+    def _on_config(self, pipeline_path):
+        self.onconfig(self.cur_project, pipeline_path.replace(self.cur_project, '.'))
+
+
     def select_project(self, project_id):
         self.cur_project = self.projects[project_id]
         pipelines = f"{self.cur_project}/pipelines/*.json"
-        qt_selection = Selection(self._on_start, self.onconfig, pipelines=pipelines)
+        qt_selection = Selection(self._on_start, self._on_config, pipelines=pipelines)
         if self.qt_selection is not None:
             self.qt_grid.removeWidget(self.qt_selection)
         self.qt_grid.addWidget(qt_selection)
