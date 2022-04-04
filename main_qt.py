@@ -58,6 +58,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.log_file = None
 
+        self.home_dir = os.getcwd()
+        print('CWD:', os.getcwd())
+
         # for some fucking reason i cannot figure out how to set the css class only on the home class... so hacking this by adding and removign the class on view change...
         # self.central_widget.setProperty("cssClass", "home")
         # self.widget_home.setProperty("cssClass", "home")
@@ -91,14 +94,20 @@ class MainWindow(QtWidgets.QMainWindow):
         self.central_widget.setCurrentWidget(self.widget_home)
         self.central_widget.removeWidget(cur)
         print("Nr of views: ", self.central_widget.count())
+        os.chdir(self.home_dir)
+        print('CWD:', os.getcwd())
 
     def _log_helper(self, msg):
         self.log_file.write(msg + '\n')
         self.log_file.flush()
 
     def onstart(self, project_path, pipeline_path):
-        log_file=f"{project_path}/logs/{datetime.datetime.fromtimestamp(time.time())}"
-        log_folder = '/'.join(log_file.split('/')[:-1])
+        os.chdir(project_path)
+        print('CWD:', os.getcwd())
+
+        log_folder = './logs'
+        log_file=f"{log_folder}/{datetime.datetime.fromtimestamp(time.time())}"
+        
         if not os.path.exists(log_folder):
             os.mkdir(log_folder)
 

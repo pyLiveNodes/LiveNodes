@@ -40,7 +40,7 @@ class Home(QWidget):
         self.select_project(0)
 
     def _on_start(self, pipeline_path):
-        self.onstart(self.cur_project, pipeline_path)
+        self.onstart(self.cur_project, pipeline_path.replace(self.cur_project, '.'))
 
     def select_project(self, project_id):
         self.cur_project = self.projects[project_id]
