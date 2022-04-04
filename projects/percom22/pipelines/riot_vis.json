@@ -1,0 +1,108 @@
+{
+  "RIoT [In_riot]": {
+    "class": "In_riot",
+    "settings": {
+      "block": false,
+      "name": "RIoT",
+      "compute_on": 3,
+      "id": 0,
+      "listen_ip": "192.168.1.101",
+      "listen_port": 8888
+    },
+    "inputs": [],
+    "outputs": [
+      {
+        "emitting_node": "RIoT [In_riot]",
+        "receiving_node": "Raw Filter [Transform_filter]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "RIoT [In_riot]",
+        "receiving_node": "Raw Filter [Transform_filter]",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
+        "connection_counter": 0
+      }
+    ]
+  },
+  "Raw Filter [Transform_filter]": {
+    "class": "Transform_filter",
+    "settings": {
+      "name": "Raw Filter",
+      "compute_on": 3,
+      "names": [
+        "ACC_X",
+        "ACC_Y",
+        "ACC_Z",
+        "GYRO_X",
+        "GYRO_Y",
+        "GYRO_Z"
+      ]
+    },
+    "inputs": [
+      {
+        "emitting_node": "RIoT [In_riot]",
+        "receiving_node": "Raw Filter [Transform_filter]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "RIoT [In_riot]",
+        "receiving_node": "Raw Filter [Transform_filter]",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
+        "connection_counter": 0
+      }
+    ],
+    "outputs": [
+      {
+        "emitting_node": "Raw Filter [Transform_filter]",
+        "receiving_node": "Raw Data [Draw_lines]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "Raw Filter [Transform_filter]",
+        "receiving_node": "Raw Data [Draw_lines]",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
+        "connection_counter": 0
+      }
+    ]
+  },
+  "Raw Data [Draw_lines]": {
+    "class": "Draw_lines",
+    "settings": {
+      "name": "Raw Data",
+      "compute_on": 3,
+      "n_plots": 6,
+      "xAxisLength": 1000,
+      "sample_rate": 100,
+      "ylim": [
+        -1.1,
+        1.1
+      ]
+    },
+    "inputs": [
+      {
+        "emitting_node": "Raw Filter [Transform_filter]",
+        "receiving_node": "Raw Data [Draw_lines]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "Raw Filter [Transform_filter]",
+        "receiving_node": "Raw Data [Draw_lines]",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
+        "connection_counter": 0
+      }
+    ],
+    "outputs": []
+  }
+}
