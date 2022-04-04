@@ -281,15 +281,15 @@
       {
         "emitting_node": "Normed Feature Filter [Transform_filter]",
         "receiving_node": "Normed Features [Draw_lines]",
-        "emitting_channel": "Channel Names",
-        "receiving_channel": "Channel Names",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
         "connection_counter": 0
       },
       {
         "emitting_node": "Normed Feature Filter [Transform_filter]",
         "receiving_node": "Normed Features [Draw_lines]",
-        "emitting_channel": "Data",
-        "receiving_channel": "Data",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
         "connection_counter": 0
       }
     ]
@@ -311,15 +311,15 @@
       {
         "emitting_node": "Normed Feature Filter [Transform_filter]",
         "receiving_node": "Normed Features [Draw_lines]",
-        "emitting_channel": "Channel Names",
-        "receiving_channel": "Channel Names",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
         "connection_counter": 0
       },
       {
         "emitting_node": "Normed Feature Filter [Transform_filter]",
         "receiving_node": "Normed Features [Draw_lines]",
-        "emitting_channel": "Data",
-        "receiving_channel": "Data",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
         "connection_counter": 0
       }
     ],

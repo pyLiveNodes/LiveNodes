@@ -5,7 +5,7 @@
       "block": false,
       "name": "Playback",
       "compute_on": 2,
-      "emit_at_once": 50,
+      "emit_at_once": 20,
       "files": "./projects/test_ask/data/KneeBandageCSL2018/part00/01.h5",
       "meta": {
         "sample_rate": 1000,
@@ -67,15 +67,15 @@
       {
         "emitting_node": "Playback [In_playback]",
         "receiving_node": "Raw Filter [Transform_filter]",
-        "emitting_channel": "Channel Names",
-        "receiving_channel": "Channel Names",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
         "connection_counter": 0
       },
       {
         "emitting_node": "Playback [In_playback]",
         "receiving_node": "Raw Filter [Transform_filter]",
-        "emitting_channel": "Data",
-        "receiving_channel": "Data",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
         "connection_counter": 0
       },
       {
@@ -109,15 +109,15 @@
       {
         "emitting_node": "Playback [In_playback]",
         "receiving_node": "Raw Filter [Transform_filter]",
-        "emitting_channel": "Channel Names",
-        "receiving_channel": "Channel Names",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
         "connection_counter": 0
       },
       {
         "emitting_node": "Playback [In_playback]",
         "receiving_node": "Raw Filter [Transform_filter]",
-        "emitting_channel": "Data",
-        "receiving_channel": "Data",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
         "connection_counter": 0
       }
     ],
@@ -125,15 +125,15 @@
       {
         "emitting_node": "Raw Filter [Transform_filter]",
         "receiving_node": "Raw Data [Draw_lines]",
-        "emitting_channel": "Channel Names",
-        "receiving_channel": "Channel Names",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
         "connection_counter": 0
       },
       {
         "emitting_node": "Raw Filter [Transform_filter]",
         "receiving_node": "Raw Data [Draw_lines]",
-        "emitting_channel": "Data",
-        "receiving_channel": "Data",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
         "connection_counter": 0
       }
     ]
@@ -155,15 +155,15 @@
       {
         "emitting_node": "Raw Filter [Transform_filter]",
         "receiving_node": "Raw Data [Draw_lines]",
-        "emitting_channel": "Channel Names",
-        "receiving_channel": "Channel Names",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
         "connection_counter": 0
       },
       {
         "emitting_node": "Raw Filter [Transform_filter]",
         "receiving_node": "Raw Data [Draw_lines]",
-        "emitting_channel": "Data",
-        "receiving_channel": "Data",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
         "connection_counter": 0
       }
     ],
@@ -230,15 +230,15 @@
       {
         "emitting_node": "Features [Transform_feature]",
         "receiving_node": "Feature Filter [Transform_filter]",
-        "emitting_channel": "Channel Names",
-        "receiving_channel": "Channel Names",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
         "connection_counter": 0
       },
       {
         "emitting_node": "Features [Transform_feature]",
         "receiving_node": "Feature Filter [Transform_filter]",
-        "emitting_channel": "Data",
-        "receiving_channel": "Data",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
         "connection_counter": 0
       },
       {
@@ -272,15 +272,15 @@
       {
         "emitting_node": "Features [Transform_feature]",
         "receiving_node": "Feature Filter [Transform_filter]",
-        "emitting_channel": "Channel Names",
-        "receiving_channel": "Channel Names",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
         "connection_counter": 0
       },
       {
         "emitting_node": "Features [Transform_feature]",
         "receiving_node": "Feature Filter [Transform_filter]",
-        "emitting_channel": "Data",
-        "receiving_channel": "Data",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
         "connection_counter": 0
       }
     ],
@@ -288,15 +288,15 @@
       {
         "emitting_node": "Feature Filter [Transform_filter]",
         "receiving_node": "Features [Draw_lines]",
-        "emitting_channel": "Channel Names",
-        "receiving_channel": "Channel Names",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
         "connection_counter": 0
       },
       {
         "emitting_node": "Feature Filter [Transform_filter]",
         "receiving_node": "Features [Draw_lines]",
-        "emitting_channel": "Data",
-        "receiving_channel": "Data",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
         "connection_counter": 0
       }
     ]
@@ -318,15 +318,15 @@
       {
         "emitting_node": "Feature Filter [Transform_filter]",
         "receiving_node": "Features [Draw_lines]",
-        "emitting_channel": "Channel Names",
-        "receiving_channel": "Channel Names",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
         "connection_counter": 0
       },
       {
         "emitting_node": "Feature Filter [Transform_filter]",
         "receiving_node": "Features [Draw_lines]",
-        "emitting_channel": "Data",
-        "receiving_channel": "Data",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
         "connection_counter": 0
       }
     ],
@@ -438,15 +438,15 @@
       {
         "emitting_node": "Normed Feature Filter [Transform_filter]",
         "receiving_node": "Normed Features [Draw_lines]",
-        "emitting_channel": "Channel Names",
-        "receiving_channel": "Channel Names",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
         "connection_counter": 0
       },
       {
         "emitting_node": "Normed Feature Filter [Transform_filter]",
         "receiving_node": "Normed Features [Draw_lines]",
-        "emitting_channel": "Data",
-        "receiving_channel": "Data",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
         "connection_counter": 0
       }
     ]
@@ -468,15 +468,15 @@
       {
         "emitting_node": "Normed Feature Filter [Transform_filter]",
         "receiving_node": "Normed Features [Draw_lines]",
-        "emitting_channel": "Channel Names",
-        "receiving_channel": "Channel Names",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
         "connection_counter": 0
       },
       {
         "emitting_node": "Normed Feature Filter [Transform_filter]",
         "receiving_node": "Normed Features [Draw_lines]",
-        "emitting_channel": "Data",
-        "receiving_channel": "Data",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
         "connection_counter": 0
       }
     ],

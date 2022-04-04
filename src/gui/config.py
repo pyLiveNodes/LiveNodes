@@ -299,9 +299,9 @@ class Config(QWidget):
         ### Add nodes and layout
         layout = None
         if os.path.exists(self.pipeline_gui_path):
-          with open(self.pipeline_gui_path, 'r') as f: 
-            layout = json.load(f)
-
+            with open(self.pipeline_gui_path, 'r') as f: 
+                layout = json.load(f)
+        print(self.pipeline_gui_path)
         self._add_pipeline(layout, self.pipeline)
 
         if layout is None:
@@ -335,11 +335,11 @@ class Config(QWidget):
 
     def _create_paths(self, pipeline_path):
         self.pipeline_path = pipeline_path
-        self.pipeline_gui_path = rreplace(pipeline_path, '/', '/gui/', 1)
+        self.pipeline_gui_path = pipeline_path.replace('/pipelines/', '/gui/', 1)
 
         gui_folder = '/'.join(self.pipeline_gui_path.split('/')[:-1])
         if not os.path.exists(gui_folder):
-          os.mkdir(gui_folder)
+            os.mkdir(gui_folder)
 
     def _create_known_classes(self, nodes):
         ### Setup Datastructures

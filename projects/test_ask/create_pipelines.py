@@ -185,6 +185,17 @@ def save(pl, file):
 
 
 if __name__ == "__main__":
+    import os 
+    log_folder = './logs/'
+    gui_folder = './gui/'
+
+    if not os.path.exists(log_folder):
+        os.mkdir(log_folder)
+
+    if not os.path.exists(gui_folder):
+        os.mkdir(gui_folder)
+
+
     channel_names_raw = ['EMG1', 'Gonio2', 'AccLow2']
     # channel_names_fts = ['EMG1__calc_mean', 'Gonio2__calc_mean', 'AccLow2__calc_mean']
     channel_names_fts = ['EMG1__rms', 'Gonio2__calc_mean', 'AccLow2__calc_mean']

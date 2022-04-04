@@ -15,6 +15,7 @@ from nodes_collect import discover_infos
 from src.nodes.utils import logger
 import datetime
 import time
+import os
 
 
 class SubView(QWidget):
@@ -95,8 +96,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.log_file.write(msg + '\n')
         self.log_file.flush()
 
-    def onstart(self, pipeline_path):
-        log_file=f"./logs/{datetime.datetime.fromtimestamp(time.time())}"
+    def onstart(self, project_path, pipeline_path):
+        log_file=f"{project_path}/logs/{datetime.datetime.fromtimestamp(time.time())}"
+        log_folder = '/'.join(log_file.split('/')[:-1])
+        if not os.path.exists(log_folder):
+            os.mkdir(log_folder)
+
         self.log_file = open(log_file, 'a')
         logger.register_cb(self._log_helper)
 

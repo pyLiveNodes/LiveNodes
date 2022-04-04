@@ -186,6 +186,17 @@ def save(pl, file):
 
 
 if __name__ == "__main__":
+    import os 
+    log_folder = './logs/'
+    gui_folder = './gui/'
+
+    if not os.path.exists(log_folder):
+        os.mkdir(log_folder)
+
+    if not os.path.exists(gui_folder):
+        os.mkdir(gui_folder)
+
+
     x_raw = 1000
     x_processed = 10
     n_bits = 16

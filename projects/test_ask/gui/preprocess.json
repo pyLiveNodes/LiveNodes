@@ -1,0 +1,246 @@
+{
+  "connections": [
+    {
+      "in_id": "dd5f8293-854a-4826-b5d1-90781779b459",
+      "in_index": 0,
+      "out_id": "7e0d266d-d2a1-402a-bd1e-b6cc3b70e230",
+      "out_index": 0
+    },
+    {
+      "in_id": "dd5f8293-854a-4826-b5d1-90781779b459",
+      "in_index": 1,
+      "out_id": "7e0d266d-d2a1-402a-bd1e-b6cc3b70e230",
+      "out_index": 4
+    },
+    {
+      "in_id": "039baa28-c686-4a34-8af5-d5f85f69b011",
+      "in_index": 0,
+      "out_id": "7e0d266d-d2a1-402a-bd1e-b6cc3b70e230",
+      "out_index": 0
+    },
+    {
+      "in_id": "22b38982-cefe-4f8d-aabf-89281a36db21",
+      "in_index": 1,
+      "out_id": "7e0d266d-d2a1-402a-bd1e-b6cc3b70e230",
+      "out_index": 4
+    },
+    {
+      "in_id": "f7ca4cf7-80e1-42db-a883-1f238e1553e1",
+      "in_index": 0,
+      "out_id": "dd5f8293-854a-4826-b5d1-90781779b459",
+      "out_index": 0
+    },
+    {
+      "in_id": "f7ca4cf7-80e1-42db-a883-1f238e1553e1",
+      "in_index": 1,
+      "out_id": "dd5f8293-854a-4826-b5d1-90781779b459",
+      "out_index": 1
+    },
+    {
+      "in_id": "22b38982-cefe-4f8d-aabf-89281a36db21",
+      "in_index": 0,
+      "out_id": "039baa28-c686-4a34-8af5-d5f85f69b011",
+      "out_index": 0
+    },
+    {
+      "in_id": "b538e843-c4bb-408b-b13f-401ed16656e6",
+      "in_index": 0,
+      "out_id": "22b38982-cefe-4f8d-aabf-89281a36db21",
+      "out_index": 0
+    },
+    {
+      "in_id": "b538e843-c4bb-408b-b13f-401ed16656e6",
+      "in_index": 1,
+      "out_id": "22b38982-cefe-4f8d-aabf-89281a36db21",
+      "out_index": 1
+    },
+    {
+      "in_id": "dc4bc5c8-9602-46c9-b7af-8454dc60c705",
+      "in_index": 0,
+      "out_id": "22b38982-cefe-4f8d-aabf-89281a36db21",
+      "out_index": 0
+    },
+    {
+      "in_id": "e43f5c3d-9f39-4f7c-976a-b57d5da24a54",
+      "in_index": 1,
+      "out_id": "22b38982-cefe-4f8d-aabf-89281a36db21",
+      "out_index": 1
+    },
+    {
+      "in_id": "3a22285d-2e88-4d1e-aeec-e2ee393d1f21",
+      "in_index": 0,
+      "out_id": "b538e843-c4bb-408b-b13f-401ed16656e6",
+      "out_index": 0
+    },
+    {
+      "in_id": "3a22285d-2e88-4d1e-aeec-e2ee393d1f21",
+      "in_index": 1,
+      "out_id": "b538e843-c4bb-408b-b13f-401ed16656e6",
+      "out_index": 1
+    },
+    {
+      "in_id": "61f33845-55de-49b0-84b3-8e0a48d00597",
+      "in_index": 0,
+      "out_id": "dc4bc5c8-9602-46c9-b7af-8454dc60c705",
+      "out_index": 0
+    },
+    {
+      "in_id": "6d5592b7-cc57-46ec-b1b3-57beaa253e03",
+      "in_index": 0,
+      "out_id": "61f33845-55de-49b0-84b3-8e0a48d00597",
+      "out_index": 0
+    },
+    {
+      "in_id": "e43f5c3d-9f39-4f7c-976a-b57d5da24a54",
+      "in_index": 0,
+      "out_id": "6d5592b7-cc57-46ec-b1b3-57beaa253e03",
+      "out_index": 0
+    },
+    {
+      "in_id": "8a940687-0907-4b72-9445-2ff01507071b",
+      "in_index": 0,
+      "out_id": "e43f5c3d-9f39-4f7c-976a-b57d5da24a54",
+      "out_index": 0
+    },
+    {
+      "in_id": "8a940687-0907-4b72-9445-2ff01507071b",
+      "in_index": 1,
+      "out_id": "e43f5c3d-9f39-4f7c-976a-b57d5da24a54",
+      "out_index": 1
+    }
+  ],
+  "nodes": [
+    {
+      "id": "7e0d266d-d2a1-402a-bd1e-b6cc3b70e230",
+      "model": {
+        "name": "In_playback",
+        "association_to_node": "Playback [In_playback]"
+      },
+      "position": {
+        "x": 50.0,
+        "y": 126.85508196721304
+      }
+    },
+    {
+      "id": "dd5f8293-854a-4826-b5d1-90781779b459",
+      "model": {
+        "name": "Transform_filter",
+        "association_to_node": "Raw Filter [Transform_filter]"
+      },
+      "position": {
+        "x": 314.4642622950822,
+        "y": 34.42754098360652
+      }
+    },
+    {
+      "id": "f7ca4cf7-80e1-42db-a883-1f238e1553e1",
+      "model": {
+        "name": "Draw_lines",
+        "association_to_node": "Raw Data [Draw_lines]"
+      },
+      "position": {
+        "x": 677.611803278689,
+        "y": 3.920000000000009
+      }
+    },
+    {
+      "id": "039baa28-c686-4a34-8af5-d5f85f69b011",
+      "model": {
+        "name": "Transform_window",
+        "association_to_node": "Window [Transform_window]"
+      },
+      "position": {
+        "x": 306.72918032786924,
+        "y": 227.65508196721302
+      }
+    },
+    {
+      "id": "22b38982-cefe-4f8d-aabf-89281a36db21",
+      "model": {
+        "name": "Transform_feature",
+        "association_to_node": "Features [Transform_feature]"
+      },
+      "position": {
+        "x": 549.4518032786889,
+        "y": 231.17245901639336
+      }
+    },
+    {
+      "id": "b538e843-c4bb-408b-b13f-401ed16656e6",
+      "model": {
+        "name": "Transform_filter",
+        "association_to_node": "Feature Filter [Transform_filter]"
+      },
+      "position": {
+        "x": 1034.502295081967,
+        "y": 101.75737704918035
+      }
+    },
+    {
+      "id": "3a22285d-2e88-4d1e-aeec-e2ee393d1f21",
+      "model": {
+        "name": "Draw_lines",
+        "association_to_node": "Features [Draw_lines]"
+      },
+      "position": {
+        "x": 1433.6498360655735,
+        "y": 92.78491803278686
+      }
+    },
+    {
+      "id": "dc4bc5c8-9602-46c9-b7af-8454dc60c705",
+      "model": {
+        "name": "Biokit_to_fs",
+        "association_to_node": "Name [Biokit_to_fs]"
+      },
+      "position": {
+        "x": 887.9147540983604,
+        "y": 365.7298360655737
+      }
+    },
+    {
+      "id": "61f33845-55de-49b0-84b3-8e0a48d00597",
+      "model": {
+        "name": "Biokit_norm",
+        "association_to_node": "Norm [Biokit_norm]"
+      },
+      "position": {
+        "x": 1082.0472131147544,
+        "y": 420.18229508196714
+      }
+    },
+    {
+      "id": "6d5592b7-cc57-46ec-b1b3-57beaa253e03",
+      "model": {
+        "name": "Biokit_from_fs",
+        "association_to_node": "Name [Biokit_from_fs]"
+      },
+      "position": {
+        "x": 1264.659672131148,
+        "y": 350.7947540983608
+      }
+    },
+    {
+      "id": "e43f5c3d-9f39-4f7c-976a-b57d5da24a54",
+      "model": {
+        "name": "Transform_filter",
+        "association_to_node": "Normed Feature Filter [Transform_filter]"
+      },
+      "position": {
+        "x": 1488.7645901639344,
+        "y": 249.45967213114773
+      }
+    },
+    {
+      "id": "8a940687-0907-4b72-9445-2ff01507071b",
+      "model": {
+        "name": "Draw_lines",
+        "association_to_node": "Normed Features [Draw_lines]"
+      },
+      "position": {
+        "x": 1828.6045901639343,
+        "y": 261.2472131147541
+      }
+    }
+  ]
+}
