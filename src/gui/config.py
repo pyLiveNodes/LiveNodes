@@ -262,7 +262,6 @@ class Config(QWidget):
     def __init__(self, pipeline_path, pipeline=None, nodes=[], parent=None):
         super().__init__(parent)
 
-        self.pipeline = pipeline
         self._create_paths(pipeline_path)
 
         self.known_classes = {} 
@@ -302,7 +301,7 @@ class Config(QWidget):
             with open(self.pipeline_gui_path, 'r') as f: 
                 layout = json.load(f)
         print(self.pipeline_gui_path)
-        self._add_pipeline(layout, self.pipeline)
+        self._add_pipeline(layout, pipeline)
 
         if layout is None:
             try:
@@ -416,7 +415,7 @@ class Config(QWidget):
 
 
         ### Add nodes
-        if self.pipeline is not None:
+        if pipeline is not None:
             # only keep uniques
             p_nodes = {str(n): n for n in pipeline.discover_childs(pipeline)}
             
@@ -452,21 +451,41 @@ class Config(QWidget):
                 s_nodes[name]._graphics_obj = attatch_click_cb(s_nodes[name]._graphics_obj, partial(self.view_configure.set_pl_node, n))
 
 
+    def _find_initial_pl(self, pl_nodes):
+        # initial node: assume the first node we come across, that doesn't have any inputs is our initial node
+        # TODO: this will lead to problems further down
+        # when we implement piplines as nodes, there might not be nodes without inputs, then we need to take any node and make sure the discover all etc work 
+        # maybe also consider adding a warning if there are graphs that are not connected ie and which one will be saved...
+        initial_pl_nodes = [n for n in pl_nodes if len(n.channels_in) == 0 and len(n.output_connections) > 0]
+        
+        # if we cannot find a node without inputs, take the first that hase outputs
+        if len(initial_pl_nodes) == 0:
+            initial_pl_nodes = [n for n in pl_nodes if len(n.output_connections) > 0]
 
+        # if this is still empty, raise an exception
+        if len(initial_pl_nodes) == 0:
+            # TODO: not sure how much sense this makes, then again, cannot think of a case where you would want to save such a graph, as it can only consist of unconnected nodes...
+            raise Exception('No nodes with outputs in graph, cannot save')
+        
+        return initial_pl_nodes[0]
+        
 
     def get_state(self):
       state = self.scene.__getstate__()
-      vis_state = {"connections": state["connections"]}
-      vis_state["nodes"] = []
+      vis_state = {'connections': state['connections'], 'nodes': []}
+      pl_nodes = []
       for val in state['nodes']:
-        if "association_to_node" in val['model']:
-          val['model']["association_to_node"] = str(val['model']["association_to_node"])
-        vis_state['nodes'].append(val)
+            if 'association_to_node' in val['model']:
+                pl_nodes.append(val['model']['association_to_node'])
+                val['model']['association_to_node'] = str(val['model']['association_to_node'])
+            vis_state['nodes'].append(val)
       
-      return vis_state, self.pipeline
+
+      return vis_state, self._find_initial_pl(pl_nodes)
 
     def save(self):
         vis_state, pipeline = self.get_state()
+        print('initial node used for saving: ', str(pipeline))
         
         with open(self.pipeline_gui_path, 'w') as f: 
             json.dump(vis_state, f, indent=2) 

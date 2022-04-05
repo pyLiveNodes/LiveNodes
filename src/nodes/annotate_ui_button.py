@@ -1,11 +1,11 @@
 import numpy as np
 import multiprocessing as mp
 
-from .node import Node
+from .node import View
 
 from matplotlib.widgets import TextBox, Button
 
-class Annotate_ui_button(Node):
+class Annotate_ui_button(View):
     channels_in = ['Data']
     channels_out = ['Data', 'Annotation']
 

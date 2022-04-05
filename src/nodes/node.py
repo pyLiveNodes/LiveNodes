@@ -542,7 +542,7 @@ class Node ():
         # check if all required data to proceed is available and then call process
         # then cleanup aggregated data and advance our own clock
         if self._should_process(**_current_data):
-            self.verbose('Decided to process', ctr, _current_data.keys())
+            self.debug('Decided to process', ctr, _current_data.keys())
             # yes, ```if self.process``` is shorter, but as long as the documentation isn't there this is also very clear on the api
             # prevent_tick = self.process(**_current_data)
             # IMPORTANT: this is possible, due to the fact that only sender and syncs have their own clock
@@ -559,7 +559,7 @@ class Node ():
             # else:
             #     self.debug('Prevented tick')
         else:
-            self.debug('Decided not to process', ctr, _current_data.keys())
+            self.verbose('Decided not to process', ctr, _current_data.keys())
 
     def trigger_process(self, ctr):
         if self.compute_on in [Location.SAME]:

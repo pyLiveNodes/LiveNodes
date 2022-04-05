@@ -7,7 +7,7 @@ class Biokit_from_fs(Node):
     category = "BioKIT"
     description = "" 
 
-    example_init = {'name': 'Name'}
+    example_init = {'name': 'From BioKIT'}
 
     def process_time_series(self, ts):
         return ts.getMatrix()

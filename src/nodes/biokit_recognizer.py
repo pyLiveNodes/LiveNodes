@@ -31,7 +31,7 @@ class Biokit_recognizer(Node):
         self.topology = self._get_topology()
 
         self._initial = True
-        self.file = -1
+        self.file = None
 
     def _settings(self):
         return {\
@@ -58,6 +58,9 @@ class Biokit_recognizer(Node):
             _, path, _ = self.reco.decode(batch, generatepath=True, initialize=bool(self._initial)) # not sure if we need to initialize this on the first call?
 
             if self._initial:
+                # if file is not hooked up, we should set this to false at least
+                self._initial = False
+
                 # get search graph
                 graph_json = self.reco.getSearchGraph().createGraphJson(self.reco.getDictionary(), False)
                 graph = json.loads(graph_json)

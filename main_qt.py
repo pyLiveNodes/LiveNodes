@@ -87,6 +87,9 @@ class MainWindow(QtWidgets.QMainWindow):
     def closeEvent(self, event):
         self.stop()
 
+        os.chdir(self.home_dir)
+        print('CWD:', os.getcwd())
+
         self._save_state(self.widget_home)
         with open('smart-state.json', 'w') as f:
             json.dump(self._save_dict, f, indent=2)

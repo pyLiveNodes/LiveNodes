@@ -1,7 +1,7 @@
 import collections
 import numpy as np
 
-from .node import Node
+from .draw_scatter import Draw_scatter
 
 import time
 from itertools import groupby
@@ -12,8 +12,8 @@ import matplotlib as mpl
 
 
 
-class Draw_gmm(Node):
-    channels_in = ["Data", "Channel Names", "HMM Meta", "Hypo States", "GMM Models", "GMM Means", "GMM Covariances", "GMM Weights"]
+class Draw_gmm(Draw_scatter):
+    channels_in = ["Data", "Channel Names", "HMM Meta", "Hypo States"] #"GMM Models", "GMM Means", "GMM Covariances", "GMM Weights"]
     channels_out = []
 
     category = "Draw"
@@ -21,34 +21,24 @@ class Draw_gmm(Node):
 
     example_init = {
         "name": "GMM",
-            "plot_names": ["Channel 1", "Channel 2"],
-            "n_mixtures": 2,
-            "n_scatter_points": 10,
-            "name": "GMM"
+        "plot_names": ["Channel 1", "Channel 2"],
+        "n_mixtures": 2,
+        "n_scatter_points": 10,
+        "name": "GMM",
+        "ylim": (-1.1, 1.1)
     }
 
     # TODO: remove the plot_names filter! this should just be a step in the pipeline
     # (this entails fixing the gmms not being passed in the hmm meta stream but a stream of their own)
 
-    # Stopped at: re-implementing plot_names in order to get this f**ing working for tomorrow
-    def __init__(self, plot_names, n_mixtures=2, n_scatter_points = 10, name = "GMM", **kwargs):
-        super().__init__(name=name, **kwargs)
-
-        self.queue_meta = mp.Queue()
-        self.queue_hypo = mp.Queue()
-        self.queue_data = mp.Queue()
-        self.queue_gmm_models = mp.Queue()
-        self.queue_gmm_means = mp.Queue()
-        self.queue_gmm_covs = mp.Queue()
-        self.queue_gmm_weights = mp.Queue()
-        self.queue_channels = mp.Queue()
+    def __init__(self, plot_names, n_mixtures=2, n_scatter_points=50, ylim=(-1.1, 1.1), name="Draw Output Scatter", **kwargs):
+        super().__init__(n_scatter_points, ylim, name, **kwargs)
 
         self.graph = None
         self.topology = None
 
         self.plot_names = plot_names
         self.idx = None
-        self.n_scatter_points = n_scatter_points
         self.n_mixtures = n_mixtures
         self.update_scatter_fn = None
         self.model_ell_map = None
@@ -58,41 +48,26 @@ class Draw_gmm(Node):
         self.previous_alphas = []
         self.token_node_map = {}
 
-        self.token_colors, self.atom_colors, self.state_colors = None, None, None
+        self.atom_colors = None
         self.gmms = None
 
 
     def _settings(self):
-        return {\
-            "name": self.name,
+        return dict({
             "plot_names": self.plot_names,
-            "n_scatter_points": self.n_scatter_points,
             "n_mixtures": self.n_mixtures
-           }
+        }, **super()._settings())
 
     def _init_draw(self, subfig):
-        self.ax = subfig.subplots(1, 1)
-        self.ax.set_xlim(-0.5, 0.5)
-        self.ax.set_ylim(-0.5, 0.5)
-        self.ax.spines['top'].set_visible(False)
-        self.ax.spines['right'].set_visible(False)
+        super_update = super()._init_draw(subfig)
 
         self.ax.set_xlabel(self.plot_names[0])
         self.ax.set_ylabel(self.plot_names[1])
 
-        subfig.suptitle(self.name, fontsize=14)
-        
-        def update (**kwargs):
-            nonlocal self, subfig
+        def update (data, atom_colors, gmms, hypo_states, channel_names):
+            nonlocal self, subfig, super_update
 
-            meta = None
-            state_ids = None
-            data = None
-            if self.idx is not None: 
                 # only read the meta and prew_draw the gmms if we have created the idx (which we need the channel names for)
-                meta = self._empty_queue(self.queue_meta)
-                state_ids = self._empty_queue(self.queue_hypo)
-                data = self._empty_queue(self.queue_data)
 
                 # TODO: THIS is a problem!
                 # We can never be sure these are all set at the same time, as the queue filling and matplotlib render are completely independent processes
@@ -101,39 +76,54 @@ class Draw_gmm(Node):
                 # gmm_means = self._empty_queue(self.queue_gmm_means)
                 # gmm_covs = self._empty_queue(self.queue_gmm_covs)
                 # gmm_weights = self._empty_queue(self.queue_gmm_weights)
-            channel_names = self._empty_queue(self.queue_channels)
             # gmms = self._empty_queue(self.queue_gmms) # TODO: consider separate stream for this (pro: can use filter, and can visualize training, con: complicated)
 
-            if channel_names is not None and self.update_scatter_fn is None:
-                self.update_scatter_fn = self._draw_preprocessed_helper(self.ax, channel_names, self.n_scatter_points)
+            if self.idx is None:
+                # yes, we need this twice, this here is on the plotting process
                 self.idx = [channel_names.index(x) for x in self.plot_names]
 
-            if meta is not None and self.token_colors is None:
-                self.token_colors, self.atom_colors, self.state_colors = self._init_colors(meta["topology"])
-                self.gmms = meta.get('gmms')
-            # if self.gmms is not None and self.ells_list is None:
-                self.model_ell_map = {model_name: self._pre_draw_gmm(self.ax, model_name, m["means"], m["covariances"], m["mixture_weights"]) for model_name, m in self.gmms.items() }
+            if gmms is not None and self.ells_list is None:
+                self.model_ell_map = {model_name: self._pre_draw_gmm(self.ax, model_name, m["means"], m["covariances"], m["mixture_weights"], atom_colors) for model_name, m in gmms.items() }
                 self.ells_list = list(np.concatenate(list(self.model_ell_map.values()), axis=0))
             
-            if state_ids is not None and len(state_ids) > 0 and self.model_ell_map is not None:
+            if hypo_states is not None and len(hypo_states) > 0 and self.model_ell_map is not None:
                 for model_name, ells in self.model_ell_map.items():
-                    if model_name in state_ids[:self.n_mixtures]:
+                    if model_name in hypo_states[:self.n_mixtures]:
                         for ell in ells:
                             ell.set_visible(True)
-                            # ell.set_color(self.order_colors[state_ids.index(model_name)])                    
+                            # ell.set_color(self.order_colors[hypo_states.index(model_name)])                    
                     else:
                         for ell in ells:
                             ell.set_visible(False)
 
-
-            if self.update_scatter_fn is not None:
-                if self.ells_list is not None:
-                    return self.ells_list + self.update_scatter_fn(data)
-                return self.update_scatter_fn(data)
-            return []
+            return self.ells_list + super_update(data=data, channel_names=channel_names)
         return update
 
 
+    def _should_process(self, data=None, channel_names=None, hmm_meta=None, hypo_states=None):
+        return (data is not None) \
+            and (hypo_states is not None) \
+            and (self.channel_names is not None or channel_names is not None) \
+            and (self.atom_colors is not None or hmm_meta is not None) \
+
+    def process(self, data, hypo_states, channel_names=None, hmm_meta=None, **kwargs):
+        if channel_names is not None:
+            self.channel_names = channel_names
+
+            # yes, we need this twice, this here is on the processing process
+            self.idx = [channel_names.index(x) for x in self.plot_names]
+
+        if hmm_meta is not None:
+            _, self.atom_colors, _ = self._init_colors(hmm_meta["topology"])
+            self.gmms = hmm_meta.get('gmms')
+
+        # as data is (batch/file, time, channel)
+        d = np.vstack(np.array(data)[:, :, self.idx])
+
+        self.data = np.roll(self.data, d.shape[0], axis=0)
+        self.data[:d.shape[0]] = d
+
+        self._emit_draw(data=self.data[:self.n_scatter_points], atom_colors=self.atom_colors, gmms=self.gmms, hypo_states=hypo_states, channel_names=self.channel_names)
 
     # TODO: share these between the different hmm draws...
     def _init_colors(self, topology):
@@ -157,7 +147,7 @@ class Draw_gmm(Node):
     def _hack_get_atom_from_model_id(self, model_id):
         return '-'.join(model_id.split('-')[:-1])
 
-    def _pre_draw_gmm(self, ax, model_id, means, covariance, mixture_weights):
+    def _pre_draw_gmm(self, ax, model_id, means, covariance, mixture_weights, atom_colors):
         ells = []
 
         n_gaussians = len(means)
@@ -171,7 +161,7 @@ class Draw_gmm(Node):
             angle = 180 * angle / np.pi  # convert to degrees
             v = 2.0 * np.sqrt(2.0) * np.sqrt(v)
 
-            ell = mpl.patches.Ellipse(means[i][self.idx], v[0], v[1], 180 + angle, color=self.atom_colors[self._hack_get_atom_from_model_id(model_id)])
+            ell = mpl.patches.Ellipse(means[i][self.idx], v[0], v[1], 180 + angle, color=atom_colors[self._hack_get_atom_from_model_id(model_id)])
             ell.set_label(model_id)
             ell.set_zorder(1)
             ell.set_alpha(mixture_weights[i])
@@ -181,28 +171,3 @@ class Draw_gmm(Node):
             ax.add_patch(ell)
             ells.append(ell)
         return ells
-
-    # TODO: make this it's own class
-    def _draw_preprocessed_helper(self, ax, names, n_scatter_points = 10):
-        xData = [0] * n_scatter_points 
-        yData = [0] * n_scatter_points
-        alphas = np.linspace(0.1, 1, n_scatter_points)
-
-        scatter = ax.scatter(xData, yData, alpha=alphas)
-
-        # this way all the draw details are hidden from everyone else
-        # TODO: make this expect python/numpy arrays instead of biokit 
-        def update(processedData, **kwargs):
-            nonlocal xData, yData # no clue why this is needed here, but not the draw and update funcitons...
-            if processedData != None:
-                processedMcfs = processedData.getMatrix().T[self.idx] # just use the first two, filter does change the order of the channels, so that should be used if specific channels shall be plotted
-                xData.extend(processedMcfs[0])
-                xData = xData[-(n_scatter_points + 1):]
-                yData.extend(processedMcfs[1])
-                yData = yData[-(n_scatter_points + 1):]
-
-                data = np.hstack((np.array(xData)[:,np.newaxis], np.array(yData)[:, np.newaxis]))
-                scatter.set_offsets(data)
-                return [scatter]
-            return [scatter]
-        return update

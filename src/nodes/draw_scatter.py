@@ -1,9 +1,11 @@
 import collections
+import dataclasses
 from queue import Queue
+from this import d
 from tkinter import N
 import numpy as np
 
-from .node import Node
+from .node import View
 
 import matplotlib.patches as mpatches
 
@@ -13,7 +15,7 @@ import ctypes as c
 import time
 
 
-class Draw_scatter(Node):
+class Draw_scatter(View):
     channels_in = ['Data', 'Channel Names']
     channels_out = []
 
@@ -22,12 +24,12 @@ class Draw_scatter(Node):
 
     example_init = {
         "name": "Draw Data Scatter",
-        "n_scatter_points": 5000,
+        "n_scatter_points": 50,
         "ylim": (-1.1, 1.1)
     }
 
     # TODO: move the sample rate into a data_stream?
-    def __init__(self, n_scatter_points=5000, ylim=(-1.1, 1.1), name = "Draw Output Scatter", **kwargs):
+    def __init__(self, n_scatter_points=50, ylim=(-1.1, 1.1), name = "Draw Output Scatter", **kwargs):
         super().__init__(name=name, **kwargs)
 
         self.n_scatter_points = n_scatter_points
@@ -50,22 +52,22 @@ class Draw_scatter(Node):
     def _init_draw(self, subfig):
         subfig.suptitle(self.name, fontsize=14)
 
-        ax = subfig.subplots(1, 1)
-        ax.set_xlim(-0.5, 0.5)
-        ax.set_ylim(-0.5, 0.5)
-        ax.spines['top'].set_visible(False)
-        ax.spines['right'].set_visible(False)
+        self.ax = subfig.subplots(1, 1)
+        self.ax.set_xlim(-0.5, 0.5)
+        self.ax.set_ylim(-0.5, 0.5)
+        self.ax.spines['top'].set_visible(False)
+        self.ax.spines['right'].set_visible(False)
 
-        # ax.set_xlabel(self.plot_names[0])
-        # ax.set_ylabel(self.plot_names[1])
+        # self.ax.set_xlabel(self.plot_names[0])
+        # self.ax.set_ylabel(self.plot_names[1])
 
         alphas = np.linspace(0.1, 1, self.n_scatter_points)
         xData = self.data[:, 0]
         yData = self.data[:, 1]
 
-        scatter = ax.scatter(xData, yData, alpha=alphas)
+        scatter = self.ax.scatter(xData, yData, alpha=alphas)
 
-        # self.labels = [ax.text(0.005, 0.95, name, zorder=100, fontproperties=ax.xaxis.label.get_font_properties(), rotation='horizontal', va='top', ha='left', transform = ax.transAxes) for name, ax in zip(self.channel_names, axes)]
+        # self.labels = [self.ax.text(0.005, 0.95, name, zorder=100, fontproperties=self.ax.xaxis.label.get_font_properties(), rotation='horizontal', va='top', ha='left', transform = ax.transAxes) for name, ax in zip(self.channel_names, axes)]
 
         def update (data, channel_names):
             nonlocal self
@@ -73,16 +75,6 @@ class Draw_scatter(Node):
             # -> could make stuff more efficient, but well...
             # changes = []
 
-            # if self.channel_names != channel_names:
-            #     self.channel_names = channel_names
-
-            #     for i, label in enumerate(self.labels):
-            #         label.set_text(self.channel_names[i])
-
-            xData = data[:, 0]
-            yData = data[:, 1]
-
-            data = np.hstack((np.array(xData)[:,np.newaxis], np.array(yData)[:, np.newaxis]))
             scatter.set_offsets(data)
 
             return [scatter]
@@ -109,4 +101,4 @@ class Draw_scatter(Node):
         self.data[:d.shape[0]] = d
 
         # TODO: consider if we really always want to send the channel names? -> seems an unecessary overhead (but cleaner code atm, maybe massage later...)
-        self._emit_draw(data=list(self.data[:self.n_scatter_points].T), channel_names=self.channel_names)
+        self._emit_draw(data=self.data[:self.n_scatter_points], channel_names=self.channel_names)

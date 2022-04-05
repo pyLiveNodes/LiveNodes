@@ -93,13 +93,10 @@ def add_recognition(pl,fts, norm, x_raw, x_processed, vis=True):
         draw_search_graph.add_input(recog, emitting_channel="HMM Meta", receiving_channel="HMM Meta")
         draw_search_graph.add_input(recog, emitting_channel="Hypothesis", receiving_channel="Hypothesis")
 
-    # if vis:
-    #     draw_gmm = Draw_gmm(name="GMM", plot_names=channel_names_fts[:2])
-    #     draw_gmm.add_input(norm, emitting_channel="Data", receiving_channel="Data")
-    #     draw_gmm.add_input(fts, emitting_channel="Channel Names", receiving_channel="Channel Names")
-    #     draw_gmm.add_input(recog, emitting_channel="HMM Meta", receiving_channel="HMM Meta")
-    #     draw_gmm.add_input(recog, emitting_channel="Hypo States", receiving_channel="Hypo States")
-
+    if vis:
+        draw_gmm = Draw_gmm(name="GMM", plot_names=channel_names_fts[:2])
+        draw_gmm.connect_inputs_to(fts)
+        draw_gmm.connect_inputs_to(recog)
 
     return recog
 

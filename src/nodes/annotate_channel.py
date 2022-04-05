@@ -10,7 +10,11 @@ class Annotate_channel(Node):
     category = "Annotation"
     description = "" 
 
-    example_init = {'name': 'Channel Annotation', 'channel_name': 'Pushbutton', 'targets': ['Pressed', 'Released']}
+    example_init = {
+        'name': 'Channel Annotation', 
+        'channel_name': 'Pushbutton', 
+        'targets': ['Pressed', 'Released']
+    }
 
     def __init__(self, channel_name, targets, name = "Channel Annotation", **kwargs):
         super().__init__(name=name, **kwargs)

@@ -4,20 +4,6 @@ import numpy as np
 import plux
 
 class NewDevice(plux.SignalsDev):
-    channels_in = []
-    channels_out = ['Data', 'Channel Names']
-
-    category = "Base"
-    description = "" 
-
-    example_init = {
-        "adr": "mac address",
-        "freq": 100,
-        "channel_names": ["Channel 1"],
-        "n_bits": 16,
-        "name": "Biosignalsplux",
-    }
-
     def __init__(self, address):
         plux.MemoryDev.__init__(address)
 
@@ -39,6 +25,20 @@ class NewDevice(plux.SignalsDev):
     # It seems to work best when activating the plux hub and shortly after starting the pipline in qt interface
     # (which is weird) as on command line the timing is not important at all...
 class In_biosignalsplux(BlockingSender):
+    channels_in = []
+    channels_out = ['Data', 'Channel Names']
+
+    category = "Data Source"
+    description = "" 
+
+    example_init = {
+        "adr": "mac address",
+        "freq": 100,
+        "channel_names": ["Channel 1"],
+        "n_bits": 16,
+        "name": "Biosignalsplux",
+    }
+
     def __init__(self, adr, freq, channel_names=[], n_bits=16, name="Biosignalsplux", **kwargs):
         super().__init__(name, **kwargs)
 

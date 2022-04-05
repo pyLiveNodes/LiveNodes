@@ -38,8 +38,8 @@ class Draw_text_display(View):
             old_text = text
 
             # TODO: confidentelly assume that at some point we get the "only return label reference if it actually changed" to work (currenlty this causes troubles with matplotlib)
-            if old_text != text:
-                label.set_text(text)
+            # if old_text != text:
+            label.set_text(text)
 
             return [label]
         return update

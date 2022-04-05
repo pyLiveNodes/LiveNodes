@@ -7,7 +7,7 @@ class Biokit_to_fs(Node):
     category = "BioKIT"
     description = "" 
 
-    example_init = {'name': 'Name'}
+    example_init = {'name': 'To BioKIT'}
 
     def process_time_series(self, ts):
         fs = BioKIT.FeatureSequence()

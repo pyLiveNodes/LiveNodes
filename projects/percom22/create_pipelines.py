@@ -78,26 +78,19 @@ def riot_add_recog(pl, has_annotation=False):
         draw_recognition_path.add_input(memory, receiving_channel='Annotation')
 
     draw_search_graph = Draw_search_graph(n_hypos=1)
-    draw_search_graph.add_input(recog, emitting_channel="HMM Meta", receiving_channel="HMM Meta")
-    draw_search_graph.add_input(recog, emitting_channel="Hypothesis", receiving_channel="Hypothesis")
+    draw_search_graph.connect_inputs_to(recog)
 
     draw_gmm = Draw_gmm(name="GMM X", plot_names=["ACC_X", "GYRO_X"], n_mixtures=1, n_scatter_points=15)
-    draw_gmm.add_input(norm, emitting_channel="Data", receiving_channel="Data")
-    draw_gmm.add_input(pl, emitting_channel="Channel Names", receiving_channel="Channel Names")
-    draw_gmm.add_input(recog, emitting_channel="HMM Meta", receiving_channel="HMM Meta")
-    draw_gmm.add_input(recog, emitting_channel="Hypo States", receiving_channel="Hypo States")
+    draw_gmm.connect_inputs_to(filter1)
+    draw_gmm.connect_inputs_to(recog)
 
     draw_gmm = Draw_gmm(name="GMM Y", plot_names=["ACC_Y", "GYRO_Y"], n_mixtures=1, n_scatter_points=15)
-    draw_gmm.add_input(norm, emitting_channel="Data", receiving_channel="Data")
-    draw_gmm.add_input(pl, emitting_channel="Channel Names", receiving_channel="Channel Names")
-    draw_gmm.add_input(recog, emitting_channel="HMM Meta", receiving_channel="HMM Meta")
-    draw_gmm.add_input(recog, emitting_channel="Hypo States", receiving_channel="Hypo States")
+    draw_gmm.connect_inputs_to(filter1)
+    draw_gmm.connect_inputs_to(recog)
 
     draw_gmm = Draw_gmm(name="GMM Z", plot_names=["ACC_Z", "GYRO_Z"], n_mixtures=1, n_scatter_points=15)
-    draw_gmm.add_input(norm, emitting_channel="Data", receiving_channel="Data")
-    draw_gmm.add_input(pl, emitting_channel="Channel Names", receiving_channel="Channel Names")
-    draw_gmm.add_input(recog, emitting_channel="HMM Meta", receiving_channel="HMM Meta")
-    draw_gmm.add_input(recog, emitting_channel="Hypo States", receiving_channel="Hypo States")
+    draw_gmm.connect_inputs_to(filter1)
+    draw_gmm.connect_inputs_to(recog)
 
     return pl
 
@@ -189,7 +182,7 @@ if __name__ == "__main__":
         "targets": ["None", "Right", "Left"]
     }
 
-    pl = In_playback(files="./data/RIoT/*.h5", csv_columns=["start", "end", "act"], annotation_holes="", meta=riot_meta, emit_at_once=1)
+    pl = In_playback(files="./data/RIoT/*.h5", csv_columns=["start", "end", "act"], annotation_holes="None", meta=riot_meta, emit_at_once=1)
     pl = add_riot_draw(pl, subset=0.5)
     save(pl, "riot_playback.json")
 

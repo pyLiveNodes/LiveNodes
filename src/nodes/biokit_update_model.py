@@ -45,8 +45,10 @@ class Biokit_update_model(Node):
         self.storage_annotation = []
         self.storage_data = []
 
-        self.last_training = time.time()
-        self.last_msg = time.time()
+        self.last_training = None
+        self.last_msg = None
+
+        self.reco = None
 
     def _settings(self):
         return {\
@@ -177,17 +179,17 @@ class Biokit_update_model(Node):
                    initSearchGraph=True)
 
     def _train(self):
-        len_d, len_a = len(self.data), len(self.annotations)
+        len_d, len_a = len(self.storage_data), len(self.storage_annotation)
         keep = min(len_d, len_a) 
         if len_d != len_a:
             logger.warn(f"Data length ({len_d}) did not match annotation length ({len_a})")
-            self.data = self.data[:keep]
-            self.annotations = self.annotations[:keep]
+            self.storage_data = self.storage_data[:keep]
+            self.storage_annotation = self.storage_annotation[:keep]
 
-        if len(self.data) <= 0:
+        if len(self.storage_data) <= 0:
             return
 
-        featuredimensionality = len(self.data[0][0])
+        featuredimensionality = len(self.storage_data[0][0])
 
         ### Create Recognizer instance
         is_new = not os.path.exists(self.model_path)
@@ -196,7 +198,7 @@ class Biokit_update_model(Node):
             self.reco = recognizer.Recognizer.createNewFromFile(self.model_path, sequenceRecognition=True)
         else:
             print('Adding new activities to new model')
-            print('Feature dim:', len(self.data[0][0]))
+            print('Feature dim:', len(self.storage_data[0][0]))
             # This is kinda ugly, but biokit does not allow empty dicts here :/
             self.reco = recognizer.Recognizer.createCompletelyNew({f"{self.catch_all}_1": ["0"], }, {self.catch_all: [f"{self.catch_all}_1"]}, 1, featuredimensionality=featuredimensionality)
             # self.reco = recognizer.Recognizer.createCompletelyNew({}, {}, 1, featuredimensionality=featuredimensionality)
@@ -206,8 +208,8 @@ class Biokit_update_model(Node):
         processedTokens = DefaultDict(list)
 
         # TODO: clean this up and make sure we don't need store the data twice (once on self and once in fs)
-        n_groups = len(list(groupby(self.annotations)))
-        grouped_atoms = groupby(zip(self.annotations, self.data), key=lambda x: x[0])
+        n_groups = len(list(groupby(self.storage_annotation)))
+        grouped_atoms = groupby(zip(self.storage_annotation, self.storage_data), key=lambda x: x[0])
         for i, (atom, g) in enumerate(grouped_atoms):
             if i < n_groups - 1:
                 pro_sq = BioKIT.FeatureSequence()
@@ -275,16 +277,20 @@ class Biokit_update_model(Node):
         else:
             print('No model was trained')
 
-    def process(self, data, annotation):
+    def _onstart(self):
+        self.last_training = time.time()
+        self.last_msg = time.time()
+
+    def process(self, data, annotation, **kwargs):
         # TODO: make sure this is proper
         self.storage_data.extend(data)
         self.storage_annotation.extend(annotation)
 
         cur_time = time.time()
-        if self.last_training + 60 >= cur_time:
+        if self.last_training + self.update_every_s <= cur_time:
             self.last_training = cur_time
             
-            print('Update!', len(self.data))
+            print('Update!', len(self.storage_data))
 
             try:
                 self._emit_data(f"[{str(self)}]\n      Starting training.", channel="Text") 
@@ -296,7 +302,8 @@ class Biokit_update_model(Node):
                 print(traceback.format_exc())
                 print(err)
 
-        elif self.last_msg + 1 >= cur_time:
+        elif self.last_msg + 1 <= cur_time:
             self._emit_data(f"[{str(self)}]\n     Next training: {self.update_every_s - (self.last_msg - self.last_training):.2f}s.", channel="Text") 
+            self.last_msg = cur_time
 
 

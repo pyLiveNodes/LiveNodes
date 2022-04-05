@@ -13,10 +13,15 @@ class In_riot(BlockingSender):
     channels_in = []
     channels_out = ['Data', 'Channel Names']
 
-    category = "Base"
+    category = "Data Source"
     description = "" 
 
-    example_init = {'name': 'Name', "id": 0, "listen_ip": '192.168.1.101', "listen_port": 8888}
+    example_init = {
+        'name': 'Name', 
+        "id": 0, 
+        "listen_ip": '192.168.1.101', 
+        "listen_port": 8888
+    }
 
     def __init__(self, id=0, name="RIoT", listen_ip='192.168.1.101', listen_port=8888, **kwargs):
         super().__init__(name, **kwargs)

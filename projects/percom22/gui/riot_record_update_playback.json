@@ -1,0 +1,177 @@
+{
+  "connections": [
+    {
+      "in_id": "773e628b-265c-4d89-a73d-d5a9d6201d55",
+      "in_index": 0,
+      "out_id": "0be92c42-3998-44e5-9edd-c3b12f2ffd08",
+      "out_index": 0
+    },
+    {
+      "in_id": "773e628b-265c-4d89-a73d-d5a9d6201d55",
+      "in_index": 1,
+      "out_id": "0be92c42-3998-44e5-9edd-c3b12f2ffd08",
+      "out_index": 4
+    },
+    {
+      "in_id": "a0521ae3-a0cc-4327-be5a-43eae272f2de",
+      "in_index": 0,
+      "out_id": "0be92c42-3998-44e5-9edd-c3b12f2ffd08",
+      "out_index": 0
+    },
+    {
+      "in_id": "81097d71-a0e5-41f9-a184-6967e0be085d",
+      "in_index": 1,
+      "out_id": "0be92c42-3998-44e5-9edd-c3b12f2ffd08",
+      "out_index": 4
+    },
+    {
+      "in_id": "223937b3-e57c-48a1-8e03-1f578e161042",
+      "in_index": 0,
+      "out_id": "773e628b-265c-4d89-a73d-d5a9d6201d55",
+      "out_index": 0
+    },
+    {
+      "in_id": "223937b3-e57c-48a1-8e03-1f578e161042",
+      "in_index": 1,
+      "out_id": "773e628b-265c-4d89-a73d-d5a9d6201d55",
+      "out_index": 1
+    },
+    {
+      "in_id": "81097d71-a0e5-41f9-a184-6967e0be085d",
+      "in_index": 0,
+      "out_id": "a0521ae3-a0cc-4327-be5a-43eae272f2de",
+      "out_index": 0
+    },
+    {
+      "in_id": "4ac978fa-a4ee-4f70-9027-69741d22dd87",
+      "in_index": 1,
+      "out_id": "a0521ae3-a0cc-4327-be5a-43eae272f2de",
+      "out_index": 1
+    },
+    {
+      "in_id": "8874b2b5-1fb2-47b2-a3aa-67b54c88764d",
+      "in_index": 0,
+      "out_id": "81097d71-a0e5-41f9-a184-6967e0be085d",
+      "out_index": 0
+    },
+    {
+      "in_id": "2b804baf-a1de-41ea-9b68-3b0e112956f1",
+      "in_index": 0,
+      "out_id": "8874b2b5-1fb2-47b2-a3aa-67b54c88764d",
+      "out_index": 0
+    },
+    {
+      "in_id": "4ac978fa-a4ee-4f70-9027-69741d22dd87",
+      "in_index": 0,
+      "out_id": "2b804baf-a1de-41ea-9b68-3b0e112956f1",
+      "out_index": 0
+    },
+    {
+      "in_id": "84cd3340-746b-4a52-9506-f62d700f8b9b",
+      "in_index": 0,
+      "out_id": "4ac978fa-a4ee-4f70-9027-69741d22dd87",
+      "out_index": 0
+    }
+  ],
+  "nodes": [
+    {
+      "id": "0be92c42-3998-44e5-9edd-c3b12f2ffd08",
+      "model": {
+        "name": "In_playback",
+        "association_to_node": "Playback [In_playback]"
+      },
+      "position": {
+        "x": 50.0,
+        "y": 118.0
+      }
+    },
+    {
+      "id": "773e628b-265c-4d89-a73d-d5a9d6201d55",
+      "model": {
+        "name": "Transform_filter",
+        "association_to_node": "Raw Filter [Transform_filter]"
+      },
+      "position": {
+        "x": 295.00000000000006,
+        "y": 50.0
+      }
+    },
+    {
+      "id": "223937b3-e57c-48a1-8e03-1f578e161042",
+      "model": {
+        "name": "Draw_lines",
+        "association_to_node": "Raw Data [Draw_lines]"
+      },
+      "position": {
+        "x": 625.3199999999999,
+        "y": 50.88000000000005
+      }
+    },
+    {
+      "id": "a0521ae3-a0cc-4327-be5a-43eae272f2de",
+      "model": {
+        "name": "Annotate_ui_button",
+        "association_to_node": "GUI Button Annotation [Annotate_ui_button]"
+      },
+      "position": {
+        "x": 278.7600000000001,
+        "y": 262.23999999999995
+      }
+    },
+    {
+      "id": "81097d71-a0e5-41f9-a184-6967e0be085d",
+      "model": {
+        "name": "Transform_filter",
+        "association_to_node": "Annot Filter [Transform_filter]"
+      },
+      "position": {
+        "x": 524.52,
+        "y": 203.8400000000001
+      }
+    },
+    {
+      "id": "8874b2b5-1fb2-47b2-a3aa-67b54c88764d",
+      "model": {
+        "name": "Biokit_to_fs",
+        "association_to_node": "Name [Biokit_to_fs]"
+      },
+      "position": {
+        "x": 868.1199999999999,
+        "y": 207.60000000000002
+      }
+    },
+    {
+      "id": "2b804baf-a1de-41ea-9b68-3b0e112956f1",
+      "model": {
+        "name": "Biokit_norm",
+        "association_to_node": "Norm [Biokit_norm]"
+      },
+      "position": {
+        "x": 1046.12,
+        "y": 209.92000000000002
+      }
+    },
+    {
+      "id": "4ac978fa-a4ee-4f70-9027-69741d22dd87",
+      "model": {
+        "name": "Biokit_update_model",
+        "association_to_node": "Train [Biokit_update_model]"
+      },
+      "position": {
+        "x": 1213.4799999999998,
+        "y": 216.00000000000014
+      }
+    },
+    {
+      "id": "84cd3340-746b-4a52-9506-f62d700f8b9b",
+      "model": {
+        "name": "Draw_text_display",
+        "association_to_node": "Training Status [Draw_text_display]"
+      },
+      "position": {
+        "x": 1445.3199999999997,
+        "y": 216.5600000000001
+      }
+    }
+  ]
+}

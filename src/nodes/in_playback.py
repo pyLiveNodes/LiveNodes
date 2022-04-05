@@ -24,7 +24,16 @@ class In_playback(Sender):
     category = "Data Source"
     description = "" 
 
-    example_init = {'name': 'Name'}
+    example_init = {
+        'name': 'Playback',
+        'files': './data/RIoT/*.h5',
+        'meta': {
+            'sample_rate': 1000,
+            'targets': ['stand'],
+            'channels': ['channel 1']
+        },
+        'emit_at_once': 20
+    }
 
     # TODO: consider using a file for meta data instead of dictionary...
     def __init__(self, files, meta, emit_at_once=1, annotation_holes="stand", csv_columns=["act", "start", "end"], name="Playback", compute_on=Location.THREAD, block=False, **kwargs):
