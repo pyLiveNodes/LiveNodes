@@ -2,7 +2,6 @@ import numpy as np
 
 from .node import View
 
-
 # The draw pattern works as follows:
 # 1. init_draw is called externally by matplotlib or qt and provides access to the subfig. 
 #   -> use this to setup axes, paths etc
@@ -16,6 +15,14 @@ from .node import View
 
 
 class Draw_lines(View):
+    """
+    Draw all received data channels as line plot over time.
+
+    Furthest right is the current time, left is x second in the past.
+
+    Draws on a matplotlib canvas.
+    """
+
     channels_in = ['Data', 'Channel Names']
     channels_out = []
 

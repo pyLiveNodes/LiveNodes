@@ -1,7 +1,12 @@
 from .node import View
 
-
 class Draw_text_display(View):
+    """
+    Draws any given Text replacing previosly drawn text.
+    
+    Draws on a matplotlib canvas.
+    """
+
     channels_in = ['Text']
     channels_out = []
 

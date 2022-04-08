@@ -4,9 +4,13 @@ import numpy as np
 import plux
 
 class NewDevice(plux.SignalsDev):
+    """
+    Stub for a Plux based device.
+    The onRawFrame should be overwritten
+    """
+
     def __init__(self, address):
         plux.MemoryDev.__init__(address)
-
         self.onRawFrame = lambda _: None
 
     # From the doc/examples:
@@ -24,7 +28,16 @@ class NewDevice(plux.SignalsDev):
     # DEBUG NOTE:
     # It seems to work best when activating the plux hub and shortly after starting the pipline in qt interface
     # (which is weird) as on command line the timing is not important at all...
+
 class In_biosignalsplux(BlockingSender):
+    """
+    Feeds data frames from a biosiagnal plux based device into the pipeline.
+
+    Examples for biosignal plux devices are: biosignalplux hup and muscleban (for RIoT and Bitalino please have a look at in_riot.py)
+
+    Requires the plux libaray.
+    """
+
     channels_in = []
     channels_out = ['Data', 'Channel Names']
 

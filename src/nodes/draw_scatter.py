@@ -1,21 +1,17 @@
-import collections
-import dataclasses
-from queue import Queue
-from this import d
-from tkinter import N
 import numpy as np
 
 from .node import View
 
-import matplotlib.patches as mpatches
-
-import multiprocessing as mp
-import ctypes as c
-
-import time
-
 
 class Draw_scatter(View):
+    """
+    Draw all the first two received data channels as scatter plot.
+    
+    Time is represented via alpha values. The most current point is opaque the furthest point away is at 10% alpha.
+
+    Draws on a matplotlib canvas.
+    """
+
     channels_in = ['Data', 'Channel Names']
     channels_out = []
 

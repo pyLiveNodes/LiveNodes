@@ -4,6 +4,10 @@ from .node import Node
 from .biokit import BioKIT
 
 class Biokit_to_fs(Node):
+    """
+    Transforms a Stream (batch/file, time, channel) into (batch/file, BioKIT Feature Sequence).
+    """
+    
     category = "BioKIT"
     description = "" 
 

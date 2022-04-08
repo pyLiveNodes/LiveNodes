@@ -1,17 +1,19 @@
-import collections
 import numpy as np
+import seaborn as sns
 
 from .node import View
 
-import time
-from itertools import groupby
-import seaborn as sns
-
-import multiprocessing as mp
-
-
 
 class Draw_search_graph(View):
+    """
+    Draws the BioKIT search graph as broken bar plot.
+    Highlights the current best hypothesis.
+
+    Each Token (word/activity) is represented with it's according Atoms (phonem/phase)
+
+    Draws on a matplotlib canvas.
+    """
+
     channels_in = ['HMM Meta', 'Hypothesis']
     channels_out = []
 

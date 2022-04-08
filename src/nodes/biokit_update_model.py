@@ -1,13 +1,9 @@
 from itertools import groupby
-from turtle import update
 from typing import DefaultDict
-import threading
-import numpy as np
 from .node import Node
 from .biokit import BioKIT, logger, recognizer
 import time
 
-import multiprocessing as mp
 import os
 import traceback
 
@@ -17,6 +13,19 @@ import traceback
 # TODO: also figure out how to adapt a model to the current wearer -> should be a standard procedure somewhere...
     # -> have a second look at the MAP tests in biokit
 class Biokit_update_model(Node):
+    """
+    Updates a Hidden Markov Model Recognizer (for a BioKIT Feature Sequence Stream)
+
+    Reads a given model or creates a new one if none is found.
+    Every x seconds the received data will be used to update the model.
+    Once the pipeline stops, the new model is written out to files.
+
+    If the collected data includes unseen activities a new target is created using the passed parameter of default phases.
+    If the data includes seen activities they are currently discarded. This is a TODO point, where these should also be used for training.
+
+    Requires a BioKIT Feature Sequence Stream
+    """
+
     channels_in = ["Data", "Annotation"]
     channels_out = ["Text"]
 

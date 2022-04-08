@@ -35,6 +35,20 @@ def convert_list_pos(itms, x_max, yrange):
 
 
 class Draw_recognition(View):
+    """
+    Draws the BioKIT recognition as broken bar plot over time.
+
+    Furthest right is the current time, left is x second in the past.
+
+    Includes four subplots:
+    - Reference: (if provided) the ground trouth
+    - Token: the recognized word / activity 
+    - Atom: the recognized phonem / activity-phase
+    - State: the recognized phonem-state / -
+
+    Draws on a matplotlib canvas.
+    """
+    
     channels_in = ['Recognition', 'Annotation', 'HMM Meta']
     channels_out = []
 

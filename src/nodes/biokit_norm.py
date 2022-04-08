@@ -4,6 +4,16 @@ from .node import Node
 from .biokit import BioKIT
 
 class Biokit_norm(Node):
+    """
+    Z-Normalisierung on BioKIT Feature Sequences. 
+    For each Batch: Subtracts the current running mean and norm the variance to one. 
+    
+    The running mean is updated with each new batch of data.
+    The current implementation never resets the means.
+
+    Requires a BioKIT Feature Sequence Stream
+    """
+
     category = "BioKIT"
     description = "" 
 

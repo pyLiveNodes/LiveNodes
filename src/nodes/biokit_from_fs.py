@@ -1,9 +1,12 @@
-import numpy as np
 from .node import Node
 
-from .biokit import BioKIT
-
 class Biokit_from_fs(Node):
+    """
+    Transforms a Stream of (batch/file, BioKIT Feature Sequence) into (batch/file, time, channel).
+
+    Requires a BioKIT Feature Sequence Stream
+    """
+
     category = "BioKIT"
     description = "" 
 

@@ -1,15 +1,21 @@
-import numpy as np
 from .node import Node
-
 from .biokit import recognizer
-
-import seaborn as sns
 
 import json
 
 # TODO: figure out if needed (!) how we can train this as well...
 
 class Biokit_recognizer(Node):
+    """
+    Hidden Markov Model Recognizer (for a BioKIT Feature Sequence Stream)
+
+    Updates it's own recognition with each new batch of data and sends.
+    Also sends the most likely hypothesis of the current state.
+
+    Requires a pre-trained model (look at biokit_train.py)
+    Requires a BioKIT Feature Sequence Stream
+    """
+
     channels_in = ['Data', 'File']
     channels_out = ['Recognition', 'HMM Meta', 'Hypothesis', 'Hypo States']
 

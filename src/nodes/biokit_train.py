@@ -1,12 +1,20 @@
 from itertools import groupby
 from typing import DefaultDict
-import numpy as np
-from .node import Node
 
+from .node import Node
 from .biokit import BioKIT, logger, recognizer
 
 
 class Biokit_train(Node):
+    """
+    Trains Hidden Markov Model Recognizer (for a BioKIT Feature Sequence Stream)
+
+    Collects all data send to it along with the annotation and file information.
+    Once it receives a Termination signal (read: no more data will be send) it trains a model with the given parameters and saves it to the specified path.
+
+    Requires a BioKIT Feature Sequence Stream
+    """
+
     channels_in = ['Data', 'File', 'Annotation', 'Termination']
     channels_out = []
 

@@ -1,18 +1,24 @@
-import collections
 import numpy as np
+import seaborn as sns
+import matplotlib as mpl
 
 from .draw_scatter import Draw_scatter
 
-import time
-from itertools import groupby
-import seaborn as sns
-
-import multiprocessing as mp
-import matplotlib as mpl
-
-
 
 class Draw_gmm(Draw_scatter):
+    """
+    Draw Gaussian Mixtures in two dimensional space along with the current data points as scatter plot.
+
+    The gaussians are pre-rendered once received. The weight of each gaussian is represented as alpha values.
+
+    The scatter drawing is passed of to draw_scatter.
+
+    TODO: at the moment this includes it's own filter, as previously the biokit recognizer did only send the gaussians in full dimension.
+    Now that a filter can be put in between, this class should be simplified.
+
+    Draws on a matplotlib canvas.
+    """
+
     channels_in = ["Data", "Channel Names", "HMM Meta", "Hypo States"] #"GMM Models", "GMM Means", "GMM Covariances", "GMM Weights"]
     channels_out = []
 
