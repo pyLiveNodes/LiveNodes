@@ -8,3 +8,6 @@ smart.egg-info/
 .pytest_cache/
 
 logs/
+
+
+_doc/

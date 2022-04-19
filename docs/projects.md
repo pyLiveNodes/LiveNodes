@@ -1,3 +1,5 @@
+# Projects
+
 A project is a scope for multiple files and graphs/pipelines.
 A project is required to have the following subfolders:
 - data: all data will live here, ie data from another dataset and/or recorded data, etc.

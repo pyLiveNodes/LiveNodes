@@ -1,3 +1,5 @@
+# Draw System
+
 Every node may choose to implement a draw/interactive frontend.
 Each node may choose what to draw. This can either be data in form of plots, information in form of text or even controls, like playback speed etc. At the moment only a matplotlib frontend is implemented, but any qt based frontend will be possible in the future.
 
