@@ -26,3 +26,13 @@ format:
     - python -m pip install yapf
   script:
     - yapf -ri ./src ./tests
+
+
+test:
+  stage: test
+  script:
+    - pytest --junitxml=report.xml
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
