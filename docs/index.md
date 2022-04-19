@@ -1,12 +1,12 @@
 # SMART
 
-test
 
 ## TOC
 
 ```{eval-rst}
 .. toctree::
     :maxdepth: 2
+    :caption: Test
 
     nodes.md
     gui.md
@@ -27,5 +27,13 @@ test
     :maxdepth: 2
 
     modules/modules.rst
+
+
+.. toctree::
+    :caption: Contributing
+    :maxdepth: 2
+
+    contributing/index.md
+
 ```
 
