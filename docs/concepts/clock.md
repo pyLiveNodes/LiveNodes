@@ -1,3 +1,5 @@
+# Clock
+
 Feeder nodes and sync nodes provide a clock wich acts as a takt for their whole subgraph.
 
 This allows subgraphs to be synced on the same clock.

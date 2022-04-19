@@ -1,3 +1,5 @@
+# Streams
+
 Every node may declare any stream it likes.
 
 Streams are currently based on the strings provided by each node. Similar to the node system, in the future a class and registry might be implemented.

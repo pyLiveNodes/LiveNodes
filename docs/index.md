@@ -1,20 +1,31 @@
-# Main Folder
+# SMART
 
-## Some Information
-
-
-[Some link](test/bla.md)
-
+test
 
 ## TOC
 
 ```{eval-rst}
 .. toctree::
-   :maxdepth: 2
+    :maxdepth: 2
 
-   draw.md
-   logger.md
-   examples/calculator.md
-   projects.md
-   nodes.md
+    nodes.md
+    gui.md
+
+    concepts/index.md
+    libraries/index.md
+
+
+.. toctree::
+    :caption: Examples
+    :maxdepth: 2
+
+    examples/index.md
+
+
+.. toctree::
+    :caption: Modules
+    :maxdepth: 2
+
+    modules/modules.rst
 ```
+

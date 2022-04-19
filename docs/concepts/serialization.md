@@ -1,3 +1,5 @@
+# Serialization
+
 The serialization system can serialize a graph to json (or yml) and deserialize it from json as well.
 It uses a couple of assumptions etc for that (these are partialy subject to change).
 
