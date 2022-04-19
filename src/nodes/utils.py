@@ -1,4 +1,3 @@
-
 # Print iterations progress
 from asyncore import write
 from enum import IntEnum
@@ -8,7 +7,14 @@ import threading
 import datetime
 
 
-def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
+def printProgressBar(iteration,
+                     total,
+                     prefix='',
+                     suffix='',
+                     decimals=1,
+                     length=100,
+                     fill='█',
+                     printEnd="\r"):
     """
     Call in a loop to create terminal progress bar
     @params:
@@ -21,14 +27,14 @@ def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, 
         fill        - Optional  : bar fill character (Str)
         printEnd    - Optional  : end character (e.g. "\r", "\r\n") (Str)
     """
-    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+    percent = ("{0:." + str(decimals) + "f}").format(
+        100 * (iteration / float(total)))
     filledLength = int(length * iteration // total)
     bar = fill * filledLength + '-' * (length - filledLength)
-    print(f'\r{prefix} |{bar}| {percent}% {suffix}', end = printEnd)
+    print(f'\r{prefix} |{bar}| {percent}% {suffix}', end=printEnd)
     # Print New Line on Complete
-    if iteration == total: 
+    if iteration == total:
         print()
-
 
 
 class LogLevel(IntEnum):
@@ -36,6 +42,7 @@ class LogLevel(IntEnum):
     INFO = 2
     DEBUG = 3
     VERBOSE = 4
+
 
 class Logger():
     _log_level = LogLevel.DEBUG
@@ -52,7 +59,7 @@ class Logger():
 
     def register_cb(self, cb):
         self.cbs.append(cb)
-    
+
     def remove_cb(self, cb):
         self.cbs.remove(cb)
 
@@ -75,7 +82,8 @@ class Logger():
             cur_thread = threading.current_thread().name
             txt = " ".join(str(t) for t in text)
 
-            level_str = ["Warning", "Information", "Debug", "Verbose"][level - 1]
+            level_str = ["Warning", "Information", "Debug",
+                         "Verbose"][level - 1]
 
             msg = f"{timestamp} | {cur_proc: <13} | {cur_thread: <13} | {level_str: <11} | {txt}"
 
@@ -84,7 +92,7 @@ class Logger():
 
             for cb in self.cbs:
                 cb(msg)
-            
+
             # release log
             self._lock.release()
 

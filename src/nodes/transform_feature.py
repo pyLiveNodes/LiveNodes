@@ -11,35 +11,44 @@ import tsfel.feature_extraction.features as tsfel
 from inspect import signature
 
 
-class SingleChannelFeature (BaseTransformer_eager):
+class SingleChannelFeature(BaseTransformer_eager):
+
     def __init__(self, fn, fnParams={}):
         self.fn = fn
         self.fnParams = fnParams
-        
+
     def transformSingleChannelTS(self, ts):
         return np.array([self.fn(window, **self.fnParams) for window in ts])
-    
+
     def transform(self, wts):
         return list(map(self.transformSingleChannelTS, wts))
-    
-class MultiChannelFeature (BaseTransformer_eager):
+
+
+class MultiChannelFeature(BaseTransformer_eager):
+
     def __init__(self, fn, fnParams={}):
         self.fn = fn
         self.fnParams = fnParams
 
     def transform(self, wts):
         return self.fn(wts, **self.fnParams)
-    
-class MultipleWrapper (BaseTransformer_eager):
+
+
+class MultipleWrapper(BaseTransformer_eager):
+
     def __init__(self, estimator: BaseTransformer_eager):
         self.estimator = estimator
 
     def transform(self, wts):
         res = np.array(self.estimator.transform(wts))
-        if len(res.shape) == 2: # -> the feature returned an array on each channel for each window
+        if len(
+                res.shape
+        ) == 2:  # -> the feature returned an array on each channel for each window
             self.dimensions_ = np.ma.size(res, axis=-1)
             return np.hstack(res.transpose(2, 0, 1))
-        elif len(res.shape) == 1: # -> the feature returned a single value on each channel for each window
+        elif len(
+                res.shape
+        ) == 1:  # -> the feature returned a single value on each channel for each window
             self.dimensions_ = 1
             return res
 
@@ -49,11 +58,15 @@ class Transform_feature(Node):
     channels_out = ['Data', 'Channel Names']
 
     category = "Transform"
-    description = "" 
+    description = ""
 
     example_init = {"name": "Name"}
 
-    def __init__(self, name="Features", features=["calc_mean"], feature_args={}, **kwargs):
+    def __init__(self,
+                 name="Features",
+                 features=["calc_mean"],
+                 feature_args={},
+                 **kwargs):
         super().__init__(name, **kwargs)
 
         self.features = features
@@ -67,19 +80,24 @@ class Transform_feature(Node):
             else:
                 ftfn = getattr(mkr_features, f_name)
                 ftTransformer = MultiChannelFeature
-                
-            ftfnParams = signature(ftfn).parameters
-            ftArgs = {key: feature_args[key] for key in feature_args if key in ftfnParams and not key == 'wts'}
-            
-            self.featureList.append(MultipleWrapper(estimator=ftTransformer(ftfn, ftArgs)))          
 
-        self._union = FeatureUnion(self.featureList, featureNames=self.features)
+            ftfnParams = signature(ftfn).parameters
+            ftArgs = {
+                key: feature_args[key]
+                for key in feature_args
+                if key in ftfnParams and not key == 'wts'
+            }
+
+            self.featureList.append(
+                MultipleWrapper(estimator=ftTransformer(ftfn, ftArgs)))
+
+        self._union = FeatureUnion(self.featureList,
+                                   featureNames=self.features)
         # self._union = FeatureUnion(self.featureList, featureNames=self.features, **self.unionParams)
 
         self.channel_names = None
         self.channels = []
 
-        
     def _settings(self):
         return {\
             "features": self.features,
@@ -90,7 +108,6 @@ class Transform_feature(Node):
         return data is not None and \
             (self.channel_names is not None or channel_names is not None)
 
-
     # input shape: (batch/file, time, channel)
     def process(self, data, channel_names=None, **kwargs):
         if channel_names is not None:
@@ -99,12 +116,13 @@ class Transform_feature(Node):
         # TODO: update the union stuff etc to not expect a tuple as input
         # TODO: update this to not expect it to be wrapped in a list
         # TODO: update this to not use a map anymore
-        # TODO: currently ft.transform is called twice, as the dimensions_ will otherwise not be set -> most of the time we do double the work for no benefit 
+        # TODO: currently ft.transform is called twice, as the dimensions_ will otherwise not be set -> most of the time we do double the work for no benefit
         # data, channels = self._union.transform((data_frame, self.channel_names))
 
         # the union implementation is from mkr and expects (batch, channel, time)
-        fts, channels = self._union.transform((np.array(data).transpose((0, 2, 1)), self.channel_names))
-        
+        fts, channels = self._union.transform((np.array(data).transpose(
+            (0, 2, 1)), self.channel_names))
+
         # as we've folded the original time axis into the features, let's insert it with size one, to fulfill the (batch, time, channel) expectation
         # STOPPED HERE: TODO: rething the insertion as well as the channels put out by window. As the current idea doens't make much sense for normalization, as we would normalize on sequences of length 1... or should we normalize over batches? that feels quite wrong tho...
         # -> nvm: the norm is a running norm anyway, ie updates with every frame.

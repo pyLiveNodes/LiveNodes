@@ -6,14 +6,19 @@ import random
 from PyQt5 import QtWidgets
 from glob import glob
 
-from PyQt5.QtGui import QPixmap, QIcon                                                                                                        
+from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtWidgets import QToolButton, QFormLayout, QComboBox, QComboBox, QPushButton, QVBoxLayout, QWidget, QGridLayout, QHBoxLayout, QScrollArea, QLabel
 from PyQt5.QtCore import Qt, QSize, pyqtSignal
 from sklearn import pipeline
 
+
 class Home(QWidget):
 
-    def __init__(self, onstart, onconfig, projects='./projects/*', parent=None):
+    def __init__(self,
+                 onstart,
+                 onconfig,
+                 projects='./projects/*',
+                 parent=None):
         super().__init__(parent)
 
         # This is somewhat fucked up...
@@ -50,16 +55,19 @@ class Home(QWidget):
         self.select_project(id)
 
     def _on_start(self, pipeline_path):
-        self.onstart(self.cur_project, pipeline_path.replace(self.cur_project, '.'))
+        self.onstart(self.cur_project,
+                     pipeline_path.replace(self.cur_project, '.'))
 
     def _on_config(self, pipeline_path):
-        self.onconfig(self.cur_project, pipeline_path.replace(self.cur_project, '.'))
-
+        self.onconfig(self.cur_project,
+                      pipeline_path.replace(self.cur_project, '.'))
 
     def select_project(self, project_id):
         self.cur_project = self.projects[project_id]
         pipelines = f"{self.cur_project}/pipelines/*.json"
-        qt_selection = Selection(self._on_start, self._on_config, pipelines=pipelines)
+        qt_selection = Selection(self._on_start,
+                                 self._on_config,
+                                 pipelines=pipelines)
         if self.qt_selection is not None:
             self.qt_grid.removeWidget(self.qt_selection)
         self.qt_grid.addWidget(qt_selection)
@@ -69,7 +77,7 @@ class Home(QWidget):
 class Project_Selection(QWidget):
     selection = pyqtSignal(int)
 
-    def __init__(self, projects=[], parent = None):
+    def __init__(self, projects=[], parent=None):
         super().__init__(parent)
 
         self.combo = QComboBox()
@@ -89,7 +97,7 @@ class Project_Selection(QWidget):
 
     def _set_selected(self, id):
         self.combo.setCurrentIndex(id)
-    
+
     def _selected(self, id):
         self.selection.emit(id)
 
@@ -105,26 +113,30 @@ class Pipline_Selection(QWidget):
 
         self.scroll_panel = QWidget()
         self.scroll_panel_layout = QHBoxLayout(self.scroll_panel)
-        self.scroll_panel_layout.setContentsMargins(0,0,0,0)
+        self.scroll_panel_layout.setContentsMargins(0, 0, 0, 0)
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
-        self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+        self.scroll_area.setVerticalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.scroll_area.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
         self.scroll_area.setWidget(self.scroll_panel)
 
         # layout
         self.mainLayout = QGridLayout(self)
-        self.mainLayout.setContentsMargins(0,0,0,0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.addWidget(self.scroll_area)
 
         for itm in pipelines:
-            icon = QIcon(itm.replace('/pipelines/', '/gui/').replace('.json', '.png'))
+            icon = QIcon(
+                itm.replace('/pipelines/', '/gui/').replace('.json', '.png'))
             button = QToolButton()
             button.setText(itm.split('/')[-1].replace('.json', ''))
             button.setIcon(icon)
-            button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+            button.setToolButtonStyle(
+                Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
             button.clicked.connect(partial(self.__select, itm))
-            button.setIconSize(QSize(200,200))
+            button.setIconSize(QSize(200, 200))
             self.scroll_panel_layout.addWidget(button)
 
     def __select(self, pipline_path):
@@ -132,6 +144,7 @@ class Pipline_Selection(QWidget):
 
 
 class Selection(QWidget):
+
     def __init__(self, onstart, onconfig, pipelines="./pipelines/*.json"):
         super().__init__()
 
@@ -147,7 +160,7 @@ class Selection(QWidget):
 
         # combobox1.currentTextChanged.connect(self.text_changed)
         self.text = pipelines[0]
-        
+
         selection = Pipline_Selection(pipelines)
         selection.clicked.connect(self.text_changed)
 
@@ -174,13 +187,15 @@ class Selection(QWidget):
 
         l1 = QVBoxLayout(self)
         # l1.addWidget(self.pixmap, stretch=1)
-        l1.addStretch(1) # idea from: https://zetcode.com/gui/pysidetutorial/layoutmanagement/
+        l1.addStretch(
+            1
+        )  # idea from: https://zetcode.com/gui/pysidetutorial/layoutmanagement/
         l1.addWidget(selection)
         l1.addLayout(buttons)
 
     def onstart(self):
         self.cb_onstart(self.text)
-    
+
     def onconfig(self):
         self.cb_onconfig(self.text)
 
@@ -188,8 +203,10 @@ class Selection(QWidget):
         self.selected.setText(text)
         self.text = text
 
+
 def noop(*args, **kwargs):
     print(args, kwargs)
+
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication([])

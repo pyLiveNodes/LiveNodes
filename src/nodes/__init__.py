@@ -7,15 +7,16 @@ logger.set_log_level(BioKIT.LogSeverityLevel.Warning)
 # use this for debugging
 # logger.set_log_level(BioKIT.LogSeverityLevel.Debug)
 
-
 # Sniff out the correct plux api for this platform
 import platform
 import sys
 
 # TODO: test, clean and extend this, currently arm32 is not checked
-osDic = {"Darwin": "MacOS",
-         "Linux": "Linux64",
-         "Windows":("Win32_37","Win64_37")}
+osDic = {
+    "Darwin": "MacOS",
+    "Linux": "Linux64",
+    "Windows": ("Win32_37", "Win64_37")
+}
 if platform.system() != "Windows":
     if platform.machine() == 'aarch64':
         path = f"plux-api/LinuxARM64_38"

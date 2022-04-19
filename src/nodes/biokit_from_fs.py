@@ -1,5 +1,6 @@
 from .node import Node
 
+
 class Biokit_from_fs(Node):
     """
     Transforms a Stream of (batch/file, BioKIT Feature Sequence) into (batch/file, time, channel).
@@ -8,10 +9,9 @@ class Biokit_from_fs(Node):
     """
 
     category = "BioKIT"
-    description = "" 
+    description = ""
 
     example_init = {'name': 'From BioKIT'}
 
     def process_time_series(self, ts):
         return ts.getMatrix()
-

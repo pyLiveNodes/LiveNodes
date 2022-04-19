@@ -3,6 +3,7 @@ import numpy as np
 
 import plux
 
+
 class NewDevice(plux.SignalsDev):
     """
     Stub for a Plux based device.
@@ -14,7 +15,7 @@ class NewDevice(plux.SignalsDev):
         self.onRawFrame = lambda _: None
 
     # From the doc/examples:
-    # 
+    #
     # https://github.com/biosignalsplux/python-samples/blob/master/MultipleDeviceThreadingExample.py
     # Supported channel number codes:
     # {1 channel - 0x01, 2 channels - 0x03, 3 channels - 0x07
@@ -29,6 +30,7 @@ class NewDevice(plux.SignalsDev):
     # It seems to work best when activating the plux hub and shortly after starting the pipline in qt interface
     # (which is weird) as on command line the timing is not important at all...
 
+
 class In_biosignalsplux(BlockingSender):
     """
     Feeds data frames from a biosiagnal plux based device into the pipeline.
@@ -42,7 +44,7 @@ class In_biosignalsplux(BlockingSender):
     channels_out = ['Data', 'Channel Names']
 
     category = "Data Source"
-    description = "" 
+    description = ""
 
     example_init = {
         "adr": "mac address",
@@ -52,7 +54,13 @@ class In_biosignalsplux(BlockingSender):
         "name": "Biosignalsplux",
     }
 
-    def __init__(self, adr, freq, channel_names=[], n_bits=16, name="Biosignalsplux", **kwargs):
+    def __init__(self,
+                 adr,
+                 freq,
+                 channel_names=[],
+                 n_bits=16,
+                 name="Biosignalsplux",
+                 **kwargs):
         super().__init__(name, **kwargs)
 
         self.adr = adr
@@ -62,7 +70,6 @@ class In_biosignalsplux(BlockingSender):
 
         self.device = None
 
-    
     def _settings(self):
         return {\
             "adr": self.adr,
@@ -70,7 +77,6 @@ class In_biosignalsplux(BlockingSender):
             "n_bits": self.n_bits,
             "channel_names": self.channel_names
         }
-
 
     def _onstop(self):
         self.device.stop()
@@ -80,7 +86,8 @@ class In_biosignalsplux(BlockingSender):
         """
         Streams the data and calls frame callbacks for each frame.
         """
-        def onRawFrame (nSeq, data):
+
+        def onRawFrame(nSeq, data):
             d = np.array(data)
             # if nSeq % 1000 == 0:
             #     print(nSeq, d, d.shape)
@@ -97,6 +104,7 @@ class In_biosignalsplux(BlockingSender):
         self.device.onRawFrame = onRawFrame
         # self.device.start(self.device.frequency, 0x01, 16)
         # convert len of channel_names to bit mask for start (see top, or: https://github.com/biosignalsplux/python-samples/blob/master/MultipleDeviceThreadingExample.py)
-        self.device.start(self.device.frequency, 2 ** len(self.channel_names) - 1, self.n_bits)
-        self.device.loop()  # calls self.device.onRawFrame until it returns True
-        
+        self.device.start(self.device.frequency,
+                          2**len(self.channel_names) - 1, self.n_bits)
+        self.device.loop(
+        )  # calls self.device.onRawFrame until it returns True

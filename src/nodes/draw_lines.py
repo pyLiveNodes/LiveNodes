@@ -3,7 +3,7 @@ import numpy as np
 from .node import View
 
 # The draw pattern works as follows:
-# 1. init_draw is called externally by matplotlib or qt and provides access to the subfig. 
+# 1. init_draw is called externally by matplotlib or qt and provides access to the subfig.
 #   -> use this to setup axes, paths etc
 # 2. init_draw returns a update function which is also called externally and does not receive any inputs
 #   -> this should only interface the update calls on matplotlib using data stored in the attributes of the class instance
@@ -11,7 +11,7 @@ from .node import View
 #   -> calculate the data you will render in the update fn from draw_init
 #
 # The main advantage of this is, that the pipeline and render loops are separated and one doesn't slow down the other
-#  
+#
 
 
 class Draw_lines(View):
@@ -27,7 +27,7 @@ class Draw_lines(View):
     channels_out = []
 
     category = "Draw"
-    description = "" 
+    description = ""
 
     example_init = {
         "name": "Draw Data Lines",
@@ -38,7 +38,13 @@ class Draw_lines(View):
     }
 
     # TODO: move the sample rate into a data_stream?
-    def __init__(self, n_plots=4, xAxisLength=5000, sample_rate=1000, ylim=(-1.1, 1.1), name = "Draw Output Lines", **kwargs):
+    def __init__(self,
+                 n_plots=4,
+                 xAxisLength=5000,
+                 sample_rate=1000,
+                 ylim=(-1.1, 1.1),
+                 name="Draw Output Lines",
+                 **kwargs):
         super().__init__(name=name, **kwargs)
 
         self.xAxisLength = xAxisLength
@@ -48,7 +54,8 @@ class Draw_lines(View):
 
         # computation process
         # yData follows the structure (time, channel)
-        self.yData = np.zeros(xAxisLength * n_plots).reshape((xAxisLength, n_plots))
+        self.yData = np.zeros(xAxisLength * n_plots).reshape(
+            (xAxisLength, n_plots))
 
         # render process
         self.channel_names = list(map(str, range(n_plots)))
@@ -76,19 +83,36 @@ class Draw_lines(View):
 
             ticks = np.linspace(0, self.xAxisLength, 11).astype(np.int)
             ax.set_xticks(ticks)
-            ax.set_xticklabels(- ticks / self.sample_rate)
+            ax.set_xticklabels(-ticks / self.sample_rate)
             ax.invert_xaxis()
             # ax.xaxis.grid(False)
 
         axes[-1].set_xlabel("Time [sec]")
-        xData = range(0, self.xAxisLength)  
-        self.lines = [axes[i].plot(xData, np.zeros((self.xAxisLength)), lw=2, animated=True)[0] for i in range(self.n_plots)]
+        xData = range(0, self.xAxisLength)
+        self.lines = [
+            axes[i].plot(xData,
+                         np.zeros((self.xAxisLength)),
+                         lw=2,
+                         animated=True)[0] for i in range(self.n_plots)
+        ]
 
         # self.labels = []
-        self.labels = [ax.text(0.005, 0.95, name, zorder=100, fontproperties=ax.xaxis.label.get_font_properties(), rotation='horizontal', va='top', ha='left', transform = ax.transAxes) for name, ax in zip(self.channel_names, axes)]
+        self.labels = [
+            ax.text(0.005,
+                    0.95,
+                    name,
+                    zorder=100,
+                    fontproperties=ax.xaxis.label.get_font_properties(),
+                    rotation='horizontal',
+                    va='top',
+                    ha='left',
+                    transform=ax.transAxes)
+            for name, ax in zip(self.channel_names, axes)
+        ]
+
         # self.labels = [ax.text(0, 0.5, name, fontproperties=ax.xaxis.label.get_font_properties(), rotation='vertical', va='center', ha='right', transform = ax.transAxes) for name, ax in zip(self.channel_names, axes)]
 
-        def update (data, channel_names):
+        def update(data, channel_names):
             nonlocal self
             # Not sure why the changes part doesn't work, (not even with zorder)
             # -> could make stuff more efficient, but well...
@@ -106,7 +130,6 @@ class Draw_lines(View):
             return list(np.concatenate([self.lines, self.labels]))
 
         return update
-
 
     def _should_process(self, data=None, channel_names=None):
         return data is not None and \
@@ -129,4 +152,5 @@ class Draw_lines(View):
         self.yData[:d.shape[0]] = d
 
         # TODO: consider if we really always want to send the channel names? -> seems an unecessary overhead (but cleaner code atm, maybe massage later...)
-        self._emit_draw(data=list(self.yData.T), channel_names=self.channel_names)
+        self._emit_draw(data=list(self.yData.T),
+                        channel_names=self.channel_names)

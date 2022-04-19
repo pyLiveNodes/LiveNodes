@@ -1,10 +1,9 @@
-
 from enum import IntEnum
 import json
 from re import L
 from socket import timeout
 import numpy as np
-import time 
+import time
 import multiprocessing as mp
 import queue
 from collections import defaultdict
@@ -16,15 +15,18 @@ import sys
 
 from .utils import logger, LogLevel
 
-# this fix is for macos (https://docs.python.org/3.8/library/multiprocessing.html#contexts-and-start-methods) 
-# TODO: test/validate this works in all cases (ie increase test cases, coverage and machines to be tested on) 
+# this fix is for macos (https://docs.python.org/3.8/library/multiprocessing.html#contexts-and-start-methods)
+# TODO: test/validate this works in all cases (ie increase test cases, coverage and machines to be tested on)
 # mp.set_start_method('fork')
 
+
 class NumpyEncoder(json.JSONEncoder):
+
     def default(self, obj):
         if isinstance(obj, np.ndarray):
             return obj.tolist()
         return json.JSONEncoder.default(self, obj)
+
 
 class Location(IntEnum):
     SAME = 1
@@ -32,11 +34,14 @@ class Location(IntEnum):
     PROCESS = 3
     # SOCKET = 4
 
+
 class Canvas(IntEnum):
     MPL = 1
     # QT = 2
 
+
 class QueueHelperHack():
+
     def __init__(self, compute_on=Location.PROCESS):
         if compute_on in [Location.PROCESS, Location.THREAD]:
             self.queue = mp.Queue()
@@ -66,7 +71,10 @@ class QueueHelperHack():
             self._read[itm_ctr] = item
 
     def discard_before(self, ctr):
-        self._read = {key: val for key, val in self._read.items() if key >= ctr}
+        self._read = {
+            key: val
+            for key, val in self._read.items() if key >= ctr
+        }
 
     def get(self, ctr):
         if self.compute_on == Location.SAME:
@@ -74,12 +82,13 @@ class QueueHelperHack():
             # This should also never be executed in process or thread, as then the update function does not block and keys are skipped!
             self.empty_queue()
 
-        if ctr in self._read:         
+        if ctr in self._read:
             return True, self._read[ctr]
         return False, None
-    
+
 
 class Clock():
+
     def __init__(self, node, should_time):
         self.ctr = 0
         self.times = []
@@ -89,7 +98,7 @@ class Clock():
             self.tick = self._tick_with_time
         else:
             self.tick = self._tick
-    
+
     def _tick_with_time(self):
         self.ctr += 1
         self.times.append(time.time())
@@ -100,9 +109,14 @@ class Clock():
         return self.ctr
 
 
-class Connection ():
+class Connection():
     # TODO: consider creating a channel registry instead of using strings?
-    def __init__(self, emitting_node, receiving_node, emitting_channel="Data", receiving_channel="Data", connection_counter=0):
+    def __init__(self,
+                 emitting_node,
+                 receiving_node,
+                 emitting_channel="Data",
+                 receiving_channel="Data",
+                 connection_counter=0):
         self._emitting_node = emitting_node
         self._receiving_node = receiving_node
         self._emitting_channel = emitting_channel
@@ -113,7 +127,13 @@ class Connection ():
         return f"{str(self._emitting_node)}.{self._emitting_channel} -> {str(self._receiving_node)}.{self._receiving_channel}"
 
     def to_dict(self):
-        return {"emitting_node": str(self._emitting_node), "receiving_node": str(self._receiving_node), "emitting_channel": self._emitting_channel, "receiving_channel": self._receiving_channel, "connection_counter": self._connection_counter}
+        return {
+            "emitting_node": str(self._emitting_node),
+            "receiving_node": str(self._receiving_node),
+            "emitting_channel": self._emitting_channel,
+            "receiving_channel": self._receiving_channel,
+            "connection_counter": self._connection_counter
+        }
 
     def _set_connection_counter(self, counter):
         self._connection_counter = counter
@@ -125,14 +145,15 @@ class Connection ():
             self._receiving_channel == other._receiving_channel
 
     def __eq__(self, other):
-        return self._similar(other) and self._connection_counter == other._connection_counter
+        return self._similar(
+            other) and self._connection_counter == other._connection_counter
+
 
 # class LogLevels(Enum):
-#     Debug 
+#     Debug
 
 
-
-class Node ():
+class Node():
     # === Information Stuff =================
     channels_in = ["Data"]
     channels_out = ["Data"]
@@ -142,18 +163,23 @@ class Node ():
 
     example_init = {}
 
-
     # === Basic Stuff =================
-    def __init__(self, name="Name", compute_on=Location.PROCESS, should_time=False):
+    def __init__(self,
+                 name="Name",
+                 compute_on=Location.PROCESS,
+                 should_time=False):
 
         self.name = name
-        
+
         self.input_connections = []
         self.output_connections = []
 
         self.compute_on = compute_on
 
-        self._received_data = {key: QueueHelperHack(compute_on=compute_on) for key in self.channels_in}
+        self._received_data = {
+            key: QueueHelperHack(compute_on=compute_on)
+            for key in self.channels_in
+        }
 
         self._ctr = None
 
@@ -168,7 +194,8 @@ class Node ():
         elif self.compute_on in [Location.THREAD]:
             self._subprocess_info = {
                 "process": None,
-                "termination_lock": threading.Lock() # as this is called from the main process
+                "termination_lock":
+                threading.Lock()  # as this is called from the main process
             }
 
         self.info('Computing on: ', self.compute_on)
@@ -179,7 +206,6 @@ class Node ():
 
     def __str__(self):
         return f"{self.name} [{self.__class__.__name__}]"
-
 
     # === Logging Stuff =================
     # TODO: move this into it's own module/file?
@@ -201,14 +227,12 @@ class Node ():
         msg = f"{node: <40} | {txt}"
         return msg
 
-
     # # === Subclass Validation Stuff =================
     # def __init_subclass__(self):
     #     """
     #     Check if a new class instance is valid, ie if channels are correct, info is existing etc
     #     """
     #     pass
-
 
     # === Seriallization Stuff =================
     def copy(self, children=False, parents=False):
@@ -217,7 +241,9 @@ class Node ():
         if deep=True copy all childs as well
         """
         # not sure if this will work, as from_dict expects a cls not self...
-        return self.from_dict(self.to_dict(children=children, parents=parents)) #, children=children, parents=parents)
+        return self.from_dict(self.to_dict(
+            children=children,
+            parents=parents))  #, children=children, parents=parents)
 
     def _node_settings(self):
         return {"name": self.name, "compute_on": self.compute_on}
@@ -240,9 +266,9 @@ class Node ():
             for node in self.discover_childs(self):
                 res[str(node)] = node.get_settings()
         return res
-    
+
     @classmethod
-    def from_dict(cls, items, initial_node=None): 
+    def from_dict(cls, items, initial_node=None):
         # TODO: implement children=True, parents=True
         # format should be as in to_dict, ie a dictionary, where the name is unique and the values is a dictionary with three values (settings, ins, outs)
 
@@ -256,7 +282,7 @@ class Node ():
             module_name = f"src.nodes.{itm['class'].lower()}"
             if module_name not in sys.modules:
                 module = importlib.import_module(module_name)
-            else: 
+            else:
                 module = importlib.reload(sys.modules[module_name])
             tmp = (getattr(module, itm['class'])(**itm['settings']))
 
@@ -274,7 +300,10 @@ class Node ():
         for name, itm in items.items():
             # only add inputs, as, if we go through all nodes this automatically includes all outputs as well
             for con in itm['inputs']:
-                items_instc[name].add_input(emitting_node=items_instc[con["emitting_node"]], emitting_channel=con['emitting_channel'], receiving_channel=con['receiving_channel'])
+                items_instc[name].add_input(
+                    emitting_node=items_instc[con["emitting_node"]],
+                    emitting_channel=con['emitting_channel'],
+                    receiving_channel=con['receiving_channel'])
 
         return initial
 
@@ -292,7 +321,6 @@ class Node ():
             json_str = json.load(f)
         return cls.from_dict(json_str)
 
-
     # === Connection Stuff =================
     def connect_inputs_to(self, emitting_node):
         """
@@ -300,26 +328,36 @@ class Node ():
         Main function to connect two nodes together with add_input.
         """
 
-        channels_in_common = set(self.channels_in).intersection(emitting_node.channels_out)
+        channels_in_common = set(self.channels_in).intersection(
+            emitting_node.channels_out)
         for channel in channels_in_common:
-            self.add_input(emitting_node=emitting_node, emitting_channel=channel, receiving_channel=channel)
+            self.add_input(emitting_node=emitting_node,
+                           emitting_channel=channel,
+                           receiving_channel=channel)
 
-
-    def add_input(self, emitting_node, emitting_channel="Data", receiving_channel="Data"):
+    def add_input(self,
+                  emitting_node,
+                  emitting_channel="Data",
+                  receiving_channel="Data"):
         """
         Add one input to self via attributes.
         Main function to connect two nodes together with connect_inputs_to
         """
 
         if not isinstance(emitting_node, Node):
-            raise ValueError("Emitting Node must be of instance Node. Got:", emitting_node)
-        
+            raise ValueError("Emitting Node must be of instance Node. Got:",
+                             emitting_node)
+
         if emitting_channel not in emitting_node.channels_out:
-            raise ValueError(f"Emitting Channel not present on given emitting node ({str(emitting_node)}). Got", emitting_channel)
+            raise ValueError(
+                f"Emitting Channel not present on given emitting node ({str(emitting_node)}). Got",
+                emitting_channel)
 
         if receiving_channel not in self.channels_in:
-            raise ValueError(f"Receiving Channel not present on node ({str(self)}). Got", receiving_channel)
-        
+            raise ValueError(
+                f"Receiving Channel not present on node ({str(self)}). Got",
+                receiving_channel)
+
         # This is too simple, as when connecting two nodes, we really are connecting two sub-graphs, which need to be checked
         # TODO: implement this proper
         # nodes_in_graph = emitting_node.discover_full(emitting_node)
@@ -327,13 +365,17 @@ class Node ():
         #     raise ValueError("Name already in parent sub-graph. Got:", str(self))
 
         # Create connection instance
-        connection = Connection(emitting_node, self, emitting_channel=emitting_channel, receiving_channel=receiving_channel)
+        connection = Connection(emitting_node,
+                                self,
+                                emitting_channel=emitting_channel,
+                                receiving_channel=receiving_channel)
 
         if len(list(filter(connection.__eq__, self.input_connections))) > 0:
             raise ValueError("Connection already exists.")
 
         # Find existing connections of these nodes and channels
-        counter = len(list(filter(connection._similar, self.input_connections)))
+        counter = len(list(filter(connection._similar,
+                                  self.input_connections)))
         # Update counter
         connection._set_connection_counter(counter)
 
@@ -341,35 +383,42 @@ class Node ():
         emitting_node._add_output(connection)
         self.input_connections.append(connection)
 
-
     def remove_all_inputs(self):
         for con in self.input_connections:
             self.remove_input_by_connection(con)
 
-
-    def remove_input(self, emitting_node, emitting_channel="Data", receiving_channel="Data", connection_counter=0):
+    def remove_input(self,
+                     emitting_node,
+                     emitting_channel="Data",
+                     receiving_channel="Data",
+                     connection_counter=0):
         """
         Remove an input from self via attributes
         """
-        return self.remove_input_by_connection(Connection(emitting_node, self, emitting_channel=emitting_channel, receiving_channel=receiving_channel, connection_counter=connection_counter))
-        
+        return self.remove_input_by_connection(
+            Connection(emitting_node,
+                       self,
+                       emitting_channel=emitting_channel,
+                       receiving_channel=receiving_channel,
+                       connection_counter=connection_counter))
 
     def remove_input_by_connection(self, connection):
         """
         Remove an input from self via a connection
         """
         if not isinstance(connection, Connection):
-            raise ValueError("Passed argument is not a connection. Got", connection)
-        
+            raise ValueError("Passed argument is not a connection. Got",
+                             connection)
+
         cons = list(filter(connection.__eq__, self.input_connections))
         if len(cons) == 0:
-            raise ValueError("Passed connection is not in inputs. Got", connection)
+            raise ValueError("Passed connection is not in inputs. Got",
+                             connection)
 
-        # Remove first 
+        # Remove first
         # -> in case something goes wrong on the parents side, the connection remains intact
-        cons[0]._emitting_node._remove_output(cons[0]) 
+        cons[0]._emitting_node._remove_output(cons[0])
         self.input_connections.remove(cons[0])
-
 
     def _add_output(self, connection):
         """
@@ -378,7 +427,6 @@ class Node ():
         """
         self.output_connections.append(connection)
 
-
     def _remove_output(self, connection):
         """
         Remove an output from self. 
@@ -386,18 +434,21 @@ class Node ():
         """
         cons = list(filter(connection.__eq__, self.output_connections))
         if len(cons) == 0:
-            raise ValueError("Passed connection is not in outputs. Got", connection)
+            raise ValueError("Passed connection is not in outputs. Got",
+                             connection)
         self.output_connections.remove(connection)
 
     def _is_input_connected(self, receiving_channel='Data'):
-        return any([x._receiving_channel == receiving_channel for x in self.input_connections])
-
+        return any([
+            x._receiving_channel == receiving_channel
+            for x in self.input_connections
+        ])
 
     # TODO: actually start, ie design/test a sending node!
 
     # === Start/Stop Stuff =================
     def start(self, children=True):
-        if self._running == False: # the node might be child to multiple parents, but we just want to start once
+        if self._running == False:  # the node might be child to multiple parents, but we just want to start once
             # first start children, so they are ready to receive inputs
             # children cannot not have inputs, ie they are always relying on this node to send them data if they want to progress their clock
             if children:
@@ -410,9 +461,11 @@ class Node ():
             # TODO: consider moving this in the node constructor, so that we do not have this nested behaviour processeses due to parents calling their childs start()
             if self.compute_on in [Location.PROCESS, Location.THREAD]:
                 if self.compute_on == Location.PROCESS:
-                    self._subprocess_info['process'] = mp.Process(target=self._process_on_proc)
+                    self._subprocess_info['process'] = mp.Process(
+                        target=self._process_on_proc)
                 elif self.compute_on == Location.THREAD:
-                    self._subprocess_info['process'] = threading.Thread(target=self._process_on_proc)
+                    self._subprocess_info['process'] = threading.Thread(
+                        target=self._process_on_proc)
 
                 self.info('create subprocess')
                 self._acquire_lock(self._subprocess_info['termination_lock'])
@@ -422,21 +475,23 @@ class Node ():
                 self._onstart()
                 self.info('Executed _onstart')
 
-
     def stop(self, children=True):
         # first stop self, so that non-existing children don't receive inputs
-        if self._running == True: # the node might be child to multiple parents, but we just want to stop once
+        if self._running == True:  # the node might be child to multiple parents, but we just want to stop once
             self._running = False
 
             if self.compute_on in [Location.PROCESS, Location.THREAD]:
-                self.info(self._subprocess_info['process'].is_alive(), self._subprocess_info['process'].name)
+                self.info(self._subprocess_info['process'].is_alive(),
+                          self._subprocess_info['process'].name)
                 self._subprocess_info['termination_lock'].release()
                 self._subprocess_info['process'].join(1)
-                self.info(self._subprocess_info['process'].is_alive(), self._subprocess_info['process'].name)
+                self.info(self._subprocess_info['process'].is_alive(),
+                          self._subprocess_info['process'].name)
 
                 if self.compute_on in [Location.PROCESS]:
                     self._subprocess_info['process'].terminate()
-                    self.info(self._subprocess_info['process'].is_alive(), self._subprocess_info['process'].name)
+                    self.info(self._subprocess_info['process'].is_alive(),
+                              self._subprocess_info['process'].name)
             elif self.compute_on in [Location.SAME]:
                 self.info('Executing _onstop')
                 self._onstop()
@@ -452,12 +507,15 @@ class Node ():
             return lock.acquire(block=block, timeout=timeout)
         elif self.compute_on in [Location.THREAD]:
             if block:
-                return lock.acquire(blocking=True, timeout=-1 if timeout is None else timeout)
+                return lock.acquire(blocking=True,
+                                    timeout=-1 if timeout is None else timeout)
             else:
-                return lock.acquire(blocking=False) # forbidden to specify timeout
+                return lock.acquire(
+                    blocking=False)  # forbidden to specify timeout
         else:
-            raise Exception('Cannot acquire lock in non multi process/threading environment')
-
+            raise Exception(
+                'Cannot acquire lock in non multi process/threading environment'
+            )
 
     # === Data Stuff =================
     def _emit_data(self, data, channel="Data", ctr=None):
@@ -472,12 +530,12 @@ class Node ():
 
         for con in self.output_connections:
             if con._emitting_channel == channel:
-                con._receiving_node.receive_data(clock, payload={con._receiving_channel: data})
-
+                con._receiving_node.receive_data(
+                    clock, payload={con._receiving_channel: data})
 
     def _process_on_proc(self):
         self.info('Started subprocess')
-        
+
         self._onstart()
         self.info('Executed _onstart')
 
@@ -487,7 +545,8 @@ class Node ():
         was_terminated = False
 
         while not was_terminated or not was_queue_empty_last_iteration:
-            was_terminated = was_terminated or self._acquire_lock(self._subprocess_info['termination_lock'], block=False)
+            was_terminated = was_terminated or self._acquire_lock(
+                self._subprocess_info['termination_lock'], block=False)
             # block until signaled that we have new data
             # as we might receive not data after having received a termination
             #      -> we'll just poll, so that on termination we do terminate after no longer than 0.1seconds
@@ -498,10 +557,10 @@ class Node ():
                 if found_value:
                     self._process(ctr)
                     was_queue_empty_last_iteration = False
-        
+
         self.info('Executing _onstop')
         self._onstop()
-        
+
         self.info('Finished subprocess')
 
     @staticmethod
@@ -514,7 +573,8 @@ class Node ():
         for key, queue in self._received_data.items():
             # discard everything, that was before our own current clock
             found_value, cur_value = queue.get(ctr)
-            self.verbose('retreiving current data', key, found_value, queue._read.keys(), ctr)
+            self.verbose('retreiving current data', key, found_value,
+                         queue._read.keys(), ctr)
             if found_value:
                 # TODO: instead of this key transformation/tolower consider actually using classes for data types... (allows for gui names alongside dev names and not converting between the two)
                 res[self._channel_name_to_key(key)] = cur_value
@@ -535,7 +595,7 @@ class Node ():
         called every time something is put into the queue / we received some data (ie if there are three inputs, we expect this to be called three times, before the clock should advance)
         """
         self.verbose('_Process triggered')
-        
+
         # update current state, based on own clock
         _current_data = self._retrieve_current_data(ctr=ctr)
 
@@ -546,7 +606,7 @@ class Node ():
             # yes, ```if self.process``` is shorter, but as long as the documentation isn't there this is also very clear on the api
             # prevent_tick = self.process(**_current_data)
             # IMPORTANT: this is possible, due to the fact that only sender and syncs have their own clock
-            # sender will never receive inputs and therefore will never have 
+            # sender will never receive inputs and therefore will never have
             # TODO: IMPORTANT: every node it's own clock seems to have been a mistake: go back to the original idea of "senders and syncs implement clocks and everyone else just passes them along"
             self._ctr = ctr
             self.process(**_current_data, _ctr=ctr)
@@ -581,7 +641,7 @@ class Node ():
             self._received_data[key].put(ctr, val)
 
         # FIX ME! TODO: this is a pain in the butt
-        # Basically: 
+        # Basically:
         # 1. node A runs in a thread
         # 2. node B runs on another thread
         # 3. A calls emit_data in its own process()
@@ -600,21 +660,28 @@ class Node ():
     @staticmethod
     def discover_childs(node):
         if len(node.output_connections) > 0:
-            childs = [con._receiving_node.discover_childs(con._receiving_node) for con in node.output_connections]
+            childs = [
+                con._receiving_node.discover_childs(con._receiving_node)
+                for con in node.output_connections
+            ]
             return [node] + list(np.concatenate(childs))
         return [node]
 
     @staticmethod
     def discover_parents(node):
         if len(node.input_connections) > 0:
-            parents = [con._emitting_node.discover_parents(con._emitting_node) for con in node.input_connections]
+            parents = [
+                con._emitting_node.discover_parents(con._emitting_node)
+                for con in node.input_connections
+            ]
             return [node] + list(np.concatenate(parents))
         return [node]
 
     # TODO: this will not find the parent of it's own child (same applies to discover_parents and discover_children)
     @staticmethod
     def discover_full(node):
-        return node.remove_discovered_duplicates(node.discover_parents(node) + node.discover_childs(node))
+        return node.remove_discovered_duplicates(
+            node.discover_parents(node) + node.discover_childs(node))
 
     def is_child_of(self, node):
         # self is always a child of itself
@@ -624,7 +691,6 @@ class Node ():
         # self is always a parent of itself
         return self in self.discover_parents(node)
 
-
     # === Drawing Graph Stuff =================
     def dot_graph(self, nodes, name=False, transparent_bg=False):
         # Imports are done here, as if you don't need the dotgraph it should not be required to start
@@ -632,9 +698,9 @@ class Node ():
         from PIL import Image
         from io import BytesIO
 
-        graph_attr={"size":"10,10!", "ratio":"fill"}
-        if transparent_bg: graph_attr["bgcolor"]= "#00000000"
-        dot = Digraph(format = 'png', strict = False, graph_attr=graph_attr)
+        graph_attr = {"size": "10,10!", "ratio": "fill"}
+        if transparent_bg: graph_attr["bgcolor"] = "#00000000"
+        dot = Digraph(format='png', strict=False, graph_attr=graph_attr)
 
         for node in nodes:
             shape = 'rect'
@@ -643,12 +709,14 @@ class Node ():
             if len(node.channels_out) <= 0:
                 shape = 'trapezium'
             disp_name = node.name if name else str(node)
-            dot.node(str(node), disp_name, shape = shape, style = 'rounded')
-        
+            dot.node(str(node), disp_name, shape=shape, style='rounded')
+
         # Second pass: add edges based on output links
         for node in nodes:
             for con in node.output_connections:
-                dot.edge(str(node), str(con._receiving_node), label=str(con._emitting_channel))
+                dot.edge(str(node),
+                         str(con._receiving_node),
+                         label=str(con._emitting_channel))
 
         return Image.open(BytesIO(dot.pipe()))
 
@@ -660,14 +728,12 @@ class Node ():
 
     def dot_graph_full(self, **kwargs):
         return self.dot_graph(self.discover_full(self), **kwargs)
-    
 
     # === Performance Stuff =================
     # def timeit(self):
     #     pass
 
     # TODO: Look at the original timing code, ideas and plots
-
 
     ## TODO: this is an absolute hack. remove! consider how to do this, maybe consider the pickle/sklearn interfaces?
     def _set_attr(self, **kwargs):
@@ -686,8 +752,9 @@ class Node ():
         params: **channels_in
         returns bool (if process should be called with these inputs)
         """
-        return set(list(map(self._channel_name_to_key, self.channels_in))) <= set(list(kwargs.keys()))
-    
+        return set(list(map(self._channel_name_to_key,
+                            self.channels_in))) <= set(list(kwargs.keys()))
+
     def process_time_series(self, ts):
         return ts
 
@@ -720,14 +787,12 @@ class Node ():
         pass
 
 
-
-
 class View(Node):
     canvas = Canvas.MPL
 
     def __init__(self, name, compute_on=Location.PROCESS, should_time=False):
         super().__init__(name, compute_on, should_time)
-        
+
         # TODO: consider if/how to disable the visualization of a node?
         # self.display = display
 
@@ -740,7 +805,7 @@ class View(Node):
         """
         Heart of the nodes drawing, should be a functional function
         """
-        
+
         update_fn = self._init_draw(*args, **kwargs)
         artis_storage = {'returns': []}
 
@@ -761,17 +826,17 @@ class View(Node):
                 self.debug('Decided not to draw', cur_state.keys())
 
             return artis_storage['returns']
+
         return update
 
-
     def stop(self, children=True):
-        if self._running == True: # -> seems important as the processes otherwise not always return (especially on fast machines, seems to be a race condition somewhere, not sure i've fully understood whats happening here, but seems to work so far)
+        if self._running == True:  # -> seems important as the processes otherwise not always return (especially on fast machines, seems to be a race condition somewhere, not sure i've fully understood whats happening here, but seems to work so far)
             # we need to clear the draw state, as otherwise the feederqueue never returns and the whole script never returns
             while not self._draw_state.empty():
                 self._draw_state.get()
 
             # should throw an error if anyone tries to insert anything into the queue after we emptied it
-            # also should allow the queue to be garbage collected 
+            # also should allow the queue to be garbage collected
             # seems not be important though...
             self._draw_state.close()
 
@@ -785,6 +850,7 @@ class View(Node):
         Similar to init_draw, but specific to matplotlib animations
         Should be either or, not sure how to check that...
         """
+
         def update():
             pass
 
@@ -810,16 +876,21 @@ class View(Node):
 #     """
 #     pass
 
+
 class Sender(Node):
     """
     Loops the process function until it returns false, indicating that no more data is to be sent
     """
 
-    channels_in = [] # must be empty!
+    channels_in = []  # must be empty!
 
-    def __init__(self, name, block=False, compute_on=Location.PROCESS, should_time=False):
+    def __init__(self,
+                 name,
+                 block=False,
+                 compute_on=Location.PROCESS,
+                 should_time=False):
         super().__init__(name, compute_on, should_time)
-        
+
         if not block and compute_on == Location.SAME:
             # TODO: consider how to not block this in Location.Same?
             raise ValueError('Block cannot be false if location=same')
@@ -851,17 +922,19 @@ class Sender(Node):
         runner = self._run()
         try:
             # as long as we do not receive a termination signal and there is data, we will send data
-            while not self._acquire_lock(self._subprocess_info['termination_lock'], block=False) and next(runner):
+            while not self._acquire_lock(
+                    self._subprocess_info['termination_lock'],
+                    block=False) and next(runner):
                 self._ctr = self._clock.tick()
         except StopIteration:
-                self.info('Reached end of run')
+            self.info('Reached end of run')
         self.info('Finished subprocess')
-
 
     def start(self, children=True):
         super().start(children)
-        
-        if self.compute_on in [Location.PROCESS, Location.THREAD] and self.block:
+
+        if self.compute_on in [Location.PROCESS, Location.THREAD
+                               ] and self.block:
             self._subprocess_info['process'].join()
         elif self.compute_on in [Location.SAME]:
             # iterate until the generator that is run() returns false, ie no further data is to be processed
@@ -871,13 +944,16 @@ class Sender(Node):
                     self._ctr = self._clock.tick()
             except StopIteration:
                 self.info('Reached end of run')
-    
 
 
 class BlockingSender(Sender):
 
     # TODO: check if the block parameter even does anything
-    def __init__(self, name, block=False, compute_on=Location.PROCESS, should_time=False):
+    def __init__(self,
+                 name,
+                 block=False,
+                 compute_on=Location.PROCESS,
+                 should_time=False):
         super().__init__(name, block, compute_on, should_time)
 
         self._clock = Clock(node=self, should_time=should_time)
@@ -906,7 +982,7 @@ class BlockingSender(Sender):
 
     def start(self, children=True):
         super().start(children)
-        
+
         if self.compute_on in [Location.PROCESS, Location.THREAD]:
             self._subprocess_info['process'].join()
         elif self.compute_on in [Location.SAME]:
@@ -914,7 +990,7 @@ class BlockingSender(Sender):
 
     def stop(self, children=True):
         # first stop self, so that non-existing children don't receive inputs
-        if self._running == True: # the node might be child to multiple parents, but we just want to stop once
+        if self._running == True:  # the node might be child to multiple parents, but we just want to stop once
             self._running = False
 
             if self.compute_on in [Location.SAME, Location.THREAD]:

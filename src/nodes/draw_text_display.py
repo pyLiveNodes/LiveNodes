@@ -1,5 +1,6 @@
 from .node import View
 
+
 class Draw_text_display(View):
     """
     Draws any given Text replacing previosly drawn text.
@@ -11,18 +12,17 @@ class Draw_text_display(View):
     channels_out = []
 
     category = "Draw"
-    description = "" 
+    description = ""
 
     example_init = {
         "name": "Text Outpuy",
         "initial_text": "",
     }
 
-    def __init__(self, initial_text="", name = "Text Output", **kwargs):
+    def __init__(self, initial_text="", name="Text Output", **kwargs):
         super().__init__(name=name, **kwargs)
 
         self.text = initial_text
-
 
     def _init_draw(self, subfig):
         subfig.suptitle(self.name, fontsize=14)
@@ -34,10 +34,18 @@ class Draw_text_display(View):
         ax.set_xticks([])
         ax.set_yticks([])
 
-        label = ax.text(0.005, 0.95, self.text, zorder=100, fontproperties=ax.xaxis.label.get_font_properties(), rotation='horizontal', va='top', ha='left', transform = ax.transAxes)
+        label = ax.text(0.005,
+                        0.95,
+                        self.text,
+                        zorder=100,
+                        fontproperties=ax.xaxis.label.get_font_properties(),
+                        rotation='horizontal',
+                        va='top',
+                        ha='left',
+                        transform=ax.transAxes)
         old_text = self.text
 
-        def update (text=None):
+        def update(text=None):
             nonlocal label, old_text
 
             old_text = text
@@ -47,7 +55,8 @@ class Draw_text_display(View):
             label.set_text(text)
 
             return [label]
+
         return update
 
     def process(self, text, **kwargs):
-        self._emit_draw(text=text)  
+        self._emit_draw(text=text)

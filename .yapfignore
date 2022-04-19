@@ -1,0 +1,6 @@
+src/nodes/biokit/*
+
+*/.ipynb_checkpoints/*
+*/__pycache__/*
+
+venv/*

@@ -16,7 +16,7 @@ class Draw_scatter(View):
     channels_out = []
 
     category = "Draw"
-    description = "" 
+    description = ""
 
     example_init = {
         "name": "Draw Data Scatter",
@@ -25,7 +25,11 @@ class Draw_scatter(View):
     }
 
     # TODO: move the sample rate into a data_stream?
-    def __init__(self, n_scatter_points=50, ylim=(-1.1, 1.1), name = "Draw Output Scatter", **kwargs):
+    def __init__(self,
+                 n_scatter_points=50,
+                 ylim=(-1.1, 1.1),
+                 name="Draw Output Scatter",
+                 **kwargs):
         super().__init__(name=name, **kwargs)
 
         self.n_scatter_points = n_scatter_points
@@ -33,7 +37,8 @@ class Draw_scatter(View):
 
         # computation process
         # yData follows the structure (time, channel)
-        self.data = np.zeros(n_scatter_points * 2).reshape((n_scatter_points, 2))
+        self.data = np.zeros(n_scatter_points * 2).reshape(
+            (n_scatter_points, 2))
 
         # render process
         self.channel_names = list(map(str, range(2)))
@@ -65,7 +70,7 @@ class Draw_scatter(View):
 
         # self.labels = [self.ax.text(0.005, 0.95, name, zorder=100, fontproperties=self.ax.xaxis.label.get_font_properties(), rotation='horizontal', va='top', ha='left', transform = ax.transAxes) for name, ax in zip(self.channel_names, axes)]
 
-        def update (data, channel_names):
+        def update(data, channel_names):
             nonlocal self
             # Not sure why the changes part doesn't work, (not even with zorder)
             # -> could make stuff more efficient, but well...
@@ -76,7 +81,6 @@ class Draw_scatter(View):
             return [scatter]
 
         return update
-
 
     def _should_process(self, data=None, channel_names=None):
         return (data is not None) and \
@@ -97,4 +101,5 @@ class Draw_scatter(View):
         self.data[:d.shape[0]] = d
 
         # TODO: consider if we really always want to send the channel names? -> seems an unecessary overhead (but cleaner code atm, maybe massage later...)
-        self._emit_draw(data=self.data[:self.n_scatter_points], channel_names=self.channel_names)
+        self._emit_draw(data=self.data[:self.n_scatter_points],
+                        channel_names=self.channel_names)

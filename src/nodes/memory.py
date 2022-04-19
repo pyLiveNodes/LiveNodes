@@ -1,22 +1,26 @@
 import numpy as np
 from .node import Node
 
+
 class Memory(Node):
     channels_in = ['Data']
     channels_out = ['Data']
 
     category = "Basic"
-    description = "" 
+    description = ""
 
     example_init = {'name': 'Name'}
 
-    def __init__(self, length=None,  concat_batches=True, name = "Memory", **kwargs):
+    def __init__(self,
+                 length=None,
+                 concat_batches=True,
+                 name="Memory",
+                 **kwargs):
         super().__init__(name=name, **kwargs)
 
         self.length = length
         self.buffer = np.array([])
         self.concat_batches = concat_batches
-
 
     def _settings(self):
         return {\
@@ -43,5 +47,5 @@ class Memory(Node):
             self._emit_data([self.buffer])
         else:
             # self.buffer.extend(data)
-            raise NotImplementedError('No offline file based routine implemented yet for windowing.')
-
+            raise NotImplementedError(
+                'No offline file based routine implemented yet for windowing.')

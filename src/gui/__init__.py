@@ -8,76 +8,60 @@ from qtpynodeeditor.connection_geometry import ConnectionGeometry
 
 from qtpynodeeditor import (PortType, Connection)
 
-def new_init(self, port_a, port_b = None, *, style, converter = None):
-  super(Connection, self).__init__()
-  self._uid = str(uuid.uuid4())
 
-  if port_a is None:
-      raise ValueError('port_a is required')
-  elif port_a is port_b:
-      raise ValueError('Cannot connect a port to itself')
+def new_init(self, port_a, port_b=None, *, style, converter=None):
+    super(Connection, self).__init__()
+    self._uid = str(uuid.uuid4())
 
-  if port_a.port_type == PortType.input:
-      in_port = port_a
-      out_port = port_b
-  else:
-      in_port = port_b
-      out_port = port_a
+    if port_a is None:
+        raise ValueError('port_a is required')
+    elif port_a is port_b:
+        raise ValueError('Cannot connect a port to itself')
 
-  if in_port is not None and out_port is not None:
-      if in_port.port_type == out_port.port_type:
-          raise exceptions.PortsOfSameTypeError(
-              'Cannot connect two ports of the same type')
+    if port_a.port_type == PortType.input:
+        in_port = port_a
+        out_port = port_b
+    else:
+        in_port = port_b
+        out_port = port_a
 
-  self._ports = {
-      PortType.input: in_port,
-      PortType.output: out_port
-  }
+    if in_port is not None and out_port is not None:
+        if in_port.port_type == out_port.port_type:
+            raise exceptions.PortsOfSameTypeError(
+                'Cannot connect two ports of the same type')
 
-  if in_port is not None:
-      if in_port.connections:
-          conn, = in_port.connections
-          existing_in, existing_out = conn.ports
-          if existing_in == in_port and existing_out == out_port:
-              raise exceptions.PortsAlreadyConnectedError(
-                  'Specified ports already connected')
-          raise exceptions.MultipleInputConnectionError(
-              f'Maximum one connection per input port '
-              f'(existing: {conn})')
+    self._ports = {PortType.input: in_port, PortType.output: out_port}
 
-  if in_port and out_port:
-      self._required_port = PortType.none
-  elif in_port:
-      self._required_port = PortType.output
-  else:
-      self._required_port = PortType.input
+    if in_port is not None:
+        if in_port.connections:
+            conn, = in_port.connections
+            existing_in, existing_out = conn.ports
+            if existing_in == in_port and existing_out == out_port:
+                raise exceptions.PortsAlreadyConnectedError(
+                    'Specified ports already connected')
+            raise exceptions.MultipleInputConnectionError(
+                f'Maximum one connection per input port '
+                f'(existing: {conn})')
 
-  self._last_hovered_node = None
-  self._converter = converter
-  self._style = style
-  self._connection_geometry = ConnectionGeometry(style)
-  self._graphics_object = None
+    if in_port and out_port:
+        self._required_port = PortType.none
+    elif in_port:
+        self._required_port = PortType.output
+    else:
+        self._required_port = PortType.input
+
+    self._last_hovered_node = None
+    self._converter = converter
+    self._style = style
+    self._connection_geometry = ConnectionGeometry(style)
+    self._graphics_object = None
+
 
 qtpynodeeditor.Connection.__init__ = new_init
 
 ### End Patch
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#### Monkey Patch connection drawing 
+#### Monkey Patch connection drawing
 # Patches wrong type, orig: QPoint, correct: QPointF
 
 from qtpy.QtCore import QSize, Qt, QPointF
@@ -86,6 +70,7 @@ from qtpy.QtGui import QIcon, QPen
 from qtpynodeeditor.connection_geometry import ConnectionGeometry
 from qtpynodeeditor.enums import PortType
 import qtpynodeeditor.connection_painter
+
 
 def draw_normal_line(painter, connection, style):
     if connection.requires_port:
@@ -144,12 +129,15 @@ def draw_normal_line(painter, connection, style):
                 p.setColor(c)
                 painter.setPen(p)
 
-            painter.drawLine(cubic.pointAtPercent(ratio_prev), cubic.pointAtPercent(ratio))
+            painter.drawLine(cubic.pointAtPercent(ratio_prev),
+                             cubic.pointAtPercent(ratio))
 
         icon = QIcon(":convert.png")
 
         pixmap = icon.pixmap(QSize(22, 22))
-        painter.drawPixmap(cubic.pointAtPercent(0.50) - QPointF(pixmap.width() / 2, pixmap.height() / 2), pixmap)
+        painter.drawPixmap(
+            cubic.pointAtPercent(0.50) - QPointF(pixmap.width() / 2,
+                                                 pixmap.height() / 2), pixmap)
     else:
         p.setColor(normal_color_out)
 
@@ -161,23 +149,10 @@ def draw_normal_line(painter, connection, style):
 
         painter.drawPath(cubic)
 
+
 qtpynodeeditor.connection_painter.draw_normal_line = draw_normal_line
 
 ### End patch
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #### Monkey Patch auto layouts
 # Patches more options for auto layouts
@@ -185,8 +160,11 @@ qtpynodeeditor.connection_painter.draw_normal_line = draw_normal_line
 import qtpynodeeditor.flow_scene
 
 
-def auto_arrange(self, layout='planar_layout', scale=700, align='horizontal',
-                    **kwargs):
+def auto_arrange(self,
+                 layout='planar_layout',
+                 scale=700,
+                 align='horizontal',
+                 **kwargs):
     '''
     Automatically arrange nodes with networkx, if available
     Raises
@@ -215,15 +193,7 @@ def auto_arrange(self, layout='planar_layout', scale=700, align='horizontal',
 qtpynodeeditor.flow_scene.FlowScene.auto_arrange = auto_arrange
 ### End patch
 
-
-
-
-
-
-
-
 # #### Monkey Patch to allow attatching to click on node graphic
 # import qtpynodeeditor.node_graphics_object
 
 # prev_mouseMoveEvent_fn = qtpynodeeditor.node_graphics_object.NodeGraphicsObject.mousePressEvent
-

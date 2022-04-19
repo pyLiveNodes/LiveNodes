@@ -2,6 +2,7 @@ import pytest
 from src.nodes.node import Node, Location, Sender
 import multiprocessing as mp
 
+
 class Data(Sender):
     channels_in = []
     # yes, "Data" would have been fine, but wanted to quickly test the naming parts
@@ -21,7 +22,7 @@ class Quadratic(Node):
     channels_out = ["Alternate Data"]
 
     def process(self, alternate_data, **kwargs):
-        self._emit_data(alternate_data ** 2, channel="Alternate Data")
+        self._emit_data(alternate_data**2, channel="Alternate Data")
 
 
 class Save(Node):
@@ -49,7 +50,7 @@ def create_simple_graph():
     quadratic = Quadratic(name="B", compute_on=Location.SAME)
     out1 = Save(name="C", compute_on=Location.SAME)
     out2 = Save(name="D", compute_on=Location.SAME)
-    
+
     out1.connect_inputs_to(data)
     quadratic.connect_inputs_to(data)
     out2.connect_inputs_to(quadratic)
@@ -63,12 +64,13 @@ def create_simple_graph_mp():
     quadratic = Quadratic(name="B", compute_on=Location.PROCESS)
     out1 = Save(name="C", compute_on=Location.PROCESS)
     out2 = Save(name="D", compute_on=Location.PROCESS)
-    
+
     out1.connect_inputs_to(data)
     quadratic.connect_inputs_to(data)
     out2.connect_inputs_to(quadratic)
 
     return data, quadratic, out1, out2
+
 
 @pytest.fixture
 def create_simple_graph_mixed():
@@ -76,7 +78,7 @@ def create_simple_graph_mixed():
     quadratic = Quadratic(name="B", compute_on=Location.THREAD)
     out1 = Save(name="C", compute_on=Location.THREAD)
     out2 = Save(name="D", compute_on=Location.THREAD)
-    
+
     out1.connect_inputs_to(data)
     quadratic.connect_inputs_to(data)
     out2.connect_inputs_to(quadratic)
@@ -91,10 +93,9 @@ class TestProcessing():
 
         data.start()
         data.stop()
-        
+
         assert out1.get_state() == list(range(10))
         assert out2.get_state() == list(map(lambda x: x**2, range(10)))
-
 
     def test_calc_mp(self, create_simple_graph_mp):
         data, quadratic, out1, out2 = create_simple_graph_mp

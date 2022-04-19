@@ -15,6 +15,7 @@ if __name__ == "__main__":
     wts_flat = np.random.rand(windows * channels * samples) - 0.5
     wts_rand = wts_flat.reshape((windows, channels, samples))
 
-    print('Nr Windows: %s, Nr Channels: %s, Nr Values: %s' % (windows, channels, samples))
-    
+    print('Nr Windows: %s, Nr Channels: %s, Nr Values: %s' %
+          (windows, channels, samples))
+
     entropy(wts_flat)

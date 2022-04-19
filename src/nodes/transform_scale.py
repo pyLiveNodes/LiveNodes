@@ -1,16 +1,17 @@
 import numpy as np
 from .node import Node
 
+
 class Transform_scale(Node):
     channels_in = ['Data']
     channels_out = ['Data']
 
     category = "Transform"
-    description = "" 
+    description = ""
 
     example_init = {'name': 'Name'}
 
-    def __init__(self, in_min, in_max, name = "Scaler", **kwargs):
+    def __init__(self, in_min, in_max, name="Scaler", **kwargs):
         super().__init__(name=name, **kwargs)
 
         self.in_min = in_min

@@ -3,6 +3,7 @@ from .node import Node
 
 from .biokit import BioKIT
 
+
 class Biokit_norm(Node):
     """
     Z-Normalisierung on BioKIT Feature Sequences. 
@@ -15,7 +16,7 @@ class Biokit_norm(Node):
     """
 
     category = "BioKIT"
-    description = "" 
+    description = ""
 
     example_init = {'name': 'Norm'}
 
@@ -24,7 +25,6 @@ class Biokit_norm(Node):
 
         self.meanSubtraction = BioKIT.ZNormalization()
         self.meanSubtraction.resetMeans()
-
 
     def process_time_series(self, ts):
         self.meanSubtraction.updateMeans([ts], 1.0, True)

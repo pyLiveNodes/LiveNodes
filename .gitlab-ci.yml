@@ -18,3 +18,11 @@ pages:
   rules:
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
 
+format:
+  stage: deploy
+  image: python:3.9-slim
+  before_script:
+    - apt-get update && apt-get install make --no-install-recommends -y
+    - python -m pip install yapf
+  script:
+    - yapf -ri ./src ./tests

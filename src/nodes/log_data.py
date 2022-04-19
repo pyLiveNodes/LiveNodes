@@ -1,11 +1,12 @@
 from .node import Node
 
+
 class Log_data(Node):
     channels_in = ['Data']
     channels_out = ['Data']
 
     category = "Basic"
-    description = "" 
+    description = ""
 
     example_init = {'name': 'Name'}
 

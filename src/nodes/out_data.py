@@ -18,7 +18,7 @@ class Out_data(Node):
     channels_out = []
 
     category = "Save"
-    description = "" 
+    description = ""
 
     example_init = {'name': 'Save', 'folder': './data/Debug/'}
 
@@ -42,8 +42,7 @@ class Out_data(Node):
         self.last_annotation = None
 
         self.channels = None
-       
-    
+
     def _settings(self):
         return {\
             "folder": self.folder
@@ -56,15 +55,26 @@ class Out_data(Node):
     def _onstop(self):
         self.outputFile.close()
         if self.last_annotation is not None:
-            self.outputFileAnnotation.write(f"{self.last_annotation[1]},{self.last_annotation[2]},{self.last_annotation[0]}")
+            self.outputFileAnnotation.write(
+                f"{self.last_annotation[1]},{self.last_annotation[2]},{self.last_annotation[0]}"
+            )
         self.outputFileAnnotation.close()
         self.info('Stopped Writing out')
 
-    def _should_process(self, data=None, channel_names=None, meta=None, annotation=None):
+    def _should_process(self,
+                        data=None,
+                        channel_names=None,
+                        meta=None,
+                        annotation=None):
         return data is not None and \
             (self.channels is not None or channel_names is not None)
 
-    def process(self, data, channel_names=None, meta=None, annotation=None, **kwargs):
+    def process(self,
+                data,
+                channel_names=None,
+                meta=None,
+                annotation=None,
+                **kwargs):
         if channel_names is not None:
             self.channels = channel_names
 
@@ -73,7 +83,10 @@ class Out_data(Node):
             self._write_meta(m_dict)
 
             if self.outputDataset is not None:
-                self.outputDataset = self.outputFile.create_dataset("data", (1, len(self.channels)), maxshape = (None, len(self.channels)), dtype = "float32")
+                self.outputDataset = self.outputFile.create_dataset(
+                    "data", (1, len(self.channels)),
+                    maxshape=(None, len(self.channels)),
+                    dtype="float32")
 
         if meta is not None:
             m_dict = self._read_meta()
@@ -86,30 +99,34 @@ class Out_data(Node):
         if annotation is not None:
             self.receive_annotation(annotation)
 
-        self.outputDataset.resize(self.outputDataset.shape[0] + len(data), axis = 0)
+        self.outputDataset.resize(self.outputDataset.shape[0] + len(data),
+                                  axis=0)
         self.outputDataset[-len(data):] = data
-
 
     def receive_annotation(self, data_frame, **kwargs):
         # For now lets assume the file is always open before this is called.
         # TODO: re-consider that assumption
         if self.last_annotation is None:
             self.last_annotation = (data_frame[0], 0, 0)
-        
+
         for annotation in data_frame:
             if annotation == self.last_annotation[0]:
-                self.last_annotation = (annotation, self.last_annotation[1], self.last_annotation[2] + 1)
+                self.last_annotation = (annotation, self.last_annotation[1],
+                                        self.last_annotation[2] + 1)
             else:
-                self.outputFileAnnotation.write(f"{self.last_annotation[1]},{self.last_annotation[2]},{self.last_annotation[0]}\n")
-                self.last_annotation = (annotation, self.last_annotation[2] + 1, self.last_annotation[2] + 1)
-
+                self.outputFileAnnotation.write(
+                    f"{self.last_annotation[1]},{self.last_annotation[2]},{self.last_annotation[0]}\n"
+                )
+                self.last_annotation = (annotation,
+                                        self.last_annotation[2] + 1,
+                                        self.last_annotation[2] + 1)
 
     def _read_meta(self):
         if not os.path.exists(f"{self.outputFilename}.json"):
             return {}
         with open(f"{self.outputFilename}.json", 'r') as f:
-            return json.load(f) 
-    
+            return json.load(f)
+
     def _write_meta(self, setting):
         with open(f"{self.outputFilename}.json", 'w') as f:
-            json.dump(setting, f, indent=2) 
+            json.dump(setting, f, indent=2)
