@@ -50,14 +50,6 @@ class Biokit_train(Node):
         self.annotations = []
         self.files = []
 
-    @property
-    def in_map(self):
-        return {
-            "Data": self.receive_data,
-            "File": self.receive_file,
-            "Annotation": self.receive_annotation,
-            "Termination": self.receive_data_end
-        }
 
     def _settings(self):
         return {\
@@ -146,7 +138,7 @@ class Biokit_train(Node):
         # Save the model
         self.reco.saveToFiles(self.model_path)
 
-    def receive_data_end(self, data):
+    def receive_data_end(self):
         # assume we never loose data, then these should be the same
         len_d, len_a, len_f = len(self.data), len(self.annotations), len(
             self.files)
@@ -161,11 +153,26 @@ class Biokit_train(Node):
 
         self._train()
 
+    def _should_process(self, data=None, annotation=None, file=None, termination=None):
+        return (data is not None \
+            and annotation is not None \
+            and file is not None) \
+            or termination is not None
+
     def receive_file(self, files, **kwargs):
         self.files.extend(files)
 
     def receive_annotation(self, annotation, **kwargs):
         self.annotations.extend(annotation)
 
-    def process(self, data, **kwargs):
-        self.data.append(data)
+    def process(self, data, annotation, file, termination=None, **kwargs):
+        # TODO: consider moving this into _onstop()
+        # note: we assume there is no data in annotation etc on close here
+        if termination:
+            self.receive_data_end()
+
+        self.files.extend(file)
+        self.annotations.extend(annotation)
+        self.data.extend(data)
+
+        

@@ -130,7 +130,9 @@ class In_data(Sender):
                                 channel="File")
                 yield True
 
+        # TODO: maybe we could get rid of this, and jsut use the fact, that this will end at some point?
+        # -> might be a problem if we want' to retrain based on event
         self._emit_data(
-            None, channel='Termination'
+            True, channel='Termination'
         )  # TODO: maybe we could use something like this for syncing... ie seperate stream with just a counter
         yield False

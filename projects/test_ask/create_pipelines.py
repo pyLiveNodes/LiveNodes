@@ -1,3 +1,4 @@
+from numpy import block
 from src.nodes.memory import Memory
 from src.nodes.log_data import Log_data
 
@@ -246,7 +247,7 @@ if __name__ == "__main__":
 
     print('=== Build Train Pipeline ===')
 
-    pl = In_data(files="./data/KneeBandageCSL2018/part*/*.h5", meta=meta, emit_at_once=2000)
+    pl = In_data(files="./data/KneeBandageCSL2018/part*/*.h5", meta=meta, block=True, emit_at_once=2000)
     norm, fts = add_processing(pl, x_raw=x_raw, x_processed=x_processed, vis=(False, False, False))
     save(pl, "preprocess_no_vis.json")
 
