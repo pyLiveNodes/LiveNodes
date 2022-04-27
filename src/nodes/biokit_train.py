@@ -4,6 +4,7 @@ from typing import DefaultDict
 from .node import Node
 from .biokit import BioKIT, logger, recognizer
 
+import numpy as np
 
 class Biokit_train(Node):
     """
@@ -75,12 +76,14 @@ class Biokit_train(Node):
             for x in g:
                 pro_sq.append(x[0])
             processedSequences.append(pro_sq)
-            processedAnnotations.append([x[1] for x in g])
+            tmp_an = []
             for atom, gg in groupby(g, key=lambda x: x[1]):
+                tmp_an.append(atom)
                 pro_sq = BioKIT.FeatureSequence()
                 for x in gg:
                     pro_sq.append(x[0])
                 processedTokens[atom].append(pro_sq)
+            processedAnnotations.append(tmp_an)
 
         print(processedTokens.keys())
 
@@ -97,7 +100,7 @@ class Biokit_train(Node):
         config.setKeepThreshold(10)
         config.setMaxGaussians(10)
 
-        logger.info('=== Initializaion ===')
+        self.info('=== Initializaion ===')
         for atom in processedTokens:
             for trainingData in processedTokens[atom]:
                 self.reco.storeTokenSequenceForInit(
@@ -107,10 +110,10 @@ class Biokit_train(Node):
         self.reco.initializeStoredModels()
 
         # TODO: not sure if we actually need both (train token and train sequence) and how/if we can even combine token + seq here...
-        logger.info('=== Train Tokens ===')
+        self.info('=== Train Tokens ===')
         # Use the fact that we know each tokens start and end
         for i in range(self.train_iterations[0]):
-            logger.info(f'--- Iteration {i} ---')
+            self.info(f'--- Iteration {i} ---')
             for atom in processedTokens:
                 for trainingData in processedTokens[atom]:
                     # Says sequence, but is used for small chunks, so that the initial gmm training etc is optimized before we use the full sequences
@@ -121,10 +124,10 @@ class Biokit_train(Node):
                         addFillerToBeginningAndEnd=False)
             self.reco.finishTrainIteration()
 
-        logger.info('=== Train Sequence ===')
+        self.info('=== Train Sequence ===')
         # not sure if this is even needed tbh, TODO: try and document
         for i in range(self.train_iterations[1]):
-            logger.info(f'--- Iteration {i} ---')
+            self.info(f'--- Iteration {i} ---')
             for sequence, annotation in zip(processedSequences,
                                             processedAnnotations):
                 self.reco.storeTokenSequenceForTrain(
@@ -156,23 +159,22 @@ class Biokit_train(Node):
     def _should_process(self, data=None, annotation=None, file=None, termination=None):
         return (data is not None \
             and annotation is not None \
-            and file is not None) \
-            or termination is not None
+            and file is not None)
 
-    def receive_file(self, files, **kwargs):
-        self.files.extend(files)
 
-    def receive_annotation(self, annotation, **kwargs):
-        self.annotations.extend(annotation)
+    def process(self, data=None, annotation=None, file=None, termination=None, **kwargs):
+        if data is not None:
+            # remove batches!
+            self.files.extend(np.array(file).flatten())
+            # self.info(np.unique(np.array(annotation).flatten(), return_counts=True))
+            self.annotations.extend(np.array(annotation).flatten())
+            self.data.extend(data)
 
-    def process(self, data, annotation, file, termination=None, **kwargs):
-        # TODO: consider moving this into _onstop()
-        # note: we assume there is no data in annotation etc on close here
         if termination:
+            self.info('Starting Training')
             self.receive_data_end()
+        
 
-        self.files.extend(file)
-        self.annotations.extend(annotation)
-        self.data.extend(data)
+
 
         

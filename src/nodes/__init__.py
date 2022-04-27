@@ -2,7 +2,7 @@ import os
 
 from .biokit import BioKIT, logger
 
-logger.set_log_level(BioKIT.LogSeverityLevel.Warning)
+logger.set_log_level(BioKIT.LogSeverityLevel.Information)
 
 # use this for debugging
 # logger.set_log_level(BioKIT.LogSeverityLevel.Debug)
