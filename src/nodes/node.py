@@ -158,6 +158,8 @@ class Clock_Register():
 
     queue = mp.SimpleQueue()
 
+    _store = mp.Event()
+
     def __init__(self, should_time=False):
         self._owner_process = mp.current_process()
         self._owner_thread = threading.current_thread()
@@ -168,7 +170,12 @@ class Clock_Register():
         if self.should_time:
             raise NotImplementedError()
         else:
-            self.queue.put((name, ctr, None))
+            if not self._store.is_set():
+                self.queue.put((name, ctr, None))
+
+    def set_passthrough(self):
+        self._store.set()
+        self.queue = None
 
     # called in main/handling process
     def read_state(self):
@@ -500,7 +507,7 @@ class Node():
     # TODO: actually start, ie design/test a sending node!
 
     # === Start/Stop Stuff =================
-    def start(self, children=True):
+    def start(self, children=True, join=False):
         if self._running == False:  # the node might be child to multiple parents, but we just want to start once
             # first start children, so they are ready to receive inputs
             # children cannot not have inputs, ie they are always relying on this node to send them data if they want to progress their clock
@@ -527,6 +534,11 @@ class Node():
             elif self.compute_on in [Location.SAME]:
                 self._onstart()
                 self.info('Executed _onstart')
+
+        if join:
+            self._join()
+        else: 
+            self._clocks.set_passthrough()
 
     def stop(self, children=True):
         # first stop self, so that non-existing children don't receive inputs
@@ -555,7 +567,7 @@ class Node():
                 for con in self.output_connections:
                     con._receiving_node.stop()
 
-    def join(self):
+    def _join(self):
         # blocks until all nodes in the graph reached the same clock as the node we are calling this from
         # for senders: this only makes sense for senders with block=True as otherwise race conditions might make this return before the final data was send
         # ie in the extreme case: self._ctr=0 and all others as well
@@ -568,18 +580,19 @@ class Node():
 
     def _acquire_lock(self, lock, block=True, timeout=None):
         if self.compute_on in [Location.PROCESS]:
-            return lock.acquire(block=block, timeout=timeout)
+            res = lock.acquire(block=block, timeout=timeout)
         elif self.compute_on in [Location.THREAD]:
             if block:
-                return lock.acquire(blocking=True,
+                res = lock.acquire(blocking=True,
                                     timeout=-1 if timeout is None else timeout)
             else:
-                return lock.acquire(
+                res = lock.acquire(
                     blocking=False)  # forbidden to specify timeout
         else:
             raise Exception(
                 'Cannot acquire lock in non multi process/threading environment'
             )
+        return res
 
     # === Data Stuff =================
     def _emit_data(self, data, channel="Data", ctr=None):
@@ -680,8 +693,11 @@ class Node():
             # TODO: IMPORTANT: every node it's own clock seems to have been a mistake: go back to the original idea of "senders and syncs implement clocks and everyone else just passes them along"
             self._ctr = ctr
             self.process(**_current_data, _ctr=ctr)
+            self.verbose('process fn finished')
             for queue in self._received_data.values():
                 queue.discard_before(ctr)
+
+            # self.verbose('discarded values, registering now', self._clocks._store.is_set())
 
             self._clocks.register(str(self), ctr)
             # if not keep_current_data:
@@ -691,6 +707,7 @@ class Node():
             #     self.debug('Prevented tick')
         else:
             self.verbose('Decided not to process', ctr, _current_data.keys())
+        self.verbose('_Process finished')
 
     def trigger_process(self, ctr):
         if self.compute_on in [Location.SAME]:
@@ -937,7 +954,8 @@ class View(Node):
         """
         if not self._draw_state.full():
             self.verbose('Storing for draw:', kwargs.keys())
-            self._draw_state.put(kwargs)
+            self._draw_state.put_nowait(kwargs)
+            # self.verbose('Stored for draw')
 
 
 # class Transform(Node):
@@ -994,12 +1012,18 @@ class Sender(Node):
         return super()._emit_data(data, channel, ctr)
 
     def _on_runner(self):
+        # everytime next(runner) has been called, this should be called
+        # TODO: maybe wrap the self._run() into a generator, that calls this automatically...
+        # self.debug('Next(Runner) was called')
         if self._emit_ctr_fallback > 0:
+            # self.debug('Putting on queue', str(self), self._ctr)
             self._clocks.register(str(self), self._ctr)
+            # self.debug('Put on queue')
             self._ctr = self._clock.tick()
         else:
             raise Exception('Runner did not emit data, yet said it would do so in the previous run. Please check your implementation.')
         self._emit_ctr_fallback = 0
+        # self.debug('Next(Runner) returned')
 
     def _process_on_proc(self):
         self.info('Started subprocess')
@@ -1019,8 +1043,8 @@ class Sender(Node):
         self._on_runner()
         self.info('Finished subprocess', self._ctr)
 
-    def start(self, children=True):
-        super().start(children)
+    def start(self, children=True, join=False):
+        super().start(children, join=False)
 
         if self.compute_on in [Location.PROCESS, Location.THREAD
                                ] and self.block:
@@ -1036,11 +1060,17 @@ class Sender(Node):
             self.info('Reached end of run')
             # this still means we send data, before the return, just that after now no new data will be sent
             self._on_runner()
+        
+        if join:
+            self._join()
+        else: 
+            self._clocks.set_passthrough()
 
-    def join(self):
+    def _join(self):
         if not self.block:
-            raise Exception('Cannot join non-blocking senders as we have no way of knowing when they are finished (atm =>  theoretically we can still use the ret false concept)')
-        return super().join()
+            raise Exception('Cannot join non-blocking senders as we have no way of knowing when they are finished atm')
+            # theoretically we can still use the ret false concept from the senders ie yield False indicates finish
+        return super()._join()
 
 
 
@@ -1074,14 +1104,19 @@ class BlockingSender(Sender):
             self._onstop()
         self.info('Finished subprocess')
 
-    def start(self, children=True):
-        super().start(children)
+    def start(self, children=True, join=False):
+        super().start(children, join=False)
 
         if self.compute_on in [Location.PROCESS, Location.THREAD]:
             if self.block:
                 self._subprocess_info['process'].join()
         elif self.compute_on in [Location.SAME]:
             self._onstart()
+
+        if join:
+            self._join()
+        else: 
+            self._clocks.set_passthrough()
 
     def stop(self, children=True):
         # first stop self, so that non-existing children don't receive inputs
