@@ -45,7 +45,7 @@ class LogLevel(IntEnum):
 
 
 class Logger():
-    _log_level = LogLevel.DEBUG
+    _log_level = LogLevel.VERBOSE
     _lock = mp.Lock()
 
     cbs = []

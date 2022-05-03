@@ -91,7 +91,6 @@ class TestProcessing():
         data, quadratic, out1, out2 = create_simple_graph
 
         data.start()
-        # data.join()
         data.stop()
 
         assert out1.get_state() == list(range(10))
@@ -101,7 +100,6 @@ class TestProcessing():
         data, quadratic, out1, out2 = create_simple_graph_mp
 
         data.start()
-        # data.join()
         data.stop()
 
         assert out1.get_state() == list(range(10))
@@ -111,7 +109,6 @@ class TestProcessing():
         data, quadratic, out1, out2 = create_simple_graph_mixed
 
         data.start()
-        # data.join()
         data.stop()
 
         assert out1.get_state() == list(range(10))
