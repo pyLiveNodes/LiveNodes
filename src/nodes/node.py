@@ -1069,17 +1069,17 @@ class BlockingSender(Sender):
         try:
             self._onstart()
         except KeyboardInterrupt:
+            # TODO: this seems to be never called
             self.info('Received Termination Signal')
             self._onstop()
-        except Exception as err:
-            self.debug(err)
         self.info('Finished subprocess')
 
     def start(self, children=True):
         super().start(children)
 
         if self.compute_on in [Location.PROCESS, Location.THREAD]:
-            self._subprocess_info['process'].join()
+            if self.block:
+                self._subprocess_info['process'].join()
         elif self.compute_on in [Location.SAME]:
             self._onstart()
 

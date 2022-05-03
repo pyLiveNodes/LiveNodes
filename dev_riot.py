@@ -26,7 +26,7 @@ def riot_handler(addr, *data):
     ctrs[addr] += 1
     if times[addr] == 0:
         times[addr] = time.time()
-
+    
     every = 100
     if ctrs[addr] % every == 0:
         t2 = time.time()
