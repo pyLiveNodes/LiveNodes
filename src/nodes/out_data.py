@@ -75,6 +75,7 @@ class Out_data(Node):
                 meta=None,
                 annotation=None,
                 **kwargs):
+
         if channel_names is not None:
             self.channels = channel_names
 
@@ -82,7 +83,7 @@ class Out_data(Node):
             m_dict['channels'] = channel_names
             self._write_meta(m_dict)
 
-            if self.outputDataset is not None:
+            if self.outputDataset is None:
                 self.outputDataset = self.outputFile.create_dataset(
                     "data", (1, len(self.channels)),
                     maxshape=(None, len(self.channels)),
@@ -114,6 +115,7 @@ class Out_data(Node):
                 self.last_annotation = (annotation, self.last_annotation[1],
                                         self.last_annotation[2] + 1)
             else:
+                # self.verbose(f"writing: {self.last_annotation[1]},{self.last_annotation[2]},{self.last_annotation[0]}")
                 self.outputFileAnnotation.write(
                     f"{self.last_annotation[1]},{self.last_annotation[2]},{self.last_annotation[0]}\n"
                 )
