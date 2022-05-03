@@ -1071,6 +1071,8 @@ class BlockingSender(Sender):
         except KeyboardInterrupt:
             self.info('Received Termination Signal')
             self._onstop()
+        except Exception as err:
+            self.debug(err)
         self.info('Finished subprocess')
 
     def start(self, children=True):
@@ -1089,7 +1091,7 @@ class BlockingSender(Sender):
             if self.compute_on in [Location.SAME, Location.THREAD]:
                 self._onstop()
             elif self.compute_on in [Location.PROCESS]:
-                self._subprocess_info['process'].terminate()
+                self._subprocess_info['process'].kill()
 
         # now stop children
         if children:

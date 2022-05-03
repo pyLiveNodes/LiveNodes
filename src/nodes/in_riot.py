@@ -64,17 +64,22 @@ class In_riot(BlockingSender):
             self._emit_data([[np.array(list(data)) * factors]])
             # self._emit_data([data])
 
+        self.info('Starting server')
         disp = Dispatcher()
         disp.map(f"/{self.id}/raw", onRawFrame)
         server = AsyncIOOSCUDPServer((self.listen_ip, self.listen_port), disp,
                                      asyncio.get_event_loop())
         transport, protocol = await server.create_serve_endpoint()
 
+        self.info('Server started')
+        self._emit_data(self.channels, channel="Channel Names")
+
         while (not self._stop_event.is_set()):
             await asyncio.sleep(0)
 
-        print("closing transport")
+        self.info("Closing server")
         transport.close()
+        self.info("Server closed")
 
     def _onstop(self):
         self._stop_event.set()
@@ -83,6 +88,4 @@ class In_riot(BlockingSender):
         """
         Streams the data and calls frame callbacks for each frame.
         """
-
-        self._emit_data(self.channels, channel="Channel Names")
         asyncio.run(self.collect())

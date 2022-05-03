@@ -137,7 +137,7 @@ if __name__ == "__main__":
     # frm_ctr = Debug_frame_counter()
     # pl.add_input(frm_ctr)
     pl = add_riot_draw(pl, subset=0.5)
-    save(pl, "riot_vis.json")
+    save(pl, "live_vis.json")
 
     annot = Annotate_ui_button(fall_back_target='None')
     annot.add_input(pl)
@@ -146,11 +146,11 @@ if __name__ == "__main__":
     out_data.add_input(annot)
     out_data.add_input(annot, emitting_channel="Annotation", receiving_channel="Annotation")
     out_data.add_input(pl, emitting_channel="Channel Names", receiving_channel="Channel Names")
-    save(pl, "riot_record.json")
+    save(pl, "live_record.json")
 
 
     print('=== Build RIoT Record and Update Pipeline ===')
-    filter1 =Transform_filter(name="Annot Filter", names=["ACC_X", "ACC_Y", "ACC_Z", "GYRO_X", "GYRO_Y", "GYRO_Z"])
+    filter1 = Transform_filter(name="Annot Filter", names=["ACC_X", "ACC_Y", "ACC_Z", "GYRO_X", "GYRO_Y", "GYRO_Z"])
     filter1.add_input(annot)
     filter1.add_input(pl, emitting_channel="Channel Names", receiving_channel="Channel Names")
 
@@ -171,7 +171,7 @@ if __name__ == "__main__":
 
     status_text = Draw_text_display(name="Training Status")
     status_text.add_input(pl_train_new, emitting_channel="Text", receiving_channel="Text")
-    save(pl, "riot_record_update.json")
+    save(pl, "live_record_update.json")
     
 
 
@@ -184,16 +184,16 @@ if __name__ == "__main__":
 
     pl = In_playback(files="./data/RIoT/*.h5", csv_columns=["start", "end", "act"], annotation_holes="None", meta=riot_meta, emit_at_once=1)
     pl = add_riot_draw(pl, subset=0.5)
-    save(pl, "riot_playback.json")
+    save(pl, "playback_vis.json")
 
 
     print('=== Build RIoT Playback Recognition ===')
     pl = riot_add_recog(pl, has_annotation=True)
-    save(pl, "riot_playback_recog.json")
+    save(pl, "playback_recog.json")
 
 
     print('=== Build RIoT Live Recognition ===')
     pl = In_riot(id=0)
     pl = add_riot_draw(pl, subset=0.5)
     pl = riot_add_recog(pl, has_annotation=False)
-    save(pl, "riot_live_recog.json")
+    save(pl, "live_recog.json")

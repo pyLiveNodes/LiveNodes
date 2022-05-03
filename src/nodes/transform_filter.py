@@ -11,7 +11,7 @@ class Transform_filter(Node):
     category = "Transform"
     description = ""
 
-    example_init = {'name': 'Channel Filter'}
+    example_init = {'name': 'Channel Filter', 'names': ['ACC X']}
 
     def __init__(self, names, name="Channel Filter", **kwargs):
         super().__init__(name=name, **kwargs)

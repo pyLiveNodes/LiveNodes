@@ -148,4 +148,3 @@ class In_playback(Sender):
                     last_time = time.time()
 
                     yield True
-        yield False

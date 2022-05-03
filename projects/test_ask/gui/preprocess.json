@@ -128,8 +128,8 @@
         "association_to_node": "Raw Filter [Transform_filter]"
       },
       "position": {
-        "x": 314.4642622950822,
-        "y": 80.5075409836065
+        "x": 313.4642622950822,
+        "y": 79.5075409836065
       }
     },
     {
@@ -139,7 +139,7 @@
         "association_to_node": "Raw Data [Draw_lines]"
       },
       "position": {
-        "x": 677.611803278689,
+        "x": 676.611803278689,
         "y": 50.0
       }
     },
@@ -150,7 +150,7 @@
         "association_to_node": "Window [Transform_window]"
       },
       "position": {
-        "x": 306.72918032786924,
+        "x": 305.72918032786924,
         "y": 273.73508196721303
       }
     },
@@ -161,7 +161,7 @@
         "association_to_node": "Features [Transform_feature]"
       },
       "position": {
-        "x": 514.4518032786889,
+        "x": 513.4518032786889,
         "y": 269.25245901639335
       }
     },
@@ -172,7 +172,7 @@
         "association_to_node": "Feature Filter [Transform_filter]"
       },
       "position": {
-        "x": 1034.502295081967,
+        "x": 1033.502295081967,
         "y": 147.83737704918033
       }
     },
@@ -183,7 +183,7 @@
         "association_to_node": "Features [Draw_lines]"
       },
       "position": {
-        "x": 1433.6498360655735,
+        "x": 1432.6498360655735,
         "y": 138.86491803278685
       }
     },
@@ -194,7 +194,7 @@
         "association_to_node": "Name [Biokit_to_fs]"
       },
       "position": {
-        "x": 887.9147540983604,
+        "x": 886.9147540983604,
         "y": 411.8098360655737
       }
     },
@@ -205,7 +205,7 @@
         "association_to_node": "Norm [Biokit_norm]"
       },
       "position": {
-        "x": 1082.0472131147544,
+        "x": 1081.0472131147544,
         "y": 466.2622950819671
       }
     },
@@ -216,7 +216,7 @@
         "association_to_node": "Name [Biokit_from_fs]"
       },
       "position": {
-        "x": 1264.659672131148,
+        "x": 1263.659672131148,
         "y": 396.87475409836077
       }
     },
@@ -227,7 +227,7 @@
         "association_to_node": "Normed Feature Filter [Transform_filter]"
       },
       "position": {
-        "x": 1488.7645901639344,
+        "x": 1487.7645901639344,
         "y": 295.5396721311477
       }
     },
@@ -238,7 +238,7 @@
         "association_to_node": "Normed Features [Draw_lines]"
       },
       "position": {
-        "x": 1828.6045901639343,
+        "x": 1827.6045901639343,
         "y": 307.3272131147541
       }
     }
