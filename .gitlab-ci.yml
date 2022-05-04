@@ -30,6 +30,7 @@ format:
 
 test:
   stage: test
+  image: ubuntu:20.04
   script:
     - pytest --junitxml=report.xml
   before_script:
