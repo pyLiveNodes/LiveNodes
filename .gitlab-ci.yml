@@ -7,7 +7,7 @@ documentation:
   image: python:3.9-slim
   before_script:
     - apt-get update && apt-get install make --no-install-recommends -y
-    - python -m pip install sphinx furo myst-parser
+    - python -m pip install sphinx furo myst-parser sphinx_rtd_theme
   script:
     - sphinx-apidoc -f -o docs/modules ./src
     - make html
