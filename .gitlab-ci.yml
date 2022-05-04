@@ -33,7 +33,9 @@ test:
   script:
     - pytest --junitxml=report.xml
   before_script:
+    - python -m pip install -r requirements_slim.txt
     - python -m pip install pytest
+    - python -m pip install . -e 
   artifacts:
     when: always
     reports:
