@@ -2,7 +2,7 @@ stages:
   - deploy
   - test
 
-documentation:
+pages:
   stage: deploy
   image: python:3.9-slim
   before_script:
