@@ -2,7 +2,7 @@ stages:
   - deploy
   - test
 
-pages:
+documentation:
   stage: deploy
   image: python:3.9-slim
   before_script:
@@ -12,7 +12,7 @@ pages:
     - sphinx-apidoc -f -o docs/modules ./src
     - make html
   after_script:
-    - mv _build/html/ ./public/
+    - mv ./html/ ./public/
   artifacts:
     paths:
     - public
