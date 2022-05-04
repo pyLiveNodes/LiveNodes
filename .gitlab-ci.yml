@@ -12,7 +12,7 @@ documentation:
     - sphinx-apidoc -f -o docs/modules ./src
     - make html
   after_script:
-    - mv ./html/ ./public/
+    - mv _doc/html/ ./public/
   artifacts:
     paths:
     - public
