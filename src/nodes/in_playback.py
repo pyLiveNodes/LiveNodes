@@ -91,7 +91,7 @@ class In_playback(Sender):
         while (True):
             f = random.choice(fs)
             ctr += 1
-            print(ctr, f)
+            self.info(ctr, f)
 
             # Read and send data from file
             with h5py.File(f, "r") as dataFile:
@@ -121,6 +121,7 @@ class In_playback(Sender):
 
                 # TODO: for some reason i have no fucking clue about using read_data results in the annotation plot in draw recog to be wrong, although the targs are exactly the same (yes, if checked read_data()[1] == targs)...
                 for i in range(start, end, self.emit_at_once):
+                    # self.verbose(i, start, end, self.emit_at_once)
                     d_len = len(
                         data[i:i + self.emit_at_once]
                     )  # usefull if i+self.emit_at_once > len(data), as then all the rest will be read into one batch
@@ -142,10 +143,10 @@ class In_playback(Sender):
                         (1, -1, 1)),
                                     channel="File")
 
+                    # self.verbose(time.time(), last_time + sleep_time, time.time() < last_time + sleep_time)
                     while time.time() < last_time + sleep_time:
                         time.sleep(0.00001)
 
                     last_time = time.time()
 
                     yield True
-        yield False

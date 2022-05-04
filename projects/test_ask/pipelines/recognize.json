@@ -165,6 +165,20 @@
         "emitting_channel": "Channel Names",
         "receiving_channel": "Channel Names",
         "connection_counter": 0
+      },
+      {
+        "emitting_node": "Features [Transform_feature]",
+        "receiving_node": "GMM [Draw_gmm]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "Features [Transform_feature]",
+        "receiving_node": "GMM [Draw_gmm]",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
+        "connection_counter": 0
       }
     ]
   },
@@ -377,6 +391,20 @@
         "emitting_channel": "Hypothesis",
         "receiving_channel": "Hypothesis",
         "connection_counter": 0
+      },
+      {
+        "emitting_node": "Recognizer [Biokit_recognizer]",
+        "receiving_node": "GMM [Draw_gmm]",
+        "emitting_channel": "Hypo States",
+        "receiving_channel": "Hypo States",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "Recognizer [Biokit_recognizer]",
+        "receiving_node": "GMM [Draw_gmm]",
+        "emitting_channel": "HMM Meta",
+        "receiving_channel": "HMM Meta",
+        "connection_counter": 0
       }
     ]
   },
@@ -437,6 +465,54 @@
         "receiving_node": "Search Graph [Draw_search_graph]",
         "emitting_channel": "Hypothesis",
         "receiving_channel": "Hypothesis",
+        "connection_counter": 0
+      }
+    ],
+    "outputs": []
+  },
+  "GMM [Draw_gmm]": {
+    "class": "Draw_gmm",
+    "settings": {
+      "name": "GMM",
+      "compute_on": 3,
+      "plot_names": [
+        "EMG1__rms",
+        "Gonio2__calc_mean"
+      ],
+      "n_mixtures": 2,
+      "n_scatter_points": 50,
+      "ylim": [
+        -1.1,
+        1.1
+      ]
+    },
+    "inputs": [
+      {
+        "emitting_node": "Features [Transform_feature]",
+        "receiving_node": "GMM [Draw_gmm]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "Features [Transform_feature]",
+        "receiving_node": "GMM [Draw_gmm]",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "Recognizer [Biokit_recognizer]",
+        "receiving_node": "GMM [Draw_gmm]",
+        "emitting_channel": "Hypo States",
+        "receiving_channel": "Hypo States",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "Recognizer [Biokit_recognizer]",
+        "receiving_node": "GMM [Draw_gmm]",
+        "emitting_channel": "HMM Meta",
+        "receiving_channel": "HMM Meta",
         "connection_counter": 0
       }
     ],

@@ -9,8 +9,7 @@ class Data(Sender):
         for ctr in range(10):
             self.info(ctr)
             self._emit_data(ctr)
-            yield True
-        return False
+            yield ctr < 9
 
 class Quadratic(Node):
     channels_in = ["Data"]
@@ -39,7 +38,7 @@ class Save(Node):
         return res
 
 if __name__ == "__main__":
-    data = Data(name="A", compute_on=Location.THREAD)
+    data = Data(name="A", compute_on=Location.THREAD, block=True)
     quadratic = Quadratic(name="B", compute_on=Location.THREAD)
     out1 = Save(name="C", compute_on=Location.THREAD)
     out2 = Save(name="D", compute_on=Location.THREAD)
@@ -49,6 +48,7 @@ if __name__ == "__main__":
     out2.connect_inputs_to(quadratic)
 
     data.start()
+    data.join()
     data.stop()
 
     print(out1.get_state())

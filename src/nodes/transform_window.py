@@ -9,7 +9,12 @@ class Transform_window(Node):
     category = "Transform"
     description = ""
 
-    example_init = {'name': 'Name'}
+    example_init = {            
+        "length": 100,
+        "overlap": 0.0,
+        "name": "Name",
+        "concat_batches": True
+    }
 
     def __init__(self,
                  length,

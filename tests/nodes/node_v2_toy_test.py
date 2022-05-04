@@ -13,8 +13,7 @@ class Data(Sender):
         for ctr in range(10):
             self.info(ctr)
             self._emit_data(ctr, channel="Alternate Data")
-            yield True
-        return False
+            yield ctr < 9
 
 
 class Quadratic(Node):
@@ -46,7 +45,7 @@ class Save(Node):
 # Arrange
 @pytest.fixture
 def create_simple_graph():
-    data = Data(name="A", compute_on=Location.SAME)
+    data = Data(name="A", compute_on=Location.SAME, block=True)
     quadratic = Quadratic(name="B", compute_on=Location.SAME)
     out1 = Save(name="C", compute_on=Location.SAME)
     out2 = Save(name="D", compute_on=Location.SAME)
@@ -60,7 +59,7 @@ def create_simple_graph():
 
 @pytest.fixture
 def create_simple_graph_mp():
-    data = Data(name="A", compute_on=Location.PROCESS)
+    data = Data(name="A", compute_on=Location.PROCESS, block=True)
     quadratic = Quadratic(name="B", compute_on=Location.PROCESS)
     out1 = Save(name="C", compute_on=Location.PROCESS)
     out2 = Save(name="D", compute_on=Location.PROCESS)
@@ -74,7 +73,7 @@ def create_simple_graph_mp():
 
 @pytest.fixture
 def create_simple_graph_mixed():
-    data = Data(name="A", compute_on=Location.THREAD)
+    data = Data(name="A", compute_on=Location.THREAD, block=True)
     quadratic = Quadratic(name="B", compute_on=Location.THREAD)
     out1 = Save(name="C", compute_on=Location.THREAD)
     out2 = Save(name="D", compute_on=Location.THREAD)

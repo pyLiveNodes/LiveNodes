@@ -17,6 +17,8 @@ from src.nodes.utils import logger
 import datetime
 import time
 
+import os
+
 # from src.realtime_animation import RealtimeAnimation
 
 import seaborn as sns
@@ -30,6 +32,9 @@ def _log_helper(f, msg):
     f.flush()
 
 if __name__ == '__main__':
+    os.chdir('./projects/test_ask')
+
+
     log_file=f"./logs/{datetime.datetime.fromtimestamp(time.time())}"
     with open(log_file, 'a') as f:
         log = partial(_log_helper, f)
@@ -68,8 +73,9 @@ if __name__ == '__main__':
 
 
         print('=== Load Pipeline ====')
+
         # pipeline = Node.load('./projects/test_ask/pipelines/recognize.json')
-        pipeline = Node.load('./projects/test_ask/pipelines/preprocess.json')
+        pipeline = Node.load('./pipelines/preprocess.json')
 
 
         print('=== Start main loops ====')

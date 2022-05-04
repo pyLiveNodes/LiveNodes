@@ -152,5 +152,6 @@ class Draw_lines(View):
         self.yData[:d.shape[0]] = d
 
         # TODO: consider if we really always want to send the channel names? -> seems an unecessary overhead (but cleaner code atm, maybe massage later...)
+        # self.debug('emitting draw', self.yData.shape)
         self._emit_draw(data=list(self.yData.T),
                         channel_names=self.channel_names)

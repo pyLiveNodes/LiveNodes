@@ -152,6 +152,60 @@ class Connection():
 # class LogLevels(Enum):
 #     Debug
 
+class Clock_Register():
+    state = {}
+    times = {}
+
+    queue = mp.SimpleQueue()
+
+    _store = mp.Event()
+
+    def __init__(self, should_time=False):
+        self._owner_process = mp.current_process()
+        self._owner_thread = threading.current_thread()
+        self.should_time = should_time
+
+    # called in sub-processes
+    def register(self, name, ctr):
+        if self.should_time:
+            raise NotImplementedError()
+        else:
+            if not self._store.is_set():
+                self.queue.put((name, ctr, None))
+
+    def set_passthrough(self):
+        self._store.set()
+        self.queue = None
+
+    # called in main/handling process
+    def read_state(self):
+        if self._owner_process != mp.current_process():
+            raise Exception('Called from wrong process')
+        if self._owner_thread != threading.current_thread():
+            raise Exception('Called from wrong thread')
+
+        while not self.queue.empty():
+            name, ctr, time = self.queue.get()
+            if name not in self.state: 
+                self.state[name] = []
+                self.times[name] = []
+                
+            self.state[name].append(ctr)
+            self.times[name].append(time)
+
+        return self.state, self.times
+
+    def all_at(self, ctr):
+        states, _ = self.read_state()
+
+        for name, ctrs in states.items():
+            if max(ctrs) < ctr:
+                return False
+
+        return True
+
+
+
 
 class Node():
     # === Information Stuff =================
@@ -162,6 +216,12 @@ class Node():
     description = ""
 
     example_init = {}
+
+    # not super awesome, but will do the trick for now:
+    # have a register of clock ticks in the graph on the node class (should never be overwritten)
+    # everytime a child node processes something it registers this here
+    # then we can join the whole graph by waiting until in this register all ctrs are as high as the highest senders (if all senders have stopped sending)
+    _clocks = Clock_Register()
 
     # === Basic Stuff =================
     def __init__(self,
@@ -447,7 +507,7 @@ class Node():
     # TODO: actually start, ie design/test a sending node!
 
     # === Start/Stop Stuff =================
-    def start(self, children=True):
+    def start(self, children=True, join=False):
         if self._running == False:  # the node might be child to multiple parents, but we just want to start once
             # first start children, so they are ready to receive inputs
             # children cannot not have inputs, ie they are always relying on this node to send them data if they want to progress their clock
@@ -474,6 +534,11 @@ class Node():
             elif self.compute_on in [Location.SAME]:
                 self._onstart()
                 self.info('Executed _onstart')
+
+        if join:
+            self._join()
+        else: 
+            self._clocks.set_passthrough()
 
     def stop(self, children=True):
         # first stop self, so that non-existing children don't receive inputs
@@ -502,20 +567,32 @@ class Node():
                 for con in self.output_connections:
                     con._receiving_node.stop()
 
+    def _join(self):
+        # blocks until all nodes in the graph reached the same clock as the node we are calling this from
+        # for senders: this only makes sense for senders with block=True as otherwise race conditions might make this return before the final data was send
+        # ie in the extreme case: self._ctr=0 and all others as well
+        self_name = str(self)
+        # the first part will be false until the first time _process() is being called, after that, the second part will be false until all clocks have catched up to our own
+        while (not self_name in self._clocks.read_state()[0]) or not (self._clocks.all_at(max(self._clocks.state[self_name]))):
+            time.sleep(0.01)
+        self.info(f'Join returned at clock {max(self._clocks.state[self_name])}')
+
+
     def _acquire_lock(self, lock, block=True, timeout=None):
         if self.compute_on in [Location.PROCESS]:
-            return lock.acquire(block=block, timeout=timeout)
+            res = lock.acquire(block=block, timeout=timeout)
         elif self.compute_on in [Location.THREAD]:
             if block:
-                return lock.acquire(blocking=True,
+                res = lock.acquire(blocking=True,
                                     timeout=-1 if timeout is None else timeout)
             else:
-                return lock.acquire(
+                res = lock.acquire(
                     blocking=False)  # forbidden to specify timeout
         else:
             raise Exception(
                 'Cannot acquire lock in non multi process/threading environment'
             )
+        return res
 
     # === Data Stuff =================
     def _emit_data(self, data, channel="Data", ctr=None):
@@ -541,22 +618,28 @@ class Node():
 
         # as long as we do not receive a termination signal, we will wait for data to be processed
         # the .empty() is not reliable (according to the python doc), but the best we have at the moment
-        was_queue_empty_last_iteration = True
+        was_queue_empty_last_iteration = 0
+        queue_empty = False
         was_terminated = False
 
-        while not was_terminated or not was_queue_empty_last_iteration:
-            was_terminated = was_terminated or self._acquire_lock(
-                self._subprocess_info['termination_lock'], block=False)
+        # one iteration takes roughly 0.00001 * channels -> 0.00001 * 10 * 100 = 0.01
+        while not was_terminated or was_queue_empty_last_iteration < 10:
+            could_acquire_term_lock = self._acquire_lock(self._subprocess_info['termination_lock'], block=False)
+            was_terminated = was_terminated or could_acquire_term_lock
             # block until signaled that we have new data
             # as we might receive not data after having received a termination
             #      -> we'll just poll, so that on termination we do terminate after no longer than 0.1seconds
             # self.info(was_terminated, was_queue_empty_last_iteration)
-            was_queue_empty_last_iteration = True
+            queue_empty = True
             for queue in self._received_data.values():
                 found_value, ctr = queue.update(timeout=0.00001)
                 if found_value:
                     self._process(ctr)
-                    was_queue_empty_last_iteration = False
+                    queue_empty = False
+            if queue_empty:
+                was_queue_empty_last_iteration += 1
+            else:
+                was_queue_empty_last_iteration = 0
 
         self.info('Executing _onstop')
         self._onstop()
@@ -610,9 +693,13 @@ class Node():
             # TODO: IMPORTANT: every node it's own clock seems to have been a mistake: go back to the original idea of "senders and syncs implement clocks and everyone else just passes them along"
             self._ctr = ctr
             self.process(**_current_data, _ctr=ctr)
+            self.verbose('process fn finished')
             for queue in self._received_data.values():
                 queue.discard_before(ctr)
 
+            # self.verbose('discarded values, registering now', self._clocks._store.is_set())
+
+            self._clocks.register(str(self), ctr)
             # if not keep_current_data:
             #     self.discard_before
             # if not prevent_tick:
@@ -620,6 +707,7 @@ class Node():
             #     self.debug('Prevented tick')
         else:
             self.verbose('Decided not to process', ctr, _current_data.keys())
+        self.verbose('_Process finished')
 
     def trigger_process(self, ctr):
         if self.compute_on in [Location.SAME]:
@@ -866,7 +954,8 @@ class View(Node):
         """
         if not self._draw_state.full():
             self.verbose('Storing for draw:', kwargs.keys())
-            self._draw_state.put(kwargs)
+            self._draw_state.put_nowait(kwargs)
+            # self.verbose('Stored for draw')
 
 
 # class Transform(Node):
@@ -900,6 +989,7 @@ class Sender(Node):
 
         self._clock = Clock(node=self, should_time=should_time)
         self._ctr = self._clock.ctr
+        self._emit_ctr_fallback = 0
 
     def _node_settings(self):
         return dict({"block": self.block}, **super()._node_settings())
@@ -917,6 +1007,24 @@ class Sender(Node):
         """
         yield False
 
+    def _emit_data(self, data, channel="Data", ctr=None):
+        self._emit_ctr_fallback += 1
+        return super()._emit_data(data, channel, ctr)
+
+    def _on_runner(self):
+        # everytime next(runner) has been called, this should be called
+        # TODO: maybe wrap the self._run() into a generator, that calls this automatically...
+        # self.debug('Next(Runner) was called')
+        if self._emit_ctr_fallback > 0:
+            # self.debug('Putting on queue', str(self), self._ctr)
+            self._clocks.register(str(self), self._ctr)
+            # self.debug('Put on queue')
+            self._ctr = self._clock.tick()
+        else:
+            raise Exception('Runner did not emit data, yet said it would do so in the previous run. Please check your implementation.')
+        self._emit_ctr_fallback = 0
+        # self.debug('Next(Runner) returned')
+
     def _process_on_proc(self):
         self.info('Started subprocess')
         runner = self._run()
@@ -925,13 +1033,18 @@ class Sender(Node):
             while not self._acquire_lock(
                     self._subprocess_info['termination_lock'],
                     block=False) and next(runner):
-                self._ctr = self._clock.tick()
-        except StopIteration:
-            self.info('Reached end of run')
-        self.info('Finished subprocess')
+                self._on_runner()
 
-    def start(self, children=True):
-        super().start(children)
+        except StopIteration:
+            self.warn('Iterator returned without passing false first. Assuming everything is fine.')
+        
+        self.info('Reached end of run')
+        # this still means we send data, before the return, just that after now no new data will be sent
+        self._on_runner()
+        self.info('Finished subprocess', self._ctr)
+
+    def start(self, children=True, join=False):
+        super().start(children, join=False)
 
         if self.compute_on in [Location.PROCESS, Location.THREAD
                                ] and self.block:
@@ -941,9 +1054,24 @@ class Sender(Node):
             try:
                 runner = self._run()
                 while next(runner):
-                    self._ctr = self._clock.tick()
+                    self._on_runner()
             except StopIteration:
-                self.info('Reached end of run')
+                self.warn('Iterator returned without passing false first. Assuming everything is fine.')
+            self.info('Reached end of run')
+            # this still means we send data, before the return, just that after now no new data will be sent
+            self._on_runner()
+        
+        if join:
+            self._join()
+        else: 
+            self._clocks.set_passthrough()
+
+    def _join(self):
+        if not self.block:
+            raise Exception('Cannot join non-blocking senders as we have no way of knowing when they are finished atm')
+            # theoretically we can still use the ret false concept from the senders ie yield False indicates finish
+        return super()._join()
+
 
 
 class BlockingSender(Sender):
@@ -959,16 +1087,11 @@ class BlockingSender(Sender):
         self._clock = Clock(node=self, should_time=should_time)
         self._ctr = self._clock.ctr
 
-    def _onstart(self):
-        pass
-
-    def _onstop(self):
-        pass
-
     def _emit_data(self, data, channel="Data"):
         super()._emit_data(data, channel)
         # as we are a blocking sender / a sensore everytime we emit a sample, we advance our clock
         if channel == "Data":
+            self._clocks.register(str(self), self._ctr)
             self._ctr = self._clock.tick()
 
     def _process_on_proc(self):
@@ -976,17 +1099,24 @@ class BlockingSender(Sender):
         try:
             self._onstart()
         except KeyboardInterrupt:
+            # TODO: this seems to be never called
             self.info('Received Termination Signal')
             self._onstop()
         self.info('Finished subprocess')
 
-    def start(self, children=True):
-        super().start(children)
+    def start(self, children=True, join=False):
+        super().start(children, join=False)
 
         if self.compute_on in [Location.PROCESS, Location.THREAD]:
-            self._subprocess_info['process'].join()
+            if self.block:
+                self._subprocess_info['process'].join()
         elif self.compute_on in [Location.SAME]:
             self._onstart()
+
+        if join:
+            self._join()
+        else: 
+            self._clocks.set_passthrough()
 
     def stop(self, children=True):
         # first stop self, so that non-existing children don't receive inputs
@@ -996,7 +1126,7 @@ class BlockingSender(Sender):
             if self.compute_on in [Location.SAME, Location.THREAD]:
                 self._onstop()
             elif self.compute_on in [Location.PROCESS]:
-                self._subprocess_info['process'].terminate()
+                self._subprocess_info['process'].kill()
 
         # now stop children
         if children:

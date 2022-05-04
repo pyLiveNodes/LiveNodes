@@ -1,42 +1,86 @@
 {
-  "RIoT [In_riot]": {
-    "class": "In_riot",
+  "Playback [In_playback]": {
+    "class": "In_playback",
     "settings": {
       "block": false,
-      "name": "RIoT",
-      "compute_on": 3,
-      "id": 0,
-      "listen_ip": "192.168.1.101",
-      "listen_port": 8888
+      "name": "Playback",
+      "compute_on": 2,
+      "emit_at_once": 1,
+      "files": "./data/RIoT/*.h5",
+      "meta": {
+        "sample_rate": 100,
+        "channels": [
+          "ACC_X",
+          "ACC_Y",
+          "ACC_Z",
+          "GYRO_X",
+          "GYRO_Y",
+          "GYRO_Z",
+          "MAG_X",
+          "MAG_Y",
+          "MAG_Z",
+          "TEMP",
+          "IO",
+          "A1",
+          "A2",
+          "C",
+          "Q1",
+          "Q2",
+          "Q3",
+          "Q4",
+          "PITCH",
+          "YAW",
+          "ROLL",
+          "HEAD"
+        ],
+        "targets": [
+          "None",
+          "Right",
+          "Left"
+        ]
+      },
+      "annotation_holes": "None",
+      "csv_columns": [
+        "start",
+        "end",
+        "act"
+      ]
     },
     "inputs": [],
     "outputs": [
       {
-        "emitting_node": "RIoT [In_riot]",
+        "emitting_node": "Playback [In_playback]",
         "receiving_node": "Raw Filter [Transform_filter]",
         "emitting_channel": "Data",
         "receiving_channel": "Data",
         "connection_counter": 0
       },
       {
-        "emitting_node": "RIoT [In_riot]",
+        "emitting_node": "Playback [In_playback]",
         "receiving_node": "Raw Filter [Transform_filter]",
         "emitting_channel": "Channel Names",
         "receiving_channel": "Channel Names",
         "connection_counter": 0
       },
       {
-        "emitting_node": "RIoT [In_riot]",
+        "emitting_node": "Playback [In_playback]",
         "receiving_node": "Annot Filter [Transform_filter]",
         "emitting_channel": "Data",
         "receiving_channel": "Data",
         "connection_counter": 0
       },
       {
-        "emitting_node": "RIoT [In_riot]",
+        "emitting_node": "Playback [In_playback]",
         "receiving_node": "Annot Filter [Transform_filter]",
         "emitting_channel": "Channel Names",
         "receiving_channel": "Channel Names",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "Playback [In_playback]",
+        "receiving_node": "Memory [Memory]",
+        "emitting_channel": "Annotation",
+        "receiving_channel": "Data",
         "connection_counter": 0
       }
     ]
@@ -57,14 +101,14 @@
     },
     "inputs": [
       {
-        "emitting_node": "RIoT [In_riot]",
+        "emitting_node": "Playback [In_playback]",
         "receiving_node": "Raw Filter [Transform_filter]",
         "emitting_channel": "Data",
         "receiving_channel": "Data",
         "connection_counter": 0
       },
       {
-        "emitting_node": "RIoT [In_riot]",
+        "emitting_node": "Playback [In_playback]",
         "receiving_node": "Raw Filter [Transform_filter]",
         "emitting_channel": "Channel Names",
         "receiving_channel": "Channel Names",
@@ -135,14 +179,14 @@
     },
     "inputs": [
       {
-        "emitting_node": "RIoT [In_riot]",
+        "emitting_node": "Playback [In_playback]",
         "receiving_node": "Annot Filter [Transform_filter]",
         "emitting_channel": "Data",
         "receiving_channel": "Data",
         "connection_counter": 0
       },
       {
-        "emitting_node": "RIoT [In_riot]",
+        "emitting_node": "Playback [In_playback]",
         "receiving_node": "Annot Filter [Transform_filter]",
         "emitting_channel": "Channel Names",
         "receiving_channel": "Channel Names",
@@ -300,20 +344,13 @@
       {
         "emitting_node": "Recognizer [Biokit_recognizer]",
         "receiving_node": "GMM X [Draw_gmm]",
-        "emitting_channel": "HMM Meta",
-        "receiving_channel": "HMM Meta",
+        "emitting_channel": "Hypo States",
+        "receiving_channel": "Hypo States",
         "connection_counter": 0
       },
       {
         "emitting_node": "Recognizer [Biokit_recognizer]",
         "receiving_node": "GMM X [Draw_gmm]",
-        "emitting_channel": "Hypo States",
-        "receiving_channel": "Hypo States",
-        "connection_counter": 0
-      },
-      {
-        "emitting_node": "Recognizer [Biokit_recognizer]",
-        "receiving_node": "GMM Y [Draw_gmm]",
         "emitting_channel": "HMM Meta",
         "receiving_channel": "HMM Meta",
         "connection_counter": 0
@@ -327,7 +364,7 @@
       },
       {
         "emitting_node": "Recognizer [Biokit_recognizer]",
-        "receiving_node": "GMM Z [Draw_gmm]",
+        "receiving_node": "GMM Y [Draw_gmm]",
         "emitting_channel": "HMM Meta",
         "receiving_channel": "HMM Meta",
         "connection_counter": 0
@@ -337,6 +374,13 @@
         "receiving_node": "GMM Z [Draw_gmm]",
         "emitting_channel": "Hypo States",
         "receiving_channel": "Hypo States",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "Recognizer [Biokit_recognizer]",
+        "receiving_node": "GMM Z [Draw_gmm]",
+        "emitting_channel": "HMM Meta",
+        "receiving_channel": "HMM Meta",
         "connection_counter": 0
       }
     ]
@@ -366,6 +410,13 @@
         "receiving_node": "Recognition [Draw_recognition]",
         "emitting_channel": "HMM Meta",
         "receiving_channel": "HMM Meta",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "Memory [Memory]",
+        "receiving_node": "Recognition [Draw_recognition]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Annotation",
         "connection_counter": 0
       }
     ],
@@ -430,15 +481,15 @@
       {
         "emitting_node": "Recognizer [Biokit_recognizer]",
         "receiving_node": "GMM X [Draw_gmm]",
-        "emitting_channel": "HMM Meta",
-        "receiving_channel": "HMM Meta",
+        "emitting_channel": "Hypo States",
+        "receiving_channel": "Hypo States",
         "connection_counter": 0
       },
       {
         "emitting_node": "Recognizer [Biokit_recognizer]",
         "receiving_node": "GMM X [Draw_gmm]",
-        "emitting_channel": "Hypo States",
-        "receiving_channel": "Hypo States",
+        "emitting_channel": "HMM Meta",
+        "receiving_channel": "HMM Meta",
         "connection_counter": 0
       }
     ],
@@ -478,15 +529,15 @@
       {
         "emitting_node": "Recognizer [Biokit_recognizer]",
         "receiving_node": "GMM Y [Draw_gmm]",
-        "emitting_channel": "HMM Meta",
-        "receiving_channel": "HMM Meta",
+        "emitting_channel": "Hypo States",
+        "receiving_channel": "Hypo States",
         "connection_counter": 0
       },
       {
         "emitting_node": "Recognizer [Biokit_recognizer]",
         "receiving_node": "GMM Y [Draw_gmm]",
-        "emitting_channel": "Hypo States",
-        "receiving_channel": "Hypo States",
+        "emitting_channel": "HMM Meta",
+        "receiving_channel": "HMM Meta",
         "connection_counter": 0
       }
     ],
@@ -526,18 +577,45 @@
       {
         "emitting_node": "Recognizer [Biokit_recognizer]",
         "receiving_node": "GMM Z [Draw_gmm]",
-        "emitting_channel": "HMM Meta",
-        "receiving_channel": "HMM Meta",
+        "emitting_channel": "Hypo States",
+        "receiving_channel": "Hypo States",
         "connection_counter": 0
       },
       {
         "emitting_node": "Recognizer [Biokit_recognizer]",
         "receiving_node": "GMM Z [Draw_gmm]",
-        "emitting_channel": "Hypo States",
-        "receiving_channel": "Hypo States",
+        "emitting_channel": "HMM Meta",
+        "receiving_channel": "HMM Meta",
         "connection_counter": 0
       }
     ],
     "outputs": []
+  },
+  "Memory [Memory]": {
+    "class": "Memory",
+    "settings": {
+      "name": "Memory",
+      "compute_on": 3,
+      "length": 1000,
+      "concat_batches": true
+    },
+    "inputs": [
+      {
+        "emitting_node": "Playback [In_playback]",
+        "receiving_node": "Memory [Memory]",
+        "emitting_channel": "Annotation",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      }
+    ],
+    "outputs": [
+      {
+        "emitting_node": "Memory [Memory]",
+        "receiving_node": "Recognition [Draw_recognition]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Annotation",
+        "connection_counter": 0
+      }
+    ]
   }
 }

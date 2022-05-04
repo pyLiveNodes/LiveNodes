@@ -5,7 +5,7 @@
       "block": false,
       "name": "Playback",
       "compute_on": 2,
-      "emit_at_once": 20,
+      "emit_at_once": 200,
       "files": "./data/KneeBandageCSL2018/part00/01.h5",
       "meta": {
         "sample_rate": 1000,
@@ -98,7 +98,7 @@
     "class": "Transform_filter",
     "settings": {
       "name": "Raw Filter",
-      "compute_on": 3,
+      "compute_on": 1,
       "names": [
         "EMG1",
         "Gonio2",
@@ -142,9 +142,9 @@
     "class": "Draw_lines",
     "settings": {
       "name": "Raw Data",
-      "compute_on": 3,
+      "compute_on": 1,
       "n_plots": 3,
-      "xAxisLength": 5000,
+      "xAxisLength": 10000,
       "sample_rate": 1000,
       "ylim": [
         -1.1,
@@ -173,7 +173,7 @@
     "class": "Transform_window",
     "settings": {
       "name": "Window",
-      "compute_on": 3,
+      "compute_on": 1,
       "length": 100,
       "overlap": 0,
       "concat_batches": true
@@ -201,7 +201,7 @@
     "class": "Transform_feature",
     "settings": {
       "name": "Features",
-      "compute_on": 3,
+      "compute_on": 1,
       "features": [
         "calc_mean",
         "rms"
@@ -261,7 +261,7 @@
     "class": "Transform_filter",
     "settings": {
       "name": "Feature Filter",
-      "compute_on": 3,
+      "compute_on": 1,
       "names": [
         "EMG1__rms",
         "Gonio2__calc_mean",
@@ -305,9 +305,9 @@
     "class": "Draw_lines",
     "settings": {
       "name": "Features",
-      "compute_on": 3,
+      "compute_on": 1,
       "n_plots": 3,
-      "xAxisLength": 50,
+      "xAxisLength": 100,
       "sample_rate": 1000,
       "ylim": [
         -1.1,
@@ -336,7 +336,7 @@
     "class": "Biokit_to_fs",
     "settings": {
       "name": "Name",
-      "compute_on": 3
+      "compute_on": 1
     },
     "inputs": [
       {
@@ -361,7 +361,7 @@
     "class": "Biokit_norm",
     "settings": {
       "name": "Norm",
-      "compute_on": 3
+      "compute_on": 1
     },
     "inputs": [
       {
@@ -386,7 +386,7 @@
     "class": "Biokit_from_fs",
     "settings": {
       "name": "Name",
-      "compute_on": 3
+      "compute_on": 1
     },
     "inputs": [
       {
@@ -411,7 +411,7 @@
     "class": "Transform_filter",
     "settings": {
       "name": "Normed Feature Filter",
-      "compute_on": 3,
+      "compute_on": 1,
       "names": [
         "EMG1__rms",
         "Gonio2__calc_mean",
@@ -455,9 +455,9 @@
     "class": "Draw_lines",
     "settings": {
       "name": "Normed Features",
-      "compute_on": 3,
+      "compute_on": 1,
       "n_plots": 3,
-      "xAxisLength": 50,
+      "xAxisLength": 100,
       "sample_rate": 1000,
       "ylim": [
         -5,

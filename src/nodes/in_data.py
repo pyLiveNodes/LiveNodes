@@ -115,6 +115,8 @@ class In_data(Sender):
                              suffix=f,
                              length=50)
 
+            # self.info(f)
+
             # data, targs = read_data(f)
 
             for i in range(0, len(data), self.emit_at_once):
@@ -125,14 +127,15 @@ class In_data(Sender):
                 self._emit_data(np.array(
                     targs[i:i + self.emit_at_once]).reshape((1, -1, 1)),
                                 channel='Annotation')
+                # self.info('send', np.unique(targs[i:i + self.emit_at_once], return_counts=True))
                 self._emit_data(np.array([file_number] * d_len).reshape(
                     (1, -1, 1)),
                                 channel="File")
-                yield True
 
-        # TODO: maybe we could get rid of this, and jsut use the fact, that this will end at some point?
-        # -> might be a problem if we want' to retrain based on event
-        self._emit_data(
-            True, channel='Termination'
-        )  # TODO: maybe we could use something like this for syncing... ie seperate stream with just a counter
-        yield False
+                finished = (l == file_number + 1) and (i + self.emit_at_once >= len(data))
+                self._emit_data(
+                    finished, channel='Termination'
+                )  # TODO: maybe we could use something like this for syncing... ie seperate stream with just a counter
+                
+                self.info('finished?', not finished)
+                yield not finished
