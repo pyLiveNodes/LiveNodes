@@ -34,7 +34,7 @@ test:
   script:
     - pytest --junitxml=report.xml
   before_script:
-    - python3 -m venv venv && source venv/bin/activate
+    - python -m venv venv && source venv/bin/activate
     - pip install -r requirements_slim.txt
     - pip install pytest
     - pip install -e . 
