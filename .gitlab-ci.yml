@@ -23,7 +23,6 @@ format:
   stage: deploy
   image: python:3.9-slim
   before_script:
-    - apt-get update && apt-get install make --no-install-recommends -y
     - python -m pip install yapf
   script:
     - yapf -ri ./src ./tests
@@ -33,6 +32,8 @@ test:
   stage: test
   script:
     - pytest --junitxml=report.xml
+  before_script:
+    - python -m pip install pytest
   artifacts:
     when: always
     reports:
