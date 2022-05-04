@@ -33,9 +33,10 @@ test:
   script:
     - pytest --junitxml=report.xml
   before_script:
-    - python -m pip install -r requirements_slim.txt
-    - python -m pip install pytest
-    - python -m pip install -e . 
+    - python3 -m venv venv && source venv/bin/activate
+    - pip install -r requirements_slim.txt
+    - pip install pytest
+    - pip install -e . 
   artifacts:
     when: always
     reports:
