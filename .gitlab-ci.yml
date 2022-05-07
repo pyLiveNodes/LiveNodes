@@ -31,7 +31,10 @@ test:
     when: always
     reports:
       junit: dist/tests/report.xml
-      coverage_report: dist/tests/coverage.xml
+      # current gitlab is: 14.0.12, this is available starting in 14.10.x
+      # coverage_report: 
+      #   coverage_format: cobertura
+      #   path: dist/tests/coverage.xml
 
 
 pages:
