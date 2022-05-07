@@ -1,28 +1,28 @@
 from numpy import block
-from src.nodes.memory import Memory
-from src.nodes.log_data import Log_data
+from livenodes.nodes.memory import Memory
+from livenodes.nodes.log_data import Log_data
 
-from src.nodes.biokit_norm import Biokit_norm
-from src.nodes.biokit_to_fs import Biokit_to_fs
-from src.nodes.biokit_from_fs import Biokit_from_fs
-from src.nodes.biokit_recognizer import Biokit_recognizer
-from src.nodes.biokit_train import Biokit_train
+from livenodes.biokit.biokit_norm import Biokit_norm
+from livenodes.biokit.biokit_to_fs import Biokit_to_fs
+from livenodes.biokit.biokit_from_fs import Biokit_from_fs
+from livenodes.biokit.biokit_recognizer import Biokit_recognizer
+from livenodes.biokit.biokit_train import Biokit_train
 
-from src.nodes.transform_feature import Transform_feature
-from src.nodes.transform_window import Transform_window
-from src.nodes.transform_filter import Transform_filter
-from src.nodes.transform_majority_select import Transform_majority_select
+from livenodes.nodes.transform_feature import Transform_feature
+from livenodes.nodes.transform_window import Transform_window
+from livenodes.nodes.transform_filter import Transform_filter
+from livenodes.nodes.transform_majority_select import Transform_majority_select
 
-from src.nodes.in_playback import In_playback
-from src.nodes.in_data import In_data
+from livenodes.nodes.in_playback import In_playback
+from livenodes.nodes.in_data import In_data
 
 
-from src.nodes.draw_lines import Draw_lines
-from src.nodes.draw_recognition import Draw_recognition
-from src.nodes.draw_search_graph import Draw_search_graph
-from src.nodes.draw_gmm import Draw_gmm
+from livenodes.nodes.draw_lines import Draw_lines
+from livenodes.nodes.draw_recognition import Draw_recognition
+from livenodes.nodes.draw_search_graph import Draw_search_graph
+from livenodes.nodes.draw_gmm import Draw_gmm
 
-from src.nodes.node import Node
+from livenodes.core.node import Node
 
 def add_features(pl_in, x_raw, x_processed, vis=(True, True)):
     if vis[0]:
