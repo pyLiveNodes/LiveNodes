@@ -1,5 +1,5 @@
 import numpy as np
-from .node import Sender
+from core.sender import Sender
 import glob, random
 import h5py
 import pandas as pd

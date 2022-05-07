@@ -1,6 +1,6 @@
 import numpy as np
 
-from .node import View
+from core.viewer import View
 
 # The draw pattern works as follows:
 # 1. init_draw is called externally by matplotlib or qt and provides access to the subfig.

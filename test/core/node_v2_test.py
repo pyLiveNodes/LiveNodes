@@ -1,7 +1,7 @@
 import pytest
-from src.nodes.node import Node
 import json
 
+from src.core.node import Node
 
 class SimpleNode(Node):
     channels_in = ["Data"]

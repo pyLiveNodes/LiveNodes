@@ -1,7 +1,7 @@
 import numpy as np
 import multiprocessing as mp
 
-from .node import View
+from core.viewer import View
 
 from matplotlib.widgets import TextBox, Button
 

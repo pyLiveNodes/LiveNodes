@@ -1,6 +1,6 @@
 from itertools import groupby
 from typing import DefaultDict
-from .node import Node
+from core.node import Node
 from .biokit import BioKIT, logger, recognizer
 import time
 

@@ -1,7 +1,7 @@
 import numpy as np
 import multiprocessing as mp
 
-from .node import Node
+from core.node import Node
 
 
 class Transform_filter(Node):

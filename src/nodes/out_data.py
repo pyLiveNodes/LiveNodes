@@ -3,7 +3,7 @@ import datetime
 import numpy as np
 from multiprocessing import Process
 import threading
-from .node import Node
+from core.node import Node
 import glob, random
 import h5py
 import pandas as pd

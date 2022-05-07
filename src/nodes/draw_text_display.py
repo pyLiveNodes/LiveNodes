@@ -1,4 +1,4 @@
-from .node import View
+from core.viewer import View
 
 
 class Draw_text_display(View):

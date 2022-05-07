@@ -1,7 +1,8 @@
 import pytest
-from src.nodes.node import Node, Location, Sender
 import multiprocessing as mp
 
+from src.core.node import Node, Location
+from src.core.sender import Sender
 
 class Data(Sender):
     channels_in = []

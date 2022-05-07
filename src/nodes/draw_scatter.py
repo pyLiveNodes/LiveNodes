@@ -1,6 +1,6 @@
 import numpy as np
 
-from .node import View
+from core.viewer import View
 
 
 class Draw_scatter(View):

@@ -1,6 +1,6 @@
 import time
 import numpy as np
-from .node import Sender, Location
+from core.sender import Sender, Location
 import glob, random
 import h5py
 import pandas as pd

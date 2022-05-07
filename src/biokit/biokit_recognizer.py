@@ -1,4 +1,4 @@
-from .node import Node
+from core.node import Node
 from .biokit import recognizer
 
 import json

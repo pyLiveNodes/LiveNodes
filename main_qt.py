@@ -1,18 +1,16 @@
-from functools import partial
+import multiprocessing as mp
 import sys
-from turtle import back
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSizePolicy
-# from PyQt5.QtGui import QSizePolicy
 
-from src.gui.home import Home
-from src.gui.config import Config
-from src.gui.run import Run
-from src.nodes.node import Node
+from gui.home import Home
+from gui.config import Config
+from gui.run import Run
+from core.node import Node
 
 from nodes_collect import discover_infos
 
-from src.nodes.utils import logger
+from nodes.utils import logger
 import datetime
 import time
 import os
@@ -170,6 +168,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 if __name__ == '__main__':
+    # this fix is for macos (https://docs.python.org/3.8/library/multiprocessing.html#contexts-and-start-methods)
+    # TODO: test/validate this works in all cases (ie increase test cases, coverage and machines to be tested on)
+    mp.set_start_method('fork', force=True) # force=True doesn't seem like a too good idea, but hey
+    # mp.set_start_method('fork')
+
     app = QtWidgets.QApplication([])
 
     with open('./src/gui/static/style.qss', 'r') as f:

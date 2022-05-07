@@ -1,6 +1,6 @@
 import numpy as np
 import threading
-from .node import BlockingSender
+from core.sender_blocking import BlockingSender
 
 from pythonosc.osc_server import AsyncIOOSCUDPServer, BlockingOSCUDPServer
 from pythonosc.dispatcher import Dispatcher

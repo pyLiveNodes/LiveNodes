@@ -1,43 +1,21 @@
 from enum import IntEnum
 import json
-from re import L
-from socket import timeout
 import numpy as np
 import time
 import multiprocessing as mp
 import queue
-from collections import defaultdict
-import datetime
 import threading
-import queue
 import importlib
 import sys
 
-from .utils import logger, LogLevel
-
-# this fix is for macos (https://docs.python.org/3.8/library/multiprocessing.html#contexts-and-start-methods)
-# TODO: test/validate this works in all cases (ie increase test cases, coverage and machines to be tested on)
-# mp.set_start_method('fork')
-
-
-class NumpyEncoder(json.JSONEncoder):
-
-    def default(self, obj):
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
-        return json.JSONEncoder.default(self, obj)
-
+from logger import logger, LogLevel
+from utils import NumpyEncoder
 
 class Location(IntEnum):
     SAME = 1
     THREAD = 2
     PROCESS = 3
     # SOCKET = 4
-
-
-class Canvas(IntEnum):
-    MPL = 1
-    # QT = 2
 
 
 class QueueHelperHack():
@@ -875,88 +853,6 @@ class Node():
         pass
 
 
-class View(Node):
-    canvas = Canvas.MPL
-
-    def __init__(self, name, compute_on=Location.PROCESS, should_time=False):
-        super().__init__(name, compute_on, should_time)
-
-        # TODO: consider if/how to disable the visualization of a node?
-        # self.display = display
-
-        # TODO: evaluate if one or two is better as maxsize (the difference should be barely noticable, but not entirely sure)
-        # -> one: most up to date, but might just miss each other? probably only applicable if sensor sampling rate is vastly different from render fps?
-        # -> two: always one frame behind, but might not jump then
-        self._draw_state = mp.Queue(maxsize=2)
-
-    def init_draw(self, *args, **kwargs):
-        """
-        Heart of the nodes drawing, should be a functional function
-        """
-
-        update_fn = self._init_draw(*args, **kwargs)
-        artis_storage = {'returns': []}
-
-        def update():
-            nonlocal update_fn, artis_storage
-            cur_state = {}
-
-            try:
-                cur_state = self._draw_state.get_nowait()
-            except queue.Empty:
-                pass
-            # always execute the update, even if no new data is added, as a view might want to update not based on the self emited data
-            # this happens for instance if the view wants to update based on user interaction (and not data)
-            if self._should_draw(**cur_state):
-                artis_storage['returns'] = update_fn(**cur_state)
-                self.verbose('Decided to draw', cur_state.keys())
-            else:
-                self.debug('Decided not to draw', cur_state.keys())
-
-            return artis_storage['returns']
-
-        return update
-
-    def stop(self, children=True):
-        if self._running == True:  # -> seems important as the processes otherwise not always return (especially on fast machines, seems to be a race condition somewhere, not sure i've fully understood whats happening here, but seems to work so far)
-            # we need to clear the draw state, as otherwise the feederqueue never returns and the whole script never returns
-            while not self._draw_state.empty():
-                self._draw_state.get()
-
-            # should throw an error if anyone tries to insert anything into the queue after we emptied it
-            # also should allow the queue to be garbage collected
-            # seems not be important though...
-            self._draw_state.close()
-
-            # sets _running to false
-            super().stop(children)
-
-    # for now we only support matplotlib
-    # TODO: should be updated later on
-    def _init_draw(self, subfig):
-        """
-        Similar to init_draw, but specific to matplotlib animations
-        Should be either or, not sure how to check that...
-        """
-
-        def update():
-            pass
-
-        return update
-
-    def _should_draw(self, **cur_state):
-        return bool(cur_state)
-
-    def _emit_draw(self, **kwargs):
-        """
-        Called in computation process, ie self.process
-        Emits data to draw process, ie draw_inits update fn
-        """
-        if not self._draw_state.full():
-            self.verbose('Storing for draw:', kwargs.keys())
-            self._draw_state.put_nowait(kwargs)
-            # self.verbose('Stored for draw')
-
 
 # class Transform(Node):
 #     """
@@ -964,171 +860,3 @@ class View(Node):
 #     Takes input and produces output
 #     """
 #     pass
-
-
-class Sender(Node):
-    """
-    Loops the process function until it returns false, indicating that no more data is to be sent
-    """
-
-    channels_in = []  # must be empty!
-
-    def __init__(self,
-                 name,
-                 block=False,
-                 compute_on=Location.PROCESS,
-                 should_time=False):
-        super().__init__(name, compute_on, should_time)
-
-        if not block and compute_on == Location.SAME:
-            # TODO: consider how to not block this in Location.Same?
-            raise ValueError('Block cannot be false if location=same')
-
-        # TODO: also consider if this is better suited as parameter to start?
-        self.block = block
-
-        self._clock = Clock(node=self, should_time=should_time)
-        self._ctr = self._clock.ctr
-        self._emit_ctr_fallback = 0
-
-    def _node_settings(self):
-        return dict({"block": self.block}, **super()._node_settings())
-
-    def __init_subclass__(cls):
-        super().__init_subclass__()
-        if len(cls.channels_in) > 0:
-            # This is a design choice. Technically this might even be possible, but at the time of writing i do not forsee a usefull case.
-            raise ValueError('Sender nodes cannot have input')
-
-    def _run(self):
-        """
-        should be implemented instead of the standard process function
-        should be a generator
-        """
-        yield False
-
-    def _emit_data(self, data, channel="Data", ctr=None):
-        self._emit_ctr_fallback += 1
-        return super()._emit_data(data, channel, ctr)
-
-    def _on_runner(self):
-        # everytime next(runner) has been called, this should be called
-        # TODO: maybe wrap the self._run() into a generator, that calls this automatically...
-        # self.debug('Next(Runner) was called')
-        if self._emit_ctr_fallback > 0:
-            # self.debug('Putting on queue', str(self), self._ctr)
-            self._clocks.register(str(self), self._ctr)
-            # self.debug('Put on queue')
-            self._ctr = self._clock.tick()
-        else:
-            raise Exception('Runner did not emit data, yet said it would do so in the previous run. Please check your implementation.')
-        self._emit_ctr_fallback = 0
-        # self.debug('Next(Runner) returned')
-
-    def _process_on_proc(self):
-        self.info('Started subprocess')
-        runner = self._run()
-        try:
-            # as long as we do not receive a termination signal and there is data, we will send data
-            while not self._acquire_lock(
-                    self._subprocess_info['termination_lock'],
-                    block=False) and next(runner):
-                self._on_runner()
-
-        except StopIteration:
-            self.warn('Iterator returned without passing false first. Assuming everything is fine.')
-        
-        self.info('Reached end of run')
-        # this still means we send data, before the return, just that after now no new data will be sent
-        self._on_runner()
-        self.info('Finished subprocess', self._ctr)
-
-    def start(self, children=True, join=False):
-        super().start(children, join=False)
-
-        if self.compute_on in [Location.PROCESS, Location.THREAD
-                               ] and self.block:
-            self._subprocess_info['process'].join()
-        elif self.compute_on in [Location.SAME]:
-            # iterate until the generator that is run() returns false, ie no further data is to be processed
-            try:
-                runner = self._run()
-                while next(runner):
-                    self._on_runner()
-            except StopIteration:
-                self.warn('Iterator returned without passing false first. Assuming everything is fine.')
-            self.info('Reached end of run')
-            # this still means we send data, before the return, just that after now no new data will be sent
-            self._on_runner()
-        
-        if join:
-            self._join()
-        else: 
-            self._clocks.set_passthrough()
-
-    def _join(self):
-        if not self.block:
-            raise Exception('Cannot join non-blocking senders as we have no way of knowing when they are finished atm')
-            # theoretically we can still use the ret false concept from the senders ie yield False indicates finish
-        return super()._join()
-
-
-
-class BlockingSender(Sender):
-
-    # TODO: check if the block parameter even does anything
-    def __init__(self,
-                 name,
-                 block=False,
-                 compute_on=Location.PROCESS,
-                 should_time=False):
-        super().__init__(name, block, compute_on, should_time)
-
-        self._clock = Clock(node=self, should_time=should_time)
-        self._ctr = self._clock.ctr
-
-    def _emit_data(self, data, channel="Data"):
-        super()._emit_data(data, channel)
-        # as we are a blocking sender / a sensore everytime we emit a sample, we advance our clock
-        if channel == "Data":
-            self._clocks.register(str(self), self._ctr)
-            self._ctr = self._clock.tick()
-
-    def _process_on_proc(self):
-        self.info('Started subprocess')
-        try:
-            self._onstart()
-        except KeyboardInterrupt:
-            # TODO: this seems to be never called
-            self.info('Received Termination Signal')
-            self._onstop()
-        self.info('Finished subprocess')
-
-    def start(self, children=True, join=False):
-        super().start(children, join=False)
-
-        if self.compute_on in [Location.PROCESS, Location.THREAD]:
-            if self.block:
-                self._subprocess_info['process'].join()
-        elif self.compute_on in [Location.SAME]:
-            self._onstart()
-
-        if join:
-            self._join()
-        else: 
-            self._clocks.set_passthrough()
-
-    def stop(self, children=True):
-        # first stop self, so that non-existing children don't receive inputs
-        if self._running == True:  # the node might be child to multiple parents, but we just want to stop once
-            self._running = False
-
-            if self.compute_on in [Location.SAME, Location.THREAD]:
-                self._onstop()
-            elif self.compute_on in [Location.PROCESS]:
-                self._subprocess_info['process'].kill()
-
-        # now stop children
-        if children:
-            for con in self.output_connections:
-                con._receiving_node.stop()

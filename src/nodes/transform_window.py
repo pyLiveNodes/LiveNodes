@@ -1,5 +1,5 @@
 import numpy as np
-from .node import Node
+from core.node import Node
 
 
 class Transform_window(Node):

@@ -1,7 +1,7 @@
 import numpy as np
 import seaborn as sns
 
-from .node import View
+from core.viewer import View
 
 
 class Draw_search_graph(View):

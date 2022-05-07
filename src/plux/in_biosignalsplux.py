@@ -1,4 +1,4 @@
-from .node import BlockingSender
+from core.sender_blocking import BlockingSender
 import numpy as np
 
 import plux

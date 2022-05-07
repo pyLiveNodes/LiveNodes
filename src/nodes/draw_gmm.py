@@ -2,7 +2,7 @@ import numpy as np
 import seaborn as sns
 import matplotlib as mpl
 
-from .draw_scatter import Draw_scatter
+from draw_scatter import Draw_scatter
 
 
 class Draw_gmm(Draw_scatter):
