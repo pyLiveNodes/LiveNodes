@@ -35,7 +35,6 @@ test:
 
 pages:
   stage: deploy
-  when: always
   image: python:3.9-slim
   before_script:
     # - apt-get update && apt-get install make --no-install-recommends -y
@@ -43,7 +42,7 @@ pages:
   script:
     - tox -e docs
   after_script:
-    - mv dist/docs/ ./public/
+    - mv dist/docs/ public/
   artifacts:
     paths:
     - public
