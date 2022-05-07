@@ -7,7 +7,6 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   nodes.biokit
    nodes.features
 
 Submodules
@@ -25,54 +24,6 @@ nodes.annotate\_ui\_button module
 ---------------------------------
 
 .. automodule:: nodes.annotate_ui_button
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-nodes.biokit\_from\_fs module
------------------------------
-
-.. automodule:: nodes.biokit_from_fs
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-nodes.biokit\_norm module
--------------------------
-
-.. automodule:: nodes.biokit_norm
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-nodes.biokit\_recognizer module
--------------------------------
-
-.. automodule:: nodes.biokit_recognizer
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-nodes.biokit\_to\_fs module
----------------------------
-
-.. automodule:: nodes.biokit_to_fs
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-nodes.biokit\_train module
---------------------------
-
-.. automodule:: nodes.biokit_train
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-nodes.biokit\_update\_model module
-----------------------------------
-
-.. automodule:: nodes.biokit_update_model
    :members:
    :undoc-members:
    :show-inheritance:
@@ -125,14 +76,6 @@ nodes.draw\_text\_display module
    :undoc-members:
    :show-inheritance:
 
-nodes.in\_biosignalsplux module
--------------------------------
-
-.. automodule:: nodes.in_biosignalsplux
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 nodes.in\_data module
 ---------------------
 
@@ -149,14 +92,6 @@ nodes.in\_playback module
    :undoc-members:
    :show-inheritance:
 
-nodes.in\_riot module
----------------------
-
-.. automodule:: nodes.in_riot
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 nodes.log\_data module
 ----------------------
 
@@ -169,14 +104,6 @@ nodes.memory module
 -------------------
 
 .. automodule:: nodes.memory
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-nodes.node module
------------------
-
-.. automodule:: nodes.node
    :members:
    :undoc-members:
    :show-inheritance:

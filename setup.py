@@ -1,5 +1,5 @@
-from __future__ import absolute_import
-from __future__ import print_function
+#!/usr/bin/env python
+# -*- encoding: utf-8 -*-
 
 import io
 import re
@@ -14,25 +14,22 @@ from setuptools import setup
 
 
 def read(*names, **kwargs):
-    with io.open(
-        join(dirname(__file__), *names),
-        encoding=kwargs.get('encoding', 'utf8')
-    ) as fh:
+    with io.open(join(dirname(__file__), *names), encoding=kwargs.get('encoding', 'utf8')) as fh:
         return fh.read()
 
 
 setup(
-    name='smart',
-    version='0.2.2',
+    name='livenodes',
+    version='0.7.0',
     license='MIT',
-    description='S-MART Studio: node based live streaming sensor/data and visualization suite.',
-    long_description='%s\n%s' % (
-        re.compile('^.. start-badges.*^.. end-badges', re.M | re.S).sub('', read('README.md')),
-        re.sub(':[a-z]+:`~?(.*?)`', r'``\1``', read('CHANGELOG.md'))
+    description='LiveNodes: node based live streaming sensor/data and visualization suite.',
+    long_description='{}\n{}'.format(
+        re.compile('^.. start-badges.*^.. end-badges', re.M | re.S).sub('', read('README.rst')),
+        re.sub(':[a-z]+:`~?(.*?)`', r'``\1``', read('CHANGELOG.rst')),
     ),
     author='Yale Hartmann',
     author_email='yale.hartmann@uni-bremen.de',
-    url='https://yale1.pages.csl.uni-bremen.de/smart-studio/',
+    url='https://gitlab.csl.uni-bremen.de/yale1/livenodes',
     packages=find_packages('src'),
     package_dir={'': 'src'},
     py_modules=[splitext(basename(path))[0] for path in glob('src/*.py')],
@@ -40,28 +37,32 @@ setup(
     zip_safe=False,
     classifiers=[
         # complete classifier list: http://pypi.python.org/pypi?%3Aaction=list_classifiers
-        # 'Development Status :: 5 - Production/Stable',
+        'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Operating System :: Unix',
-        # 'Operating System :: POSIX',
-        # 'Operating System :: Microsoft :: Windows',
+        'Operating System :: POSIX',
+        'Operating System :: Microsoft :: Windows',
         'Programming Language :: Python',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3 :: Only',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
-        # 'Programming Language :: Python :: Implementation :: CPython',
-        # 'Programming Language :: Python :: Implementation :: PyPy',
-        # # uncomment if you test on these interpreters:
-        # # 'Programming Language :: Python :: Implementation :: IronPython',
-        # # 'Programming Language :: Python :: Implementation :: Jython',
-        # # 'Programming Language :: Python :: Implementation :: Stackless',
-        # 'Topic :: Utilities',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: Implementation :: CPython',
+        'Programming Language :: Python :: Implementation :: PyPy',
+        # uncomment if you test on these interpreters:
+        # 'Programming Language :: Python :: Implementation :: IronPython',
+        # 'Programming Language :: Python :: Implementation :: Jython',
+        # 'Programming Language :: Python :: Implementation :: Stackless',
+        'Topic :: Utilities',
     ],
     project_urls={
-        'Changelog': 'https://gitlab.csl.uni-bremen.de/yale1/smart-studio/blob/master/CHANGELOG.rst',
-        'Issue Tracker': 'https://gitlab.csl.uni-bremen.de/yale1/smart-studio/issues',
+        'Documentation': 'https://yale1.pages.csl.uni-bremen.de/livenodes/',
+        'Changelog': 'https://yale1.pages.csl.uni-bremen.de/livenodes/latest/changelog.html',
+        'Issue Tracker': 'https://gitlab.csl.uni-bremen.de/yale1/livenodes/issues',
     },
     keywords=[
         # eg: 'keyword1', 'keyword2', 'keyword3',
@@ -75,12 +76,9 @@ setup(
         #   'rst': ['docutils>=0.11'],
         #   ':python_version=="2.6"': ['argparse'],
     },
-    setup_requires=[
-        'pytest-runner',
-    ],
     entry_points={
-        # 'console_scripts': [
-        #     'nameless = nameless.cli:main',
-        # ]
+        'console_scripts': [
+            'livenodes = livenodes.cli:main',
+        ]
     },
 )

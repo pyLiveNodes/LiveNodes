@@ -1,0 +1,19 @@
+[paths]
+source =
+   src
+   */site-packages
+
+[run]
+branch = true
+source =
+    livenodes
+    tests
+parallel = true
+omit =
+    # omit anything in the biokit subdirectory directory anywhere
+    */livenodes/biokit/biokit/*
+
+[report]
+show_missing = true
+precision = 2
+omit = *migrations*
