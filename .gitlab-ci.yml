@@ -31,6 +31,7 @@ test:
     when: always
     reports:
       junit: dist/tests/report.xml
+      coverage_report: dist/tests/coverage.xml
 
 
 pages:
