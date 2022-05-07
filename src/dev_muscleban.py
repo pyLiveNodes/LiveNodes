@@ -1,20 +1,20 @@
-import time 
-
-from src.nodes import plux
-from src.nodes.node import Location
+from livenodes.plux import plux
 
 def onRawFrame(nSeq, data):  # onRawFrame takes three arguments
     if nSeq % 1000 == 0:
         print(nSeq, data)
     return nSeq > 1000 * 30
 
+
 class NewDevice(plux.SignalsDev):
+
     def __init__(self, address):
         plux.MemoryDev.__init__(address)
         self.onRawFrame = lambda _: None
 
 
-def exampleAcquisition(address, time, freq, code):  # time acquisition for each frequency
+def exampleAcquisition(address, time, freq,
+                       code):  # time acquisition for each frequency
     """
     Example acquisition.
     Supported channel number codes:
@@ -58,7 +58,6 @@ freq = 400
 # exampleAcquisition(f"BTH{adr}", 20, freq, 0x01)
 exampleAcquisition(f"{adr}", 20, freq, 0x03)
 # exampleAcquisition(f"BLE{adr}", 20, freq, 0x01)
-
 
 # from src.nodes.in_biosignalsplux import In_biosignalsplux
 # from src.nodes.log_data import Log_data

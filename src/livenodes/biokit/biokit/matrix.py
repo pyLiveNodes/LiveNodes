@@ -6,7 +6,8 @@ fmat_header_dtype = np.dtype([
     ("format_id", "S4"),  #needs to be FMAT
     ("rows", ">i4"),
     ("columns", ">i4"),
-    ("unused", ">f4")])
+    ("unused", ">f4")
+])
 
 
 def loadFloatMatrix(filename):
@@ -22,6 +23,7 @@ def loadFloatMatrix(filename):
     data = np.reshape(data, (header['rows'][0], header['columns'][0]))
     return data
 
+
 def writeFloatMatrix(array, filename):
     """
     Save a numpy array in float matrix (.fmat) format.
@@ -31,10 +33,8 @@ def writeFloatMatrix(array, filename):
     """
     rows, cols = array.shape
     header = struct.pack(">4siif", "FMAT", rows, cols, 0.0)
-    nrelements = rows*cols
-    data = struct.pack(">"+nrelements*"f", *(array.flatten()))
+    nrelements = rows * cols
+    data = struct.pack(">" + nrelements * "f", *(array.flatten()))
     with open(filename, "w") as fh:
         fh.write(header)
         fh.write(data)
-
-

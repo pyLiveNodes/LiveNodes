@@ -31,7 +31,9 @@ def read_data(f):
 
     return data, targs
 
+
 from . import local_registry
+
 
 @local_registry.register
 class In_data(Sender):
@@ -134,10 +136,11 @@ class In_data(Sender):
                     (1, -1, 1)),
                                 channel="File")
 
-                finished = (l == file_number + 1) and (i + self.emit_at_once >= len(data))
+                finished = (l == file_number +
+                            1) and (i + self.emit_at_once >= len(data))
                 self._emit_data(
                     finished, channel='Termination'
                 )  # TODO: maybe we could use something like this for syncing... ie seperate stream with just a counter
-                
+
                 self.info('finished?', not finished)
                 yield not finished

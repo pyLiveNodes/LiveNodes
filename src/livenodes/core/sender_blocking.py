@@ -1,6 +1,7 @@
 from .node import Location, Clock
 from .sender import Sender
 
+
 class BlockingSender(Sender):
 
     # TODO: check if the block parameter even does anything
@@ -42,7 +43,7 @@ class BlockingSender(Sender):
 
         if join:
             self._join()
-        else: 
+        else:
             self._clocks.set_passthrough()
 
     def stop(self, children=True):

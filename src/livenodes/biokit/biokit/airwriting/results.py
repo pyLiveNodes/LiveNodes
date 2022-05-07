@@ -5,7 +5,9 @@ from sqlalchemy.sql import func
 import align
 import json
 
+
 class ResultHandler:
+
     def __init__(self, session):
         """
         Initialize a result handler with a database session
@@ -15,7 +17,7 @@ class ResultHandler:
         """
         self.session = session
 
-    def get_cv_result(self, cv_id, iteration = None):
+    def get_cv_result(self, cv_id, iteration=None):
         """
         Retrieve cross validation results from database
         
@@ -45,7 +47,7 @@ class ResultHandler:
         else:
             return query.all()
 
-    def get_cv_detail(self, cv_id, iteration = None):
+    def get_cv_detail(self, cv_id, iteration=None):
         """
         Retrieve cross validation results from database by fold
 
@@ -67,12 +69,11 @@ class ResultHandler:
                                   filter(db.CrossValidation.id == cv_id)
         #                          group_by(db.Result.iteration)
         if iteration:
-            result =  query.filter(db.Results.iteration == iteration).one()
+            result = query.filter(db.Results.iteration == iteration).one()
         else:
-            result =  query.all()
+            result = query.all()
         resdict = self.get_cvresults(result)
         return resdict
-
 
     def get_cv_overview(self):
         """
@@ -83,14 +84,13 @@ class ResultHandler:
         for cv in cvs:
             cvresults.extend(self.get_cv_result(cv.id))
         ov = self.get_cvresults(cvresults)
-        return(ov)
+        return (ov)
 
     def get_cvresults(self, cvresults):
-        config_keys = ("basemodel_id", "id" ) 
+        config_keys = ("basemodel_id", "id")
         biokit_keys = ('token_insertion_penalty', 'languagemodel_weight',
-                       'hypo_topn', 'hypo_beam',
-                       'final_hypo_beam', 'final_hypo_topn',
-                       'lattice_beam')
+                       'hypo_topn', 'hypo_beam', 'final_hypo_beam',
+                       'final_hypo_topn', 'lattice_beam')
         ibis_keys = ('wordPen', 'lz', 'wordBeam', 'stateBeam', 'morphBeam')
         #get all cross validations
         ov = []
@@ -105,7 +105,8 @@ class ResultHandler:
                 d['crossval_id'] = crossval.id
                 d['exp_id'] = config.testset.recordings[0].experiment.string_id
             else:
-                raise Exception("unknown length of result %s: %s" % (len(result), result))
+                raise Exception("unknown length of result %s: %s" %
+                                (len(result), result))
             for key in config_keys:
                 d[key] = getattr(config, key)
             for key in biokit_keys:
@@ -125,11 +126,12 @@ class ResultHandler:
             d['cer'] = cer
             d['cputime'] = cputime
             if cputime is not None:
-                d['rt factor'] = cputime*9./config.iterations/(236*60)
+                d['rt factor'] = cputime * 9. / config.iterations / (236 * 60)
             else:
                 d['rt factor'] = None
             ov.append(d)
-        return(ov)
+        return (ov)
+
 
 def insertblanks(s):
     """
@@ -144,6 +146,7 @@ def insertblanks(s):
     """
     blankremoved = "".join(s.split())
     return " ".join(blankremoved)
+
 
 def computeCharacterErrorRate(resultlist):
     """
@@ -161,27 +164,28 @@ def computeCharacterErrorRate(resultlist):
     for result in resultlist:
         reference = insertblanks(result['reference'])
         hypothesis = insertblanks(result['hypothesis'])
-        charresultlist.append({'reference': reference, 'hypothesis': hypothesis})
+        charresultlist.append({
+            'reference': reference,
+            'hypothesis': hypothesis
+        })
     cer = align.totalTokenErrorRate(charresultlist)
     return cer
 
-    
-    
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Result viewer interface")
     parser.add_argument('db', help="SQLAlchemy conform database uri string")
     parser.add_argument('-id', help="Cross-validation id for detail view")
     args = parser.parse_args()
-    
+
     airdb = db.AirDb(args.db)
     resulthandler = ResultHandler(airdb.session)
     if args.id:
         overview = resulthandler.get_cv_detail(args.id)
     else:
         overview = resulthandler.get_cv_overview()
-    fieldwidth = [len(str(s))+2 for s in overview[0].values()]
-    rowfmt = " ".join("%"+str(w)+"s" for w in fieldwidth)
+    fieldwidth = [len(str(s)) + 2 for s in overview[0].values()]
+    rowfmt = " ".join("%" + str(w) + "s" for w in fieldwidth)
     #print(rowfmt % tuple(overview[0]))
     for l in overview:
-        print((rowfmt % tuple(l.values()))) 
-        
+        print((rowfmt % tuple(l.values())))

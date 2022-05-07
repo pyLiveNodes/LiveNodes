@@ -16,7 +16,9 @@ import time
 import os
 import json
 
+
 class SubView(QWidget):
+
     def __init__(self, child, name, back_fn, parent=None):
         super().__init__(parent)
 
@@ -24,12 +26,12 @@ class SubView(QWidget):
         # toolbar.setMovable(False)
         # home = QAction("Home", self)
         # toolbar.addAction(home)
-        
+
         button = QPushButton("Back")
         button.setSizePolicy(QSizePolicy())
         button.clicked.connect(back_fn)
 
-        toolbar = QHBoxLayout() 
+        toolbar = QHBoxLayout()
         toolbar.addWidget(button)
         toolbar.addStretch(1)
         toolbar.addWidget(QLabel(name))
@@ -39,20 +41,23 @@ class SubView(QWidget):
         l1.addWidget(child)
 
         self.child = child
-    
+
     def stop(self):
         if hasattr(self.child, 'stop'):
             self.child.stop()
 
 
 class MainWindow(QtWidgets.QMainWindow):
+
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
 
         self.central_widget = QtWidgets.QStackedWidget()
         self.setCentralWidget(self.central_widget)
 
-        self.widget_home = Home(onconfig=self.onconfig, onstart=self.onstart, projects='../projects/*')
+        self.widget_home = Home(onconfig=self.onconfig,
+                                onstart=self.onstart,
+                                projects='../projects/*')
         self.central_widget.addWidget(self.widget_home)
 
         self.log_file = None
@@ -70,12 +75,11 @@ class MainWindow(QtWidgets.QMainWindow):
         # self.widget_home.setProperty("cssClass", "home")
         self._set_state(self.widget_home)
 
-    
     def stop(self):
         cur = self.central_widget.currentWidget()
         if hasattr(cur, 'stop'):
             cur.stop()
-            
+
         if self.log_file is not None:
             logger.remove_cb(self._log_helper)
             self.log_file.close()
@@ -90,12 +94,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self._save_state(self.widget_home)
         with open('smart-state.json', 'w') as f:
             json.dump(self._save_dict, f, indent=2)
-            
+
         return super().closeEvent(event)
 
     def _set_state(self, view):
         print(view)
-        if hasattr(view, 'set_state') and view.__class__.__name__ in self._save_dict:
+        if hasattr(view,
+                   'set_state') and view.__class__.__name__ in self._save_dict:
             view.set_state(**self._save_dict[view.__class__.__name__])
 
     def _save_state(self, view):
@@ -104,7 +109,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def return_home(self):
         cur = self.central_widget.currentWidget()
-        
+
         # TODO: this shoudl really be in a onclose event inside of config rather than here..., but i don't know yet when/how those are called or connected to...
         if isinstance(cur.child, Config):
             cur.child.save()
@@ -112,7 +117,7 @@ class MainWindow(QtWidgets.QMainWindow):
             # print(vis_state)
             # for n in cur.child.get_nodes().values():
             #     print(n.__getstate__())
-        
+
         self._save_state(cur)
 
         self.stop()
@@ -131,8 +136,8 @@ class MainWindow(QtWidgets.QMainWindow):
         print('CWD:', os.getcwd())
 
         log_folder = './logs'
-        log_file=f"{log_folder}/{datetime.datetime.fromtimestamp(time.time())}"
-        
+        log_file = f"{log_folder}/{datetime.datetime.fromtimestamp(time.time())}"
+
         if not os.path.exists(log_folder):
             os.mkdir(log_folder)
 
@@ -141,12 +146,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
         pipeline = Node.load(pipeline_path)
         # TODO: make these logs project dependent as well
-        widget_run = SubView(child=Run(pipeline=pipeline), name=f"Running: {pipeline_path}", back_fn=self.return_home)
+        widget_run = SubView(child=Run(pipeline=pipeline),
+                             name=f"Running: {pipeline_path}",
+                             back_fn=self.return_home)
         self.central_widget.addWidget(widget_run)
         self.central_widget.setCurrentWidget(widget_run)
 
         self._set_state(widget_run)
-
 
     def onconfig(self, project_path, pipeline_path):
         # in production we should switch this (no need to always load all modules!), but for now it's easier like this
@@ -158,18 +164,23 @@ class MainWindow(QtWidgets.QMainWindow):
         print('CWD:', os.getcwd())
 
         pipeline = Node.load(pipeline_path)
-        widget_run = SubView(child=Config(pipeline=pipeline, nodes=known_nodes, pipeline_path=pipeline_path), name=f"Configuring: {pipeline_path}", back_fn=self.return_home)
+        widget_run = SubView(child=Config(pipeline=pipeline,
+                                          nodes=known_nodes,
+                                          pipeline_path=pipeline_path),
+                             name=f"Configuring: {pipeline_path}",
+                             back_fn=self.return_home)
         self.central_widget.addWidget(widget_run)
         self.central_widget.setCurrentWidget(widget_run)
 
         self._set_state(widget_run)
 
 
-
 if __name__ == '__main__':
     # this fix is for macos (https://docs.python.org/3.8/library/multiprocessing.html#contexts-and-start-methods)
     # TODO: test/validate this works in all cases (ie increase test cases, coverage and machines to be tested on)
-    mp.set_start_method('fork', force=True) # force=True doesn't seem like a too good idea, but hey
+    mp.set_start_method(
+        'fork',
+        force=True)  # force=True doesn't seem like a too good idea, but hey
     # mp.set_start_method('fork')
 
     from livenodes.core import global_registry

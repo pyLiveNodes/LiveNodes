@@ -7,6 +7,7 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QToolButton, QComboBox, QComboBox, QPushButton, QVBoxLayout, QWidget, QGridLayout, QHBoxLayout, QScrollArea, QLabel
 from PyQt5.QtCore import Qt, QSize, pyqtSignal
 
+
 class Home(QWidget):
 
     def __init__(self,

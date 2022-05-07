@@ -5,6 +5,7 @@ from livenodes.core.viewer import View
 
 from . import local_registry
 
+
 @local_registry.register
 class Annotate_ui_button(View):
     channels_in = ['Data']

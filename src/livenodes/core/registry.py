@@ -4,6 +4,7 @@ from class_registry import ClassRegistry
 # yes, this basically just wraps the ClassRegistry, but i am contemplating namespacing the local_registries
 # and also allows to merge local registries
 class Node_Register():
+
     def __init__(self):
         self.packages = ClassRegistry('__name__')
 

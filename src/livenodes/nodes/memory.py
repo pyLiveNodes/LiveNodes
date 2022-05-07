@@ -4,6 +4,7 @@ from livenodes.core.node import Node
 
 from . import local_registry
 
+
 @local_registry.register
 class Memory(Node):
     channels_in = ['Data']

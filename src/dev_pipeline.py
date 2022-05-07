@@ -1,16 +1,14 @@
-import time
-from src.nodes.in_playback import In_playback
-from src.nodes.draw_lines import Draw_lines
-from src.nodes.node import Node, Location
-
 import os
 
-import numpy as np
+# from livenodes.nodes.in_playback import In_playback
+# from livenodes.nodes.draw_lines import Draw_lines
+from livenodes.core.node import Node, Location
+from livenodes.core.logger import logger, LogLevel
 
-from src.nodes.utils import logger, LogLevel
 
 def _log_helper(msg):
     print(msg, flush=True)
+
 
 if __name__ == '__main__':
     logger.register_cb(_log_helper)
@@ -48,7 +46,6 @@ if __name__ == '__main__':
     # draw = Draw_lines(name='Raw Data', compute_on=Location.PROCESS)
     # # draw = Draw_lines(name='Raw Data', compute_on=Location.SAME)
     # draw.connect_inputs_to(pipeline)
-
 
     print('=== Load Pipeline ====')
     # pipeline = Node.load('./pipelines/recognize.json')

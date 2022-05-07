@@ -1,9 +1,9 @@
 # coding: utf-8
 import sys
+
 sys.path.append("airwriting")
 from . import db
 from . import AirwritingDb
-
 """
 This script converts the old style recording databased to the new style format
 with all different recording types in one big database
@@ -15,7 +15,7 @@ databases with the tcl script convertDB.tcl
 """
 
 #convert_chardata = True
-#convert_worddata = True 
+#convert_worddata = True
 #convert_sendata = True
 convert_waxdata = True
 
@@ -25,11 +25,11 @@ targetdb = "mysql+mysqldb://@i19pc56/diss"
 chardb_path = "/project/AMR/Handwriting/data/db/all.sqlite"
 #worddb_path = "/home/camma/workspace/decoder/python/integration_test/_simple/_dataAirwriting/airwritingWords.sqlite"
 worddb_path = "/project/AMR/Handwriting/data/db/airwriting_dev_word.jdb.sqlite"
-worddb_csv = "/project/AMR/Handwriting/data/db/db_tmp.csv" 
+worddb_csv = "/project/AMR/Handwriting/data/db/db_tmp.csv"
 sendb_path = "/home/camma/tools/ci/workspace/decoder/python/integration_test/_simple/_dataAirwriting/airwritingSentences.sqlite"
 senwithwaxdb_path = "/project/AMR/Handwriting/data/db/dev.sentences.transform.multiple.sqlite"
 
-airdb  = db.AirDb(targetdb)
+airdb = db.AirDb(targetdb)
 
 # load the different databases and convert to new format
 if convert_chardata:
@@ -46,13 +46,14 @@ if convert_chardata:
 #load word recordings from csv
 if convert_worddata:
     wordjanusdb = db.JanusDb(worddb_path)
-#    with open(worddb_csv, "r") as fh:
-#        wordjanusdb.insert_from_csv(fh, "")
+    #    with open(worddb_csv, "r") as fh:
+    #        wordjanusdb.insert_from_csv(fh, "")
     wordjanusdb.insert_into_airdb(airdb, 'word')
-    
 
 #load the sentence recordings
 if convert_sendata:
     sendb = AirwritingDb.AirwritingDb(senwithwaxdb_path)
-    
-    sendb.convertToNewDb(targetdb, has_corrupt_rec=True, use_id_as_janusid=True)
+
+    sendb.convertToNewDb(targetdb,
+                         has_corrupt_rec=True,
+                         use_id_as_janusid=True)

@@ -4,9 +4,11 @@ import sys
 import os
 
 # TODO: test, clean and extend this, currently arm32 is not checked
-osDic = {"Darwin": "MacOS",
-         "Linux": "Linux64",
-         "Windows":("Win32_37","Win64_37")}
+osDic = {
+    "Darwin": "MacOS",
+    "Linux": "Linux64",
+    "Windows": ("Win32_37", "Win64_37")
+}
 if platform.system() != "Windows":
     if platform.machine() == 'aarch64':
         path = f"lib/LinuxARM64_38"
@@ -21,6 +23,5 @@ if platform.system() != "Windows":
 full_path = os.path.join(os.path.dirname(__file__), path)
 print('Using BioKIT:', full_path)
 sys.path.append(full_path)
-
 
 import BioKIT

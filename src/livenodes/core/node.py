@@ -11,6 +11,7 @@ from .utils import NumpyEncoder
 
 from . import global_registry
 
+
 class Location(IntEnum):
     SAME = 1
     THREAD = 2
@@ -130,6 +131,7 @@ class Connection():
 # class LogLevels(Enum):
 #     Debug
 
+
 class Clock_Register():
     state = {}
     times = {}
@@ -164,10 +166,10 @@ class Clock_Register():
 
         while not self.queue.empty():
             name, ctr, time = self.queue.get()
-            if name not in self.state: 
+            if name not in self.state:
                 self.state[name] = []
                 self.times[name] = []
-                
+
             self.state[name].append(ctr)
             self.times[name].append(time)
 
@@ -181,8 +183,6 @@ class Clock_Register():
                 return False
 
         return True
-
-
 
 
 class Node():
@@ -317,13 +317,15 @@ class Node():
         for name, itm in items.items():
             # module_name = f"livenodes.nodes.{itm['class'].lower()}"
             # if module_name in sys.modules:
-                # module = importlib.reload(sys.modules[module_name])
+            # module = importlib.reload(sys.modules[module_name])
             # tmp = (getattr(module, itm['class'])(**itm['settings']))
 
-            items_instc[name] = global_registry.get(itm['class'], **itm['settings'])
+            items_instc[name] = global_registry.get(itm['class'],
+                                                    **itm['settings'])
 
             # assume that the first node without any inputs is the initial node...
-            if initial_node is None and len(items_instc[name].channels_in) <= 0:
+            if initial_node is None and len(
+                    items_instc[name].channels_in) <= 0:
                 initial_node = name
 
         # not sure if we can remove this at some point...
@@ -514,7 +516,7 @@ class Node():
 
         if join:
             self._join()
-        else: 
+        else:
             self._clocks.set_passthrough()
 
     def stop(self, children=True):
@@ -550,10 +552,11 @@ class Node():
         # ie in the extreme case: self._ctr=0 and all others as well
         self_name = str(self)
         # the first part will be false until the first time _process() is being called, after that, the second part will be false until all clocks have catched up to our own
-        while (not self_name in self._clocks.read_state()[0]) or not (self._clocks.all_at(max(self._clocks.state[self_name]))):
+        while (not self_name in self._clocks.read_state()[0]) or not (
+                self._clocks.all_at(max(self._clocks.state[self_name]))):
             time.sleep(0.01)
-        self.info(f'Join returned at clock {max(self._clocks.state[self_name])}')
-
+        self.info(
+            f'Join returned at clock {max(self._clocks.state[self_name])}')
 
     def _acquire_lock(self, lock, block=True, timeout=None):
         if self.compute_on in [Location.PROCESS]:
@@ -561,7 +564,7 @@ class Node():
         elif self.compute_on in [Location.THREAD]:
             if block:
                 res = lock.acquire(blocking=True,
-                                    timeout=-1 if timeout is None else timeout)
+                                   timeout=-1 if timeout is None else timeout)
             else:
                 res = lock.acquire(
                     blocking=False)  # forbidden to specify timeout
@@ -601,7 +604,8 @@ class Node():
 
         # one iteration takes roughly 0.00001 * channels -> 0.00001 * 10 * 100 = 0.01
         while not was_terminated or was_queue_empty_last_iteration < 10:
-            could_acquire_term_lock = self._acquire_lock(self._subprocess_info['termination_lock'], block=False)
+            could_acquire_term_lock = self._acquire_lock(
+                self._subprocess_info['termination_lock'], block=False)
             was_terminated = was_terminated or could_acquire_term_lock
             # block until signaled that we have new data
             # as we might receive not data after having received a termination
@@ -850,7 +854,6 @@ class Node():
         executed on stop, should return! (if you need always running -> blockingSender)
         """
         pass
-
 
 
 # class Transform(Node):

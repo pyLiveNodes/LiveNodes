@@ -8,6 +8,7 @@ from livenodes.core.node import Node
 
 from . import local_registry
 
+
 @local_registry.register
 class Out_data(Node):
     channels_in = ['Data', 'Channel Names', 'Meta', 'Annotation']

@@ -1,10 +1,4 @@
 from functools import partial
-from src.nodes.in_playback import In_playback
-from src.nodes.draw_lines import Draw_lines
-from src.nodes.node import Location, View
-
-from src.nodes.node import Node
-
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import animation
@@ -13,29 +7,36 @@ import matplotlib
 import time
 import math
 
-from src.nodes.utils import logger
 import datetime
 import time
 
 import os
 
+# from livenodes.nodes.in_playback import In_playback
+# from livenodes.nodes.draw_lines import Draw_lines
+from livenodes.core.node import Node
+from livenodes.core.viewer import View
+from livenodes.core.logger import logger
+
 # from src.realtime_animation import RealtimeAnimation
 
 import seaborn as sns
+
 sns.set_style("darkgrid")
 sns.set_context("paper")
 
 matplotlib.rcParams['toolbar'] = 'None'
 
+
 def _log_helper(f, msg):
     f.write(msg + '\n')
     f.flush()
 
+
 if __name__ == '__main__':
     os.chdir('./projects/test_ask')
 
-
-    log_file=f"./logs/{datetime.datetime.fromtimestamp(time.time())}"
+    log_file = f"./logs/{datetime.datetime.fromtimestamp(time.time())}"
     with open(log_file, 'a') as f:
         log = partial(_log_helper, f)
         logger.register_cb(log)
@@ -71,19 +72,20 @@ if __name__ == '__main__':
         # # draw = Draw_lines(name='Raw Data', compute_on=Location.SAME)
         # draw.connect_inputs_to(pipeline)
 
-
         print('=== Load Pipeline ====')
 
         # pipeline = Node.load('./projects/test_ask/pipelines/recognize.json')
         pipeline = Node.load('./pipelines/preprocess.json')
 
-
         print('=== Start main loops ====')
 
-        font={'size': 6}
+        font = {'size': 6}
         plt.rc('font', **font)
 
-        draws = {str(n): n.init_draw for n in Node.discover_childs(pipeline) if isinstance(n, View)}.values()
+        draws = {
+            str(n): n.init_draw
+            for n in Node.discover_childs(pipeline) if isinstance(n, View)
+        }.values()
         print(draws)
 
         fig = plt.figure(num=0, figsize=(12, 7.5))
@@ -91,32 +93,38 @@ if __name__ == '__main__':
         fig.canvas.manager.set_window_title("ASK")
 
         if len(draws) <= 0:
-            raise Exception ('Must have at least one draw function registered')
+            raise Exception('Must have at least one draw function registered')
 
         n_figs = len(draws)
         cols = min(2, n_figs)
-        rows = math.ceil(n_figs / cols) # ie max 3 columns
+        rows = math.ceil(n_figs / cols)  # ie max 3 columns
 
         # https://matplotlib.org/stable/gallery/subplots_axes_and_figures/subfigures.html
-        subfigs = fig.subfigures(rows, cols) #, wspace=1, hspace=0.07)
+        subfigs = fig.subfigures(rows, cols)  #, wspace=1, hspace=0.07)
 
         if len(draws) == 1:
-            subfigs = [subfigs] # matplotlibs subfigures call doesn't consistently return a list, but with n=1 the subfig directly...
+            subfigs = [
+                subfigs
+            ]  # matplotlibs subfigures call doesn't consistently return a list, but with n=1 the subfig directly...
         subfigs = np.array(subfigs).flatten()
 
         # artists = np.concatenate([setup_fn(subfig) for setup_fn, subfig in zip(draws, subfigs)])
-        artists = [setup_fn(subfig) for setup_fn, subfig in zip(draws, subfigs)]
+        artists = [
+            setup_fn(subfig) for setup_fn, subfig in zip(draws, subfigs)
+        ]
 
         # not nice, as cannot be updated at runtime later on (not sure if that'll be necessary tho)
-        def draw_update (i, **kwargs):
-            ret_arts = list(np.concatenate([fn(**kwargs) for fn in artists], axis=0))
+        def draw_update(i, **kwargs):
+            ret_arts = list(
+                np.concatenate([fn(**kwargs) for fn in artists], axis=0))
 
             if i % 100 == 0 and i != 0:
                 el_time = time.time() - timer
-                print(f"Rendered {i} frames in {el_time:.2f} seconds. This equals {i/el_time:.2f}fps.")
+                print(
+                    f"Rendered {i} frames in {el_time:.2f} seconds. This equals {i/el_time:.2f}fps."
+                )
 
             return ret_arts
-
 
         timer = time.time()
         pipeline.start()
@@ -131,7 +139,10 @@ if __name__ == '__main__':
             logger.remove_cb(log)
             return True
 
-        animationProcess = animation.FuncAnimation(fig=fig, func=draw_update, interval=0, blit=True)
+        animationProcess = animation.FuncAnimation(fig=fig,
+                                                   func=draw_update,
+                                                   interval=0,
+                                                   blit=True)
         fig.canvas.mpl_connect("close_event", stop)
 
         plt.show()

@@ -6,6 +6,7 @@ from livenodes.core.viewer import View
 
 from . import local_registry
 
+
 def convert_pos(pos, yrange):
     ymin, ywidth = yrange
     ymax = ymin + ywidth

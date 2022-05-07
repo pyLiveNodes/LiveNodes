@@ -1,7 +1,7 @@
 import sqlalchemy
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Table, Column
-from sqlalchemy import  Integer, String, Float, LargeBinary, Text
+from sqlalchemy import Integer, String, Float, LargeBinary, Text
 """import the mysql datatypes in order to work with mysql"""
 from sqlalchemy.dialects.mysql import \
         BIGINT, BINARY, BIT, BLOB, BOOLEAN, CHAR, DATE, \
@@ -21,9 +21,12 @@ import pprint
 
 bsize = 2**24
 
+
 def log(level, text):
-    print("Python log: " + str(datetime.datetime.now()) + " - " + level + ": " + text)
-    
+    print("Python log: " + str(datetime.datetime.now()) + " - " + level +
+          ": " + text)
+
+
 def makestr(object, attributes):
     """
     Return a string representation of an object containing the given attributes
@@ -34,31 +37,38 @@ def makestr(object, attributes):
     Keyword arguments:
     object - instance of any class
     attributes - iterable of class attributes to include in the representation
-    """ 
+    """
     s = "%s\n" % object.__class__
     for attrib in attributes:
         s += "\t%s: %s\n" % (attrib, object.__getattribute__(attrib))
     return s
 
+
 def write_blob(blob, file):
     with open(file, "w") as fh:
         fh.write(blob)
-        
+
+
 def read_blob(file):
     with open(file) as fh:
         return fh.read()
 
+
 class StrMixin(object):
+
     def __str__(self):
         return pprint.pformat(self.__dict__)
+
 
 Base = declarative_base()
 JanusBase = declarative_base()
 #ConfigBase = declarative_base()
 
+
 class Error(Exception):
     """Base class for exceptions in this module."""
     pass
+
 
 class MultipleResultsFound(Error):
     """
@@ -68,9 +78,11 @@ class MultipleResultsFound(Error):
         expr -- query result showing consistency problems
         msg  -- explanation of the error
     """
+
     def __init__(self, expr, msg):
         self.expr = expr
         self.msg = msg
+
 
 class ConsistencyError(Error):
     """Exception raised for consistency errors in the database.
@@ -79,9 +91,11 @@ class ConsistencyError(Error):
         expr -- query result containing multiple results
         msg  -- explanation of the error
     """
+
     def __init__(self, expr, msg):
         self.expr = expr
         self.msg = msg
+
 
 """
 Database interfaces for the airwriting system. Two main independent databases
@@ -89,6 +103,7 @@ exist:
 AirDb - stores all information on experiments and recorded data
 ConfigDb - stores information on evaluations and results
 """
+
 
 def get_or_create(session, model, **kwargs):
     """
@@ -104,6 +119,7 @@ def get_or_create(session, model, **kwargs):
         session.commit()
         print(("%s was created" % instance))
         return instance
+
 
 class Recording(Base):
     """
@@ -122,14 +138,16 @@ class Recording(Base):
     id = Column(Integer, primary_key=True)
     reference = Column(String(200), nullable=False)
     filename = Column(String(200), nullable=False, unique=True)
-    experiment_id = Column(Integer, ForeignKey("experiments.id"), 
+    experiment_id = Column(Integer,
+                           ForeignKey("experiments.id"),
                            nullable=False)
     experiment = relationship("Experiment", backref=backref("recordings"))
-    
+
     def __repr__(self):
-        return ("<Recording(%s, %s, %s)>" 
-              % (self.reference, self.filename, self.experiment))
-        
+        return ("<Recording(%s, %s, %s)>" %
+                (self.reference, self.filename, self.experiment))
+
+
 class Experiment(Base):
     """
     Represents one recording session of airwriting data.
@@ -145,17 +163,18 @@ class Experiment(Base):
     person - the person who did this experiment
     """
     __tablename__ = "experiments"
-    id = Column(Integer, primary_key = True)
+    id = Column(Integer, primary_key=True)
     string_id = Column(String(50), unique=True)
     base_dir = Column(String(512), nullable=False)
     type = Column(String(30), nullable=False)
     person_id = Column(Integer, ForeignKey("persons.id"), nullable=False)
     person = relationship("Person", backref=backref("experiments"))
-    
+
     def __repr__(self):
-        return ("<Experiment(%s, %s, %s)>" 
-                % (self.base_dir, self.person, self.string_id))
-    
+        return ("<Experiment(%s, %s, %s)>" %
+                (self.base_dir, self.person, self.string_id))
+
+
 class Person(Base):
     """
     Represents one subject.
@@ -168,14 +187,14 @@ class Person(Base):
     dominant hand - either right or left
     """
     __tablename__ = "persons"
-    id = Column(Integer, primary_key = True)
+    id = Column(Integer, primary_key=True)
     name = Column(String(50), nullable=False, unique=True)
     dominant_hand = Column(String(20), nullable=False)
-        
+
     def __repr__(self):
-        return ("<Person(%s, %s)>"
-                % (self.name, self.dominant_hand))
-        
+        return ("<Person(%s, %s)>" % (self.name, self.dominant_hand))
+
+
 class BrokenRecording(Base):
     """
     Represents one recording, that is somehow broken.
@@ -184,9 +203,11 @@ class BrokenRecording(Base):
     __tablename__ = "broken_recordings"
     id = Column(Integer, primary_key=True)
     recording_id = Column(Integer, ForeignKey("recordings.id"), nullable=False)
-    recording = relationship("Recording", backref=backref("broken_recording",
-                                                          uselist=False))
-    
+    recording = relationship("Recording",
+                             backref=backref("broken_recording",
+                                             uselist=False))
+
+
 class JanusId(Base):
     """
     Maps a recording id to an old Janus style id
@@ -195,13 +216,15 @@ class JanusId(Base):
     id = Column(Integer, primary_key=True)
     janus_id = Column(String(50), nullable=False, unique=True)
     recording_id = Column(Integer, ForeignKey("recordings.id"), nullable=False)
-    recording = relationship("Recording", backref=backref("janus_id",
-                                                          uselist=False))
-    
+    recording = relationship("Recording",
+                             backref=backref("janus_id", uselist=False))
+
+
 class AirDb(object):
     """
     SQLite database containing airwriting recordings
     """
+
     def __init__(self, connstring):
         """
         Constructor takes a connection string as argument and creates a session.
@@ -215,15 +238,15 @@ class AirDb(object):
         """
         self.engine = sqlalchemy.create_engine(connstring, pool_recycle=72000)
         Base.metadata.create_all(self.engine)
-        self.SessionMaker = sessionmaker(bind = self.engine)
+        self.SessionMaker = sessionmaker(bind=self.engine)
         self.session = self.SessionMaker()
-        
+
     def close(self):
         """
         Closes the session.
         """
         self.session.close()
-        
+
     def insert_unique(self, instance):
         """
         Insert if not exists under uniqueness constraint
@@ -248,11 +271,16 @@ class AirDb(object):
             self.session.rollback()
             print(instance)
             print(("Data %s already exists (Exception: %s)" % (instance, e)))
-            
 
-    def insert_complete(self, person, experiment, experiment_type, reference,
-                        filename, basedir, dominant_hand = "right",
-                        janusid = None):
+    def insert_complete(self,
+                        person,
+                        experiment,
+                        experiment_type,
+                        reference,
+                        filename,
+                        basedir,
+                        dominant_hand="right",
+                        janusid=None):
         """
         Insert a complete recording including person and experiment.
         
@@ -274,24 +302,28 @@ class AirDb(object):
         """
         newperson = Person(name=person, dominant_hand=dominant_hand)
         self.insert_unique(newperson)
-        newperson = self.session.query(Person).filter(Person.name==person).one()
-        newexperiment = Experiment(string_id=experiment, base_dir=basedir,
-                                   person=newperson, type=experiment_type)
+        newperson = self.session.query(Person).filter(
+            Person.name == person).one()
+        newexperiment = Experiment(string_id=experiment,
+                                   base_dir=basedir,
+                                   person=newperson,
+                                   type=experiment_type)
         self.insert_unique(newexperiment)
         newexperiment = self.session.query(Experiment).filter(
-                            Experiment.string_id==experiment).one()
-        newrecording = Recording(reference=reference, filename=filename,
+            Experiment.string_id == experiment).one()
+        newrecording = Recording(reference=reference,
+                                 filename=filename,
                                  experiment=newexperiment)
         self.session.add(newrecording)
         self.session.commit()
         if janusid:
             newrecording = self.session.query(Recording).filter(
-                            Recording.filename==filename).one()
+                Recording.filename == filename).one()
             newjanusid = JanusId(recording_id=newrecording.id,
                                  janus_id=janusid)
             self.session.add(newjanusid)
             self.session.commit()
-            
+
     def load_janus_dataset(self, filename, name=None):
         """
         Load a textfile containing janus ids and save as dataset.
@@ -305,14 +337,13 @@ class AirDb(object):
         recordings = []
         for id in ids:
             janusid = self.session.query(JanusId).filter(
-                            JanusId.janus_id==id).one()
+                JanusId.janus_id == id).one()
             recording = self.session.query(Recording).filter(
-                            Recording.id==janusid.recording_id  ).one()
+                Recording.id == janusid.recording_id).one()
             recordings.append(recording)
         dataset = Dataset(recordings=recordings, name=name)
         self.insert_unique(dataset)
-        
-        
+
     def write_janus_dataset(self, dataset, filename):
         """
         Write a given dataset as a janus readable set file (using janus ids)
@@ -329,11 +360,13 @@ class AirDb(object):
                     join(JanusId).\
                     filter(Dataset.id == dataset.id).all()
             ids = [x[1].janus_id for x in results]
-            log("Info", "Writing janus ids for dataset %s with %s ids to file %s." 
-                            % (dataset.name, len(ids), filename))
+            log(
+                "Info",
+                "Writing janus ids for dataset %s with %s ids to file %s." %
+                (dataset.name, len(ids), filename))
             s = " ".join(ids)
             fh.write(s)
-                
+
     def clean_all_trained_models(self):
         """
         Delete everything except the data corpus.
@@ -342,25 +375,25 @@ class AirDb(object):
         """
         self.session.query(ModelParameters).delete()
         self.session.commit()
-        
-    def clean_job(self, job, delete_files = True):
+
+    def clean_job(self, job, delete_files=True):
         if delete_files:
-           pass 
-        
+            pass
+
     def clean_jobs(self):
         """
         Clear the jobs table
         """
         self.session.query(Job).delete()
         self.session.commit()
-        
+
     def clean_results(self):
         """
         Delete all results
         """
         self.session.query(Result).delete()
         self.session.commit()
-        
+
     def find_modelparameters(self, config, iteration):
         """
         Look for existing modelparameters matching the giving configuration.
@@ -374,19 +407,19 @@ class AirDb(object):
         
         Raises MultipleResultsFound if more than one matching ModelParameters
             object is found
-        """  
+        """
         result = self.session.query(ModelParameters).filter_by(
-                                configuration = config,
-                                iteration = iteration).all()
+            configuration=config, iteration=iteration).all()
         if len(result) == 0:
             return None
         elif len(result) == 1:
             return result[0]
         else:
-            raise MultipleResultsFound(result,
+            raise MultipleResultsFound(
+                result,
                 "found %s modelparameters, but only one at max is expected" %
-                (len(result),))
-        
+                (len(result), ))
+
     def find_equal_training_modelsparameters(self, config, iteration):
         """
         Check if models with the same configuration exist. Equality of 
@@ -417,7 +450,8 @@ class AirDb(object):
         session - A db.AirDb.session object
     
         """
-        log("Info", "Check for existing models with same training configuration")
+        log("Info",
+            "Check for existing models with same training configuration")
         foundConfig = None
         result = self.session.query(ModelParameters).\
                     join(ModelParameters.configuration).\
@@ -437,8 +471,7 @@ class AirDb(object):
             raise MultipleResultsFound(
                 result,
                 "Found %s possible trained models: %s" % (len(result), result))
-        
-            
+
 
 class JanusRecording(JanusBase):
     """
@@ -450,13 +483,14 @@ class JanusRecording(JanusBase):
     expid = Column(String(30))
     text = Column(String(512))
     filename = Column(String(512))
-    janusid = Column(String(50))        
-        
+    janusid = Column(String(50))
+
 
 class JanusDb(object):
     """
     SQLite database containing flat recordings with janus ids
     """
+
     def __init__(self, sqlitefile):
         """
         Constructor takes the sqlite file as argument and creates a session.
@@ -465,9 +499,9 @@ class JanusDb(object):
         sqlitefile - sqlite file containing the database or empty file to 
                      create new database
         """
-        self.engine = sqlalchemy.create_engine('sqlite:///'+sqlitefile)
+        self.engine = sqlalchemy.create_engine('sqlite:///' + sqlitefile)
         JanusBase.metadata.create_all(self.engine)
-        self.SessionMaker = sessionmaker(bind = self.engine)
+        self.SessionMaker = sessionmaker(bind=self.engine)
         self.session = self.SessionMaker()
 
     def insert_into_airdb(self, airdb, experiment_type):
@@ -484,12 +518,15 @@ class JanusDb(object):
         """
         recordings = self.session.query(JanusRecording).all()
         for janusrec in recordings:
-            basedir = "/".join(["v"+str(janusrec.expid), "data"])
-            airdb.insert_complete(janusrec.person, janusrec.expid,
+            basedir = "/".join(["v" + str(janusrec.expid), "data"])
+            airdb.insert_complete(janusrec.person,
+                                  janusrec.expid,
                                   experiment_type,
-                                  janusrec.text, janusrec.filename,
-                                  basedir, janusid=janusrec.janusid)
-            
+                                  janusrec.text,
+                                  janusrec.filename,
+                                  basedir,
+                                  janusid=janusrec.janusid)
+
     def insert_from_csv(self, csvfile, basedir, reference_key='text'):
         """
         Read a csv file and insert data into database.
@@ -511,18 +548,18 @@ class JanusDb(object):
                 raise Exception()
         for line in lines:
             linedict = dict(list(zip(line[::2], line[1::2])))
-            janusrec = JanusRecording(person = linedict['person'],
-                                      expid = linedict['expid'],
-                                      text = linedict[reference_key],
-                                      filename = linedict['filename'],
-                                      janusid = linedict['janusid'])
+            janusrec = JanusRecording(person=linedict['person'],
+                                      expid=linedict['expid'],
+                                      text=linedict[reference_key],
+                                      filename=linedict['filename'],
+                                      janusid=linedict['janusid'])
             self.session.add(janusrec)
         self.session.commit()
-            
+
     #def populate_from_airdb(self, airdb, basepath):
     #    """
     #    Populate a Janus recordings database from a AirDb database
-    #    
+    #
     #    Keyword arguments:
     #    airdb - an instance of AirDb containing the data
     #    basepath - path to prepend before Experiment.base_dir
@@ -531,66 +568,68 @@ class JanusDb(object):
     #   for rec in recordings:
     #       janusrec = db.JanusRecording()
     #       janusrec.person = rec.experiment.person.name
-    #       janusrec.stringId = 
-            
+    #       janusrec.stringId =
+
+
 ##############################################################################
 #
 # Configuration tables
 #
 ##############################################################################
 
+
 class ContextModelType(Base, StrMixin, object):
     """
     Reference Table for the different types of context models
     """
-    __tablename__="contextmodeltypes"
+    __tablename__ = "contextmodeltypes"
     id = Column(Integer, primary_key=True)
     name = Column(String(50))
 
 
-
-
 class ContextModel(Base, StrMixin, object):
     """Stores relevant information for a tokensequence model"""
-    __tablename__="contextmodels"
+    __tablename__ = "contextmodels"
     id = Column(Integer, primary_key=True)
     name = Column(String(50), unique=True)
     file = Column(String(200), unique=True)
-    type_id = Column(Integer,ForeignKey("contextmodeltypes.id"),nullable=False)
+    type_id = Column(Integer,
+                     ForeignKey("contextmodeltypes.id"),
+                     nullable=False)
     type = relationship("ContextModelType", backref=backref("contextmodels"))
-    __table_args__ = (UniqueConstraint('name', 'type_id'),)
-  
-    
+    __table_args__ = (UniqueConstraint('name', 'type_id'), )
+
+
 class Dictionary(Base, StrMixin, object):
     """Stores information on the used dictionary"""
-    __tablename__="dictionaries"
+    __tablename__ = "dictionaries"
     id = Column(Integer, primary_key=True)
     name = Column(String(50), unique=True)
     file = Column(String(200), unique=True)
-    
-    
+
+
 class Vocabulary(Base, StrMixin, object):
     """Stores information on the used vocabulary"""
-    __tablename__="vocabularies"
+    __tablename__ = "vocabularies"
     id = Column(Integer, primary_key=True)
     name = Column(String(50), unique=True)
     file = Column(String(200), unique=True)
-    
-    
+
+
 class AtomSet(Base, StrMixin, object):
     """Stores information on the used atoms"""
-    __tablename__="atomsets"
+    __tablename__ = "atomsets"
     id = Column(Integer, primary_key=True)
     name = Column(String(50), unique=True)
     enumeration = Column(String(256))
-    
-    
+
+
 class ModelParameters(Base, object):
     """
     Stores information on all the model parameters and the number of iteration
     they have been trained
     """
-    __tablename__="modelparameters"
+    __tablename__ = "modelparameters"
     id = Column(Integer, primary_key=True)
     gaussian_desc = Column(LargeBinary(bsize))
     gaussian_data = Column(LargeBinary(bsize))
@@ -602,14 +641,18 @@ class ModelParameters(Base, object):
     transitions = Column(LargeBinary)
     phones = Column(LargeBinary)
     iteration = Column(Integer)
-    configuration_id = Column(Integer, ForeignKey("configurations.id", 
-                              use_alter=True, name="config_id_fk"),
+    configuration_id = Column(Integer,
+                              ForeignKey("configurations.id",
+                                         use_alter=True,
+                                         name="config_id_fk"),
                               nullable=False)
-    configuration = relationship("Configuration",
-                              primaryjoin="(ModelParameters.configuration_id==Configuration.id)",
-                              backref=backref("modelparameters"))
+    configuration = relationship(
+        "Configuration",
+        primaryjoin="(ModelParameters.configuration_id==Configuration.id)",
+        backref=backref("modelparameters"))
+
     #__table_args__ = UniqueConstraint('')
-    
+
     def read_from_files(self, gaussian_desc, gaussian_data, mixture_desc,
                         mixture_data, distrib_tree, topologies, topology_tree,
                         transitions, phones):
@@ -622,10 +665,10 @@ class ModelParameters(Base, object):
         self.topology_tree = read_blob(topology_tree)
         self.transitions = read_blob(transitions)
         self.phones = read_blob(phones)
-        
-    def read_from_biokit_files(self, gaussian_desc, gaussian_data, mixture_desc,
-                        mixture_data, distrib_tree, topologies, topology_tree,
-                        phones):
+
+    def read_from_biokit_files(self, gaussian_desc, gaussian_data,
+                               mixture_desc, mixture_data, distrib_tree,
+                               topologies, topology_tree, phones):
         """
         Reads in files in biokit format
         """
@@ -639,19 +682,19 @@ class ModelParameters(Base, object):
         self.phones = read_blob(phones)
 
     def __str__(self):
-        return ("ModelParameters: configuration_id = %s, iteration = %s" 
-                % (self.configuration_id, self.iteration))
+        return ("ModelParameters: configuration_id = %s, iteration = %s" %
+                (self.configuration_id, self.iteration))
 
-    
     def __repr__(self):
-        return ("<ModelParameters: configuration_id = %s, iteration = %s>" 
-                % (self.configuration, self.iteration))
-    
+        return ("<ModelParameters: configuration_id = %s, iteration = %s>" %
+                (self.configuration, self.iteration))
+
+
 class PreProcessing(Base, StrMixin, object):
     """
     Stores the name of the used preprocessing method.
     """
-    __tablename__="preprocessings"
+    __tablename__ = "preprocessings"
     #name = Column(String, primary_key=True)
     id = Column(Integer, primary_key=True)
     type = Column(String(100))
@@ -660,15 +703,16 @@ class PreProcessing(Base, StrMixin, object):
     janus_access = Column(String(256))
 
     __mapper_args__ = {
-            'polymorphic_identity': 'PreProcessing',
-            'polymorphic_on': type
+        'polymorphic_identity': 'PreProcessing',
+        'polymorphic_on': type
     }
-    
+
+
 class PreProStandard(PreProcessing, StrMixin, object):
     """
     The standard airwriting preprocessing configuration
     """
-    __tablename__="preprostandardconfigs"
+    __tablename__ = "preprostandardconfigs"
     id = Column(Integer, ForeignKey('preprocessings.id'), primary_key=True)
     windowsize = Column(Integer, nullable=False)
     frameshift = Column(Integer, nullable=False)
@@ -680,54 +724,55 @@ class PreProStandard(PreProcessing, StrMixin, object):
     __mapper_args__ = {'polymorphic_identity': 'PreProStandard'}
     __table_args__ = (UniqueConstraint('windowsize', 'frameshift',
                                        'filterstring', 'channels', 'meansub',
-                                       'feature' ),)
-    
+                                       'feature'), )
+
     def janusConfigStr(self):
         s = 'windowsize %s\n' % (self.windowsize)
         s += 'frameshift %s\n' % (self.frameshift)
         s += 'filter {%s}\n' % (self.filterstring)
         s += 'channels {%s}\n' % (self.channels)
         s += 'meansub "%s"\n' % (self.meansub)
-        s += 'feature "%s"\n' % (self.feature) 
+        s += 'feature "%s"\n' % (self.feature)
         return s
-    
+
     #def __str__(self):
     #    return ("PreProStandard: windowsize=%s, frameshift=%s, filterstring
 
-    
+
 class TopologyConfig(Base, StrMixin, object):
     """
     Stores information on the HMM topology
     """
-    __tablename__="topologies"
+    __tablename__ = "topologies"
     id = Column(Integer, primary_key=True)
     hmmstates = Column(Integer)
     hmm_repos_states = Column(Integer)
     gmm = Column(Integer)
     gmm_repos = Column(Integer)
-    __table_args__ = (UniqueConstraint('hmmstates', 'hmm_repos_states',
-                                       'gmm', 'gmm_repos'),)
-    
+    __table_args__ = (UniqueConstraint('hmmstates', 'hmm_repos_states', 'gmm',
+                                       'gmm_repos'), )
+
 
 class IbisConfig(Base, StrMixin, object):
     """
     Ibis decoder specific parameters
     """
-    __tablename__="ibisconfigs"
+    __tablename__ = "ibisconfigs"
     id = Column(Integer, primary_key=True)
     wordPen = Column(Integer)
     lz = Column(Integer)
     wordBeam = Column(Integer)
     stateBeam = Column(Integer)
     morphBeam = Column(Integer)
-    __table_args__ = (UniqueConstraint('wordPen', 'lz', 'wordBeam', 'stateBeam',
-                                       'morphBeam'),)
-        
+    __table_args__ = (UniqueConstraint('wordPen', 'lz', 'wordBeam',
+                                       'stateBeam', 'morphBeam'), )
+
+
 class BiokitConfig(Base, StrMixin, object):
     """
     BioKit decoder specific parameters
     """
-    __tablename__="biokitconfigs"
+    __tablename__ = "biokitconfigs"
     id = Column(Integer, primary_key=True)
     token_insertion_penalty = Column(Integer)
     languagemodel_weight = Column(Integer)
@@ -738,8 +783,9 @@ class BiokitConfig(Base, StrMixin, object):
     lattice_beam = Column(Integer)
     __table_args__ = (UniqueConstraint('token_insertion_penalty',
                                        'languagemodel_weight', 'hypo_topn',
-                                       'hypo_beam', 'final_hypo_beam', 
-                                       'final_hypo_topn', 'lattice_beam'),)
+                                       'hypo_beam', 'final_hypo_beam',
+                                       'final_hypo_topn', 'lattice_beam'), )
+
 
 class Dataset(Base, object):
     """
@@ -748,31 +794,30 @@ class Dataset(Base, object):
     __tablename__ = "datasets"
     id = Column(Integer, primary_key=True)
     name = Column(String(100), unique=True)
-    recordings = relationship("Recording", secondary=lambda:dataset_association)
-    
+    recordings = relationship("Recording",
+                              secondary=lambda: dataset_association)
+
     def __str__(self):
-        return ("Dataset: id=%s, name=%s, length=%s" % (self.id, self.name,
-                                                        len(self.recordings)))
-    
+        return ("Dataset: id=%s, name=%s, length=%s" %
+                (self.id, self.name, len(self.recordings)))
+
     def __repr__(self):
-        return ("<Dataset(%s, %s)>" 
-                % (self.name, self.recordings))
-    
+        return ("<Dataset(%s, %s)>" % (self.name, self.recordings))
 
-dataset_association = Table('dataset_association', Base.metadata,
+
+dataset_association = Table(
+    'dataset_association', Base.metadata,
     Column('set_id', Integer, ForeignKey('datasets.id')),
-    Column('reording_id', Integer, ForeignKey('recordings.id'))
-)
-    
+    Column('reording_id', Integer, ForeignKey('recordings.id')))
 
-            
-crossval_association = Table('crossval_association', Base.metadata,
+crossval_association = Table(
+    'crossval_association', Base.metadata,
     Column('crossvalidation_id', Integer, ForeignKey('crossvalidations.id')),
-    Column('configuration_id', Integer, ForeignKey('configurations.id'))
-)
+    Column('configuration_id', Integer, ForeignKey('configurations.id')))
+
 
 class CrossValidation(Base, StrMixin, object):
-    __tablename__="crossvalidations"
+    __tablename__ = "crossvalidations"
     id = Column(Integer, primary_key=True)
     nr_folds = Column(Integer)
     configurations = relationship("Configuration",
@@ -783,7 +828,7 @@ class Configuration(Base):
     """
     Stores all relevant information to reproduce a training and evaluation
     """
-    __tablename__="configurations"
+    __tablename__ = "configurations"
     id = Column(Integer, primary_key=True)
     #files and paths
     data_basedir = Column(String(256))
@@ -798,16 +843,18 @@ class Configuration(Base):
     contextmodel = relationship("ContextModel",
                                 backref=backref("configurations"))
     basemodel_id = Column(Integer, ForeignKey("modelparameters.id"))
-    basemodel = relationship("ModelParameters", 
-                             primaryjoin=(basemodel_id==ModelParameters.id),
+    basemodel = relationship("ModelParameters",
+                             primaryjoin=(basemodel_id == ModelParameters.id),
                              backref=backref("base_of_configurations"))
-    
-    preprocessing_id = Column(Integer, ForeignKey("preprocessings.id"), 
+
+    preprocessing_id = Column(Integer,
+                              ForeignKey("preprocessings.id"),
                               nullable=False)
-    preprocessing = relationship("PreProcessing", 
+    preprocessing = relationship("PreProcessing",
                                  backref=backref("configurations"))
     topology_id = Column(Integer, ForeignKey("topologies.id"), nullable=False)
-    topology = relationship("TopologyConfig", backref=backref("configurations"))
+    topology = relationship("TopologyConfig",
+                            backref=backref("configurations"))
     ibisconfig_id = Column(Integer, ForeignKey("ibisconfigs.id"))
     ibisconfig = relationship("IbisConfig", backref=backref("configurations"))
     biokitconfig_id = Column(Integer, ForeignKey("biokitconfigs.id"))
@@ -815,49 +862,52 @@ class Configuration(Base):
                                 backref=backref("configurations"))
     iterations = Column(Integer)
     trainset_id = Column(Integer, ForeignKey("datasets.id"))
-    trainset = relationship("Dataset", primaryjoin=(trainset_id==Dataset.id),
+    trainset = relationship("Dataset",
+                            primaryjoin=(trainset_id == Dataset.id),
                             backref=backref("trainset_configs"))
     testset_id = Column(Integer, ForeignKey("datasets.id"))
-    testset = relationship("Dataset", primaryjoin=(testset_id==Dataset.id),
+    testset = relationship("Dataset",
+                           primaryjoin=(testset_id == Dataset.id),
                            backref=backref("testset_configs"))
     transcriptkey = Column(String(50))
-    
+
     def __str__(self):
         #attribs = ("id", "data_basedir", "janusdb_name", "atomset", "dictionary",
         #           "vocabulary", "contextmodel", "basemodel", "preprocessing",
-        #           "topology", "ibisconfig", "biokitconfig", "iterations", 
+        #           "topology", "ibisconfig", "biokitconfig", "iterations",
         #           "trainset", "testset", "transcriptkey")
-        attribs = ("id", "basemodel", "ibisconfig", "biokitconfig", "iterations",
-                   "trainset", "testset")
+        attribs = ("id", "basemodel", "ibisconfig", "biokitconfig",
+                   "iterations", "trainset", "testset")
         return makestr(self, attribs)
-    
+
+
 #class JobStatus(Base):
 #    id
 #    desc
-    
+
+
 class Job(Base, StrMixin, object):
     """
     Stores information and status on job to run or running
     """
-    __tablename__="jobs"
+    __tablename__ = "jobs"
     id = Column(Integer, primary_key=True)
     configuration_id = Column(Integer, ForeignKey("configurations.id"))
-    configuration = relationship("Configuration",
-                                 backref=backref("jobs"))
+    configuration = relationship("Configuration", backref=backref("jobs"))
     status = Column(String(30))
     cputime = Column(Float)
     host = Column(String(50))
-    
+
     def __repr__(self):
-        return ("<Job(%s, %s, %s, %s)>" % (self.configuration_id, self.status,
-                                           self.cputime, self.host))
-    
+        return ("<Job(%s, %s, %s, %s)>" %
+                (self.configuration_id, self.status, self.cputime, self.host))
+
 
 class Result(Base, StrMixin, object):
     """
     Stores the result of an evaluation
     """
-    __tablename__="results"
+    __tablename__ = "results"
     id = Column(Integer, primary_key=True)
     git_rev = Column(String(100))
     ter = Column(Float)
@@ -866,28 +916,29 @@ class Result(Base, StrMixin, object):
     iteration = Column(Integer)
     # FIXME: wrong unique constraint, does nothing
     UniqueConstraint('configuration_id', 'iteration')
-    
+
     def __repr__(self):
-        return ("<Result(%s, %s, %s, %s)>"
-                % (self.git_rev, self.ter,
-                   self.configuration_id, self.iteration))
+        return (
+            "<Result(%s, %s, %s, %s)>" %
+            (self.git_rev, self.ter, self.configuration_id, self.iteration))
+
 
 class ResultList(Base, StrMixin, object):
     """
     Stores detailed list of results.
     """
-    __tablename__="resultlists"
+    __tablename__ = "resultlists"
     result_id = Column(Integer, ForeignKey("results.id"), primary_key=True)
     result = relationship("Result", backref=backref("resultlist"))
     resjson = Column(Text)
-    
+
+
 class ErrorBlaming(Base, StrMixin, object):
     """
     Stores results of the error blaming.
     """
-    __tablename__="errorblaming"
+    __tablename__ = "errorblaming"
     result_id = Column(Integer, ForeignKey("results.id"), primary_key=True)
     result = relationship("Result", backref=backref("errorblaming"))
     blamelog = Column(Text)
     confusionmap = Column(Text)
-

@@ -56,7 +56,9 @@ class Sender(Node):
             # self.debug('Put on queue')
             self._ctr = self._clock.tick()
         else:
-            raise Exception('Runner did not emit data, yet said it would do so in the previous run. Please check your implementation.')
+            raise Exception(
+                'Runner did not emit data, yet said it would do so in the previous run. Please check your implementation.'
+            )
         self._emit_ctr_fallback = 0
         # self.debug('Next(Runner) returned')
 
@@ -71,8 +73,10 @@ class Sender(Node):
                 self._on_runner()
 
         except StopIteration:
-            self.warn('Iterator returned without passing false first. Assuming everything is fine.')
-        
+            self.warn(
+                'Iterator returned without passing false first. Assuming everything is fine.'
+            )
+
         self.info('Reached end of run')
         # this still means we send data, before the return, just that after now no new data will be sent
         self._on_runner()
@@ -91,19 +95,22 @@ class Sender(Node):
                 while next(runner):
                     self._on_runner()
             except StopIteration:
-                self.warn('Iterator returned without passing false first. Assuming everything is fine.')
+                self.warn(
+                    'Iterator returned without passing false first. Assuming everything is fine.'
+                )
             self.info('Reached end of run')
             # this still means we send data, before the return, just that after now no new data will be sent
             self._on_runner()
-        
+
         if join:
             self._join()
-        else: 
+        else:
             self._clocks.set_passthrough()
 
     def _join(self):
         if not self.block:
-            raise Exception('Cannot join non-blocking senders as we have no way of knowing when they are finished atm')
+            raise Exception(
+                'Cannot join non-blocking senders as we have no way of knowing when they are finished atm'
+            )
             # theoretically we can still use the ret false concept from the senders ie yield False indicates finish
         return super()._join()
-

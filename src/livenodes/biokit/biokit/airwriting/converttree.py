@@ -18,5 +18,3 @@ for dirpath, dirnames, filenames in os.walk(sourcedir):
             targetfile = os.path.join(targetdir, relpath, fname)
             print(("convert %s to %s" % (sourcefile, targetfile)))
             wax2ib.convertfile(sourcefile, targetfile)
-
-

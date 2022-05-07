@@ -1,9 +1,7 @@
-
 import datetime
 import multiprocessing
 import sys
 import threading
-
 """
 Simple logging for BioKIT
 
@@ -39,11 +37,11 @@ def log(level, *text):
     """
 
     if BioKIT.LoggingUtilities.getLogLevel() <= level:
-        msg = "{} | {:<11} | {:<11} | {:>11} | {}".format(datetime.datetime.now().strftime("%Y-%m-%d %X"),
-                                                          multiprocessing.current_process().name,
-                                                          threading.current_thread().name,
-                                                          str(level),
-                                                          " ".join(str(t) for t in text))
+        msg = "{} | {:<11} | {:<11} | {:>11} | {}".format(
+            datetime.datetime.now().strftime("%Y-%m-%d %X"),
+            multiprocessing.current_process().name,
+            threading.current_thread().name, str(level),
+            " ".join(str(t) for t in text))
 
         # acquire blocking log
         logger_lock.acquire(True)
@@ -53,18 +51,23 @@ def log(level, *text):
         # release log
         logger_lock.release()
 
+
 def warn(*text):
     log(BioKIT.LogSeverityLevel.Warning, *text)
+
 
 def info(*text):
     log(BioKIT.LogSeverityLevel.Information, *text)
 
+
 def debug(*text):
     log(BioKIT.LogSeverityLevel.Debug, *text)
+
 
 # Integrate the C++ logging
 def loggingCallback(fileName, level, message):
     log(level, fileName + ": " + message)
+
 
 def set_log_level(level):
     """
@@ -78,6 +81,7 @@ def set_log_level(level):
     - BioKIT.LogSeverityLevel.Trace (only available in BioKIT debug builds)
     """
     BioKIT.LoggingUtilities.setLogLevel(level)
+
 
 # Use this logging for BioKIT C++ logging when this module is imported
 BioKIT.LoggingUtilities.setLoggingCallback(loggingCallback)

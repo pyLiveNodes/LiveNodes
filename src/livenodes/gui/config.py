@@ -5,7 +5,7 @@ import os
 import importlib
 
 from PyQt5.QtGui import QIntValidator
-from PyQt5.QtWidgets import QDialogButtonBox, QDialog,  QFormLayout, QCheckBox, QLineEdit, QVBoxLayout, QWidget, QHBoxLayout, QScrollArea, QLabel
+from PyQt5.QtWidgets import QDialogButtonBox, QDialog, QFormLayout, QCheckBox, QLineEdit, QVBoxLayout, QWidget, QHBoxLayout, QScrollArea, QLabel
 from PyQt5.QtCore import Qt, pyqtSignal
 
 import qtpynodeeditor

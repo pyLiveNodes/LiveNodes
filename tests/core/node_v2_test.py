@@ -4,10 +4,12 @@ import json
 from livenodes.core.node import Node
 from livenodes.core import global_registry
 
+
 @global_registry.packages.register
 class SimpleNode(Node):
     channels_in = ["Data"]
     channels_out = ["Data"]
+
 
 @global_registry.packages.register
 class ComplexNode(Node):

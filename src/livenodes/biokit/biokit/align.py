@@ -4,6 +4,7 @@ import copy
 import string
 import sys
 
+
 def align(reference, hypothesis):
     """
     Calculate word level alignment between reference and hypothesis
@@ -40,15 +41,17 @@ def align(reference, hypothesis):
     # initialize full cumulative score matrix #
     # --------------------------------------- #
 
-    cummulativeScores = [[100000 for col in range(0, hypothesisLength+1)] for row in range(0, referenceLength+1)]
-    bp = [[-1 for col in range(0, hypothesisLength+1)] for row in range(0, referenceLength+1)]
+    cummulativeScores = [[100000 for col in range(0, hypothesisLength + 1)]
+                         for row in range(0, referenceLength + 1)]
+    bp = [[-1 for col in range(0, hypothesisLength + 1)]
+          for row in range(0, referenceLength + 1)]
 
     cummulativeScores[0][0] = 0
-    for refX in range(1, referenceLength+1):
-        cummulativeScores[refX][0] = cummulativeScores[refX-1][0] + 1
+    for refX in range(1, referenceLength + 1):
+        cummulativeScores[refX][0] = cummulativeScores[refX - 1][0] + 1
         bp[refX][0] = DEL
-    for hyX in range(1, hypothesisLength+1):
-        cummulativeScores[0][hyX] = cummulativeScores[0][hyX-1] + 1
+    for hyX in range(1, hypothesisLength + 1):
+        cummulativeScores[0][hyX] = cummulativeScores[0][hyX - 1] + 1
         bp[0][hyX] = INS
 
     # ---------------- #
@@ -60,22 +63,25 @@ def align(reference, hypothesis):
         hyX = 1
         for hyW in splittedHypothesis[:]:
 
-            newscore = cummulativeScores[refX-1][hyX] + 1                                 # try transition 0: insertion
+            newscore = cummulativeScores[
+                refX - 1][hyX] + 1  # try transition 0: insertion
             if newscore < cummulativeScores[refX][hyX]:
                 bp[refX][hyX] = DEL
                 cummulativeScores[refX][hyX] = newscore
 
-            if splittedTokenSequence[refX-1] == splittedHypothesis[hyX-1]:                                        # try transition 1: substitution
-                newscore = cummulativeScores[refX-1][hyX-1]
+            if splittedTokenSequence[refX - 1] == splittedHypothesis[
+                    hyX - 1]:  # try transition 1: substitution
+                newscore = cummulativeScores[refX - 1][hyX - 1]
                 DIFF = EQU
             else:
-                newscore = cummulativeScores[refX-1][hyX-1] + 1
+                newscore = cummulativeScores[refX - 1][hyX - 1] + 1
                 DIFF = SUB
             if newscore < cummulativeScores[refX][hyX]:
                 bp[refX][hyX] = DIFF
                 cummulativeScores[refX][hyX] = newscore
 
-            newscore = cummulativeScores[refX][hyX-1] + 1                                 # try transition 2: deletion
+            newscore = cummulativeScores[refX][
+                hyX - 1] + 1  # try transition 2: deletion
             if newscore < cummulativeScores[refX][hyX]:
                 bp[refX][hyX] = INS
                 cummulativeScores[refX][hyX] = newscore
@@ -90,7 +96,8 @@ def align(reference, hypothesis):
     refX = referenceLength
     hyX = hypothesisLength
 
-    return (cummulativeScores[refX][hyX], bp, referenceLength, hypothesisLength, splittedTokenSequence, splittedHypothesis)
+    return (cummulativeScores[refX][hyX], bp, referenceLength,
+            hypothesisLength, splittedTokenSequence, splittedHypothesis)
 
 
 def tokenErrorRate(reference, hypothesis):
@@ -161,7 +168,7 @@ def tokenErrorRateInsDelSubCount(reference, hypothesis):
 
     currentField = bp[referenceLength][hypothesisLength]
 
-    i = referenceLength   # counter for horizontal position change in DP matrix
+    i = referenceLength  # counter for horizontal position change in DP matrix
     j = hypothesisLength  # counter for vertical position change in DP matrix
 
     subList = []
@@ -176,29 +183,37 @@ def tokenErrorRateInsDelSubCount(reference, hypothesis):
 
         if currentField == 1:  # in case of sub
             subCount = subCount + 1
-            subList1 = [splittedTokenSequence[i-1], splittedHypothesis[j-1]]
-            subList.insert(0, subList1)  # insert to the beginning of the sub list
-            currentField = bp[i-1][j-1]
+            subList1 = [
+                splittedTokenSequence[i - 1], splittedHypothesis[j - 1]
+            ]
+            subList.insert(0,
+                           subList1)  # insert to the beginning of the sub list
+            currentField = bp[i - 1][j - 1]
             i = i - 1
             j = j - 1
         elif currentField == 2:  # in case of ins
             insCount = insCount + 1
-            insList.insert(0, splittedHypothesis[j-1])  # insert to the beginning of the ins list
-            currentField = bp[i][j-1]  # change position
+            insList.insert(0, splittedHypothesis[
+                j - 1])  # insert to the beginning of the ins list
+            currentField = bp[i][j - 1]  # change position
             j = j - 1
         elif currentField == 3:  # in case of del
             delCount = delCount + 1
-            delList.insert(0, splittedTokenSequence[i-1])  # insert to the beginning of the del list
-            currentField = bp[i-1][j]
+            delList.insert(0, splittedTokenSequence[
+                i - 1])  # insert to the beginning of the del list
+            currentField = bp[i - 1][j]
             i = i - 1
         elif currentField == 0:  # in case of equal
             eqCount = eqCount + 1
-            currentField = bp[i-1][j-1]
+            currentField = bp[i - 1][j - 1]
             i = i - 1
             j = j - 1
 
-    InsDelSubCount = [eqCount, insCount, delCount, subCount]  # list with numbers of equals, insertions, deletions and substitutions
-    InsDelSub = [InsDelSubCount, insList, delList, subList]   # list with numbers and tokens
+    InsDelSubCount = [
+        eqCount, insCount, delCount, subCount
+    ]  # list with numbers of equals, insertions, deletions and substitutions
+    InsDelSub = [InsDelSubCount, insList, delList,
+                 subList]  # list with numbers and tokens
 
     return InsDelSub  # return list with numbers and tokens
 
@@ -224,7 +239,7 @@ def getAlignment(reference, hypothesis):
 
     currentField = bp[referenceLength][hypothesisLength]
 
-    i = referenceLength   # counter for horizontal position change in DP matrix
+    i = referenceLength  # counter for horizontal position change in DP matrix
     j = hypothesisLength  # counter for vertical position change in DP matrix
 
     import collections
@@ -237,21 +252,21 @@ def getAlignment(reference, hypothesis):
         # Note: reference on horizontal lines, hypothesis on vertical lines
 
         if currentField == 1:  # in case of sub
-            alignment[i-1].insert(0, (j-1, "sub"))
-            currentField = bp[i-1][j-1]
+            alignment[i - 1].insert(0, (j - 1, "sub"))
+            currentField = bp[i - 1][j - 1]
             i = i - 1
             j = j - 1
         elif currentField == 2:  # in case of ins
-            alignment[i-1].insert(0, (j-1, "ins"))
-            currentField = bp[i][j-1]
+            alignment[i - 1].insert(0, (j - 1, "ins"))
+            currentField = bp[i][j - 1]
             j = j - 1
         elif currentField == 3:  # in case of del
-            alignment[i-1].insert(0, (j-1, "del"))
-            currentField = bp[i-1][j]
+            alignment[i - 1].insert(0, (j - 1, "del"))
+            currentField = bp[i - 1][j]
             i = i - 1
         elif currentField == 0:  # in case of equal
-            alignment[i-1].insert(0, (j-1, "match"))
-            currentField = bp[i-1][j-1]
+            alignment[i - 1].insert(0, (j - 1, "match"))
+            currentField = bp[i - 1][j - 1]
             i = i - 1
             j = j - 1
 
@@ -295,4 +310,3 @@ def tokenErrorRateForAlignment(alignment):
     token_error_rate = float(ins_count + sub_count + del_count) / reference_len
 
     return token_error_rate, equ_count, ins_count, del_count, sub_count
-

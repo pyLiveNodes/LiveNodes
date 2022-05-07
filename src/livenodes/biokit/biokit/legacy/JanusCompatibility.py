@@ -1,10 +1,11 @@
 def convertDictToJanus(dictionary):
     outputString = ""
-    for key,val in dictionary.items():
+    for key, val in dictionary.items():
         outputString += "{"
         outputString += key
         outputString += " {" + str(val) + "}} "
-    return(outputString)
+    return (outputString)
+
 
 def writeJanusArraysToFile(entries, filename):
     with open(filename, 'w') as f:

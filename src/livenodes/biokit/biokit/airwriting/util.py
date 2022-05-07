@@ -5,11 +5,12 @@ import os
 import numpy
 import numpyutil
 
+
 class FeatureSequenceStorage:
     """
     Precomputes and stores features sequences in memory.
     """
-    
+
     def __init__(self, config, prepro):
         print("Initialize storage object for FeatureSequences")
         self.storage = {}
@@ -21,20 +22,21 @@ class FeatureSequenceStorage:
         if self.config.testset:
             for recording in self.config.testset.recordings:
                 self.put(recording)
-        
+
     def put(self, recording):
         filename = os.path.join(self.config.data_basedir,
-                                    recording.experiment.base_dir,
-                                    recording.filename)
+                                recording.experiment.base_dir,
+                                recording.filename)
         mcfs = self.prepro.process(filename)
         fs = mcfs[0]
         self.storage[recording.id] = fs
-    
+
     def get(self, recording_id):
-        return(self.storage[recording_id])
-    
+        return (self.storage[recording_id])
+
     def wipe(self):
         self.storage = {}
+
 
 def computeClassStats(janusdb, ids):
     """
@@ -48,7 +50,7 @@ def computeClassStats(janusdb, ids):
     janusdb - instance of db.JanusDb
     ids     - list of janus id strings
     """
-    
+
     samplecounts = dict()
     basedir = "/project/AMR/Handwriting/data/"
     for id in ids:
@@ -59,7 +61,7 @@ def computeClassStats(janusdb, ids):
             text = "_"
         else:
             text = recording.text
-        filepath = os.path.join(basedir, "v"+recording.expid, "data",
+        filepath = os.path.join(basedir, "v" + recording.expid, "data",
                                 recording.filename)
         data = adc.read(filepath)
         count = data.shape[0]
@@ -73,14 +75,11 @@ def computeClassStats(janusdb, ids):
         stddev = numpy.std(counts)
         stats[text] = {'mean': mean, 'stddev': stddev}
     return stats
-        
-            
+
+
 def writeMcfsToAdc(mcfs, path):
-       """
+    """
        Write a mcfs to an ADC file
        """
-       ar = numpyutil.mcfs2array(mcfs)
-       adc.write(ar, path)
-           
-             
-                        
+    ar = numpyutil.mcfs2array(mcfs)
+    adc.write(ar, path)

@@ -11,6 +11,7 @@ from . import features as mkr_features
 
 from . import local_registry
 
+
 class SingleChannelFeature(BaseTransformer_eager):
 
     def __init__(self, fn, fnParams={}):

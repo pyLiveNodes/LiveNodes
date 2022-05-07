@@ -1,5 +1,7 @@
-from src.nodes.node import Sender, Node, Location
+from livenodes.core.node import Node, Location
+from livenodes.core.sender import Sender
 import multiprocessing as mp
+
 
 class Data(Sender):
     channels_in = []
@@ -11,12 +13,13 @@ class Data(Sender):
             self._emit_data(ctr)
             yield ctr < 9
 
+
 class Quadratic(Node):
     channels_in = ["Data"]
     channels_out = ["Data"]
 
     def process(self, data, **kwargs):
-        self._emit_data(data ** 2)
+        self._emit_data(data**2)
 
 
 class Save(Node):
@@ -37,12 +40,13 @@ class Save(Node):
             res.append(self.out.get())
         return res
 
+
 if __name__ == "__main__":
     data = Data(name="A", compute_on=Location.THREAD, block=True)
     quadratic = Quadratic(name="B", compute_on=Location.THREAD)
     out1 = Save(name="C", compute_on=Location.THREAD)
     out2 = Save(name="D", compute_on=Location.THREAD)
-    
+
     out1.connect_inputs_to(data)
     quadratic.connect_inputs_to(data)
     out2.connect_inputs_to(quadratic)

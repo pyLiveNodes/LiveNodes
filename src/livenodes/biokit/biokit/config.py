@@ -42,7 +42,8 @@ class Config:
     def __read_config(self, config_file_path, config_variables, verbose):
         """ Read config file """
         with open(config_file_path) as config_file:
-            logger.log(BioKIT.LogSeverityLevel.Information, "Reading config file", config_file_path)
+            logger.log(BioKIT.LogSeverityLevel.Information,
+                       "Reading config file", config_file_path)
 
             for lineno, line in enumerate(config_file):
                 line = line.strip()
@@ -56,7 +57,9 @@ class Config:
                 key = key.strip()
                 val = val.strip()
                 if key == '' or val == '':
-                    raise ValueError("Syntax error in config file, line {}".format(lineno + 1))  # lineno starts at 0
+                    raise ValueError(
+                        "Syntax error in config file, line {}".format(
+                            lineno + 1))  # lineno starts at 0
 
                 # parse value to correct type and set key as class attribute
                 val = ast.literal_eval(val)
@@ -64,12 +67,14 @@ class Config:
 
                 # log config
                 if verbose:
-                    logger.log(BioKIT.LogSeverityLevel.Information, "   {:<30} = {}".format(key, repr(val)))
+                    logger.log(BioKIT.LogSeverityLevel.Information,
+                               "   {:<30} = {}".format(key, repr(val)))
 
         # check if all specified config variables were found
         for variable in config_variables:
             if (variable not in self.__dict__):
-                msg = "Variable '{}' is not set in config file {}".format(variable, config_file_path)
+                msg = "Variable '{}' is not set in config file {}".format(
+                    variable, config_file_path)
                 logger.log(BioKIT.LogSeverityLevel.Error, msg)
                 raise KeyError(msg)
 
@@ -90,6 +95,7 @@ class Config:
         Does this config have this key?
         """
         return hasattr(self, key)
+
 
 ################
 # USAGE EXAMPLE

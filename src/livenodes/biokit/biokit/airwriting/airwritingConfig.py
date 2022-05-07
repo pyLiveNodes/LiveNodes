@@ -14,6 +14,7 @@ import shutil
 # python-lib
 from . import airwritingUtil as airUtil
 
+
 class Config(collections.MutableMapping):
     '''
     Base class to store all sorts of configuration information
@@ -21,50 +22,51 @@ class Config(collections.MutableMapping):
     All configuration information is stored as key value pairs. The class 
     exposes a Mapping interface and therefore can be used like a dictionary.
     The data can be written to and read from files in binary and text format.
-    '''  
-    
+    '''
+
     _values = {}
     _optionality = {}
-      
+
     def __init__(self):
         self._values = {}
         self._optionality = {}
+
     #abstract methods
     def __getitem__(self, key):
         return self._values[key]
-    
+
     def __setitem__(self, key, value):
-        # TODO: if key not exists set optionality to false by default 
+        # TODO: if key not exists set optionality to false by default
         self._values[key] = value
-        
+
     def __delitem__(self, key):
         return self._values.pop(key)
-    
+
     def __len__(self):
         return len(self._values)
-    
+
     def __iter__(self):
         return iter(self._values)
-        
+
     def setoptional(self, key, isOptional):
         self._optionality[key] = isOptional
-    
+
     def saveFile(self, filename):
         """Save config to file in pickle format."""
         with open(filename, "w") as fh:
             pickle.dump(self, fh)
-    
+
     def loadFile(self, filename):
         """Load config from file in pickle format."""
         with open(filename, "r") as fh:
             self = pickle.load(fh)
-        
+
     def saveTxtFile(self, filename):
         """Save config in file in text format."""
         with open(filename, "w") as f:
             for key, value in self._values.items():
                 f.write(key + "=" + str(value) + "\n")
-    
+
     def loadTxtFile(self, filename):
         """Load config from file given in text format."""
         with open(filename, "r") as f:
@@ -79,7 +81,7 @@ class Config(collections.MutableMapping):
                     self._values[words[0]] = words[1]
                 except SyntaxError:
                     self._values[words[0]] = words[1]
-    
+
     def generateConfigTable(self, db, tableName):
         """
         Create a table with one column for each config parameter.
@@ -89,8 +91,8 @@ class Config(collections.MutableMapping):
         tableName -- Name of the table to be created
         """
         #construct table creation sql query
-        sqlcmd = ("CREATE TABLE IF NOT EXISTS " + tableName + "(id INTEGER PRIMARY" +
-        " KEY AUTOINCREMENT ")
+        sqlcmd = ("CREATE TABLE IF NOT EXISTS " + tableName +
+                  "(id INTEGER PRIMARY" + " KEY AUTOINCREMENT ")
         for key in self:
             if type(self[key]) == int:
                 sqlcmd += ", " + key + " INTEGER"
@@ -100,7 +102,7 @@ class Config(collections.MutableMapping):
                 sqlcmd += ", " + key + " TEXT"
         sqlcmd += ")"
         db.executeStatement(sqlcmd)
-        
+
     def _sqlize(self, x):
         """
         Generate a sql-style string for given value.
@@ -117,12 +119,12 @@ class Config(collections.MutableMapping):
         else:
             s = str(x)
             #not really robust, at least I'm not sure --> use ORM
-            sqlized = s.replace("'", '"') # sqlite needs double quotes 
+            sqlized = s.replace("'", '"')  # sqlite needs double quotes
             return "\'" + str(sqlized) + "\'"
-    
+
     def insertIntoDb(self, db, tableName):
         print("config values: ")
-        #for k in self: print k  
+        #for k in self: print k
         sqlcmd = "INSERT INTO " + tableName + " ( "
         sqlcmd += ", ".join(iter(self.keys()))
         sqlcmd += " ) VALUES ( "
@@ -130,17 +132,17 @@ class Config(collections.MutableMapping):
         sqlcmd += " )"
         ret = db.executeStatement(sqlcmd)
         print(ret)
-        
+
     def countInDb(self, db, tableName, ignorelist):
-        params = [(x,y) for x,y in list(self.items()) if x not in ignorelist]
-        paramList = [x + "=" + self._sqlize(y) for x,y in params]
+        params = [(x, y) for x, y in list(self.items()) if x not in ignorelist]
+        paramList = [x + "=" + self._sqlize(y) for x, y in params]
         sqlcmd = "SELECT count(*) AS count FROM " + tableName + " WHERE "
         sqlcmd += " AND ".join(paramList)
         ret = [x for x in db.executeStatement(sqlcmd)]
         assert len(ret) == 1
         print(ret)
         return ret[0]['count']
-    
+
     def getFromDb(self, db, table, rowid):
         configResults = db.executeStatement("SELECT * FROM " + table +
                                             " WHERE id = " + rowid)
@@ -148,7 +150,7 @@ class Config(collections.MutableMapping):
         configRes = configResults[0]
         #rename primary key, otherwise will conflict when inserting to other table
         configRes['orig_id'] = configRes.pop('id')
-        pprint.pprint([(k, v, type(v)) for k,v in list(configRes.items())])
+        pprint.pprint([(k, v, type(v)) for k, v in list(configRes.items())])
         for key, value in list(configRes.items()):
             #strval = str(value)
             try:
@@ -158,7 +160,8 @@ class Config(collections.MutableMapping):
                     #must be refactored using an ORM (sqlalchemy)!!!!
                     print(("trying to evaluate string: " + value))
                     evalval = eval(value)
-                    print(("got type (" + str(type(evalval)) + ") with value " + str(evalval)))
+                    print(("got type (" + str(type(evalval)) +
+                           ") with value " + str(evalval)))
                     if type(evalval) in [list, dict]:
                         self._values[key] = evalval
                     else:
@@ -174,8 +177,8 @@ class Config(collections.MutableMapping):
             except SyntaxError as se:
                 print(("SyntaxError: " + str(se)))
                 self._values[key] = str(value)
-            
-        
+
+
 class ConfigGenerator:
     """
     Manage parameter ranges and return all possible combinations of them.
@@ -186,7 +189,7 @@ class ConfigGenerator:
     
     cg.param_ranges['x'] = range(1,6,2) 
     """
-    
+
     def __init__(self, config):
         """
         Constructor initialized with a given config.
@@ -196,7 +199,7 @@ class ConfigGenerator:
         """
         self.config = config
         self.param_ranges = {}
-    
+
     def getConfigurations(self):
         """
         Generates each possible parameter combination.
@@ -210,7 +213,7 @@ class ConfigGenerator:
         if len(list(self.param_ranges.items())) == 0:
             print("no ranges selected, return one configuration")
             yield config
-        else:    
+        else:
             #we need to make sure that key and value at index n belong together
             keys, values = list(zip(*list(self.param_ranges.items())))
             #cartesian product of all value ranges
@@ -221,24 +224,25 @@ class ConfigGenerator:
                     config[key] = param
                 yield config
 
-                
 
 class JanusConfig(Config):
     '''Config parameters for Janus to be used with the airwriting scripts'''
-    
-    janusCfgFileParams = ['dbdir', 'dbname', 'datadir', 'featdesc', 'feataccess',
-                          'vocab', 'dict', 'feature', 'phones', 'trainset', 
-                          'testset', 'devset', 'meansub', 'windowsize', 
-                          'frameshift', 'wordPen', 'wordBeam', 'stateBeam',
-                          'morphBeam', 'lz', 'hmmstates', 'hmm_repos_states',
-                          'gmm', 'gmm_repos', 'iterations', 'channels',
-                          'filter', 'transcriptkey', 'trainSet', 'devSet',
-                          'testSet']
-    
-    modelFileKeys = ['codebookSetFile', 'codebookWeightsFile','distribSetFile',
-                     'distribWeightsFile', 'topologiesFile', 'topologyTreeFile', 
-                     'distribTreeFile', 'phonesSetFile', 'transitionModelsFile']
-    
+
+    janusCfgFileParams = [
+        'dbdir', 'dbname', 'datadir', 'featdesc', 'feataccess', 'vocab',
+        'dict', 'feature', 'phones', 'trainset', 'testset', 'devset',
+        'meansub', 'windowsize', 'frameshift', 'wordPen', 'wordBeam',
+        'stateBeam', 'morphBeam', 'lz', 'hmmstates', 'hmm_repos_states', 'gmm',
+        'gmm_repos', 'iterations', 'channels', 'filter', 'transcriptkey',
+        'trainSet', 'devSet', 'testSet'
+    ]
+
+    modelFileKeys = [
+        'codebookSetFile', 'codebookWeightsFile', 'distribSetFile',
+        'distribWeightsFile', 'topologiesFile', 'topologyTreeFile',
+        'distribTreeFile', 'phonesSetFile', 'transitionModelsFile'
+    ]
+
     def areModelFilesSet(self):
         print("modelFileKeys:")
         print((JanusConfig.modelFileKeys))
@@ -246,23 +250,24 @@ class JanusConfig(Config):
         print((list(self.keys())))
         ret = set(JanusConfig.modelFileKeys).issubset(list(self.keys()))
         print(("is subset: " + str(ret)))
-        return(ret)
-    
+        return (ret)
+
     def copyModelFilesToDst(self, dstDir):
         '''Copy the model files referenced in config to destination directory'''
-        
+
         for fileKey in JanusConfig.modelFileKeys:
-            if fileKey == 'distribWeightsFile' :
-                shutil.copy(self[fileKey], os.path.join(dstDir, "distribWeights"))
+            if fileKey == 'distribWeightsFile':
+                shutil.copy(self[fileKey],
+                            os.path.join(dstDir, "distribWeights"))
             if fileKey == 'codebookWeightsFile':
-                shutil.copy(self[fileKey], os.path.join(dstDir, "codebookWeights"))
+                shutil.copy(self[fileKey],
+                            os.path.join(dstDir, "codebookWeights"))
             else:
                 shutil.copy(self[fileKey], dstDir)
         #create dumm tags file
         f = open(os.path.join(dstDir, "tags"), "w")
         f.close()
-        
-    
+
     def writeLocalConfig(self, dirname):
         '''fill a directory with everything needed to run Janus Eval in it.
         
@@ -270,11 +275,11 @@ class JanusConfig(Config):
         and all relevant model files are copied. The directory must already 
         exist
         '''
-        
+
         if self.areModelFilesSet():
             print("model files are set, copy to destination...")
             self.copyModelFilesToDst(dirname)
-        
+
             #exctract some information from model files
             #assume all characters have the same number of gaussians
             #gcs = BioKIT.GaussianContainerSet()
@@ -287,13 +292,12 @@ class JanusConfig(Config):
             #modelNames = [x[0] for x in names]
             #self['hmmstates'] = modelNames.count("a")
             #self['hmm_repos_states'] = modelNames.count("_")
-        
-        
-        #compose output string          
+
+        #compose output string
         s = ""
         s += "set conf {\n"
         for key in self.janusCfgFileParams:
-            if key in list(self.keys()): #no key is mandatory
+            if key in list(self.keys()):  #no key is mandatory
                 if key == "channels":
                     s += key + " " + str(self[key]) + "\n"
                 elif key == "filter":
@@ -304,13 +308,14 @@ class JanusConfig(Config):
                     s += key + " " + str(self[key]) + "\n"
                 else:
                     s += key + " \"" + str(self[key]) + "\"\n"
-            
+
         if self['LMType'] == "ngram":
             s += "ngram \"" + self['tokenSequenceModelFile'] + "\"\n"
         elif self['LMType'] == "grammar":
             s += "grammar \"" + self['tokenSequenceModelFile'] + "\"\n"
         else:
-            raise RuntimeError("Unknown janusLMType: " + str(self.janusLMType) +
+            raise RuntimeError("Unknown janusLMType: " +
+                               str(self.janusLMType) +
                                "should be one of {ngram,grammar}")
         s += "dirname " + dirname + "\n"
         s += "}\n"
@@ -320,11 +325,10 @@ class JanusConfig(Config):
         #write serialization of self
         self.saveFile(os.path.join(dirname, "janusConfig.pickle"))
         self.saveTxtFile(os.path.join(dirname, "janusConfig.txt"))
-   
-     
+
 
 class AirwritingConfig(Config):
 
-    def writeLocalConfig(self, dirname, prefix = "bioKitLocalConf"):
+    def writeLocalConfig(self, dirname, prefix="bioKitLocalConf"):
         self.saveTxtFile(os.path.join(dirname, prefix + ".txt"))
         self.saveFile(os.path.join(dirname, prefix + ".pickle"))

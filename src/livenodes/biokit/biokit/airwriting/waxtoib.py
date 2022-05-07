@@ -2,6 +2,7 @@ import numpy
 import argparse
 import adc
 
+
 class WaxToIb():
     """
     Convert data recorded with WAX9 at the wrist to InertialBlue data
@@ -10,14 +11,16 @@ class WaxToIb():
 
     def __init__(self):
         default_base = "/project/AMR/Handwriting/wrist/transform/scripts/"
-        self.config = {"transformation_b_file": "%stransform_b_nonorm_multiple" %
-                       default_base,
-                       "transformation_T_file": "%stransform_T_nonorm_multiple" %
-                       default_base,
-                       "transformation_c_file": "%stransform_c_nonorm_multiple" %
-                       default_base,
-                       "wax9_sampling_rate": 200,
-                       "inertial_blue_sampling_rate": 819.2}
+        self.config = {
+            "transformation_b_file":
+            "%stransform_b_nonorm_multiple" % default_base,
+            "transformation_T_file":
+            "%stransform_T_nonorm_multiple" % default_base,
+            "transformation_c_file":
+            "%stransform_c_nonorm_multiple" % default_base,
+            "wax9_sampling_rate": 200,
+            "inertial_blue_sampling_rate": 819.2
+        }
 
     def convert(self, data):
         """
@@ -30,13 +33,13 @@ class WaxToIb():
         Keyword arguments:
         data - numpy array (1st index is time, 2nd index is channels)
         """
-        
+
         #treat counter seperately
         counter = data[:, 0]
         data_arr = data[:, 1:7]
         #first generally convert the different sensor coordinate systems
         data_arr = data_arr.dot(numpy.diag([-1, 1, 1, 1, -1, -1]))
-        
+
         #scale the acc
         data_arr[:, 0:3] = 0.25 * data_arr[:, 0:3]
 
@@ -59,22 +62,20 @@ class WaxToIb():
         counter = numpy.clip(counter, -32767, 32766)
 
         #channel permutation (swap acc and gyro)
-        data_acc = data_arr[:,0:3]
-        data_gyro = data_arr[:,3:6]
+        data_acc = data_arr[:, 0:3]
+        data_gyro = data_arr[:, 3:6]
         retdata = numpy.concatenate((counter, data_gyro, data_acc), 1)
-        
+
         return retdata
-        
+
     def _resample(self, input_array, target_nr):
         in_t = numpy.atleast_2d(input_array.T)
         out_t = []
         source_nr = len(in_t[0])
         for ch in in_t:
-            if len(ch)>0:
+            if len(ch) > 0:
                 trgt = numpy.linspace(0, source_nr - 1, target_nr)
-                trgt_vls = numpy.interp(trgt,
-                                        list(range(source_nr)),
-                                        ch)
+                trgt_vls = numpy.interp(trgt, list(range(source_nr)), ch)
                 out_t.append(trgt_vls)
             else:
                 out_t.append(numpy.array([]))
@@ -85,17 +86,21 @@ class WaxToIb():
         seldata = indata[:, 2:9]
         outdata = self.convert(seldata)
         adc.write(outdata, outfile)
-    
+
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Convert WAX9 to IB coordinates")
+    parser = argparse.ArgumentParser(
+        description="Convert WAX9 to IB coordinates")
     parser.add_argument("infile", help="input wax (14channel) adc file")
     parser.add_argument("outfile", help="output ib (7channel) adc file")
-    parser.add_argument("-p", "--plot", action = "store_true", 
+    parser.add_argument("-p",
+                        "--plot",
+                        action="store_true",
                         help="plot in- and output")
     args = parser.parse_args()
-    
+
     wax2ib = WaxToIb()
-    
+
     indata = adc.read(args.infile, 14)
     inseldata = indata[:, 2:9]
     outseldata = wax2ib.convert(inseldata)
@@ -109,6 +114,3 @@ if __name__ == "__main__":
         plt.title("converted data")
         plt.plot(outseldata)
         plt.show()
-        
-    
-    

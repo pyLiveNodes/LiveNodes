@@ -2,13 +2,13 @@ from enum import IntEnum
 import multiprocessing as mp
 import queue
 
-
 from .node import Node, Location
 
 
 class Canvas(IntEnum):
     MPL = 1
     # QT = 2
+
 
 class View(Node):
     canvas = Canvas.MPL

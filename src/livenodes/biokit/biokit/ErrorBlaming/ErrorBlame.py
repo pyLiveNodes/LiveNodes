@@ -3,8 +3,8 @@ import sys
 import unittest
 
 import string
-import re           #regular expressions
-import filecmp      #file comparison
+import re  #regular expressions
+import filecmp  #file comparison
 import os
 import ast
 import glob
@@ -33,16 +33,19 @@ else:
 #outputfile = sys.argv[1]
 #####################################
 
+
 # TODO: think about logging in Python
-def log(level,text):
-	print("Python log: " + str(datetime.datetime.now()) + " - " + level + ": " + text)
+def log(level, text):
+    print("Python log: " + str(datetime.datetime.now()) + " - " + level +
+          ": " + text)
+
 
 pathPrefix = "/home"
 dataSpeechPath = '../../integration_test/_dataSpeech/'
 databasePath = '/home/telaar/db.newDecoderRelativePaths/speech.db'
 tableName = 'TestData'
 
- # connect to the database and get info
+# connect to the database and get info
 database = sqlite3.connect(databasePath)
 database.row_factory = sqlite3.Row
 database.text_factory = str
@@ -64,7 +67,7 @@ gaussMixturesSet.loadDataFile(dataSpeechPath + "_cd/6.dss")
 gmmScorer = GmmFeatureVectorScorer(gaussMixturesSet)
 cacheScorer = CacheFeatureVectorScorer(gmmScorer)
 
-log("Info","Loading dictionary")
+log("Info", "Loading dictionary")
 
 dictionary = Dictionary(atomMap)
 dictionary.registerAttributeHandler('FILLER', NumericValueHandler())
@@ -73,7 +76,7 @@ dictionary.registerAttributeHandler('TOKEN_SCORE', NumericValueHandler())
 dictionary.config().setStartToken("<s>")
 dictionary.config().setEndToken("</s>")
 dictionary.config().setUnknownToken("<UNK>")
-dictionary.readDictionary(dataSpeechPath + "_dict/dictionary");
+dictionary.readDictionary(dataSpeechPath + "_dict/dictionary")
 
 # creation of ErrorBlamer
 errorBlamer = ErrorBlamer(dictionary, 0.7, cacheScorer)
@@ -88,22 +91,28 @@ snapshotsPath = "/data/tmp/GPEN-shrunkSnaps/"
 blameResultsPath = "/data/tmp/GPEN-blameResults/"
 
 # blameLog
-blameLog = open(blameResultsPath + "GPEN-blameLog-70-shrunk" + str(datetime.datetime.today().isoformat()) + ".csv", 'w')
+blameLog = open(
+    blameResultsPath + "GPEN-blameLog-70-shrunk" +
+    str(datetime.datetime.today().isoformat()) + ".csv", 'w')
 
-sqlcmd ="SELECT * FROM " + tableName
+sqlcmd = "SELECT * FROM " + tableName
 print("Now we do " + sqlcmd)
 database_cursor.execute(sqlcmd)
 infos = database_cursor.fetchall()
 for info in infos:
-	if(os.path.exists(referencesPath + str(info['UTTID'])+ ".snp") and os.path.exists(snapshotsPath + str(info['UTTID']) + ".snp")):
-		log("Info","Utterance "+ str(info['UTTID']) + " has complete dataset: Importing snapshots.")
-		refFile = (referencesPath + str(info['UTTID']) + ".snp")
-		snapshotFile = (snapshotsPath + str(info['UTTID']) + ".snp")
-		errorBlamer.loadSnapshots(snapshotFile,refFile)
-		log("Info","Finished loading Snapshots")
+    if (os.path.exists(referencesPath + str(info['UTTID']) + ".snp")
+            and os.path.exists(snapshotsPath + str(info['UTTID']) + ".snp")):
+        log(
+            "Info", "Utterance " + str(info['UTTID']) +
+            " has complete dataset: Importing snapshots.")
+        refFile = (referencesPath + str(info['UTTID']) + ".snp")
+        snapshotFile = (snapshotsPath + str(info['UTTID']) + ".snp")
+        errorBlamer.loadSnapshots(snapshotFile, refFile)
+        log("Info", "Finished loading Snapshots")
 
-		blameLog.write("Blame assignment for " + str(info['UTTID']) + ":\n")
-		blameLog.write(errorBlamer.blameAndWriteUtterance() + "\n\n")
+        blameLog.write("Blame assignment for " + str(info['UTTID']) + ":\n")
+        blameLog.write(errorBlamer.blameAndWriteUtterance() + "\n\n")
 
-	else:
-		log("Info","Utterance "+ str(info['UTTID']) + " is incomplete. Skipping...")
+    else:
+        log("Info",
+            "Utterance " + str(info['UTTID']) + " is incomplete. Skipping...")

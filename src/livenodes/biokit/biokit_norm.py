@@ -3,6 +3,7 @@ from livenodes.biokit.biokit import BioKIT
 
 from . import local_registry
 
+
 @local_registry.register
 class Biokit_norm(Node):
     """

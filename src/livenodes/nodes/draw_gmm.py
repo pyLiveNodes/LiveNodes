@@ -6,6 +6,7 @@ from .draw_scatter import Draw_scatter
 
 from . import local_registry
 
+
 @local_registry.register
 class Draw_gmm(Draw_scatter):
     """

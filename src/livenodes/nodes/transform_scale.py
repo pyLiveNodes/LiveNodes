@@ -4,6 +4,7 @@ from livenodes.core.node import Node
 
 from . import local_registry
 
+
 @local_registry.register
 class Transform_scale(Node):
     channels_in = ['Data']

@@ -4,6 +4,7 @@ from livenodes.core.node import Node
 
 from . import local_registry
 
+
 @local_registry.register
 class Transform_window(Node):
     channels_in = ['Data']
@@ -12,7 +13,7 @@ class Transform_window(Node):
     category = "Transform"
     description = ""
 
-    example_init = {            
+    example_init = {
         "length": 100,
         "overlap": 0.0,
         "name": "Name",

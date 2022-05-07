@@ -25,21 +25,22 @@ if char:
     airdb.load_janus_dataset(dataset_file, "l25_rh_norp_all")
 
     #retrieve the created dataset from db and make cross-val sets
-    charset = airdb.session.query(db.Dataset).filter_by(
-                name="l25_rh_norp_all").one()
+    charset = airdb.session.query(
+        db.Dataset).filter_by(name="l25_rh_norp_all").one()
     charlist = [[r.id, r.experiment.string_id, r] for r in charset.recordings]
     cv = crossvalidation.CrossValidation(seed)
     cvgen = cv.createPerKeyCrossvalidation(charlist, 1)
     for fold in cvgen:
         trainset = db.Dataset()
-        trainset.name = "%s_trainset_fold_%s" % (charset.name, fold['keyValue'])
+        trainset.name = "%s_trainset_fold_%s" % (charset.name,
+                                                 fold['keyValue'])
         trainset.recordings = [x[2] for x in fold['train']]
         airdb.insert_unique(trainset)
         testset = db.Dataset()
         testset.name = "%s_testset_fold_%s" % (charset.name, fold['keyValue'])
         testset.recordings = [x[2] for x in fold['test']]
         airdb.insert_unique(testset)
-        
+
 if word:
     print("generating word datasets")
 
@@ -47,14 +48,15 @@ if word:
     airdb.load_janus_dataset(wordset_file, "words_norp_all")
 
     #retrieve the created dataset from db and make cross-val sets
-    wordset = airdb.session.query(db.Dataset).filter_by(
-                name="words_norp_all").one()
+    wordset = airdb.session.query(
+        db.Dataset).filter_by(name="words_norp_all").one()
     wordlist = [[r.id, r.experiment.string_id, r] for r in wordset.recordings]
     cv = crossvalidation.CrossValidation(seed)
     cvgen = cv.createPerKeyCrossvalidation(wordlist, 1)
     for fold in cvgen:
         trainset = db.Dataset()
-        trainset.name = "%s_trainset_fold_%s" % (wordset.name, fold['keyValue'])
+        trainset.name = "%s_trainset_fold_%s" % (wordset.name,
+                                                 fold['keyValue'])
         trainset.recordings = [x[2] for x in fold['train']]
         airdb.insert_unique(trainset)
         testset = db.Dataset()
@@ -76,7 +78,7 @@ if sen:
                 db.Experiment.string_id.in_(
                 ["053", "054", "055", "056", "057", "058", "059", "060", "061"])).\
                 subquery()
-                
+
     #REMARK: Using different crossval class than above, has slightly different API
 
     cv = crossval.CrossValidation(airdb.session, seed)
@@ -99,7 +101,7 @@ if sen:
         dataset.name = basename + "_testset_fold_" + fold['keyval']
         dataset.recordings = recordings
         airdb.insert_unique(dataset)
-    
+
 if wax:
     print("generating wax datasets")
 
@@ -114,7 +116,7 @@ if wax:
                 db.Experiment.string_id.in_(
                 ["070", "071", "072", "073", "074", "075", "076", "077"])).\
                 subquery()
-                
+
     #REMARK: Using different crossval class than above, has slightly different API
 
     cv = crossval.CrossValidation(airdb.session, seed)
@@ -152,7 +154,7 @@ if wax_no072:
                 db.Experiment.string_id.in_(
                 ["070", "071", "073", "074", "075", "076", "077"])).\
                 subquery()
-                
+
     #REMARK: Using different crossval class than above, has slightly different API
 
     cv = crossval.CrossValidation(airdb.session, seed)
@@ -190,7 +192,7 @@ if sen_and_wax_no72:
                 db.Experiment.string_id.in_(
                 ["053", "054", "055", "056", "057", "058", "059", "060", "061", "070", "071", "073", "074", "075", "076", "077"])).\
                 subquery()
-                
+
     #REMARK: Using different crossval class than above, has slightly different API
 
     cv = crossval.CrossValidation(airdb.session, seed)
@@ -202,7 +204,11 @@ if sen_and_wax_no72:
         print(trainids)
         #recordings = airdb.session.query(db.Recording).\
         #                filter(db.Recording.id.in_(trainids)).all()
-        recordings = [airdb.session.query(db.Recording).filter(db.Recording.id == x).one() for x in trainids]
+        recordings = [
+            airdb.session.query(
+                db.Recording).filter(db.Recording.id == x).one()
+            for x in trainids
+        ]
         dataset = db.Dataset()
         dataset.name = basename + "_trainset_fold_" + fold['keyval']
         dataset.recordings = recordings
@@ -215,9 +221,5 @@ if sen_and_wax_no72:
         dataset.name = basename + "_testset_fold_" + fold['keyval']
         dataset.recordings = recordings
         airdb.insert_unique(dataset)
-
-
-
-
 
 airdb.session.commit()

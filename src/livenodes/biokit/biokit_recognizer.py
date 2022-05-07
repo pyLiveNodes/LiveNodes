@@ -7,6 +7,7 @@ import json
 
 from . import local_registry
 
+
 @local_registry.register
 class Biokit_recognizer(Node):
     """
@@ -54,6 +55,7 @@ class Biokit_recognizer(Node):
     def _settings(self):
         return {\
             # "batch": self.batch,
+
 
             "token_insertion_penalty": self.token_insertion_penalty,
             "model_path": self.model_path

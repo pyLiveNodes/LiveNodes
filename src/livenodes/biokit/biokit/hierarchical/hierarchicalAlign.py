@@ -6,6 +6,7 @@ import sys
 
 import BioKIT
 
+
 def align(reference, hypothesis):
     """
     Calculate word level alignment between reference and hypothesis
@@ -42,15 +43,17 @@ def align(reference, hypothesis):
     # initialize full cumulative score matrix #
     # --------------------------------------- #
 
-    cummulativeScores = [[100000 for col in range(0, hypothesisLength+1)] for row in range(0, referenceLength+1)]
-    bp = [[-1 for col in range(0, hypothesisLength+1)] for row in range(0, referenceLength+1)]
+    cummulativeScores = [[100000 for col in range(0, hypothesisLength + 1)]
+                         for row in range(0, referenceLength + 1)]
+    bp = [[-1 for col in range(0, hypothesisLength + 1)]
+          for row in range(0, referenceLength + 1)]
 
     cummulativeScores[0][0] = 0
-    for refX in range(1, referenceLength+1):
-        cummulativeScores[refX][0] = cummulativeScores[refX-1][0] + 1
+    for refX in range(1, referenceLength + 1):
+        cummulativeScores[refX][0] = cummulativeScores[refX - 1][0] + 1
         bp[refX][0] = DEL
-    for hyX in range(1, hypothesisLength+1):
-        cummulativeScores[0][hyX] = cummulativeScores[0][hyX-1] + 1
+    for hyX in range(1, hypothesisLength + 1):
+        cummulativeScores[0][hyX] = cummulativeScores[0][hyX - 1] + 1
         bp[0][hyX] = INS
 
     # ---------------- #
@@ -62,22 +65,25 @@ def align(reference, hypothesis):
         hyX = 1
         for hyW in splittedHypothesis[:]:
 
-            newscore = cummulativeScores[refX-1][hyX] + 1                                 # try transition 0: insertion
+            newscore = cummulativeScores[
+                refX - 1][hyX] + 1  # try transition 0: insertion
             if newscore < cummulativeScores[refX][hyX]:
                 bp[refX][hyX] = DEL
                 cummulativeScores[refX][hyX] = newscore
 
-            if splittedTokenSequence[refX-1] == splittedHypothesis[hyX-1]:                                        # try transition 1: substitution
-                newscore = cummulativeScores[refX-1][hyX-1]
+            if splittedTokenSequence[refX - 1] == splittedHypothesis[
+                    hyX - 1]:  # try transition 1: substitution
+                newscore = cummulativeScores[refX - 1][hyX - 1]
                 DIFF = EQU
             else:
-                newscore = cummulativeScores[refX-1][hyX-1] + 1
+                newscore = cummulativeScores[refX - 1][hyX - 1] + 1
                 DIFF = SUB
             if newscore < cummulativeScores[refX][hyX]:
                 bp[refX][hyX] = DIFF
                 cummulativeScores[refX][hyX] = newscore
 
-            newscore = cummulativeScores[refX][hyX-1] + 1                                 # try transition 2: deletion
+            newscore = cummulativeScores[refX][
+                hyX - 1] + 1  # try transition 2: deletion
             if newscore < cummulativeScores[refX][hyX]:
                 bp[refX][hyX] = INS
                 cummulativeScores[refX][hyX] = newscore
@@ -92,7 +98,8 @@ def align(reference, hypothesis):
     refX = referenceLength
     hyX = hypothesisLength
 
-    return (cummulativeScores[refX][hyX], bp, referenceLength, hypothesisLength, splittedTokenSequence, splittedHypothesis)
+    return (cummulativeScores[refX][hyX], bp, referenceLength,
+            hypothesisLength, splittedTokenSequence, splittedHypothesis)
 
 
 def tokenErrorRate(reference, hypothesis):
@@ -163,7 +170,7 @@ def tokenErrorRateInsDelSubCount(reference, hypothesis):
 
     currentField = bp[referenceLength][hypothesisLength]
 
-    i = referenceLength   # counter for horizontal position change in DP matrix
+    i = referenceLength  # counter for horizontal position change in DP matrix
     j = hypothesisLength  # counter for vertical position change in DP matrix
 
     subList = []
@@ -178,29 +185,37 @@ def tokenErrorRateInsDelSubCount(reference, hypothesis):
 
         if currentField == 1:  # in case of sub
             subCount = subCount + 1
-            subList1 = [splittedTokenSequence[i-1], splittedHypothesis[j-1]]
-            subList.insert(0, subList1)  # insert to the beginning of the sub list
-            currentField = bp[i-1][j-1]
+            subList1 = [
+                splittedTokenSequence[i - 1], splittedHypothesis[j - 1]
+            ]
+            subList.insert(0,
+                           subList1)  # insert to the beginning of the sub list
+            currentField = bp[i - 1][j - 1]
             i = i - 1
             j = j - 1
         elif currentField == 2:  # in case of ins
             insCount = insCount + 1
-            insList.insert(0, splittedHypothesis[j-1])  # insert to the beginning of the ins list
-            currentField = bp[i][j-1]  # change position
+            insList.insert(0, splittedHypothesis[
+                j - 1])  # insert to the beginning of the ins list
+            currentField = bp[i][j - 1]  # change position
             j = j - 1
         elif currentField == 3:  # in case of del
             delCount = delCount + 1
-            delList.insert(0, splittedTokenSequence[i-1])  # insert to the beginning of the del list
-            currentField = bp[i-1][j]
+            delList.insert(0, splittedTokenSequence[
+                i - 1])  # insert to the beginning of the del list
+            currentField = bp[i - 1][j]
             i = i - 1
         elif currentField == 0:  # in case of equal
             eqCount = eqCount + 1
-            currentField = bp[i-1][j-1]
+            currentField = bp[i - 1][j - 1]
             i = i - 1
             j = j - 1
 
-    InsDelSubCount = [eqCount, insCount, delCount, subCount]  # list with numbers of equals, insertions, deletions and substitutions
-    InsDelSub = [InsDelSubCount, insList, delList, subList]   # list with numbers and tokens
+    InsDelSubCount = [
+        eqCount, insCount, delCount, subCount
+    ]  # list with numbers of equals, insertions, deletions and substitutions
+    InsDelSub = [InsDelSubCount, insList, delList,
+                 subList]  # list with numbers and tokens
 
     return InsDelSub  # return list with numbers and tokens
 
@@ -226,7 +241,7 @@ def getAlignment(reference, hypothesis):
 
     currentField = bp[referenceLength][hypothesisLength]
 
-    i = referenceLength   # counter for horizontal position change in DP matrix
+    i = referenceLength  # counter for horizontal position change in DP matrix
     j = hypothesisLength  # counter for vertical position change in DP matrix
 
     import collections
@@ -239,21 +254,21 @@ def getAlignment(reference, hypothesis):
         # Note: reference on horizontal lines, hypothesis on vertical lines
 
         if currentField == 1:  # in case of sub
-            alignment[i-1].insert(0, (j-1, "sub"))
-            currentField = bp[i-1][j-1]
+            alignment[i - 1].insert(0, (j - 1, "sub"))
+            currentField = bp[i - 1][j - 1]
             i = i - 1
             j = j - 1
         elif currentField == 2:  # in case of ins
-            alignment[i-1].insert(0, (j-1, "ins"))
-            currentField = bp[i][j-1]
+            alignment[i - 1].insert(0, (j - 1, "ins"))
+            currentField = bp[i][j - 1]
             j = j - 1
         elif currentField == 3:  # in case of del
-            alignment[i-1].insert(0, (j-1, "del"))
-            currentField = bp[i-1][j]
+            alignment[i - 1].insert(0, (j - 1, "del"))
+            currentField = bp[i - 1][j]
             i = i - 1
         elif currentField == 0:  # in case of equal
-            alignment[i-1].insert(0, (j-1, "match"))
-            currentField = bp[i-1][j-1]
+            alignment[i - 1].insert(0, (j - 1, "match"))
+            currentField = bp[i - 1][j - 1]
             i = i - 1
             j = j - 1
 
@@ -298,15 +313,22 @@ def tokenErrorRateForAlignment(alignment):
 
     return token_error_rate, equ_count, ins_count, del_count, sub_count
 
+
 def alignHierarchicalPythonOnly(reference, hypothesis):
     insertionPenalties = dict()
     deletionPenalties = dict()
     substitutionPenalties = dict()
 
-    return alignHierarchicalWithPenaltiesPythonOnly(reference, hypothesis, insertionPenalties, deletionPenalties, substitutionPenalties)
+    return alignHierarchicalWithPenaltiesPythonOnly(reference, hypothesis,
+                                                    insertionPenalties,
+                                                    deletionPenalties,
+                                                    substitutionPenalties)
 
 
-def alignHierarchicalWithPenaltiesPythonOnly(reference, hypothesis, insertionPenalties, deletionPenalties, substitutionPenalties):
+def alignHierarchicalWithPenaltiesPythonOnly(reference, hypothesis,
+                                             insertionPenalties,
+                                             deletionPenalties,
+                                             substitutionPenalties):
     """
     Assumes { } to be the grouping of substreams and
     assumes | to be the division between different substreams
@@ -334,27 +356,41 @@ def alignHierarchicalWithPenaltiesPythonOnly(reference, hypothesis, insertionPen
 
     # Retrieve hierarchy of streams, assumes that hierarchy is the same for reference and hypothesis
     # TODO check whether hierarchies for reference and hypothesis are equal, do we want to handle differing hierarchies?
-    [numberOfStreams, numberOfSubStreams, numberOfFinestStreams, firstSubStreamIndex] = retrieveHierarchy(splittedReference)
+    [
+        numberOfStreams, numberOfSubStreams, numberOfFinestStreams,
+        firstSubStreamIndex
+    ] = retrieveHierarchy(splittedReference)
 
     finestStreamCount = numberOfFinestStreams[0]
-    referenceSubStream = [ [] for col in range(finestStreamCount) ]
-    referenceStreamIndices = [ [] for col in range(finestStreamCount) ]
-    hypoSubStream = [ [] for col in range(finestStreamCount)]
-    hypoStreamIndices = [ [] for col in range(finestStreamCount) ]
+    referenceSubStream = [[] for col in range(finestStreamCount)]
+    referenceStreamIndices = [[] for col in range(finestStreamCount)]
+    hypoSubStream = [[] for col in range(finestStreamCount)]
+    hypoStreamIndices = [[] for col in range(finestStreamCount)]
 
-    retrieveFinestStreamRepresentation(0, firstSubStreamIndex, splittedReference, referenceSubStream, referenceStreamIndices, numberOfSubStreams, numberOfFinestStreams)
+    retrieveFinestStreamRepresentation(0, firstSubStreamIndex,
+                                       splittedReference, referenceSubStream,
+                                       referenceStreamIndices,
+                                       numberOfSubStreams,
+                                       numberOfFinestStreams)
 
-    for i in range(len(referenceSubStream)) :
-        referenceSubStream[i].insert(0,' ') #This is done to enable the dtw calculation to delete or substitute the first value
+    for i in range(len(referenceSubStream)):
+        referenceSubStream[i].insert(
+            0, ' '
+        )  #This is done to enable the dtw calculation to delete or substitute the first value
         print(referenceSubStream[i])
 
     #Divide hypo into finestStreams
-    splittedHypo = hypothesis.split();
+    splittedHypo = hypothesis.split()
     #Changes hypoSubStream and hypoStreamIndices
-    retrieveFinestStreamRepresentation(0, firstSubStreamIndex, splittedHypo, hypoSubStream, hypoStreamIndices, numberOfSubStreams, numberOfFinestStreams)
+    retrieveFinestStreamRepresentation(0, firstSubStreamIndex, splittedHypo,
+                                       hypoSubStream, hypoStreamIndices,
+                                       numberOfSubStreams,
+                                       numberOfFinestStreams)
 
-    for i in range(len(hypoSubStream)) :
-        hypoSubStream[i].insert(0,' ') #This is done to enable the dtw calculation to insert or substitute the first value
+    for i in range(len(hypoSubStream)):
+        hypoSubStream[i].insert(
+            0, ' '
+        )  #This is done to enable the dtw calculation to insert or substitute the first value
         print(hypoSubStream[i])
 
     #TODO:   Start here! Needed params:
@@ -374,22 +410,34 @@ def alignHierarchicalWithPenaltiesPythonOnly(reference, hypothesis, insertionPen
     backPointerTemplate = []
     for dimension in range(len(referenceSubStream) + len(hypoSubStream)):
         backPointerTemplate.append(0)
-    entry = [sys.maxsize, backPointerTemplate] #initial score, initial back pointer
-    lastSubSpace = initializeCummulativeScores(lastSubSpace, hypoSubStream, 0, entry)
+    entry = [sys.maxsize,
+             backPointerTemplate]  #initial score, initial back pointer
+    lastSubSpace = initializeCummulativeScores(lastSubSpace, hypoSubStream, 0,
+                                               entry)
 
     #Create dtw matrix for reference and add hypo dtw matrix to each field in the reference dtw matrix
     cummulativeScores = []
 
-    cummulativeScores = initializeCummulativeScores(cummulativeScores, referenceSubStream, 0, lastSubSpace)
+    cummulativeScores = initializeCummulativeScores(cummulativeScores,
+                                                    referenceSubStream, 0,
+                                                    lastSubSpace)
 
     #Create masks for tokens which span more than one finest stream to mask invalid fields in the dtw matrix
-    currentPositions = [ 0 for col in range(len(referenceSubStream))]
+    currentPositions = [0 for col in range(len(referenceSubStream))]
 
-    [referenceMasks, referenceMasksIndices, currentPositions] = createMaskForFieldsRecursive(0, firstSubStreamIndex, splittedReference, referenceSubStream, currentPositions, numberOfSubStreams, numberOfFinestStreams)
+    [referenceMasks, referenceMasksIndices, currentPositions
+     ] = createMaskForFieldsRecursive(0, firstSubStreamIndex,
+                                      splittedReference, referenceSubStream,
+                                      currentPositions, numberOfSubStreams,
+                                      numberOfFinestStreams)
 
-    currentPositions = [ 0 for col in range(len(referenceSubStream))]
+    currentPositions = [0 for col in range(len(referenceSubStream))]
 
-    [hypoMasks, hypoMasksIndices, currentPositions] = createMaskForFieldsRecursive(0, firstSubStreamIndex, splittedHypo, hypoSubStream, currentPositions, numberOfSubStreams, numberOfFinestStreams)
+    [hypoMasks, hypoMasksIndices, currentPositions
+     ] = createMaskForFieldsRecursive(0, firstSubStreamIndex, splittedHypo,
+                                      hypoSubStream, currentPositions,
+                                      numberOfSubStreams,
+                                      numberOfFinestStreams)
 
     tokenSequences = referenceSubStream[:]
     tokenSequences.extend(hypoSubStream)
@@ -399,16 +447,20 @@ def alignHierarchicalWithPenaltiesPythonOnly(reference, hypothesis, insertionPen
         mask = referenceMasks[index]
         maskIndices = referenceMasksIndices[index]
 
-        cummulativeScores = maskCummulativeScoresMatrixRecursive(cummulativeScores[:], tokenSequences, mask, maskIndices, 0, 0)
+        cummulativeScores = maskCummulativeScoresMatrixRecursive(
+            cummulativeScores[:], tokenSequences, mask, maskIndices, 0, 0)
 
     for index in range(len(hypoMasks)):
         mask = hypoMasks[index]
         maskIndices = hypoMasksIndices[index]
 
-        cummulativeScores = maskCummulativeScoresMatrixRecursive(cummulativeScores[:], tokenSequences, mask, maskIndices, 0, len(referenceSubStream))
+        cummulativeScores = maskCummulativeScoresMatrixRecursive(
+            cummulativeScores[:], tokenSequences, mask, maskIndices, 0,
+            len(referenceSubStream))
 
     #Calculate DTW Scores
-    cummulativeScores = initializeFirstFieldRecursive(cummulativeScores[:], 0, len(tokenSequences))
+    cummulativeScores = initializeFirstFieldRecursive(cummulativeScores[:], 0,
+                                                      len(tokenSequences))
 
     #TODO store backpointers for each field
 
@@ -420,15 +472,21 @@ def alignHierarchicalWithPenaltiesPythonOnly(reference, hypothesis, insertionPen
         withPenalties = True
     if (len(penalties[2]) > 0):
         withPenalties = True
-    cummulativeScores = iterateOverFieldsRecursive(cummulativeScores[:], 0, len(tokenSequences), [], cummulativeScores[:], tokenSequences, penalties, withPenalties)
+    cummulativeScores = iterateOverFieldsRecursive(cummulativeScores[:], 0,
+                                                   len(tokenSequences), [],
+                                                   cummulativeScores[:],
+                                                   tokenSequences, penalties,
+                                                   withPenalties)
 
     result = retrieveFinalScore(cummulativeScores[:], 0, len(tokenSequences))
 
-#    print 'cummulativeScores', cummulativeScores
+    #    print 'cummulativeScores', cummulativeScores
 
     #Find best path through DTW matrix
 
-    finalError = result / (finestStreamCount * 1.0) #TODO This is due to the fact, that we do not use the partial scores for the finest stream yet
+    finalError = result / (
+        finestStreamCount * 1.0
+    )  #TODO This is due to the fact, that we do not use the partial scores for the finest stream yet
 
     #TODO Calculate Insertions, Deletions and Substitutions based on backPointer table, and finestStreamRepresentations
     #Initialize substitution, deletion and insertion count for each stream
@@ -456,7 +514,9 @@ def alignHierarchicalWithPenaltiesPythonOnly(reference, hypothesis, insertionPen
             deletions[streamIndex].append(dict())
     for index in range(len(hypoSubStream)):
         currentPositions.append(len(hypoSubStream[index]) - 1)
-    currentBackPointer = retrievePositionValue(cummulativeScores, 0, len(tokenSequences), currentPositions)[1]
+    currentBackPointer = retrievePositionValue(cummulativeScores, 0,
+                                               len(tokenSequences),
+                                               currentPositions)[1]
     #Prepare error count variables for each finest stream
     insCount = [0 for stream in range(len(referenceSubStream))]
     subCount = [0 for stream in range(len(referenceSubStream))]
@@ -472,37 +532,57 @@ def alignHierarchicalWithPenaltiesPythonOnly(reference, hypothesis, insertionPen
     #while not in first field
     while (inFirstField(currentPositions) == False):
 
-#        print 'CurrentPosition is: ', currentPositions
-#        print 'BackPointer is: ', currentBackPointer
+        #        print 'CurrentPosition is: ', currentPositions
+        #        print 'BackPointer is: ', currentBackPointer
         #for all dimensions
         backTraced = False
         for dimension in range(offset):
             #if substitution
-            currentReferenceToken = referenceSubStream[dimension][currentPositions[dimension]]
-            currentHypoToken = hypoSubStream[dimension][currentPositions[dimension + offset]]
-            if ((currentBackPointer[dimension] == -1) & (currentBackPointer[dimension + offset] == -1)):
+            currentReferenceToken = referenceSubStream[dimension][
+                currentPositions[dimension]]
+            currentHypoToken = hypoSubStream[dimension][currentPositions[
+                dimension + offset]]
+            if ((currentBackPointer[dimension] == -1) &
+                (currentBackPointer[dimension + offset] == -1)):
                 backTraced = True
                 maxLength = len(currentReferenceToken)
                 if (len(currentHypoToken) > maxLength):
                     maxLength = len(currentHypoToken)
                 if (currentReferenceToken != currentHypoToken):
                     subCount[dimension] = subCount[dimension] + 1
-                    fromStream = referenceStreamIndices[dimension][currentPositions[dimension] - 1] # referenceStream has a leading ' '
-                    toStream = hypoStreamIndices[dimension][currentPositions[dimension + offset] - 1] # hypoStream has a leading ' '
-                    substitutions[fromStream][toStream][dimension] = storeSubstitution(substitutions[fromStream][toStream][dimension], currentReferenceToken, currentHypoToken)
-                    alignedReferenceAtFinestStream[dimension].insert(0, string.ljust(currentReferenceToken.upper(),maxLength))
-                    alignedHypoAtFinestStream[dimension].insert(0, string.ljust(currentHypoToken.upper(),maxLength))
+                    fromStream = referenceStreamIndices[dimension][
+                        currentPositions[dimension] -
+                        1]  # referenceStream has a leading ' '
+                    toStream = hypoStreamIndices[dimension][
+                        currentPositions[dimension + offset] -
+                        1]  # hypoStream has a leading ' '
+                    substitutions[fromStream][toStream][
+                        dimension] = storeSubstitution(
+                            substitutions[fromStream][toStream][dimension],
+                            currentReferenceToken, currentHypoToken)
+                    alignedReferenceAtFinestStream[dimension].insert(
+                        0,
+                        string.ljust(currentReferenceToken.upper(), maxLength))
+                    alignedHypoAtFinestStream[dimension].insert(
+                        0, string.ljust(currentHypoToken.upper(), maxLength))
                 else:
-                    alignedReferenceAtFinestStream[dimension].insert(0, string.ljust(currentReferenceToken,maxLength))
-                    alignedHypoAtFinestStream[dimension].insert(0, string.ljust(currentHypoToken,maxLength))
+                    alignedReferenceAtFinestStream[dimension].insert(
+                        0, string.ljust(currentReferenceToken, maxLength))
+                    alignedHypoAtFinestStream[dimension].insert(
+                        0, string.ljust(currentHypoToken, maxLength))
 
             #elif deletion
-            elif ((currentBackPointer[dimension] == -1) & (currentBackPointer[dimension + offset] == 0)):
+            elif ((currentBackPointer[dimension] == -1) &
+                  (currentBackPointer[dimension + offset] == 0)):
                 backTraced = True
                 delCount[dimension] = delCount[dimension] + 1
-                streamIndex = referenceStreamIndices[dimension][currentPositions[dimension] - 1] # referenceStream has a leading ' '
-                deletions[streamIndex][dimension] = storeInsertionDeletion(deletions[streamIndex][dimension], currentReferenceToken)
-                alignedReferenceAtFinestStream[dimension].insert(0, currentReferenceToken.upper())
+                streamIndex = referenceStreamIndices[dimension][
+                    currentPositions[dimension] -
+                    1]  # referenceStream has a leading ' '
+                deletions[streamIndex][dimension] = storeInsertionDeletion(
+                    deletions[streamIndex][dimension], currentReferenceToken)
+                alignedReferenceAtFinestStream[dimension].insert(
+                    0, currentReferenceToken.upper())
                 dummyHypoToken = ''
                 for index in range(len(currentReferenceToken)):
                     list = []
@@ -511,78 +591,126 @@ def alignHierarchicalWithPenaltiesPythonOnly(reference, hypothesis, insertionPen
                     dummyHypoToken = string.join(list, '')
                 alignedHypoAtFinestStream[dimension].insert(0, dummyHypoToken)
 
-
             #elif insertion
-            elif ((currentBackPointer[dimension] == 0) & (currentBackPointer[dimension + offset] == -1)):
+            elif ((currentBackPointer[dimension] == 0) &
+                  (currentBackPointer[dimension + offset] == -1)):
                 backTraced = True
                 insCount[dimension] = insCount[dimension] + 1
-                streamIndex = hypoStreamIndices[dimension][currentPositions[dimension + offset] - 1] # hypoStream has a leading ' '
-                insertions[streamIndex][dimension] = storeInsertionDeletion(insertions[streamIndex][dimension], currentHypoToken)
+                streamIndex = hypoStreamIndices[dimension][
+                    currentPositions[dimension + offset] -
+                    1]  # hypoStream has a leading ' '
+                insertions[streamIndex][dimension] = storeInsertionDeletion(
+                    insertions[streamIndex][dimension], currentHypoToken)
                 dummyReferenceToken = ''
                 for index in range(len(currentHypoToken)):
                     list = []
                     list.append(dummyReferenceToken)
                     list.append('*')
                     dummyReferenceToken = string.join(list, '')
-                alignedReferenceAtFinestStream[dimension].insert(0, dummyReferenceToken)
-                alignedHypoAtFinestStream[dimension].insert(0, currentHypoToken.upper())
+                alignedReferenceAtFinestStream[dimension].insert(
+                    0, dummyReferenceToken)
+                alignedHypoAtFinestStream[dimension].insert(
+                    0, currentHypoToken.upper())
 
             #else Could not backtrace
-            currentPositions[dimension] = currentPositions[dimension] + currentBackPointer[dimension]
-            currentPositions[dimension + offset] = currentPositions[dimension + offset] + currentBackPointer[dimension + offset]
+            currentPositions[dimension] = currentPositions[
+                dimension] + currentBackPointer[dimension]
+            currentPositions[dimension + offset] = currentPositions[
+                dimension + offset] + currentBackPointer[dimension + offset]
 
         if (backTraced == False):
-            print('Could not backtrace at position ',currentPositions)
-        currentBackPointer = retrievePositionValue(cummulativeScores, 0, len(tokenSequences), currentPositions)[1]
+            print('Could not backtrace at position ', currentPositions)
+        currentBackPointer = retrievePositionValue(cummulativeScores, 0,
+                                                   len(tokenSequences),
+                                                   currentPositions)[1]
     insDelSubCounts = [insCount, delCount, subCount]
-    alignedSequences = [alignedReferenceAtFinestStream, alignedHypoAtFinestStream]
+    alignedSequences = [
+        alignedReferenceAtFinestStream, alignedHypoAtFinestStream
+    ]
     insDelSubErrors = [insertions, deletions, substitutions]
     print('leaving alignHierarchical')
 
     #TODO:    End here!
 
-    return [finalError, referenceSubStream, hypoSubStream, alignedSequences, insDelSubCounts, insDelSubErrors];
+    return [
+        finalError, referenceSubStream, hypoSubStream, alignedSequences,
+        insDelSubCounts, insDelSubErrors
+    ]
+
 
 def alignHierarchical(reference, hypothesis):
 
     #Create DTW Matrix
 
     #Divide reference into finestStreams
-    splittedReference = reference.split();
+    splittedReference = reference.split()
 
     #Retrieve hierarchy of streams, assumes that hierarchy is the same for reference and hypothesis
     #TODO check whether hierarchies for reference and hypothesis are equal, do we want to handle differing hierarchies?
-    [numberOfStreams, numberOfSubStreams, numberOfFinestStreams, firstSubStreamIndex] = retrieveHierarchy(splittedReference)
+    [
+        numberOfStreams, numberOfSubStreams, numberOfFinestStreams,
+        firstSubStreamIndex
+    ] = retrieveHierarchy(splittedReference)
 
     finestStreamCount = numberOfFinestStreams[0]
-    referenceSubStream = [ [] for col in range(finestStreamCount) ]
-    referenceStreamIndices = [ [] for col in range(finestStreamCount) ]
-    hypoSubStream = [ [] for col in range(finestStreamCount)]
-    hypoStreamIndices = [ [] for col in range(finestStreamCount) ]
+    referenceSubStream = [[] for col in range(finestStreamCount)]
+    referenceStreamIndices = [[] for col in range(finestStreamCount)]
+    hypoSubStream = [[] for col in range(finestStreamCount)]
+    hypoStreamIndices = [[] for col in range(finestStreamCount)]
 
-    retrieveFinestStreamRepresentation(0, firstSubStreamIndex, splittedReference, referenceSubStream, referenceStreamIndices, numberOfSubStreams, numberOfFinestStreams)
+    retrieveFinestStreamRepresentation(0, firstSubStreamIndex,
+                                       splittedReference, referenceSubStream,
+                                       referenceStreamIndices,
+                                       numberOfSubStreams,
+                                       numberOfFinestStreams)
 
-    for i in range(len(referenceSubStream)) :
-        referenceSubStream[i].insert(0,' ') #This is done to enable the dtw calculation to delete or substitute the first value
+    for i in range(len(referenceSubStream)):
+        referenceSubStream[i].insert(
+            0, ' '
+        )  #This is done to enable the dtw calculation to delete or substitute the first value
         print(referenceSubStream[i])
 
     #Divide hypo into finestStreams
-    splittedHypo = hypothesis.split();
-    retrieveFinestStreamRepresentation(0, firstSubStreamIndex, splittedHypo, hypoSubStream, hypoStreamIndices, numberOfSubStreams, numberOfFinestStreams)
+    splittedHypo = hypothesis.split()
+    retrieveFinestStreamRepresentation(0, firstSubStreamIndex, splittedHypo,
+                                       hypoSubStream, hypoStreamIndices,
+                                       numberOfSubStreams,
+                                       numberOfFinestStreams)
 
-    for i in range(len(hypoSubStream)) :
-        hypoSubStream[i].insert(0,' ') #This is done to enable the dtw calculation to insert or substitute the first value
+    for i in range(len(hypoSubStream)):
+        hypoSubStream[i].insert(
+            0, ' '
+        )  #This is done to enable the dtw calculation to insert or substitute the first value
         print(hypoSubStream[i])
 
-    aligner = BioKIT.HierarchicalAlign(referenceSubStream, hypoSubStream, numberOfStreams, numberOfSubStreams,
-                                       numberOfFinestStreams, firstSubStreamIndex, splittedHypo, referenceStreamIndices, hypoStreamIndices, splittedReference)
-    aligner.workout();
+    aligner = BioKIT.HierarchicalAlign(referenceSubStream, hypoSubStream,
+                                       numberOfStreams, numberOfSubStreams,
+                                       numberOfFinestStreams,
+                                       firstSubStreamIndex, splittedHypo,
+                                       referenceStreamIndices,
+                                       hypoStreamIndices, splittedReference)
+    aligner.workout()
 
-    alignedSequences = [aligner.getAlignedReferenceAtFinestStream(), aligner.getAlignedHypoAtFinestStream()]
-    insDelSubCounts = [aligner.getInsCount(), aligner.getDelCount(), aligner.getSubCount()]
-    insDelSubErrors = [aligner.getInsertions(), aligner.getDeletions(), aligner.getSubstitutions()]
+    alignedSequences = [
+        aligner.getAlignedReferenceAtFinestStream(),
+        aligner.getAlignedHypoAtFinestStream()
+    ]
+    insDelSubCounts = [
+        aligner.getInsCount(),
+        aligner.getDelCount(),
+        aligner.getSubCount()
+    ]
+    insDelSubErrors = [
+        aligner.getInsertions(),
+        aligner.getDeletions(),
+        aligner.getSubstitutions()
+    ]
 
-    return [aligner.getFinalError(), referenceSubStream, hypoSubStream, alignedSequences, insDelSubCounts, insDelSubErrors];
+    return [
+        aligner.getFinalError(), referenceSubStream, hypoSubStream,
+        alignedSequences, insDelSubCounts, insDelSubErrors
+    ]
+
 
 #def calculeFScore(insDelSubCounts):
 #    refCount = []
@@ -612,14 +740,17 @@ def alignHierarchical(reference, hypothesis):
 #                    allTokens[dimension] = increaseCount(allTokens[dimension], alignedReferenceSequences[dimension][index])
 #        for token in
 
+
 def storeSubstitution(substitutions, currentReferenceToken, currentHypoToken):
     if (not currentReferenceToken in substitutions):
         substitutions[currentReferenceToken] = dict()
     if (not currentHypoToken in substitutions[currentReferenceToken]):
         substitutions[currentReferenceToken][currentHypoToken] = 1
     else:
-        substitutions[currentReferenceToken][currentHypoToken] = substitutions[currentReferenceToken][currentHypoToken] + 1
+        substitutions[currentReferenceToken][currentHypoToken] = substitutions[
+            currentReferenceToken][currentHypoToken] + 1
     return substitutions
+
 
 def storeInsertionDeletion(insertionDeletion, currentToken):
     if (not currentToken in insertionDeletion):
@@ -628,6 +759,7 @@ def storeInsertionDeletion(insertionDeletion, currentToken):
         insertionDeletion[currentToken] = insertionDeletion[currentToken] + 1
     return insertionDeletion
 
+
 def inFirstField(currentPositions):
     inFirstField = True
     for index in range(len(currentPositions)):
@@ -635,18 +767,25 @@ def inFirstField(currentPositions):
             inFirstField = False
     return inFirstField
 
+
 """
 Return token error rate which is calculated as
 "alignment errors" / "average length of reference in finest streams"
 The calculation is done on the projection of the reference and the hypothesis on their finest streams
 All finest streams are currently weighted equally independent of the stream topology
 """
+
+
 def tokenErrorRateHierarchical(reference, hypothesis):
     insertionPenalties = dict()
     deletionPenalties = dict()
     substitutionPenalties = dict()
 
-    return tokenErrorRateHierarchicalWithPenalties(reference, hypothesis, insertionPenalties, deletionPenalties, substitutionPenalties, False)
+    return tokenErrorRateHierarchicalWithPenalties(reference, hypothesis,
+                                                   insertionPenalties,
+                                                   deletionPenalties,
+                                                   substitutionPenalties,
+                                                   False)
 
 
 """
@@ -655,12 +794,18 @@ Return token error rate which is calculated as
 The calculation is done on the projection of the reference and the hypothesis on their finest streams
 All finest streams are currently weighted equally independent of the stream topology
 """
+
+
 def tokenErrorRateHierarchicalPythonOnly(reference, hypothesis):
     insertionPenalties = dict()
     deletionPenalties = dict()
     substitutionPenalties = dict()
 
-    return tokenErrorRateHierarchicalWithPenalties(reference, hypothesis, insertionPenalties, deletionPenalties, substitutionPenalties, True)
+    return tokenErrorRateHierarchicalWithPenalties(reference, hypothesis,
+                                                   insertionPenalties,
+                                                   deletionPenalties,
+                                                   substitutionPenalties, True)
+
 
 """
 Return token error rate which is calculated as
@@ -668,34 +813,59 @@ Return token error rate which is calculated as
 The calculation is done on the projection of the reference and the hypothesis on their finest streams
 All finest streams are currently weighted equally independent of the stream topology
 """
-def tokenErrorRateHierarchicalWithPenalties(reference, hypothesis, insertionPenalties, deletionPenalties, substitutionPenalties, usePython = True):
+
+
+def tokenErrorRateHierarchicalWithPenalties(reference,
+                                            hypothesis,
+                                            insertionPenalties,
+                                            deletionPenalties,
+                                            substitutionPenalties,
+                                            usePython=True):
 
     print("Entering align.tokenErrorRateHierarchicalWithPenalties")
 
     if (len(insertionPenalties) > 0):
-        print("WARN: Can only calculate error rate with penalties if using python method -> Using python method")
+        print(
+            "WARN: Can only calculate error rate with penalties if using python method -> Using python method"
+        )
         usePython = True
     if (len(deletionPenalties) > 0):
-        print("WARN: Can only calculate error rate with penalties if using python method -> Using python method")
+        print(
+            "WARN: Can only calculate error rate with penalties if using python method -> Using python method"
+        )
         usePython = True
     if (len(substitutionPenalties) > 0):
-        print("WARN: Can only calculate error rate with penalties if using python method -> Using python method")
+        print(
+            "WARN: Can only calculate error rate with penalties if using python method -> Using python method"
+        )
         usePython = True
 
     if (usePython == True):
         print("Using python implementation of alignHierarchical")
-        [errorCount, referenceAtFinestStream, hypoAtFinestStream, alignedSequences, insDelSubCounts, insDelSubErrors] = alignHierarchicalWithPenaltiesPythonOnly(reference, hypothesis, insertionPenalties, deletionPenalties, substitutionPenalties)
+        [
+            errorCount, referenceAtFinestStream, hypoAtFinestStream,
+            alignedSequences, insDelSubCounts, insDelSubErrors
+        ] = alignHierarchicalWithPenaltiesPythonOnly(reference, hypothesis,
+                                                     insertionPenalties,
+                                                     deletionPenalties,
+                                                     substitutionPenalties)
     else:
         print("Using c++ implementation of alignHierarchical")
-        [errorCount, referenceAtFinestStream, hypoAtFinestStream, alignedSequences, insDelSubCounts, insDelSubErrors] = alignHierarchical(reference, hypothesis)
+        [
+            errorCount, referenceAtFinestStream, hypoAtFinestStream,
+            alignedSequences, insDelSubCounts, insDelSubErrors
+        ] = alignHierarchical(reference, hypothesis)
 
-	#The reference length is the average over the projections of the reference into the finest streams
+#The reference length is the average over the projections of the reference into the finest streams
     referenceLength = 0.0
     finestStreamCount = len(referenceAtFinestStream)
     for index in range(finestStreamCount):
-        for position in range(1,len(referenceAtFinestStream[index])): # We need to skip the 0th entry since we have a leading ' ' for each reference sequence
+        for position in range(
+                1, len(referenceAtFinestStream[index])
+        ):  # We need to skip the 0th entry since we have a leading ' ' for each reference sequence
             if (referenceAtFinestStream[index][position] in deletionPenalties):
-                referenceLength += deletionPenalties[referenceAtFinestStream[index][position]]
+                referenceLength += deletionPenalties[
+                    referenceAtFinestStream[index][position]]
             else:
                 referenceLength += 1
     referenceLength = referenceLength / (finestStreamCount * 1.0)
@@ -707,23 +877,28 @@ def tokenErrorRateHierarchicalWithPenalties(reference, hypothesis, insertionPena
         print('Aligned Hypothesis: ', alignedSequences[1][dimension])
 
         for dimension in range(len(insDelSubCounts[2])):
-                print('Dimension ', dimension)
-                print('  Insertions', insDelSubCounts[0][dimension])
-                print('  Deletions', insDelSubCounts[1][dimension])
-                print('  Substitutions', insDelSubCounts[2][dimension])
+            print('Dimension ', dimension)
+            print('  Insertions', insDelSubCounts[0][dimension])
+            print('  Deletions', insDelSubCounts[1][dimension])
+            print('  Substitutions', insDelSubCounts[2][dimension])
 
         for fromStream in range(len(insDelSubErrors[2])):
             for toStream in range(len(insDelSubErrors[2][fromStream])):
                 print('Stream (from -> to): ', fromStream, ' -> ', toStream)
-                for dimension in range(len(insDelSubErrors[2][fromStream][toStream])):
-                    print('Dimension: ',dimension)
-                    for key in insDelSubErrors[2][fromStream][toStream][dimension]:
-                        for value in insDelSubErrors[2][fromStream][toStream][dimension][key]:
-                            print(key, '-> ', value, insDelSubErrors[2][fromStream][toStream][dimension][key][value])
+                for dimension in range(
+                        len(insDelSubErrors[2][fromStream][toStream])):
+                    print('Dimension: ', dimension)
+                    for key in insDelSubErrors[2][fromStream][toStream][
+                            dimension]:
+                        for value in insDelSubErrors[2][fromStream][toStream][
+                                dimension][key]:
+                            print(
+                                key, '-> ', value, insDelSubErrors[2]
+                                [fromStream][toStream][dimension][key][value])
 
-
-    return [((1.0 * errorCount) / referenceLength), referenceAtFinestStream, hypoAtFinestStream, alignedSequences, insDelSubCounts, insDelSubErrors]
-
+    return [((1.0 * errorCount) / referenceLength), referenceAtFinestStream,
+            hypoAtFinestStream, alignedSequences, insDelSubCounts,
+            insDelSubErrors]
 """
 This method goes through the token sequence in breadth first search and retrieves the hierarchy of the streams.
 Param tokenSequence is the token sequence for which the stream hierarchy has to be retrieved
@@ -731,6 +906,8 @@ Return numberOfSubStreams Amount of sub streams for each stream
 Return numberOfFinestStreams Amount of finest streams belonging to each stream
 Return firstSubStreamIndex Index of the first sub stream of each stream
 """
+
+
 def retrieveHierarchy(tokenSequence):
     maxStreamIndexForHierarchy = 0
     #Contains a list of: the partial token sequence, the stream index and the parent stream indices
@@ -744,20 +921,22 @@ def retrieveHierarchy(tokenSequence):
         for streamPart in streamParts:
             currentPosition = 0
             #while not at the end of the token sequence
-            while (currentPosition < len(streamPart[0])) :
+            while (currentPosition < len(streamPart[0])):
                 #Retrieve next entry: Either { Foo bar { ... } } or Foo
                 #If starts with { find matching }
-                newCurrentPosition = currentPosition + 1;
-                if (streamPart[0][currentPosition] == '{') :
-                    bracketCount = 1;
-                    while ((bracketCount > 0) & (newCurrentPosition < len(streamPart[0]))) :
+                newCurrentPosition = currentPosition + 1
+                if (streamPart[0][currentPosition] == '{'):
+                    bracketCount = 1
+                    while ((bracketCount > 0) &
+                           (newCurrentPosition < len(streamPart[0]))):
                         if (streamPart[0][newCurrentPosition] == '}'):
                             bracketCount = bracketCount - 1
                         elif (streamPart[0][newCurrentPosition] == '{'):
                             bracketCount = bracketCount + 1
                         newCurrentPosition = newCurrentPosition + 1
                     if (bracketCount == 0):
-                        newStreamPart = streamPart[0][currentPosition + 1 :newCurrentPosition - 1]
+                        newStreamPart = streamPart[0][currentPosition +
+                                                      1:newCurrentPosition - 1]
                     else:
                         print('Error with finding } while parsing', streamPart)
 
@@ -782,13 +961,25 @@ def retrieveHierarchy(tokenSequence):
                             bracketCount = bracketCount - 1
                         elif (newStreamPart[endIndex] == '{'):
                             bracketCount = bracketCount + 1
-                        if ((bracketCount == 0) & (newStreamPart[endIndex] == '|')):
+                        if ((bracketCount == 0) &
+                            (newStreamPart[endIndex] == '|')):
                             if (streamPart[2] == []):
-                                newStreamParts.append([newStreamPart[startIndex:endIndex], subStreamIndex, [streamPart[1]]])
+                                newStreamParts.append([
+                                    newStreamPart[startIndex:endIndex],
+                                    subStreamIndex, [streamPart[1]]
+                                ])
                             elif (len(streamPart[2]) == 1):
-                                newStreamParts.append([newStreamPart[startIndex:endIndex], subStreamIndex, [streamPart[2], streamPart[1]]])
+                                newStreamParts.append([
+                                    newStreamPart[startIndex:endIndex],
+                                    subStreamIndex,
+                                    [streamPart[2], streamPart[1]]
+                                ])
                             else:
-                                newStreamParts.append([newStreamPart[startIndex:endIndex], subStreamIndex, streamPart[2].append(streamPart[1])])
+                                newStreamParts.append([
+                                    newStreamPart[startIndex:endIndex],
+                                    subStreamIndex,
+                                    streamPart[2].append(streamPart[1])
+                                ])
                             startIndex = endIndex + 1
                             subStreamIndex = subStreamIndex + 1
                             subStreamCount = subStreamCount + 1
@@ -798,11 +989,20 @@ def retrieveHierarchy(tokenSequence):
                         endIndex = endIndex + 1
 
                     if (streamPart[2] == []):
-                        newStreamParts.append([newStreamPart[startIndex:], subStreamIndex, [streamPart[1]]])
+                        newStreamParts.append([
+                            newStreamPart[startIndex:], subStreamIndex,
+                            [streamPart[1]]
+                        ])
                     elif (len(streamPart[2]) == 1):
-                        newStreamParts.append([newStreamPart[startIndex:], subStreamIndex, [streamPart[2], streamPart[1]]])
+                        newStreamParts.append([
+                            newStreamPart[startIndex:], subStreamIndex,
+                            [streamPart[2], streamPart[1]]
+                        ])
                     else:
-                        newStreamParts.append([newStreamPart[startIndex:], subStreamIndex, streamPart[2].append(streamPart[1])])
+                        newStreamParts.append([
+                            newStreamPart[startIndex:], subStreamIndex,
+                            streamPart[2].append(streamPart[1])
+                        ])
 
                     subStreamCount = subStreamCount + 1
                     if (len(numberOfFinestStreams) <= subStreamIndex):
@@ -812,48 +1012,81 @@ def retrieveHierarchy(tokenSequence):
                     if (retrieveNewValues == True):
                         for index in streamPart[2]:
                             numberOfFinestStreams[index] += subStreamCount - 1
-                        numberOfFinestStreams[streamPart[1]] += subStreamCount - 1
+                        numberOfFinestStreams[
+                            streamPart[1]] += subStreamCount - 1
                         maxStreamIndexForHierarchy = maxStreamIndexForHierarchy + subStreamCount
                         numberOfSubStreams.append(subStreamCount)
 
                 currentPosition = newCurrentPosition
         streamParts = newStreamParts[:]
-    return [maxStreamIndexForHierarchy + 1, numberOfSubStreams, numberOfFinestStreams, firstSubStreamIndex]
+    return [
+        maxStreamIndexForHierarchy + 1, numberOfSubStreams,
+        numberOfFinestStreams, firstSubStreamIndex
+    ]
+
 
 #Be careful, we currently modify cummulativeScoresPart here through call by reference
-def iterateOverFieldsRecursive(cummulativeScoresPart, currentDimension, maxDepth, currentPositions, cummulativeScores, tokenSequences, penalties, withPenalties):
+def iterateOverFieldsRecursive(cummulativeScoresPart, currentDimension,
+                               maxDepth, currentPositions, cummulativeScores,
+                               tokenSequences, penalties, withPenalties):
     if (currentDimension < maxDepth):
         for index in range(len(cummulativeScoresPart)):
             currentPositions.append(index)
-            cummulativeScoresPart[index] = iterateOverFieldsRecursive(cummulativeScoresPart[index], currentDimension + 1, maxDepth, currentPositions, cummulativeScores, tokenSequences, penalties, withPenalties)
+            cummulativeScoresPart[index] = iterateOverFieldsRecursive(
+                cummulativeScoresPart[index], currentDimension + 1, maxDepth,
+                currentPositions, cummulativeScores, tokenSequences, penalties,
+                withPenalties)
             currentPositions.pop()
     else:
         # Current Field must be valid (cummulative score > -1)
         if (cummulativeScoresPart[0] != -1):
-            cummulativeScoresPart = makeTransitionsRecursive(cummulativeScores, cummulativeScoresPart[:], [], currentPositions, [], [], 0, maxDepth, tokenSequences, penalties, withPenalties)
+            cummulativeScoresPart = makeTransitionsRecursive(
+                cummulativeScores, cummulativeScoresPart[:], [],
+                currentPositions, [], [], 0, maxDepth, tokenSequences,
+                penalties, withPenalties)
+
+
 #            print 'New score for ', currentPositions, 'is ', cummulativeScoresPart[0]
 
     return cummulativeScoresPart
 
-def makeTransitionsRecursive(cummulativeScores, cummulativeScoreValue, sourcePositions, currentPositions, referenceValues, hypoValues, currentDimension, maxDepth, tokenSequence, penalties, withPenalties):
+
+def makeTransitionsRecursive(cummulativeScores, cummulativeScoreValue,
+                             sourcePositions, currentPositions,
+                             referenceValues, hypoValues, currentDimension,
+                             maxDepth, tokenSequence, penalties,
+                             withPenalties):
     value = cummulativeScoreValue
     if (currentDimension < maxDepth):
-        for index in [-1, 0]: #Transition or no transition
-#            print "Now appending to sourcePositions: ",
-#            print (currentPositions[currentDimension] + index);
+        for index in [-1, 0]:  #Transition or no transition
+            #            print "Now appending to sourcePositions: ",
+            #            print (currentPositions[currentDimension] + index);
             sourcePositions.append(currentPositions[currentDimension] + index)
-            if (currentDimension < len(tokenSequence) / 2): #TODO Assumes that number of finest streams in reference == number of finest streams in hypo, e.g. check this at the beginning of the align script
-                referenceValues.append(tokenSequence[currentDimension][currentPositions[currentDimension]])
+            if (
+                    currentDimension < len(tokenSequence) / 2
+            ):  #TODO Assumes that number of finest streams in reference == number of finest streams in hypo, e.g. check this at the beginning of the align script
+                referenceValues.append(tokenSequence[currentDimension][
+                    currentPositions[currentDimension]])
             else:
-                hypoValues.append(tokenSequence[currentDimension][currentPositions[currentDimension]]) #TODO Assumes that number of finest streams in reference == number of finest streams in hypo, e.g. check this at the beginning of the align script
-            value = makeTransitionsRecursive(cummulativeScores, value, sourcePositions, currentPositions, referenceValues, hypoValues, currentDimension + 1, maxDepth, tokenSequence, penalties, withPenalties)
+                hypoValues.append(
+                    tokenSequence[currentDimension][
+                        currentPositions[currentDimension]]
+                )  #TODO Assumes that number of finest streams in reference == number of finest streams in hypo, e.g. check this at the beginning of the align script
+            value = makeTransitionsRecursive(cummulativeScores, value,
+                                             sourcePositions, currentPositions,
+                                             referenceValues, hypoValues,
+                                             currentDimension + 1, maxDepth,
+                                             tokenSequence, penalties,
+                                             withPenalties)
             sourcePositions.pop()
-            if (currentDimension < len(tokenSequence) / 2): #TODO Assumes that number of finest streams in reference == number of finest streams in hypo, e.g. check this at the beginning of the align script
+            if (
+                    currentDimension < len(tokenSequence) / 2
+            ):  #TODO Assumes that number of finest streams in reference == number of finest streams in hypo, e.g. check this at the beginning of the align script
                 referenceValues.pop()
             else:
                 hypoValues.pop()
     else:
-#        print 'Updating score for transition from: ', sourcePositions, ' to ', currentPositions
+        #        print 'Updating score for transition from: ', sourcePositions, ' to ', currentPositions
         #All source positions must be >= 0
         possibleTransition = True
         for index in range(len(sourcePositions)):
@@ -866,120 +1099,164 @@ def makeTransitionsRecursive(cummulativeScores, cummulativeScoreValue, sourcePos
             if (sourcePositions[index] != currentPositions[index]):
                 allEqual = False
         if (possibleTransition & (allEqual == False)):
-            offset = len(sourcePositions) / 2 #TODO Assumes that number of finest streams in reference == number of finest streams in hypo, e.g. check this at the beginning of the align script
+            offset = len(
+                sourcePositions
+            ) / 2  #TODO Assumes that number of finest streams in reference == number of finest streams in hypo, e.g. check this at the beginning of the align script
             additionalScore = 0
             text = ' '
-            backPointer = [0 for index in range(offset+offset)]
+            backPointer = [0 for index in range(offset + offset)]
             for index in range(offset):
                 #Diagonal transition (substitution or equal tokens)
-                if ((sourcePositions[index] != currentPositions[index]) & ((sourcePositions[index + offset] != currentPositions[index + offset]))):
-#                    print 'Performing diagonal transition from: ', sourcePositions, ' to ', currentPositions
-#                    text = text, 'Performing diagonal transition from: ', sourcePositions, ' to ', currentPositions
+                if ((sourcePositions[index] != currentPositions[index]) &
+                    ((sourcePositions[index + offset] !=
+                      currentPositions[index + offset]))):
+                    #                    print 'Performing diagonal transition from: ', sourcePositions, ' to ', currentPositions
+                    #                    text = text, 'Performing diagonal transition from: ', sourcePositions, ' to ', currentPositions
                     backPointer[index] = -1
                     backPointer[index + offset] = -1
-                    if (referenceValues[index] != hypoValues[index]): #substitution
-                        substitutionValue = referenceValues[index]+","+hypoValues[index]
-                        if (withPenalties and substitutionValue in penalties[2]): #substitionPenalties have been specified
-                            additionalScore = additionalScore + penalties[2][substitutionValue]
+                    if (referenceValues[index] !=
+                            hypoValues[index]):  #substitution
+                        substitutionValue = referenceValues[
+                            index] + "," + hypoValues[index]
+                        if (withPenalties and substitutionValue in penalties[2]
+                            ):  #substitionPenalties have been specified
+                            additionalScore = additionalScore + penalties[2][
+                                substitutionValue]
                         #Use maximum of insertion and deletion penalty to simulate substitution score, default is 1
-                        elif (withPenalties and referenceValues[index] in penalties[1] or hypoValues[index] in penalties[0]):
+                        elif (withPenalties
+                              and referenceValues[index] in penalties[1]
+                              or hypoValues[index] in penalties[0]):
                             maxScore = 0
                             if (referenceValues[index] in penalties[1]):
                                 maxScore = penalties[1][referenceValues[index]]
                             else:
                                 maxScore = 1
                             if (hypoValues[index] in penalties[0]):
-                                if (penalties[0][hypoValues[index]] > maxScore):
+                                if (penalties[0][hypoValues[index]] >
+                                        maxScore):
                                     maxScore = penalties[0][hypoValues[index]]
                             else:
-                                if(maxScore < 1):
+                                if (maxScore < 1):
                                     maxScore = 1
                             additionalScore = additionalScore + maxScore
                         else:
-                            additionalScore = additionalScore + 1 #TODO Need to use the partial score for this stream
-                elif (sourcePositions[index] != currentPositions[index]): #deletion
-#                    print 'Performing deletion from: ', sourcePositions, ' to ', currentPositions
-#                    text = text, 'Performing deletion from: ', sourcePositions, ' to ', currentPositions
+                            additionalScore = additionalScore + 1  #TODO Need to use the partial score for this stream
+                elif (sourcePositions[index] !=
+                      currentPositions[index]):  #deletion
+                    #                    print 'Performing deletion from: ', sourcePositions, ' to ', currentPositions
+                    #                    text = text, 'Performing deletion from: ', sourcePositions, ' to ', currentPositions
                     backPointer[index] = -1
-                    if (withPenalties and referenceValues[index] in penalties[1]):
-                        additionalScore = additionalScore + penalties[1][referenceValues[index]]
+                    if (withPenalties
+                            and referenceValues[index] in penalties[1]):
+                        additionalScore = additionalScore + penalties[1][
+                            referenceValues[index]]
                     else:
-                        additionalScore = additionalScore + 1 #TODO Need to use the partial score for this stream
-                elif (sourcePositions[index + offset] != currentPositions[index + offset]): #insertion
-#                    print 'Performing insertion from: ', sourcePositions, ' to ', currentPositions
-#                    text = text, 'Performing insertion from: ', sourcePositions, ' to ', currentPositions
-                    backPointer[index+offset] = -1
+                        additionalScore = additionalScore + 1  #TODO Need to use the partial score for this stream
+                elif (sourcePositions[index + offset] !=
+                      currentPositions[index + offset]):  #insertion
+                    #                    print 'Performing insertion from: ', sourcePositions, ' to ', currentPositions
+                    #                    text = text, 'Performing insertion from: ', sourcePositions, ' to ', currentPositions
+                    backPointer[index + offset] = -1
                     if (withPenalties and hypoValues[index] in penalties[0]):
-                        additionalScore = additionalScore + penalties[0][hypoValues[index]]
+                        additionalScore = additionalScore + penalties[0][
+                            hypoValues[index]]
                     else:
-                        additionalScore = additionalScore + 1 # TODO Need to use the partial score for this stream
+                        additionalScore = additionalScore + 1  # TODO Need to use the partial score for this stream
             #if cummulativeScores at source position + additionalScore < cummulativeScores at current position than replace the cummulative score at the current position
-            sourceValue = retrievePositionValue(cummulativeScores, 0, maxDepth, sourcePositions)[0]
-            if ((sourceValue != -1) & ((sourceValue + additionalScore) < value[0])):
-#                print text
-#                print 'Old score is: ',value[0], ' new score is: ', (sourceValue + additionalScore)
-#                print 'backPointer is: ', backPointer
+            sourceValue = retrievePositionValue(cummulativeScores, 0, maxDepth,
+                                                sourcePositions)[0]
+            if ((sourceValue != -1) &
+                ((sourceValue + additionalScore) < value[0])):
+                #                print text
+                #                print 'Old score is: ',value[0], ' new score is: ', (sourceValue + additionalScore)
+                #                print 'backPointer is: ', backPointer
                 value = [(sourceValue + additionalScore), backPointer[:]]
 
     return value
+
 
 """
 Return the value for a given position in the cummulative scores matrix
 """
 
-def retrievePositionValue(cummulativeScoresPart, currentDimension, maxDepth, positions):
+
+def retrievePositionValue(cummulativeScoresPart, currentDimension, maxDepth,
+                          positions):
     newCummulativeScoresPart = cummulativeScoresPart
     if (currentDimension < maxDepth):
         #print 'currentDimension ', currentDimension
         #print 'positions[cD]', positions[currentDimension]
-        value = retrievePositionValue(newCummulativeScoresPart[positions[currentDimension]][:], currentDimension + 1, maxDepth, positions)
+        value = retrievePositionValue(
+            newCummulativeScoresPart[positions[currentDimension]][:],
+            currentDimension + 1, maxDepth, positions)
         return value
     else:
         return newCummulativeScoresPart
+
 
 """
 Return value of the first field in the cummulative scores matrix
 """
 
-def initializeFirstFieldRecursive(cummulativeScores, currentDimension, maxDepth):
+
+def initializeFirstFieldRecursive(cummulativeScores, currentDimension,
+                                  maxDepth):
     if (currentDimension < maxDepth):
-        cummulativeScores[0] = initializeFirstFieldRecursive(cummulativeScores[0][:], currentDimension + 1, maxDepth)
+        cummulativeScores[0] = initializeFirstFieldRecursive(
+            cummulativeScores[0][:], currentDimension + 1, maxDepth)
         return cummulativeScores
     else:
         return [0, -1]
+
 
 """
 Return value of the last field in the cummulative scores matrix
 """
 
+
 def retrieveFinalScore(cummulativeScores, currentDimension, maxDepth):
     newCummulativeScores = cummulativeScores
     if (currentDimension < maxDepth):
-        result = retrieveFinalScore(newCummulativeScores[len(newCummulativeScores) - 1][:], currentDimension + 1, maxDepth)
+        result = retrieveFinalScore(
+            newCummulativeScores[len(newCummulativeScores) - 1][:],
+            currentDimension + 1, maxDepth)
         return result
     else:
-        return newCummulativeScores[0] #First entry is score, second is backpointer
+        return newCummulativeScores[
+            0]  #First entry is score, second is backpointer
+
 
 """
 Applies a set of masks to the cummulative scores matrix to invalidate fields that are not possible due to token that span more than one dimension
 """
 
-def maskCummulativeScoresMatrixRecursive(cummulativeScoresPart, tokenSequences, mask, maskIndices, currentDimension, offset):
+
+def maskCummulativeScoresMatrixRecursive(cummulativeScoresPart, tokenSequences,
+                                         mask, maskIndices, currentDimension,
+                                         offset):
     newCummulativeScoresPart = cummulativeScoresPart
     if (currentDimension == len(tokenSequences)):
         if (mask == 1):
             return [-1, -1]
         else:
             return newCummulativeScoresPart
-    elif ((currentDimension >= (maskIndices[0] + offset)) & (currentDimension <= (maskIndices[len(maskIndices) - 1] + offset))):
+    elif ((currentDimension >= (maskIndices[0] + offset)) &
+          (currentDimension <= (maskIndices[len(maskIndices) - 1] + offset))):
         for index in range(len(mask)):
             subMask = mask[index]
-            newCummulativeScoresPart[index] = maskCummulativeScoresMatrixRecursive(newCummulativeScoresPart[index][:], tokenSequences, subMask, maskIndices, currentDimension + 1, offset)
+            newCummulativeScoresPart[
+                index] = maskCummulativeScoresMatrixRecursive(
+                    newCummulativeScoresPart[index][:], tokenSequences,
+                    subMask, maskIndices, currentDimension + 1, offset)
     else:
         for index in range(len(tokenSequences[currentDimension])):
-            newCummulativeScoresPart[index] = maskCummulativeScoresMatrixRecursive(newCummulativeScoresPart[index][:], tokenSequences, mask, maskIndices, currentDimension + 1, offset)
+            newCummulativeScoresPart[
+                index] = maskCummulativeScoresMatrixRecursive(
+                    newCummulativeScoresPart[index][:], tokenSequences, mask,
+                    maskIndices, currentDimension + 1, offset)
 
     return newCummulativeScoresPart
+
 
 """
 This method splits a token sequence into token sequences for the finest sub streams
@@ -990,27 +1267,34 @@ Param tokenSubStream is the output of this method, i.e. the reference divided in
 Param numberOfSubStreams is a list with the amount of sub streams for each stream
 Param numberOfFinestStreams is a list with the amount of finest sub streams for each stream
 """
+
+
 #TODO In this method tokenSubStream is passed by reference, change to pass by value
-def retrieveFinestStreamRepresentation(currentStream, firstSubStreamIndex, splittedTokenSequence, tokenSubStream, tokenStreamIndices, numberOfSubStreams, numberOfFinestStreams):
+def retrieveFinestStreamRepresentation(currentStream, firstSubStreamIndex,
+                                       splittedTokenSequence, tokenSubStream,
+                                       tokenStreamIndices, numberOfSubStreams,
+                                       numberOfFinestStreams):
     currentPosition = 0
     #while not at the end of the reference
-    while (currentPosition < len(splittedTokenSequence)) :
+    while (currentPosition < len(splittedTokenSequence)):
         #Retrieve next entry: Either { Foo bar { ... } } or Foo
         #If starts with { find matching }
-        newCurrentPosition = currentPosition + 1;
-        if (splittedTokenSequence[currentPosition] == '{') :
-            bracketCount = 1;
-            while ((bracketCount > 0) & (newCurrentPosition < len(splittedTokenSequence))) :
+        newCurrentPosition = currentPosition + 1
+        if (splittedTokenSequence[currentPosition] == '{'):
+            bracketCount = 1
+            while ((bracketCount > 0) &
+                   (newCurrentPosition < len(splittedTokenSequence))):
                 if (splittedTokenSequence[newCurrentPosition] == '}'):
                     bracketCount = bracketCount - 1
                 elif (splittedTokenSequence[newCurrentPosition] == '{'):
                     bracketCount = bracketCount + 1
                 newCurrentPosition = newCurrentPosition + 1
             if (bracketCount == 0):
-                streamPart = splittedTokenSequence[currentPosition + 1 :newCurrentPosition - 1]
+                streamPart = splittedTokenSequence[currentPosition +
+                                                   1:newCurrentPosition - 1]
             else:
-                print('Error with finding } while parsing', splittedTokenSequence)
-
+                print('Error with finding } while parsing',
+                      splittedTokenSequence)
 
             #For each subStream retrieve finest SubStream representation
             startIndex = 0
@@ -1025,19 +1309,27 @@ def retrieveFinestStreamRepresentation(currentStream, firstSubStreamIndex, split
                 elif (streamPart[endIndex] == '{'):
                     bracketCount = bracketCount + 1
                 if ((bracketCount == 0) & (streamPart[endIndex] == '|')):
-                    retrieveFinestStreamRepresentation(streamIndex, firstSubStreamIndex, streamPart[startIndex:endIndex], tokenSubStream, tokenStreamIndices, numberOfSubStreams, numberOfFinestStreams)
+                    retrieveFinestStreamRepresentation(
+                        streamIndex, firstSubStreamIndex,
+                        streamPart[startIndex:endIndex], tokenSubStream,
+                        tokenStreamIndices, numberOfSubStreams,
+                        numberOfFinestStreams)
                     startIndex = endIndex + 1
                     streamIndex = streamIndex + 1
 
                 endIndex = endIndex + 1
-            retrieveFinestStreamRepresentation(streamIndex, firstSubStreamIndex, streamPart[startIndex:], tokenSubStream, tokenStreamIndices, numberOfSubStreams, numberOfFinestStreams)
+            retrieveFinestStreamRepresentation(
+                streamIndex, firstSubStreamIndex, streamPart[startIndex:],
+                tokenSubStream, tokenStreamIndices, numberOfSubStreams,
+                numberOfFinestStreams)
 
         #else get first item and divide item into numberOfFinestStreams streams
         else:
             streamPart = splittedTokenSequence[currentPosition]
 
             #Retrieve index in finest stream layer
-            streamIndex = retrieveFirstIndexOfFinestStream(currentStream, firstSubStreamIndex)
+            streamIndex = retrieveFirstIndexOfFinestStream(
+                currentStream, firstSubStreamIndex)
             for stream in range(numberOfFinestStreams[currentStream]):
                 tokenSubStream[streamIndex].append(streamPart)
                 tokenStreamIndices[streamIndex].append(currentStream)
@@ -1045,19 +1337,21 @@ def retrieveFinestStreamRepresentation(currentStream, firstSubStreamIndex, split
         currentPosition = newCurrentPosition
     return
 
+
 """
 Return the finest stream index for this a given stream
 """
 
+
 def retrieveFirstIndexOfFinestStream(finestStreamIndex, firstSubStreamIndex):
-     while (len(firstSubStreamIndex) > finestStreamIndex):
-         finestStreamIndex = firstSubStreamIndex[finestStreamIndex]
-     firstFinestStreamIndex = 0
-     while (len(firstSubStreamIndex) > firstFinestStreamIndex):
-         firstFinestStreamIndex = firstSubStreamIndex[firstFinestStreamIndex]
-     #Normalize the stream indices to start with 0
-     streamIndex = finestStreamIndex - firstFinestStreamIndex
-     return streamIndex
+    while (len(firstSubStreamIndex) > finestStreamIndex):
+        finestStreamIndex = firstSubStreamIndex[finestStreamIndex]
+    firstFinestStreamIndex = 0
+    while (len(firstSubStreamIndex) > firstFinestStreamIndex):
+        firstFinestStreamIndex = firstSubStreamIndex[firstFinestStreamIndex]
+    #Normalize the stream indices to start with 0
+    streamIndex = finestStreamIndex - firstFinestStreamIndex
+    return streamIndex
 
 
 """
@@ -1080,7 +1374,11 @@ b   x     x
   a G d f C
 """
 
-def createMaskForFieldsRecursive(currentStream, firstSubStreamIndex, splittedTokenSequence, tokenSubStream, currentPositions, numberOfSubStreams, numberOfFinestStreams):
+
+def createMaskForFieldsRecursive(currentStream, firstSubStreamIndex,
+                                 splittedTokenSequence, tokenSubStream,
+                                 currentPositions, numberOfSubStreams,
+                                 numberOfFinestStreams):
     currentPosition = 0
 
     newMasks = []
@@ -1091,24 +1389,26 @@ def createMaskForFieldsRecursive(currentStream, firstSubStreamIndex, splittedTok
     #print "        currentStream: ", currentStream;
     #while not at the end of the reference
 
-    while (currentPosition < len(splittedTokenSequence)) :
+    while (currentPosition < len(splittedTokenSequence)):
         #print "Taking while-loop"
         #Retrieve next entry: Either { Foo bar { ... } } or Foo
         #If starts with { find matching }
-        newCurrentPosition = currentPosition + 1;
-        if (splittedTokenSequence[currentPosition] == '{') :
-            bracketCount = 1;
-            while ((bracketCount > 0) & (newCurrentPosition < len(splittedTokenSequence))) :
+        newCurrentPosition = currentPosition + 1
+        if (splittedTokenSequence[currentPosition] == '{'):
+            bracketCount = 1
+            while ((bracketCount > 0) &
+                   (newCurrentPosition < len(splittedTokenSequence))):
                 if (splittedTokenSequence[newCurrentPosition] == '}'):
                     bracketCount = bracketCount - 1
                 elif (splittedTokenSequence[newCurrentPosition] == '{'):
                     bracketCount = bracketCount + 1
                 newCurrentPosition = newCurrentPosition + 1
             if (bracketCount == 0):
-                streamPart = splittedTokenSequence[currentPosition + 1 :newCurrentPosition - 1]
+                streamPart = splittedTokenSequence[currentPosition +
+                                                   1:newCurrentPosition - 1]
             else:
-                print('Error with finding } while parsing', splittedTokenSequence)
-
+                print('Error with finding } while parsing',
+                      splittedTokenSequence)
 
             #For each subStream retrieve finest SubStream representation
             startIndex = 0
@@ -1126,7 +1426,12 @@ def createMaskForFieldsRecursive(currentStream, firstSubStreamIndex, splittedTok
                 if ((bracketCount == 0) & (streamPart[endIndex] == '|')):
                     #print "Performing recursive call due to found '|'"
                     #print "    Therefore slicing ", streamPart, " from ", str(startIndex), " to ", str(endIndex), ".";
-                    [tempNewMasks, tempNewMasksIndices, currentPositions] = createMaskForFieldsRecursive(streamIndex, firstSubStreamIndex, streamPart[startIndex:endIndex], tokenSubStream, currentPositions, numberOfSubStreams, numberOfFinestStreams)
+                    [tempNewMasks, tempNewMasksIndices,
+                     currentPositions] = createMaskForFieldsRecursive(
+                         streamIndex, firstSubStreamIndex,
+                         streamPart[startIndex:endIndex], tokenSubStream,
+                         currentPositions, numberOfSubStreams,
+                         numberOfFinestStreams)
 
                     if (tempNewMasks != []):
                         newMasks.extend(tempNewMasks)
@@ -1138,7 +1443,11 @@ def createMaskForFieldsRecursive(currentStream, firstSubStreamIndex, splittedTok
                 endIndex = endIndex + 1
             #print "Performing recursive call due to end of while-loop."
             #print "    Therefore slicing ", streamPart, " from ", str(startIndex), " to its end."
-            [tempNewMasks, tempNewMasksIndices, currentPositions] = createMaskForFieldsRecursive(streamIndex, firstSubStreamIndex, streamPart[startIndex:], tokenSubStream, currentPositions, numberOfSubStreams, numberOfFinestStreams)
+            [tempNewMasks, tempNewMasksIndices,
+             currentPositions] = createMaskForFieldsRecursive(
+                 streamIndex, firstSubStreamIndex, streamPart[startIndex:],
+                 tokenSubStream, currentPositions, numberOfSubStreams,
+                 numberOfFinestStreams)
 
             if (tempNewMasks != []):
                 newMasks.extend(tempNewMasks)
@@ -1148,7 +1457,8 @@ def createMaskForFieldsRecursive(currentStream, firstSubStreamIndex, splittedTok
         else:
             #print "currentPositions: ", currentPositions;
             streamPart = splittedTokenSequence[currentPosition]
-            streamIndex = retrieveFirstIndexOfFinestStream(currentStream, firstSubStreamIndex)
+            streamIndex = retrieveFirstIndexOfFinestStream(
+                currentStream, firstSubStreamIndex)
             #print "streamIndex: ", streamIndex
             #This field can be combined with all others
             #print "numberOfFinestStreams: ", numberOfFinestStreams;
@@ -1165,39 +1475,48 @@ def createMaskForFieldsRecursive(currentStream, firstSubStreamIndex, splittedTok
                     lengths.append(len(tokenSubStream[streamIndex]))
                     newMaskIndices.append(streamIndex)
                     #+ 1 is due to the fact that the masks are created without an empty token at the beginning of the sequences but for the dtw calculation we need such
-                    maskCurrentPositions.append(currentPositions[streamIndex] + 1)
-                    currentPositions[streamIndex] = currentPositions[streamIndex] + 1
+                    maskCurrentPositions.append(currentPositions[streamIndex] +
+                                                1)
+                    currentPositions[
+                        streamIndex] = currentPositions[streamIndex] + 1
                     streamIndex = streamIndex + 1
 
-                [newMask, dummy] = createMaskRecursive([], lengths, 0, [], maskCurrentPositions)
+                [newMask, dummy] = createMaskRecursive([], lengths, 0, [],
+                                                       maskCurrentPositions)
                 #print "Return of createMaskRecursive: ", newMask;
 
                 if (newMask != []):
                     newMasks.append(newMask)
                     newMasksIndices.append(newMaskIndices)
             else:
-                currentPositions[streamIndex] = currentPositions[streamIndex] + 1
+                currentPositions[
+                    streamIndex] = currentPositions[streamIndex] + 1
 
         currentPosition = newCurrentPosition
 
     #print "returning with currentPositions: ", currentPositions
     return [newMasks, newMasksIndices, currentPositions]
 
+
 """
 This method actually creates the mask for given fields
 """
 
-def createMaskRecursive(mask, sequenceLengths, currentDim, currentPositions, maskCurrentPositions):
+
+def createMaskRecursive(mask, sequenceLengths, currentDim, currentPositions,
+                        maskCurrentPositions):
     #print "createMaskRecursive called with mask: ", mask;
     #print "                      sequencLenghts: ", sequenceLengths;
     #print "                          currentDim: ", currentDim;
     #print "                    currentPositions: ", currentPositions;
     #print "                maskCurrentPositions: ", maskCurrentPositions;
     if (currentDim < len(sequenceLengths)):
-        mask = [ [] for col in range(sequenceLengths[currentDim])]
+        mask = [[] for col in range(sequenceLengths[currentDim])]
         for index in range(sequenceLengths[currentDim]):
             currentPositions.append(index)
-            [mask[index],currentPositions] = createMaskRecursive(mask, sequenceLengths, currentDim + 1, currentPositions, maskCurrentPositions)
+            [mask[index], currentPositions
+             ] = createMaskRecursive(mask, sequenceLengths, currentDim + 1,
+                                     currentPositions, maskCurrentPositions)
             currentPositions.pop()
         return [mask, currentPositions]
     else:
@@ -1214,20 +1533,28 @@ def createMaskRecursive(mask, sequenceLengths, currentDim, currentPositions, mas
         else:
             return [0, currentPositions]
 
+
 """
 Creates the cummulative scores matrix and initializes each field with a given value/object
 """
 
-def initializeCummulativeScores(cummulativeScoresPart, tokenSequences, currentDimension, lastSubSpace):
+
+def initializeCummulativeScores(cummulativeScoresPart, tokenSequences,
+                                currentDimension, lastSubSpace):
     if (currentDimension == len(tokenSequences)):
         return copy.deepcopy(lastSubSpace)
     else:
-        cummulativeScoresPart = [[] for col in range(len(tokenSequences[currentDimension]))]
+        cummulativeScoresPart = [
+            [] for col in range(len(tokenSequences[currentDimension]))
+        ]
         for subSpace in range(len(tokenSequences[currentDimension])):
             currentDimension = currentDimension + 1
-            cummulativeScoresPart[subSpace] = initializeCummulativeScores(cummulativeScoresPart[subSpace][:], tokenSequences, currentDimension, lastSubSpace)
+            cummulativeScoresPart[subSpace] = initializeCummulativeScores(
+                cummulativeScoresPart[subSpace][:], tokenSequences,
+                currentDimension, lastSubSpace)
             currentDimension = currentDimension - 1
     return cummulativeScoresPart
+
 
 def combineAction(primitiveSequence, action):
 
@@ -1237,12 +1564,12 @@ def combineAction(primitiveSequence, action):
 
     splittedSequence = primitiveSequence.split()
 
-    for primitiveIndex in range(len(splittedSequence)-1, 1, -1):
-        firstPrimitive = splittedSequence[primitiveIndex-1]
+    for primitiveIndex in range(len(splittedSequence) - 1, 1, -1):
+        firstPrimitive = splittedSequence[primitiveIndex - 1]
         secondPrimitive = splittedSequence[primitiveIndex]
 
-
-        if (firstPrimitive.count(action) > 0 and firstPrimitive == secondPrimitive):
+        if (firstPrimitive.count(action) > 0
+                and firstPrimitive == secondPrimitive):
             splittedSequence[primitiveIndex] = ""
 
     for primitive in splittedSequence:
@@ -1253,18 +1580,21 @@ def combineAction(primitiveSequence, action):
 
     return result
 
+
 def find(minIndex, splittedSequence, sub):
     primitiveIndex = minIndex
-    while (primitiveIndex < len(splittedSequence)-1):
+    while (primitiveIndex < len(splittedSequence) - 1):
         if (splittedSequence[primitiveIndex] == sub):
             return primitiveIndex
         else:
             primitiveIndex += 1
     return -1
 
+
 """
 Searches for a sequence of { * | * }. It is a hack and does only work for two layers
 """
+
 
 def findSeparatedPrimitives(startIndex, splittedSequence):
     firstPrimitives = ""
@@ -1273,20 +1603,24 @@ def findSeparatedPrimitives(startIndex, splittedSequence):
     firstStart = find(startIndex, splittedSequence, '{')
     if (firstStart != -1):
         #Append primitive not belonging to sequence to be combined
-        firstSplit = find(firstStart+1, splittedSequence, '|')
+        firstSplit = find(firstStart + 1, splittedSequence, '|')
         if (firstSplit != -1):
-            for firstIndex in range(firstStart+1, firstSplit):
+            for firstIndex in range(firstStart + 1, firstSplit):
                 firstPrimitives += splittedSequence[firstIndex] + ' '
-            firstEnd = find(firstSplit+1, splittedSequence, '}')
+            firstEnd = find(firstSplit + 1, splittedSequence, '}')
             if (firstEnd != -1):
-                for firstIndex in range(firstSplit+1, firstEnd):
+                for firstIndex in range(firstSplit + 1, firstEnd):
                     secondPrimitives += splittedSequence[firstIndex] + ' '
-                return [firstStart, firstEnd, firstPrimitives, secondPrimitives]
-    return [-1,-1,'','']
+                return [
+                    firstStart, firstEnd, firstPrimitives, secondPrimitives
+                ]
+    return [-1, -1, '', '']
+
 
 """
 This method is a hack and does only work for a hierarchy of wholebody_center -> wholearm_left | wholearm_right
 """
+
 
 def normalizeSequence(primitiveSequence):
     primitiveIndex = 0
@@ -1295,21 +1629,25 @@ def normalizeSequence(primitiveSequence):
     secondEnd = -1
 
     # We can only normalize if we have at least { A | B } { C | D } = 10 entries
-    while (secondEnd+1 < len(splittedSequence)-10):#
+    while (secondEnd + 1 < len(splittedSequence) - 10):  #
         firstPrimitives = ""
         secondPrimitives = ""
         #find start
-        [startIndex, endIndex, tempFirstPrimitives, tempSecondPrimitives] = findSeparatedPrimitives(secondEnd+1, splittedSequence)
+        [startIndex, endIndex, tempFirstPrimitives, tempSecondPrimitives
+         ] = findSeparatedPrimitives(secondEnd + 1, splittedSequence)
         if (startIndex != -1):
-            for index in range(secondEnd+1, startIndex):
+            for index in range(secondEnd + 1, startIndex):
                 normalizedSequence.append(splittedSequence[index] + ' ')
-            secondEnd = startIndex -1
+            secondEnd = startIndex - 1
             #while we find matching primitives
-            while (startIndex == secondEnd+1):
+            while (startIndex == secondEnd + 1):
                 firstPrimitives += tempFirstPrimitives + ' '
                 secondPrimitives += tempSecondPrimitives + ' '
                 secondEnd = endIndex
-                [startIndex, endIndex, tempFirstPrimitives, tempSecondPrimitives] = findSeparatedPrimitives(endIndex+1, splittedSequence)
+                [
+                    startIndex, endIndex, tempFirstPrimitives,
+                    tempSecondPrimitives
+                ] = findSeparatedPrimitives(endIndex + 1, splittedSequence)
 
             #Append mergedSequence to result
             firstPrimitives = firstPrimitives.strip()
@@ -1320,7 +1658,7 @@ def normalizeSequence(primitiveSequence):
             normalizedSequence.append(secondPrimitives)
             normalizedSequence.append(' } ')
 
-    for index in range(secondEnd+1, len(splittedSequence)):
+    for index in range(secondEnd + 1, len(splittedSequence)):
         normalizedSequence.append(splittedSequence[index] + ' ')
 
     result = ''.join(normalizedSequence)
@@ -1333,6 +1671,7 @@ def normalizeSequence(primitiveSequence):
 """
 This method is a hack and does only work for a hierarchy of wholebody_center -> wholearm_left | wholearm_right
 """
+
 
 def separatePrimitives(primitiveSequence):
 
@@ -1354,17 +1693,26 @@ def separatePrimitives(primitiveSequence):
             directions = splittedPrimitive[8].split('!')
             sequenceType = splittedPrimitive[9]
 
-            separatedPrimitive = dict();
+            separatedPrimitive = dict()
             separatedPrimitive['left'] = ""
             separatedPrimitive['right'] = ""
 
-            if (len(dirObjects)  > 1):
+            if (len(dirObjects) > 1):
                 for primitiveIndex in range(len(dirObjects)):
-                    side = actions[primitiveIndex*3+2]
+                    side = actions[primitiveIndex * 3 + 2]
 
-                    separatedPrimitive[side] += '_' + actions[primitiveIndex*3] + '_' + actions[primitiveIndex*3+1] + '_' + actions[primitiveIndex*3+2] + '_' + dirObjects[primitiveIndex] + '_' + indirObjects[primitiveIndex] + '_' + targets[primitiveIndex] + '_' + positions[primitiveIndex] + '_' + directions[primitiveIndex] + '_' + sequenceType + '_ ';
+                    separatedPrimitive[side] += '_' + actions[
+                        primitiveIndex *
+                        3] + '_' + actions[primitiveIndex * 3 + 1] + '_' + actions[
+                            primitiveIndex * 3 + 2] + '_' + dirObjects[
+                                primitiveIndex] + '_' + indirObjects[
+                                    primitiveIndex] + '_' + targets[
+                                        primitiveIndex] + '_' + positions[
+                                            primitiveIndex] + '_' + directions[
+                                                primitiveIndex] + '_' + sequenceType + '_ '
 
-                result += '{ ' + separatedPrimitive['left'] + '| ' + separatedPrimitive['right'] + '}'
+                result += '{ ' + separatedPrimitive[
+                    'left'] + '| ' + separatedPrimitive['right'] + '}'
             else:
                 result += primitive
         else:

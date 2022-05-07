@@ -6,6 +6,7 @@ from livenodes.core.sender_blocking import BlockingSender
 
 from . import local_registry
 
+
 @local_registry.register
 class In_riot(BlockingSender):
     channels = [

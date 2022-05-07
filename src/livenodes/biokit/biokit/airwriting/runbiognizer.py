@@ -1,4 +1,3 @@
-
 import sys
 import argparse
 import pprint
@@ -16,15 +15,14 @@ import numpy
 import json
 import visualization as vis
 
-
 from .runbiokit import *
 
 
 def log(level, text):
-    print("Python log: %s - %s: %s" % (str(datetime.datetime.now()),
-                                       level, text))
+    print("Python log: %s - %s: %s" %
+          (str(datetime.datetime.now()), level, text))
 
-        
+
 def write_biokit_initial_model_files(dir, modelparam, dictionary):
     """
     Write the data of a modelparam object with standard filenames to directory.
@@ -32,35 +30,29 @@ def write_biokit_initial_model_files(dir, modelparam, dictionary):
     The codebook and distrib weights are written to the target files
     codebookWeights and codebookWeights.0 (distribWeights and distribWeights.0). 
     """
-    log("Info", "Writing model files to directory: %s" % dir) 
-    db.write_blob(modelparam.gaussian_desc,
-                os.path.join(dir, "gaussianDesc"))
-    db.write_blob(modelparam.gaussian_data,
-                os.path.join(dir, "gaussianData"))
-    db.write_blob(modelparam.mixture_desc,
-                os.path.join(dir, "mixtureDesc"))
-    db.write_blob(modelparam.mixture_data,
-                os.path.join(dir, "mixtureData"))
-    db.write_blob(modelparam.distrib_tree,
-                os.path.join(dir, "mixtureTree"))
-    db.write_blob(modelparam.topologies,
-                os.path.join(dir, "topologies"))
-    db.write_blob(modelparam.topology_tree,
-                os.path.join(dir, "topologyTree"))
-    db.write_blob(modelparam.phones,
-                os.path.join(dir, "atomMap"))
-    shutil.copy(dictionary.file,
-                os.path.join(dir, "dictionary"))
-    
+    log("Info", "Writing model files to directory: %s" % dir)
+    db.write_blob(modelparam.gaussian_desc, os.path.join(dir, "gaussianDesc"))
+    db.write_blob(modelparam.gaussian_data, os.path.join(dir, "gaussianData"))
+    db.write_blob(modelparam.mixture_desc, os.path.join(dir, "mixtureDesc"))
+    db.write_blob(modelparam.mixture_data, os.path.join(dir, "mixtureData"))
+    db.write_blob(modelparam.distrib_tree, os.path.join(dir, "mixtureTree"))
+    db.write_blob(modelparam.topologies, os.path.join(dir, "topologies"))
+    db.write_blob(modelparam.topology_tree, os.path.join(dir, "topologyTree"))
+    db.write_blob(modelparam.phones, os.path.join(dir, "atomMap"))
+    shutil.copy(dictionary.file, os.path.join(dir, "dictionary"))
+
+
 def delete_reco_files(dir):
     """Delete files created by Recognizer.saveToFiles in given directory."""
     log("Info", "Deleting model files in directory: %s" % dir)
-    filenames = ["gaussianDesc", "gaussianData", "mixtureDesc", "mixtureData",
-                 "mixtureTree", "topologyTree", "topologies", "atomMap",
-                 "dictionary"]
+    filenames = [
+        "gaussianDesc", "gaussianData", "mixtureDesc", "mixtureData",
+        "mixtureTree", "topologyTree", "topologies", "atomMap", "dictionary"
+    ]
     for f in filenames:
         os.remove(os.path.join(dir, f))
-        
+
+
 def add_results_to_db(session, ter, iter, config, hypolist=None):
     """
     Add the TER for the given configuration and iteration to the database
@@ -75,22 +67,21 @@ def add_results_to_db(session, ter, iter, config, hypolist=None):
         session.add(reslist)
         session.commit()
     return result
-        
+
+
 def add_blame_to_db(session, result, blamelog, confusionmap):
     blame = db.ErrorBlame(result=result,
                           blamelog=json.dumps(blamelog),
                           confusionmap=json.dumps(confusionmap))
     session.add(blame)
     session.commit()
-    
-    
+
+
 def initializeRecognizer(modelparam, config, dir=None):
     """
     Return an initialized Recognizer instance with the given configuration.
     """
-    write_biokit_initial_model_files(dir,
-                                     modelparam,
-                                     config.dictionary)
+    write_biokit_initial_model_files(dir, modelparam, config.dictionary)
     # As we need to use fillers, we cannot use Recognizer.createFromFile
     topologyInfo = BioKIT.TopologyInfo()
     gaussianContainerSet = BioKIT.GaussianContainerSet()
@@ -109,7 +100,7 @@ def initializeRecognizer(modelparam, config, dir=None):
     dictionary = BioKIT.Dictionary(atomManager)
     dictionary.registerAttributeHandler("FILLER", BioKIT.NumericValueHandler())
     dictionary.readDictionary(os.sep.join([dir, 'dictionary']))
-    vocabulary = BioKIT.SearchVocabulary(dictionary)  
+    vocabulary = BioKIT.SearchVocabulary(dictionary)
     if config.contextmodel.type.name == "grammar":
         #TODO: use given grammar instead of AtomGrammar
         reco = recognizer.Recognizer.createNewFromFile(dir)
@@ -122,6 +113,7 @@ def initializeRecognizer(modelparam, config, dir=None):
         reco = recognizer.Recognizer.createNewFromFile(dir, tsm, True)
     return reco
 
+
 def getSilFeatures(fs):
     """
     Return first and last feature vector of feature sequence as 
@@ -129,21 +121,17 @@ def getSilFeatures(fs):
 
     Taken as samples for silence model.
     """
-    v1 = fs.getMatrix()[0,:]
-    v2 = fs.getMatrix()[-1,:]
-    sildata = numpy.vstack((v1,v2))
+    v1 = fs.getMatrix()[0, :]
+    v2 = fs.getMatrix()[-1, :]
+    sildata = numpy.vstack((v1, v2))
     silfs = BioKIT.FeatureSequence()
     silfs.setMatrix(sildata)
     return silfs
 
+
 def set_beams(reco, config):
     #incredibly high beams
-    reco.setTrainingBeams(1000,
-                          100,
-                          1000,
-                          100000,
-                          1000,
-                          100)
+    reco.setTrainingBeams(1000, 100, 1000, 100000, 1000, 100)
     if config.biokitconfig:
         reco.setBeams(config.biokitconfig.hypo_beam,
                       config.biokitconfig.hypo_topn,
@@ -153,20 +141,24 @@ def set_beams(reco, config):
                       config.biokitconfig.final_node_topn)
 
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Perform training and " +
                                      "decoding with BioKIT")
-    parser.add_argument('database', help = "sqlite database file")
-    parser.add_argument('id', help = "row id of job to run")
-    parser.add_argument('--dir', type = str,
-                        help = "base directory to run job in (default tmp)")
-    parser.add_argument('-k', '--keepfiles', help = "keep files after running",
+    parser.add_argument('database', help="sqlite database file")
+    parser.add_argument('id', help="row id of job to run")
+    parser.add_argument('--dir',
+                        type=str,
+                        help="base directory to run job in (default tmp)")
+    parser.add_argument('-k',
+                        '--keepfiles',
+                        help="keep files after running",
                         action="store_true")
-    parser.add_argument('-b', '--blame', help = "perform error blaming", 
+    parser.add_argument('-b',
+                        '--blame',
+                        help="perform error blaming",
                         action="store_true")
     args = parser.parse_args()
-    
+
     # some constants dependent on janus tcl scripts in use
     refkey = "reference"
     hypokey = "hypothesis"
@@ -175,32 +167,32 @@ if __name__ == "__main__":
     print("****** Starting BioKit train + decode with args:")
     pprint.pprint(args)
     print("")
-    
+
     airdb = db.AirDb(args.database)
-    job = airdb.session.query(db.Job).filter(db.Job.id==args.id).one()
+    job = airdb.session.query(db.Job).filter(db.Job.id == args.id).one()
     config = job.configuration
-        
+
     log("Info", "Using config:")
     pprint.pprint(config.__dict__)
     print("")
-    
+
     log("Info", "Start time measurement")
     starttime = time.time()
-    
+
     #prepare a directory for the run
-    dir = tempfile.mkdtemp(prefix = str(job.id) + "_airwriting", dir = args.dir)
+    dir = tempfile.mkdtemp(prefix=str(job.id) + "_airwriting", dir=args.dir)
     dir = os.path.abspath(dir)
-    
+
     #dynamically import prepro module
     prepro_module = config.preprocessing.biokit_desc
     pp = __import__(prepro_module)
     prepro = pp.PrePro()
-    
+
     #precompute features
     fsstorage = util.FeatureSequenceStorage(config, prepro)
-    
+
     legacycompat = False
-    
+
     existingModels = None
     log("Info", "Initialize models")
     if not config.basemodel:
@@ -219,14 +211,11 @@ if __name__ == "__main__":
         ##### UHHHHH THIS IS WRONG!!! WORKS ONLY IF WE INIT ON ATOM=TOKEN
         #dictionary = {atom: [atom] for atom in atomlist}
         #with open(config.dictionary.file) as df:
-            
+
         print(dictionary)
-        
+
         reco = recognizer.Recognizer.createCompletelyNew(
-                            atomtopo,
-                            dictionary,
-                            config.topology.gmm,
-                            prepro.getFeatureDim())
+            atomtopo, dictionary, config.topology.gmm, prepro.getFeatureDim())
         set_beams(reco, config)
         for recording in config.trainset.recordings:
             fs = fsstorage.get(recording.id)
@@ -237,14 +226,14 @@ if __name__ == "__main__":
         reco.initializeStoredModels()
         reco.saveToFiles(dir)
         modelparam = db.ModelParameters()
-        modelparam.read_from_biokit_files(os.path.join(dir,"gaussianDesc"),
-                                          os.path.join(dir,"gaussianData"), 
-                                          os.path.join(dir,"mixtureDesc"),
-                                          os.path.join(dir,"mixtureData"), 
-                                          os.path.join(dir,"mixtureTree"),
-                                          os.path.join(dir,"topologies"),
-                                          os.path.join(dir,"topologyTree"),
-                                          os.path.join(dir,"atomMap"))
+        modelparam.read_from_biokit_files(os.path.join(dir, "gaussianDesc"),
+                                          os.path.join(dir, "gaussianData"),
+                                          os.path.join(dir, "mixtureDesc"),
+                                          os.path.join(dir, "mixtureData"),
+                                          os.path.join(dir, "mixtureTree"),
+                                          os.path.join(dir, "topologies"),
+                                          os.path.join(dir, "topologyTree"),
+                                          os.path.join(dir, "atomMap"))
         modelparam.iteration = 0
         modelparam.configuration = config
         airdb.session.add(modelparam)
@@ -254,23 +243,23 @@ if __name__ == "__main__":
         existingModels = config.basemodel
     write_biokit_initial_model_files(dir, existingModels, config.dictionary)
     reco = recognizer.Recognizer.createNewFromFile(dir)
-    set_beams(reco, config)    
-        
+    set_beams(reco, config)
+
     log("Info", "Checking for existing models for the training iterations")
     modelsnotfound = False
-    for iter in range(1,config.iterations+1):
+    for iter in range(1, config.iterations + 1):
         no_path_recs = []
-        modelparams = airdb.find_equal_training_modelsparameters(
-                                                        config, 
-                                                        iter)
+        modelparams = airdb.find_equal_training_modelsparameters(config, iter)
         if modelparams:
             if modelsnotfound:
-                log("Info", "Found existing models for iteration " + str(iter) +
+                log(
+                    "Info",
+                    "Found existing models for iteration " + str(iter) +
                     "but previous iterations missing. This should not happen!")
                 sys.exit()
             log("Info", "Found existing models for iteration %s" % iter)
             log("Info", "ModelsParameters: %s" % modelparams)
-            
+
         else:
             log("Info", "No existing models for iteration %s found" % iter)
             log("Info", "Start training iteration %s " % iter)
@@ -287,57 +276,58 @@ if __name__ == "__main__":
                     reco.storeTokenSequenceForTrain(fs, tokensequence)
                 except recognizer.NoViterbiPath as e:
                     print("No path was found for %s, storing id" % recording)
-                    no_path_recs.append((recording.id, recording.reference, 
+                    no_path_recs.append((recording.id, recording.reference,
                                          recording.filename))
             print("No paths were found for: %s" % no_path_recs)
-            with open(os.path.join(dir,"nopathids.%s.json" % iter), "w") as f:
+            with open(os.path.join(dir, "nopathids.%s.json" % iter), "w") as f:
                 f.write(json.dumps(no_path_recs))
             reco.finishTrainIteration()
             delete_reco_files(dir)
             reco.saveToFiles(dir)
             modelparam = db.ModelParameters()
-            modelparam.read_from_biokit_files(os.path.join(dir,"gaussianDesc"),
-                                               os.path.join(dir,"gaussianData"), 
-                                               os.path.join(dir,"mixtureDesc"),
-                                               os.path.join(dir,"mixtureData"), 
-                                               os.path.join(dir,"mixtureTree"),
-                                               os.path.join(dir,"topologies"),
-                                               os.path.join(dir,"topologyTree"),
-                                               os.path.join(dir,"atomMap"))
+            modelparam.read_from_biokit_files(
+                os.path.join(dir, "gaussianDesc"),
+                os.path.join(dir, "gaussianData"),
+                os.path.join(dir, "mixtureDesc"),
+                os.path.join(dir, "mixtureData"),
+                os.path.join(dir, "mixtureTree"),
+                os.path.join(dir, "topologies"),
+                os.path.join(dir, "topologyTree"),
+                os.path.join(dir, "atomMap"))
             modelparam.iteration = iter
             modelparam.configuration = config
             airdb.session.add(modelparam)
             airdb.session.commit()
             modelsnotfound = True
-    
+
     #decoding will only be performed if a testset is given
     if config.testset:
         if config.biokitconfig and not config.ibisconfig:
             log("Info", "Perform decoding with BioKIT")
-            for iter in range(config.iterations+1):
+            for iter in range(config.iterations + 1):
                 airrec = AirwritingRecognizer(airdb.session)
                 if iter == 0 and config.basemodel:
                     modelparam = config.basemodel
                 else:
                     modelparam = airdb.find_equal_training_modelsparameters(
-                                    config, iter)
-                log("Info", "Use models for iteration=%s: %s" % (iter,modelparam))
+                        config, iter)
+                log("Info",
+                    "Use models for iteration=%s: %s" % (iter, modelparam))
                 reco = initializeRecognizer(modelparam, config, dir)
                 for recording in config.testset.recordings:
                     filename = os.path.join(config.data_basedir,
-                                        recording.experiment.base_dir,
-                                        recording.filename)
-                    log("Info", "process: %s" % (filename,))
+                                            recording.experiment.base_dir,
+                                            recording.filename)
+                    log("Info", "process: %s" % (filename, ))
                     mcfs = prepro.process(filename)
                     #util.writeMcfsToAdc(mcfs, filename+".stdprepro")
                     reco.decode(mcfs[0], recording.reference.encode('ascii'))
                     if args.blame:
                         log("Info", "Perform Error Blaming")
                         reco.storeSequenceForBlame(
-                                   mcfs[0],
-                                   recording.reference.encode('ascii').split(),
-                                   recording.id,
-                                   0.7)
+                            mcfs[0],
+                            recording.reference.encode('ascii').split(),
+                            recording.id, 0.7)
                 log("Info", "**** Decoding complete *****")
                 ter = reco.getDecodingTER()
                 reco.clearDecodingList()
@@ -346,13 +336,13 @@ if __name__ == "__main__":
                 result = add_results_to_db(airdb.session, ter, iter, config)
                 if args.blame:
                     blamelog, confusionmap = reco.getBlameResults()
-                    add_blame_to_db(airdb.session, result, blamelog, confusionmap)
-                
-                    
+                    add_blame_to_db(airdb.session, result, blamelog,
+                                    confusionmap)
+
         else:
             log("Info", "ERROR: No or multiple decoding configurations given")
-            sys.exit()        
-              
+            sys.exit()
+
     #stop time measurement
     log("Info", "Stopping time measurement")
     stoptime = time.time()
@@ -362,7 +352,7 @@ if __name__ == "__main__":
     job.host = socket.gethostname()
     job.status = "finished"
     airdb.session.commit()
-            
+
     print("****job finished")
     if not args.keepfiles:
         print("****deleting temporary directory")

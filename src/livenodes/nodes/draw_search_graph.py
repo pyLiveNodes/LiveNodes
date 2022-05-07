@@ -5,6 +5,7 @@ from livenodes.core.viewer import View
 
 from . import local_registry
 
+
 @local_registry.register
 class Draw_search_graph(View):
     """

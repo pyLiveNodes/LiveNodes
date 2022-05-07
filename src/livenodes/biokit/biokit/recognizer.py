@@ -13,32 +13,44 @@ from .wkm import wkmb
 from .wkm import wkmb2
 
 import numpy as np
+
 np.random.seed(1234)
+
 
 class NoViterbiPath(Exception):
     """Exception when search does not result in a valid path."""
+
     def __init__(self, desc):
         self.desc = desc
+
     def __str__(self):
         return repr(self.desc)
+
 
 class NoClustererInitialized(Exception):
     """Exception when clustering is called without an initialized clusterer."""
+
     def __init__(self, desc):
         self.desc = desc
+
     def __str__(self):
         return repr(self.desc)
 
+
 class NoTrainerInitialized(Exception):
     """Exception when training without an initialized trainer."""
+
     def __init__(self, desc):
         self.desc = desc
+
     def __str__(self):
         return repr(self.desc)
+
 
 class TrainerType(Enum):
     GmmTrainer = "gmm_trainer"
     MergeAndSplitTrainer = "merge_and_split_trainer"
+
 
 class Recognizer(object):
     """
@@ -82,10 +94,16 @@ class Recognizer(object):
     FINALHYPOTOPN = 1000
     LATTICEBEAM = 50
 
-
-    def __init__(self, gaussianContainerSet, gaussMixturesSet, atomMap,
-                 mixtureTree, topologyInfo, dictionary,
-                 contextModel, vocabulary=None, initSearchGraph=True):
+    def __init__(self,
+                 gaussianContainerSet,
+                 gaussMixturesSet,
+                 atomMap,
+                 mixtureTree,
+                 topologyInfo,
+                 dictionary,
+                 contextModel,
+                 vocabulary=None,
+                 initSearchGraph=True):
         """
         Create a new Recognizer with the given BioKIT-classes.
 
@@ -110,7 +128,9 @@ class Recognizer(object):
         self.dictionary = dictionary
         self.decodingResultList = []
         self.rankList = []
-        self.samples = defaultdict(list) # makes default for unknown keys [] instead of None, important in storeSamplesForInit
+        self.samples = defaultdict(
+            list
+        )  # makes default for unknown keys [] instead of None, important in storeSamplesForInit
         self.atomsamples = {}
         self.trainer = None
         self.trainerType = TrainerType.GmmTrainer
@@ -148,19 +168,18 @@ class Recognizer(object):
         TOKENINSERTIONPENALTY = 0
 
         self.beams = BioKIT.Beams(self.HYPOBEAM, self.HYPOTOPN,
-                                   self.FINALHYPOBEAM, self.FINALHYPOTOPN,
-                                   self.LATTICEBEAM)
+                                  self.FINALHYPOBEAM, self.FINALHYPOTOPN,
+                                  self.LATTICEBEAM)
 
-        self.setTrainingBeams(self.HYPOBEAM, self.HYPOTOPN,
-                                   self.FINALHYPOBEAM, self.FINALHYPOTOPN,
-                                   self.LATTICEBEAM)
+        self.setTrainingBeams(self.HYPOBEAM, self.HYPOTOPN, self.FINALHYPOBEAM,
+                              self.FINALHYPOTOPN, self.LATTICEBEAM)
 
         self.sequenceModelWeight = SEQUENCEMODELWEIGHT
         self.tokenInsertionPenalty = TOKENINSERTIONPENALTY
         self.trainingTokenSequenceModelWeight = SEQUENCEMODELWEIGHT
         self.trainingTokenInsertionPenalty = TOKENINSERTIONPENALTY
 
-    def initSearchGraph(self, tokenSequenceModel = None):
+    def initSearchGraph(self, tokenSequenceModel=None):
         """
         Initialize the search graph.
 
@@ -171,8 +190,7 @@ class Recognizer(object):
         """
         self.gmmScorer = BioKIT.GmmFeatureVectorScorer(self.gaussMixturesSet)
         self.modelMapper = BioKIT.ModelMapper(self.topologyInfo,
-                                              self.mixtureTree,
-                                              self.atomMap)
+                                              self.mixtureTree, self.atomMap)
 
         self.cacheScorer = BioKIT.CacheFeatureVectorScorer(self.gmmScorer)
 
@@ -180,14 +198,10 @@ class Recognizer(object):
         if tokenSequenceModel:
             sequenceModel = tokenSequenceModel
 
-        self.handler = BioKIT.SearchGraphHandler(sequenceModel,
-                                                 self.dictionary,
-                                                 self.vocabulary,
-                                                 self.modelMapper,
-                                                 self.cacheScorer,
-                                                 self.beams,
-                                                 self.sequenceModelWeight,
-                                                 self.tokenInsertionPenalty)
+        self.handler = BioKIT.SearchGraphHandler(
+            sequenceModel, self.dictionary, self.vocabulary, self.modelMapper,
+            self.cacheScorer, self.beams, self.sequenceModelWeight,
+            self.tokenInsertionPenalty)
         self.decoder = BioKIT.Decoder(self.handler)
 
     def createSequenceModelLookAhead(self, maxLookAheadTreeDepth,
@@ -205,11 +219,13 @@ class Recognizer(object):
             raise ValueError("The search graph needs to be initialized first.")
 
         self.handler.createTsmLookAhead(maxLookAheadTreeDepth)
-        self.handler.getTsmLookAhead().config().setTsmWeight(lookAheadSequenceModelWeight)
-        self.handler.getTsmLookAhead().config().setMaxNodeCache(lookAheadCacheSize)
+        self.handler.getTsmLookAhead().config().setTsmWeight(
+            lookAheadSequenceModelWeight)
+        self.handler.getTsmLookAhead().config().setMaxNodeCache(
+            lookAheadCacheSize)
 
-    def setTrainingBeams(self, hypoBeam, hypoTopN,
-                         finalHypoBeam, finalHypoTopN, latticeBeam):
+    def setTrainingBeams(self, hypoBeam, hypoTopN, finalHypoBeam,
+                         finalHypoTopN, latticeBeam):
         """
         Set the beams used in training.
 
@@ -226,9 +242,8 @@ class Recognizer(object):
                 the search network are pruned, unless the path's score is less or
                 equal to the global best path's score plus lattice beam.
         """
-        self.trainingBeams = BioKIT.Beams(hypoBeam, hypoTopN,
-                                           finalHypoBeam, finalHypoTopN,
-                                           latticeBeam)
+        self.trainingBeams = BioKIT.Beams(hypoBeam, hypoTopN, finalHypoBeam,
+                                          finalHypoTopN, latticeBeam)
 
     def limitSearchGraph(self, tokenlist):
         """
@@ -241,27 +256,23 @@ class Recognizer(object):
         """
         self.gmmScorer = BioKIT.GmmFeatureVectorScorer(self.gaussMixturesSet)
         self.modelMapper = BioKIT.ModelMapper(self.topologyInfo,
-                                              self.mixtureTree,
-                                              self.atomMap)
+                                              self.mixtureTree, self.atomMap)
 
         tokenids = []
         for token in tokenlist:
             id = self.dictionary.getTokenIds(token)
             tokenids += id
-        vocabulary = BioKIT.SearchVocabulary(tokenids,
-                                             self.dictionary)
+        vocabulary = BioKIT.SearchVocabulary(tokenids, self.dictionary)
 
         self.handler = BioKIT.SearchGraphHandler(self.tokenSequenceModel,
-                                                 self.dictionary,
-                                                 vocabulary,
+                                                 self.dictionary, vocabulary,
                                                  self.modelMapper,
-                                                 self.gmmScorer,
-                                                 self.beams,
+                                                 self.gmmScorer, self.beams,
                                                  self.sequenceModelWeight,
                                                  self.tokenInsertionPenalty)
         self.decoder = BioKIT.Decoder(self.handler)
 
-    def setBeams(self,hypoBeam, hypoTopN, finalHypoBeam, finalHypoTopN,
+    def setBeams(self, hypoBeam, hypoTopN, finalHypoBeam, finalHypoTopN,
                  latticeBeam):
         """
         Set the beams used in decoding.
@@ -334,7 +345,9 @@ class Recognizer(object):
              trainerType (TrainerType): Type of trainer
         """
         if not isinstance(trainerType, TrainerType):
-            raise ValueError("Received unknown type of trainer. Please use recognizer.TrainerType.")
+            raise ValueError(
+                "Received unknown type of trainer. Please use recognizer.TrainerType."
+            )
 
         self.trainerType = trainerType
 
@@ -347,9 +360,14 @@ class Recognizer(object):
             self.trainer = BioKIT.GmmTrainer(self.gaussMixturesSet)
 
     @classmethod
-    def createCompletelyNew(cls, atomList, tokenDictionary, nrofmixtures,
-                            featuredimensionality, sequenceRecognition=False,
-                            tokenSequenceModel=None, initDecoding=True):
+    def createCompletelyNew(cls,
+                            atomList,
+                            tokenDictionary,
+                            nrofmixtures,
+                            featuredimensionality,
+                            sequenceRecognition=False,
+                            tokenSequenceModel=None,
+                            initDecoding=True):
         """
         Create a completely new Recognizer.
 
@@ -407,7 +425,9 @@ class Recognizer(object):
         num_atoms = len(atomList)
         num_dict_atoms = len(dictionary.getAtomManager())
         if num_atoms != num_dict_atoms:
-            logger.warn("Mismatch between dictionary and atomList. dictionary: {} atoms, atomList: {} atoms".format(num_dict_atoms, num_atoms))
+            logger.warn(
+                "Mismatch between dictionary and atomList. dictionary: {} atoms, atomList: {} atoms"
+                .format(num_dict_atoms, num_atoms))
 
         # create hmms
         topologyInfo = BioKIT.TopologyInfo()
@@ -421,7 +441,9 @@ class Recognizer(object):
 
         for atom in nrofmixtures:
             if type(nrofmixtures[atom]) == int:
-                tmplist = len(atomList[atom]) * [nrofmixtures[atom], ]
+                tmplist = len(atomList[atom]) * [
+                    nrofmixtures[atom],
+                ]
                 nrofmixtures[atom] = tmplist
 
         gaussianContainerSet = BioKIT.GaussianContainerSet()
@@ -436,7 +458,7 @@ class Recognizer(object):
             states = atomList[atom]
             #if the token only has 1 state, then there is only the outgoing
             #transition
-            if(len(states) == 1):
+            if (len(states) == 1):
                 rootNodes = ['ROOT-' + states[0]]
                 transitions = []
                 initialStates = [0]
@@ -500,14 +522,14 @@ class Recognizer(object):
                 tsm = BioKIT.ZeroGram(dictionary)
 
         #create the Recognizer and return it
-        return(cls(gaussianContainerSet,
-                   gaussMixturesSet,
-                   dictionary.getAtomManager(),
-                   mixtureTree,
-                   topologyInfo,
-                   dictionary,
-                   tsm,
-                   initSearchGraph=initDecoding))
+        return (cls(gaussianContainerSet,
+                    gaussMixturesSet,
+                    dictionary.getAtomManager(),
+                    mixtureTree,
+                    topologyInfo,
+                    dictionary,
+                    tsm,
+                    initSearchGraph=initDecoding))
 
     @staticmethod
     def buildTokenGrammar(dictionary):
@@ -522,7 +544,8 @@ class Recognizer(object):
             the grammar
 
         """
-        logger.log(BioKIT.LogSeverityLevel.Information, "Creating grammar tokensequence model")
+        logger.log(BioKIT.LogSeverityLevel.Information,
+                   "Creating grammar tokensequence model")
         dictionary.config().setStartToken("<S>")
         dictionary.config().setEndToken("<E>")
         vocabulary = BioKIT.SearchVocabulary(dictionary)
@@ -533,13 +556,17 @@ class Recognizer(object):
         grammar.setStartSymbol(nt0)
         allowedTokens = vocabulary.getVocabulary()
         for token in sorted(allowedTokens):
-            logger.log(BioKIT.LogSeverityLevel.Debug, "creating terminal node for " + dictionary.getToken(token))
+            logger.log(
+                BioKIT.LogSeverityLevel.Debug,
+                "creating terminal node for " + dictionary.getToken(token))
             nodeId = grammar.addTerminalNode(token)
-            logger.log(BioKIT.LogSeverityLevel.Debug, "adding edge from " + str(nt0) + " to " + str(nodeId))
+            logger.log(BioKIT.LogSeverityLevel.Debug,
+                       "adding edge from " + str(nt0) + " to " + str(nodeId))
             grammar.addSuccessor(nt0, nodeId)
-            logger.log(BioKIT.LogSeverityLevel.Debug, "set " + str(nodeId) + " as end node")
+            logger.log(BioKIT.LogSeverityLevel.Debug,
+                       "set " + str(nodeId) + " as end node")
             grammar.setEndNode(nodeId)
-        return(grammar)
+        return (grammar)
 
     @staticmethod
     def addModel(atom, substates, nrOfGaussians, dim, gaussianContainerSet,
@@ -562,9 +589,8 @@ class Recognizer(object):
             hookName = 'hook-' + modelName
             if not modelName in \
                gaussianContainerSet.getGaussianContainerList():
-                gaussianContainerSet.addGaussianContainer(modelName,
-                                                          nrOfGaussians[idx],
-                                                          dim, "DIAGONAL")
+                gaussianContainerSet.addGaussianContainer(
+                    modelName, nrOfGaussians[idx], dim, "DIAGONAL")
 
             if not modelName in gaussMixturesSet.getAvailableModelIds():
                 gaussMixturesSet.addGaussMixture(modelName, modelName)
@@ -604,8 +630,11 @@ class Recognizer(object):
             newHook.setChildNode(False, newDummyNode)
 
     @classmethod
-    def createNewFromLegacyFile(cls, path, sequencemodel=None,
-                                sequenceRecognition=False, useFiller=False,
+    def createNewFromLegacyFile(cls,
+                                path,
+                                sequencemodel=None,
+                                sequenceRecognition=False,
+                                useFiller=False,
                                 codebookSet="codebookSet",
                                 codebookWeights="codebookWeights",
                                 distribSet="distribSet",
@@ -616,8 +645,7 @@ class Recognizer(object):
                                 topologies="topologies",
                                 transitionModels="transitionModels",
                                 dictfile="dictionary",
-                                vocabfile=None
-                                ):
+                                vocabfile=None):
         """
         Create a recognizer from files in legacy format.
 
@@ -661,17 +689,17 @@ class Recognizer(object):
         dictionary = BioKIT.Dictionary(atomMap)
         if useFiller:
             dictionary.registerAttributeHandler("FILLER",
-                BioKIT.NumericValueHandler())
+                                                BioKIT.NumericValueHandler())
         dictionary.readDictionary(os.sep.join([path, dictfile]))
         if vocabfile is None:
             vocabulary = BioKIT.SearchVocabulary(dictionary)
         else:
-            vocabulary = BioKIT.SearchVocabulary(os.sep.join([path, vocabfile]), dictionary)
+            vocabulary = BioKIT.SearchVocabulary(
+                os.sep.join([path, vocabfile]), dictionary)
 
         modelMapper = BioKIT.ModelMapper.ReadTopology(
-            gmmScorer, atomMap, os.path.join(path,distribTree),
-            os.path.join(path,topologyTree),
-            os.path.join(path, topologies),
+            gmmScorer, atomMap, os.path.join(path, distribTree),
+            os.path.join(path, topologyTree), os.path.join(path, topologies),
             os.path.join(path, transitionModels))
         mixtureTree = modelMapper.getMixtureTree()
         topologyInfo = modelMapper.getTopologyInfo()
@@ -690,18 +718,22 @@ class Recognizer(object):
             ngram = BioKIT.NGram(dictionary)
             ngram.readArpaFile(sequencemodel, vocabulary)
             if useFiller:
-                fillerWrapper = BioKIT.FillerWrapper(ngram, dictionary, "FILLER")
-                cacheTsm = BioKIT.CacheTokenSequenceModel(fillerWrapper, dictionary)
+                fillerWrapper = BioKIT.FillerWrapper(ngram, dictionary,
+                                                     "FILLER")
+                cacheTsm = BioKIT.CacheTokenSequenceModel(
+                    fillerWrapper, dictionary)
                 tsm = cacheTsm
             else:
                 tsm = ngram
-        return(cls(gaussianContainerSet, gaussMixturesSet, atomMap,
-                   mixtureTree, topologyInfo, dictionary,
-                   tsm, vocabulary))
+        return (cls(gaussianContainerSet, gaussMixturesSet, atomMap,
+                    mixtureTree, topologyInfo, dictionary, tsm, vocabulary))
 
     @classmethod
-    def createNewFromFile(cls, path, contextmodel=None,
-                          sequenceRecognition=False, useFiller=False):
+    def createNewFromFile(cls,
+                          path,
+                          contextmodel=None,
+                          sequenceRecognition=False,
+                          useFiller=False):
         """
         Load an existing Recognizer from files.
 
@@ -732,7 +764,8 @@ class Recognizer(object):
             a new Recognizer, initialized with the given files
 
         """
-        logger.log(BioKIT.LogSeverityLevel.Information, "create recognizer from files in %s" % path)
+        logger.log(BioKIT.LogSeverityLevel.Information,
+                   "create recognizer from files in %s" % path)
         topologyInfo = BioKIT.TopologyInfo()
         gaussianContainerSet = BioKIT.GaussianContainerSet()
         gaussMixturesSet = BioKIT.GaussMixturesSet(gaussianContainerSet)
@@ -750,7 +783,7 @@ class Recognizer(object):
         dictionary = BioKIT.Dictionary(atomMap)
         if useFiller:
             dictionary.registerAttributeHandler("FILLER",
-                BioKIT.NumericValueHandler())
+                                                BioKIT.NumericValueHandler())
         dictionary.readDictionary(os.sep.join([path, 'dictionary']))
         vocabulary = BioKIT.SearchVocabulary(dictionary)
         if contextmodel is None:
@@ -765,17 +798,20 @@ class Recognizer(object):
             ngram = BioKIT.NGram(dictionary)
             ngram.readArpaFile(contextmodel, vocabulary)
             if useFiller:
-                fillerWrapper = BioKIT.FillerWrapper(ngram, dictionary, "FILLER")
-                cacheTsm = BioKIT.CacheTokenSequenceModel(fillerWrapper, dictionary)
+                fillerWrapper = BioKIT.FillerWrapper(ngram, dictionary,
+                                                     "FILLER")
+                cacheTsm = BioKIT.CacheTokenSequenceModel(
+                    fillerWrapper, dictionary)
                 tsm = cacheTsm
             else:
                 tsm = ngram
 
-        return(cls(gaussianContainerSet, gaussMixturesSet, atomMap,
-                   mixtureTree, topologyInfo, dictionary,
-                   tsm))
+        return (cls(gaussianContainerSet, gaussMixturesSet, atomMap,
+                    mixtureTree, topologyInfo, dictionary, tsm))
 
-    def registerDictionaryAttributeHandler(self, attribute, handler=BioKIT.StringHandler()):
+    def registerDictionaryAttributeHandler(self,
+                                           attribute,
+                                           handler=BioKIT.StringHandler()):
         """
         Register handler for attribute in the dictionary.
 
@@ -835,7 +871,13 @@ class Recognizer(object):
         vis.plot_path_feat(path, self.handler, self.gmmScorer, fs)
         vis.show()
 
-    def decode(self, fs, reference=None, generatepath=False, nbest=1, initialize=True, returnscores=False):
+    def decode(self,
+               fs,
+               reference=None,
+               generatepath=False,
+               nbest=1,
+               initialize=True,
+               returnscores=False):
         """
         Decode a feature sequence.
 
@@ -868,15 +910,13 @@ class Recognizer(object):
             self.handler.setKeepHyposAlive(True)
             filename = "hyp.%s.snp" % self._blameid
             snapshotName = os.path.join(self._get_blamepath(), filename)
-            self.handler.createSnapshot(snapshotName,
-                                        self.sequenceModelWeight,
+            self.handler.createSnapshot(snapshotName, self.sequenceModelWeight,
                                         self.tokenInsertionPenalty)
 
         self.decoder.search(mcfs, initialize)
-        raw_results = self.decoder.extractSearchResult(nbest,
-                                                   self.handler.getConfig().
-                                                       getLatticeBeam(),
-                                                   "FILLER")
+        raw_results = self.decoder.extractSearchResult(
+            nbest,
+            self.handler.getConfig().getLatticeBeam(), "FILLER")
         results = [r.toString().strip() for r in raw_results]
 
         if len(results) != 0:
@@ -884,26 +924,32 @@ class Recognizer(object):
         else:
             hypo = ""
         logger.log(BioKIT.LogSeverityLevel.Information, "HYPO: %s" % (hypo))
-        logger.log(BioKIT.LogSeverityLevel.Information, "REF: %s" % (reference))
-        
+        logger.log(BioKIT.LogSeverityLevel.Information,
+                   "REF: %s" % (reference))
+
         if reference is not None:
             ter = align.tokenErrorRate(reference, hypo)
-            logger.log(BioKIT.LogSeverityLevel.Information, "Token Error Rate: " + str(ter))
+            logger.log(BioKIT.LogSeverityLevel.Information,
+                       "Token Error Rate: " + str(ter))
 
             # compute the rank of the correct hypothesis in the nbest list
             if nbest > 1:
                 rankofcorrect = None
                 for rank, res in enumerate(results):
-                    logger.log(BioKIT.LogSeverityLevel.Information, "%s-best hypo: %s" % (rank+1, res))
+                    logger.log(BioKIT.LogSeverityLevel.Information,
+                               "%s-best hypo: %s" % (rank + 1, res))
                     if align.tokenErrorRate(reference, res) == 0.0:
-                        rankofcorrect = rank+1
+                        rankofcorrect = rank + 1
                         break
-                logger.log(BioKIT.LogSeverityLevel.Information, "Rank of correct result: %s" % rank)
+                logger.log(BioKIT.LogSeverityLevel.Information,
+                           "Rank of correct result: %s" % rank)
                 self.rankList.append({'reference': reference, 'rank': rank})
 
             #save in result list for final TER computation
-            self.decodingResultList.append({'reference': reference,
-                                            'hypothesis': hypo})
+            self.decodingResultList.append({
+                'reference': reference,
+                'hypothesis': hypo
+            })
         if nbest == 1:
             retval = hypo
         else:
@@ -967,7 +1013,12 @@ class Recognizer(object):
             self.blamepath = tempfile.mkdtemp()
         return self.blamepath
 
-    def storeSequenceForBlame(self, fs, listOfTokenNames, id, flexibility, hypos=None):
+    def storeSequenceForBlame(self,
+                              fs,
+                              listOfTokenNames,
+                              id,
+                              flexibility,
+                              hypos=None):
         """
         Perform error blaming for the given data sample.
 
@@ -983,8 +1034,7 @@ class Recognizer(object):
         self.forcedSequenceAlignment(fs, listOfTokenNames)
         self.decode(fs)
         #the snapshot files are now in self.blamepath/[ref|hyp].id.snp
-        errorBlamer = BioKIT.ErrorBlamer(self.dictionary,
-                                         flexibility,
+        errorBlamer = BioKIT.ErrorBlamer(self.dictionary, flexibility,
                                          self.getScorer())
         hypsnapshot = os.path.join(self._get_blamepath(), "hyp.%s.snp" % id)
         refsnapshot = os.path.join(self._get_blamepath(), "ref.%s.snp" % id)
@@ -1021,9 +1071,12 @@ class Recognizer(object):
         """
         return self.forcedSequenceAlignment(fs, [tokenName])
 
-    def forcedSequenceAlignment(self, fs, listOfTokenNames, fillerOrFillerTokenId = -1,
-                                doNotAllowOptionalFillersAndVariations = True,
-                                addFillerToBeginningAndEnd = False):
+    def forcedSequenceAlignment(self,
+                                fs,
+                                listOfTokenNames,
+                                fillerOrFillerTokenId=-1,
+                                doNotAllowOptionalFillersAndVariations=True,
+                                addFillerToBeginningAndEnd=False):
         """
         Perform a forced viterbi alignment of a token sequence.
 
@@ -1045,7 +1098,8 @@ class Recognizer(object):
         if type(fillerOrFillerTokenId) is int:
             fillerTokenId = fillerOrFillerTokenId
         else:
-            fillerTokenId = self.dictionary.getTokenIds(fillerOrFillerTokenId)[0]
+            fillerTokenId = self.dictionary.getTokenIds(
+                fillerOrFillerTokenId)[0]
 
         if addFillerToBeginningAndEnd:
             fillerToken = self.dictionary.getToken(fillerTokenId)
@@ -1055,23 +1109,24 @@ class Recognizer(object):
         gmmScorer = BioKIT.GmmFeatureVectorScorer(self.gaussMixturesSet)
         cacheScorer = BioKIT.CacheFeatureVectorScorer(gmmScorer)
 
-        modelMapper = BioKIT.ModelMapper(self.topologyInfo,
-                                         self.mixtureTree,
+        modelMapper = BioKIT.ModelMapper(self.topologyInfo, self.mixtureTree,
                                          self.atomMap)
 
         mcfs = [fs]
         tokenIDs = []
         for tokenName in listOfTokenNames:
             tokenIds = self.dictionary.getTokenIds(tokenName)
-            assert(len(tokenIds) == 1)
+            assert (len(tokenIds) == 1)
             tokenIDs.append(tokenIds[0])
 
-        logger.log(BioKIT.LogSeverityLevel.Debug, "Forced Alignment for %s (token ids %s)" % (listOfTokenNames, tokenIDs))
+        logger.log(
+            BioKIT.LogSeverityLevel.Debug,
+            "Forced Alignment for %s (token ids %s)" %
+            (listOfTokenNames, tokenIDs))
         handler = BioKIT.SearchGraphHandler(
-            self.dictionary, tokenIDs,
-            fillerTokenId, doNotAllowOptionalFillersAndVariations, modelMapper,
-            cacheScorer, self.trainingBeams,
-            self.trainingTokenSequenceModelWeight,
+            self.dictionary, tokenIDs, fillerTokenId,
+            doNotAllowOptionalFillersAndVariations, modelMapper, cacheScorer,
+            self.trainingBeams, self.trainingTokenSequenceModelWeight,
             self.trainingTokenInsertionPenalty)
 
         decoder = BioKIT.Decoder(handler)
@@ -1079,8 +1134,7 @@ class Recognizer(object):
         if self._errorblame:
             filename = "ref.%s.snp" % self._blameid
             snapshotName = os.path.join(self._get_blamepath(), filename)
-            handler.createSnapshot(snapshotName,
-                                   self.sequenceModelWeight,
+            handler.createSnapshot(snapshotName, self.sequenceModelWeight,
                                    self.tokenInsertionPenalty)
 
         decoder.search(mcfs, True)
@@ -1095,7 +1149,11 @@ class Recognizer(object):
             path = decoder.traceViterbiPath()
         return path
 
-    def storeTokenForTrain(self, fs, tokenName, fillerToken = "filler", ignoreNoPathException=False):
+    def storeTokenForTrain(self,
+                           fs,
+                           tokenName,
+                           fillerToken="filler",
+                           ignoreNoPathException=False):
         """
         Add one token to the training iteration.
 
@@ -1118,12 +1176,15 @@ class Recognizer(object):
                 ignoreNoPathException=False
 
         """
-        self.storeTokenSequenceForTrain(fs, [tokenName], ignoreNoPathException, fillerToken)
+        self.storeTokenSequenceForTrain(fs, [tokenName], ignoreNoPathException,
+                                        fillerToken)
 
-    def storeTokenSequenceForTrain(self, fs, listOfTokenNames,
+    def storeTokenSequenceForTrain(self,
+                                   fs,
+                                   listOfTokenNames,
                                    ignoreNoPathException=False,
-                                   fillerToken = "filler",
-                                   addFillerToBeginningAndEnd = False):
+                                   fillerToken="filler",
+                                   addFillerToBeginningAndEnd=False):
         """
         Add a sequence of tokens to the training iteration.
 
@@ -1151,19 +1212,27 @@ class Recognizer(object):
         self.traincount += 1
         if (self.trainer is None):
             if self.trainerType is TrainerType.MergeAndSplitTrainer:
-                self.trainer = BioKIT.MergeAndSplitTrainer(self.gaussMixturesSet)
+                self.trainer = BioKIT.MergeAndSplitTrainer(
+                    self.gaussMixturesSet)
             else:
                 self.trainer = BioKIT.GmmTrainer(self.gaussMixturesSet)
 
         try:
-            path = self.forcedSequenceAlignment(fs, listOfTokenNames, fillerOrFillerTokenId=fillerToken, addFillerToBeginningAndEnd=addFillerToBeginningAndEnd)
+            path = self.forcedSequenceAlignment(
+                fs,
+                listOfTokenNames,
+                fillerOrFillerTokenId=fillerToken,
+                addFillerToBeginningAndEnd=addFillerToBeginningAndEnd)
             self.trainer.accuPath(fs, path, 1.0)
         except RuntimeError as e:
             if ignoreNoPathException:
-                logger.log(BioKIT.LogSeverityLevel.Information, 'Ignoring error in forced alignment for %s,'
-                                                                'error was: %s' % (listOfTokenNames, str(e)))
+                logger.log(
+                    BioKIT.LogSeverityLevel.Information,
+                    'Ignoring error in forced alignment for %s,'
+                    'error was: %s' % (listOfTokenNames, str(e)))
             else:
-                logger.log(BioKIT.LogSeverityLevel.Information, "raise NoViterbiPath exception")
+                logger.log(BioKIT.LogSeverityLevel.Information,
+                           "raise NoViterbiPath exception")
                 raise NoViterbiPath(str(e))
 
     def storePathForTrain(self, fs, path):
@@ -1189,7 +1258,9 @@ class Recognizer(object):
 
         """
         if len(fs) != len(path):
-            raise ValueError("Path of length {} does not match feature sequence of length {}".format(len(path), len(fs)))
+            raise ValueError(
+                "Path of length {} does not match feature sequence of length {}"
+                .format(len(path), len(fs)))
 
         if self.modelMapper == None:
             self.modelMapper = BioKIT.ModelMapper(self.topologyInfo,
@@ -1198,13 +1269,15 @@ class Recognizer(object):
         try:
             path = path.convertPath(self.atomMap, self.modelMapper)
         except:
-            logger.log(BioKIT.LogSeverityLevel.Critical, "Error in path conversion")
+            logger.log(BioKIT.LogSeverityLevel.Critical,
+                       "Error in path conversion")
             return
 
         self.traincount += 1
         if (self.trainer is None):
             if self.trainerType is TrainerType.MergeAndSplitTrainer:
-                self.trainer = BioKIT.MergeAndSplitTrainer(self.gaussMixturesSet)
+                self.trainer = BioKIT.MergeAndSplitTrainer(
+                    self.gaussMixturesSet)
             else:
                 self.trainer = BioKIT.GmmTrainer(self.gaussMixturesSet)
 
@@ -1222,14 +1295,18 @@ class Recognizer(object):
         changes the models.
         """
         if (self.trainer is None):
-            raise NoTrainerInitialized("Training was not initialized. No data stored for training.")
+            raise NoTrainerInitialized(
+                "Training was not initialized. No data stored for training.")
         self.clearDecodingList()
 
         # Is there data for every model?
         num_accus = self.trainer.getGaussMixtureAccuSet().getSize()
-        num_gauss_mixtures = len(self.trainer.getGaussMixturesSet().getAvailableModelNames())
+        num_gauss_mixtures = len(
+            self.trainer.getGaussMixturesSet().getAvailableModelNames())
         if num_accus != num_gauss_mixtures:
-            logger.warn("Only {} out of {} models have data to be trained on".format(num_accus, num_gauss_mixtures))
+            logger.warn(
+                "Only {} out of {} models have data to be trained on".format(
+                    num_accus, num_gauss_mixtures))
 
         # do training update
         self.trainer.doUpdate()
@@ -1237,13 +1314,20 @@ class Recognizer(object):
         if isinstance(self.trainer, BioKIT.MergeAndSplitTrainer):
             (splitCount, deleteCount) = self.trainer.splitGaussians()
             mergeCount = self.trainer.mergeGaussians()
-            logger.info("Merge-And-Split Training: {} splits, {} deletions and {} merges".format(splitCount, deleteCount, mergeCount))
+            logger.info(
+                "Merge-And-Split Training: {} splits, {} deletions and {} merges"
+                .format(splitCount, deleteCount, mergeCount))
 
         self.trainer.clear()
         self.traincount = 0
 
-    def initClustering(self, contextsize, minsamplecount, nrmaxleaves, nrofmixtures,
-                       featuredimensionality, fillerAttribute="filler"):
+    def initClustering(self,
+                       contextsize,
+                       minsamplecount,
+                       nrmaxleaves,
+                       nrofmixtures,
+                       featuredimensionality,
+                       fillerAttribute="filler"):
         """
         Initialize the clustering to convert a context-independent model to a context-dependent model.
 
@@ -1264,17 +1348,17 @@ class Recognizer(object):
                 fillers
         """
         scorer = BioKIT.GmmFeatureVectorScorer(self.gaussMixturesSet)
-        self.clusterer = BioKIT.ContextClusterer(scorer, self.modelMapper,
-                                                 contextsize, self.dictionary,
-                                                 fillerAttribute, minsamplecount,
-                                                 nrmaxleaves, nrofmixtures,
-                                                 featuredimensionality,
-                                                 "DIAGONAL")
+        self.clusterer = BioKIT.ContextClusterer(
+            scorer, self.modelMapper, contextsize, self.dictionary,
+            fillerAttribute, minsamplecount, nrmaxleaves, nrofmixtures,
+            featuredimensionality, "DIAGONAL")
 
-    def storeTokenSequenceForClustering(self, fs, listOfTokenNames,
-                                   ignoreNoPathException=False,
-                                   fillerToken = "filler",
-                                   addFillerToBeginningAndEnd = False):
+    def storeTokenSequenceForClustering(self,
+                                        fs,
+                                        listOfTokenNames,
+                                        ignoreNoPathException=False,
+                                        fillerToken="filler",
+                                        addFillerToBeginningAndEnd=False):
         """
         Add a sequence of tokens for clustering.
 
@@ -1305,14 +1389,21 @@ class Recognizer(object):
                                          'to call initClustering first!')
 
         try:
-            path = self.forcedSequenceAlignment(fs, listOfTokenNames, fillerOrFillerTokenId=fillerToken, addFillerToBeginningAndEnd=addFillerToBeginningAndEnd)
+            path = self.forcedSequenceAlignment(
+                fs,
+                listOfTokenNames,
+                fillerOrFillerTokenId=fillerToken,
+                addFillerToBeginningAndEnd=addFillerToBeginningAndEnd)
             self.clusterer.accuPath(path, fs)
         except RuntimeError as e:
             if ignoreNoPathException:
-                logger.log(BioKIT.LogSeverityLevel.Information, 'Ignoring error in forced alignment for %s,'
-                                                                'error was: %s' % (listOfTokenNames, str(e)))
+                logger.log(
+                    BioKIT.LogSeverityLevel.Information,
+                    'Ignoring error in forced alignment for %s,'
+                    'error was: %s' % (listOfTokenNames, str(e)))
             else:
-                logger.log(BioKIT.LogSeverityLevel.Information, "raise NoViterbiPath exception")
+                logger.log(BioKIT.LogSeverityLevel.Information,
+                           "raise NoViterbiPath exception")
                 raise NoViterbiPath(str(e))
 
     def storePathForClustering(self, fs, path):
@@ -1324,7 +1415,9 @@ class Recognizer(object):
             path (BioKIT.Path): matching path to the feature sequence
         """
         if len(fs) != len(path):
-            raise ValueError("Path of length {} does not match feature sequence of length {}".format(len(path), len(fs)))
+            raise ValueError(
+                "Path of length {} does not match feature sequence of length {}"
+                .format(len(path), len(fs)))
 
         if (self.clusterer is None):
             raise NoClustererInitialized('Cannot accumulate paths '
@@ -1338,7 +1431,8 @@ class Recognizer(object):
         try:
             path = path.convertPath(self.atomMap, self.modelMapper)
         except:
-            logger.log(BioKIT.LogSeverityLevel.Critical, "Error in path conversion")
+            logger.log(BioKIT.LogSeverityLevel.Critical,
+                       "Error in path conversion")
             return
 
         self.clusterer.accuPath(path, fs)
@@ -1367,10 +1461,12 @@ class Recognizer(object):
         self.clusterer = None
         self.samples = defaultdict(list)
 
-    def storeTokenSequenceToInitClustered(self, fs, listOfTokenNames,
-                                           ignoreNoPathException=False,
-                                           fillerToken = "filler",
-                                           addFillerToBeginningAndEnd = False):
+    def storeTokenSequenceToInitClustered(self,
+                                          fs,
+                                          listOfTokenNames,
+                                          ignoreNoPathException=False,
+                                          fillerToken="filler",
+                                          addFillerToBeginningAndEnd=False):
         """
         Add a sequence of tokens to initialize a clustered model.
 
@@ -1399,19 +1495,28 @@ class Recognizer(object):
             raise ValueError("No clustered mixture tree. Call cluster first.")
 
         try:
-            path = self.forcedSequenceAlignment(fs, listOfTokenNames, fillerOrFillerTokenId=fillerToken, addFillerToBeginningAndEnd=addFillerToBeginningAndEnd)
-            converted_path = path.convertPath(self.atomMap, self.cd_modelMapper)
+            path = self.forcedSequenceAlignment(
+                fs,
+                listOfTokenNames,
+                fillerOrFillerTokenId=fillerToken,
+                addFillerToBeginningAndEnd=addFillerToBeginningAndEnd)
+            converted_path = path.convertPath(self.atomMap,
+                                              self.cd_modelMapper)
 
             fsmatrix = fs.getMatrix()
             for i in range(0, converted_path.size()):
-                modelName = self.cd_mixtureTree.getScorer().getModelName(converted_path[i].mModelId)
+                modelName = self.cd_mixtureTree.getScorer().getModelName(
+                    converted_path[i].mModelId)
                 self.storeSamplesForInit(modelName, fsmatrix, i, i + 1)
         except RuntimeError as e:
             if ignoreNoPathException:
-                logger.log(BioKIT.LogSeverityLevel.Information, 'Ignoring error in forced alignment for %s,'
-                                                                'error was: %s' % (listOfTokenNames, str(e)))
+                logger.log(
+                    BioKIT.LogSeverityLevel.Information,
+                    'Ignoring error in forced alignment for %s,'
+                    'error was: %s' % (listOfTokenNames, str(e)))
             else:
-                logger.log(BioKIT.LogSeverityLevel.Information, "raise NoViterbiPath exception")
+                logger.log(BioKIT.LogSeverityLevel.Information,
+                           "raise NoViterbiPath exception")
                 raise NoViterbiPath(str(e))
 
     def storePathToInitClustered(self, fs, path):
@@ -1435,24 +1540,30 @@ class Recognizer(object):
                 beginning and end of the token sequence
         """
         if len(fs) != len(path):
-            raise ValueError("Path of length {} does not match feature sequence of length {}".format(len(path), len(fs)))
+            raise ValueError(
+                "Path of length {} does not match feature sequence of length {}"
+                .format(len(path), len(fs)))
 
         if not hasattr(self, 'cd_mixtureTree') or self.cd_mixtureTree is None:
             raise ValueError("No clustered mixture tree. Call cluster first.")
 
         try:
-            converted_path = path.convertPath(self.atomMap, self.cd_modelMapper)
+            converted_path = path.convertPath(self.atomMap,
+                                              self.cd_modelMapper)
 
             fsmatrix = fs.getMatrix()
             for i in range(0, converted_path.size()):
-                modelName = self.cd_mixtureTree.getScorer().getModelName(converted_path[i].mModelId)
+                modelName = self.cd_mixtureTree.getScorer().getModelName(
+                    converted_path[i].mModelId)
                 self.storeSamplesForInit(modelName, fsmatrix, i, i + 1)
         except:
-            logger.log(BioKIT.LogSeverityLevel.Critical, "Error in path conversion")
+            logger.log(BioKIT.LogSeverityLevel.Critical,
+                       "Error in path conversion")
 
-    def initializeClusteredModels(self, clusteringAlgorithm="kmeans",
-                                  useUniformCovariance = False,
-                                  useUniformWeights = False):
+    def initializeClusteredModels(self,
+                                  clusteringAlgorithm="kmeans",
+                                  useUniformCovariance=False,
+                                  useUniformWeights=False):
         """
         Initialize the clustered models.
 
@@ -1474,15 +1585,17 @@ class Recognizer(object):
         self.mixtureTree = self.cd_mixtureTree
         scorer = self.mixtureTree.getScorer()
         self.gaussMixturesSet = scorer.getGaussMixturesSet()
-        self.gaussianContainerSet = self.gaussMixturesSet.getGaussianContainerSet()
-        self.modelMapper  = self.cd_modelMapper
+        self.gaussianContainerSet = self.gaussMixturesSet.getGaussianContainerSet(
+        )
+        self.modelMapper = self.cd_modelMapper
         #self.initSearchGraph()
         self.cd_mixtureTree = None
         self.cd_modelMapper = None
         self.trainer = None
 
         # initialize
-        self.initializeStoredModels(clusteringAlgorithm, useUniformCovariance, useUniformWeights)
+        self.initializeStoredModels(clusteringAlgorithm, useUniformCovariance,
+                                    useUniformWeights)
 
     def storeSamplesForInit(self, statename, matrix, start, end):
         """
@@ -1512,8 +1625,9 @@ class Recognizer(object):
         """
         numberOfStates = self.getNumberOfStates(atomname)
 
-        statenames = ["%s-%s" % (atomname, state)
-                      for state in range(numberOfStates)]
+        statenames = [
+            "%s-%s" % (atomname, state) for state in range(numberOfStates)
+        ]
 
         data = fs.getMatrix().list()
         w = wkmb.WKM(data, len(statenames))
@@ -1524,7 +1638,8 @@ class Recognizer(object):
         fsmatrix = fs.getMatrix()
         for i in range(len(statenames)):
             statename = statenames[i]
-            self.storeSamplesForInit(statename, fsmatrix, boundaries[i], boundaries[i+1])
+            self.storeSamplesForInit(statename, fsmatrix, boundaries[i],
+                                     boundaries[i + 1])
 
     def storeAtomForMultiWKMInit(self, fs, atomname):
         """
@@ -1546,10 +1661,12 @@ class Recognizer(object):
         for atomname, fslist in self.atomsamples.items():
             numberOfStates = self.getNumberOfStates(atomname)
 
-            statenames = ["%s-%s" % (atomname, state)
-                          for state in range(numberOfStates)]
+            statenames = [
+                "%s-%s" % (atomname, state) for state in range(numberOfStates)
+            ]
             w = wkmb2.WKM([fs.getMatrix().list() for fs in fslist],
-                          len(statenames), minsize=30)
+                          len(statenames),
+                          minsize=30)
             w.cluster_init()
             cont = True
             while cont:
@@ -1563,13 +1680,15 @@ class Recognizer(object):
                 #state names is sorted from first to last state
                 for i in range(len(statenames)):
                     statename = statenames[i]
-                    self.storeSamplesForInit(statename, fsmatrix, boundaries[i], boundaries[i+1])
+                    self.storeSamplesForInit(statename, fsmatrix,
+                                             boundaries[i], boundaries[i + 1])
 
         self.initializeStoredModels()
 
-    def initializeStoredModels(self, clusteringAlgorithm="kmeans",
-                               useUniformCovariance = False,
-                               useUniformWeights = False):
+    def initializeStoredModels(self,
+                               clusteringAlgorithm="kmeans",
+                               useUniformCovariance=False,
+                               useUniformWeights=False):
         """
         Initialize models using on the accumulated data.
 
@@ -1584,30 +1703,40 @@ class Recognizer(object):
 
         """
         if clusteringAlgorithm not in ["kmeans", "neuralGas"]:
-            raise ValueError("Invalid clustering algorithm specified. Chose from 'kmeans' and 'neuralGas'")
+            raise ValueError(
+                "Invalid clustering algorithm specified. Chose from 'kmeans' and 'neuralGas'"
+            )
 
         logger.log(BioKIT.LogSeverityLevel.Information, "Sample counts")
         num_samples = 0
         conc_samples = {}
 
         for key in sorted(self.samples):
-            conc_samples[key] = np.copy(np.concatenate(self.samples[key], axis=0))
-            logger.log(BioKIT.LogSeverityLevel.Information, '%30s: %5d x %5d' % (key, len(conc_samples[key]),
-                                       len(conc_samples[key][0])))
+            conc_samples[key] = np.copy(
+                np.concatenate(self.samples[key], axis=0))
+            logger.log(
+                BioKIT.LogSeverityLevel.Information, '%30s: %5d x %5d' %
+                (key, len(conc_samples[key]), len(conc_samples[key][0])))
             num_samples += len(conc_samples[key])
 
-        logger.log(BioKIT.LogSeverityLevel.Information, "Total number of samples: {}".format(num_samples))
-        logger.log(BioKIT.LogSeverityLevel.Information, "Total number of models:  {}".format(len(conc_samples)))
+        logger.log(BioKIT.LogSeverityLevel.Information,
+                   "Total number of samples: {}".format(num_samples))
+        logger.log(BioKIT.LogSeverityLevel.Information,
+                   "Total number of models:  {}".format(len(conc_samples)))
 
         # sanity check: need data for all models
         samples_names = set(conc_samples.keys())
         model_names = set(self.gaussianContainerSet.getGaussianContainerList())
         if samples_names != model_names:
-            if len(samples_names-model_names) > 0:
-                raise ValueError("For these names no models were defined: {}".format(samples_names - model_names))
+            if len(samples_names - model_names) > 0:
+                raise ValueError(
+                    "For these names no models were defined: {}".format(
+                        samples_names - model_names))
             else:
                 # raise ValueError("There is no data for these models: {}\nModels cannot be initialized.".format(sorted(model_names - samples_names)))
-                logger.warn("There is no data for these models: {}\nModels cannot be initialized.".format(sorted(model_names - samples_names)))
+                logger.warn(
+                    "There is no data for these models: {}\nModels cannot be initialized."
+                    .format(sorted(model_names - samples_names)))
 
         # shortcut
         gmmScorer = BioKIT.GmmFeatureVectorScorer(self.gaussMixturesSet)
@@ -1616,7 +1745,9 @@ class Recognizer(object):
         for gcName in sorted(conc_samples):
             dim = self.gaussianContainerSet.getGaussianContainer(gcName).\
                 getDimensionality()
-            logger.log(BioKIT.LogSeverityLevel.Information, 'Clustering (' + clusteringAlgorithm + ') for ' + gcName)
+            logger.log(
+                BioKIT.LogSeverityLevel.Information,
+                'Clustering (' + clusteringAlgorithm + ') for ' + gcName)
             gc = self.gaussianContainerSet.getGaussianContainer(gcName)
             assert dim == gc.getDimensionality()
 
@@ -1627,8 +1758,9 @@ class Recognizer(object):
             data = np.array(conc_samples[gcName])
             if clusteringAlgorithm == "kmeans":
                 maxIter = 10
-                (means, variances, assigns) = BioKIT.Algorithms.kMeans(
-                    data, numberOfGaussians, maxIter, True)
+                (means, variances,
+                 assigns) = BioKIT.Algorithms.kMeans(data, numberOfGaussians,
+                                                     maxIter, True)
             elif clusteringAlgorithm == "neuralGas":
                 maxIter = 1000
                 (means, variances, assigns) = \
@@ -1647,7 +1779,8 @@ class Recognizer(object):
                 mixWeights = np.ones(gCount) / (1.0 * gCount)
             else:
                 mixWeights = list(range(gCount))
-                mixWeights = [(assigns.count(x) * 1.0) / len(assigns) for x in mixWeights]
+                mixWeights = [(assigns.count(x) * 1.0) / len(assigns)
+                              for x in mixWeights]
             mx.setMixtureWeights(mixWeights)
 
             #logger.log(BioKIT.LogSeverityLevel.Information, "Gaussian number " + str(gaussian) + ":")
@@ -1669,7 +1802,7 @@ class Recognizer(object):
         assert len(topologies) == 1
         topology = topologies[0][1]
         rootNodes = topology.getRootNodes()
-        return(len(rootNodes))
+        return (len(rootNodes))
 
     def storeAtomForInit(self, fs, atomname):
         """
@@ -1684,8 +1817,9 @@ class Recognizer(object):
             atomname (str): name of atom, which is to be initialized
         """
         numberOfStates = self.getNumberOfStates(atomname)
-        statenames = ["%s-%s" % (atomname, state)
-                      for state in range(numberOfStates)]
+        statenames = [
+            "%s-%s" % (atomname, state) for state in range(numberOfStates)
+        ]
 
         framesperstate = int(fs.getLength() / numberOfStates)
         additionalframes = fs.getLength() % numberOfStates
@@ -1727,14 +1861,15 @@ class Recognizer(object):
             for atomId in atomIds:
                 subFs = BioKIT.FeatureSequence()
                 subFs.setMatrix(fs.getMatrix()[start:end, :])
-                self.storeAtomForInit(subFs,
-                                      self.atomMap.findAtomName(atomId))
+                self.storeAtomForInit(subFs, self.atomMap.findAtomName(atomId))
                 start = start + framelen
                 end = min(end + framelen, len(fs.getMatrix()))
 
-    def storeTokenSequenceForInit(self, fs, listOfTokenNames,
-                                  fillerToken = "filler",
-                                  addFillerToBeginningAndEnd = False):
+    def storeTokenSequenceForInit(self,
+                                  fs,
+                                  listOfTokenNames,
+                                  fillerToken="filler",
+                                  addFillerToBeginningAndEnd=False):
         """
         Store a feature sequence and corresponding token sequence for initialization.
 
@@ -1770,8 +1905,7 @@ class Recognizer(object):
         end_idx = int(end)
         for atomId in atomIds:
             subFs = fs[start_idx:end_idx]
-            self.storeAtomForInit(subFs,
-                                  self.atomMap.findAtomName(atomId))
+            self.storeAtomForInit(subFs, self.atomMap.findAtomName(atomId))
             start_idx = end_idx
             end = min(end + framelen, len(fs))
             end_idx = int(end)
@@ -1780,9 +1914,7 @@ class Recognizer(object):
         if start_idx < len(fs):
             end_idx = len(fs)
             subFs = fs[start_idx:end_idx]
-            self.storeAtomForInit(subFs,
-                                  self.atomMap.findAtomName(atomId))
-
+            self.storeAtomForInit(subFs, self.atomMap.findAtomName(atomId))
 
     def storePathForInit(self, fs, path):
         """
@@ -1797,7 +1929,9 @@ class Recognizer(object):
 
         """
         if len(fs) != len(path):
-            raise ValueError("Path of length {} does not match feature sequence of length {}".format(len(path), len(fs)))
+            raise ValueError(
+                "Path of length {} does not match feature sequence of length {}"
+                .format(len(path), len(fs)))
 
         if self.modelMapper == None:
             self.modelMapper = BioKIT.ModelMapper(self.topologyInfo,
@@ -1806,13 +1940,14 @@ class Recognizer(object):
         try:
             path = path.convertPath(self.atomMap, self.modelMapper)
         except:
-            logger.log(BioKIT.LogSeverityLevel.Critical, "Error in path conversion")
+            logger.log(BioKIT.LogSeverityLevel.Critical,
+                       "Error in path conversion")
             return
 
         fsmatrix = fs.getMatrix()
         for i in range(0, path.size()):
             modelName = self.gaussMixturesSet.getModelName(path[i].mModelId)
-            self.storeSamplesForInit(modelName, fsmatrix, i, i+1)
+            self.storeSamplesForInit(modelName, fsmatrix, i, i + 1)
 
     def saveToFiles(self, path):
         """
@@ -1828,10 +1963,10 @@ class Recognizer(object):
         if not os.path.exists(path):
             os.makedirs(path)
 
-        self.gaussianContainerSet.writeDescFile(os.sep.join([path,
-                                                             "gaussianDesc"]))
-        self.gaussianContainerSet.saveDataFile(os.sep.join([path,
-                                                            'gaussianData']))
+        self.gaussianContainerSet.writeDescFile(
+            os.sep.join([path, "gaussianDesc"]))
+        self.gaussianContainerSet.saveDataFile(
+            os.sep.join([path, 'gaussianData']))
         self.gaussMixturesSet.writeDescFile(os.sep.join([path, 'mixtureDesc']))
         self.gaussMixturesSet.saveDataFile(os.sep.join([path, 'mixtureData']))
         self.mixtureTree.writeTree(os.sep.join([path, 'mixtureTree']))
@@ -1849,10 +1984,17 @@ class Recognizer(object):
                 for id in ids:
                     entry = self.dictionary.getDictionaryEntry(id)
                     atomlist = entry.getAtomIdList()
-                    atomlist = [self.atomMap.getAtom(x).getName() for x in atomlist]
+                    atomlist = [
+                        self.atomMap.getAtom(x).getName() for x in atomlist
+                    ]
                     attributelist = entry.getAttributeList()
-                    attributelist = ["[{} {}]".format(attribute, attributelist[attribute]) for attribute in attributelist]
-                    f.write("%s {%s} %s\n" % (token, " ".join(atomlist), " ".join(attributelist)))
+                    attributelist = [
+                        "[{} {}]".format(attribute, attributelist[attribute])
+                        for attribute in attributelist
+                    ]
+                    f.write(
+                        "%s {%s} %s\n" %
+                        (token, " ".join(atomlist), " ".join(attributelist)))
 
     def clearDecodingList(self):
         """Erase every previous decoding result."""

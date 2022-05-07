@@ -17,8 +17,10 @@ import pdb
 import datetime
 import visualization as vis
 
+
 def log(level, text):
-    print("Python log: " + str(datetime.datetime.now()) + " - " + level + ": " + text)
+    print("Python log: " + str(datetime.datetime.now()) + " - " + level +
+          ": " + text)
 
 
 class AirwritingRecognizer:
@@ -35,7 +37,9 @@ class AirwritingRecognizer:
         self.blamepath = None
         self.trainer = None
 
-    def setupjanus(self, directory, prepro_name,
+    def setupjanus(self,
+                   directory,
+                   prepro_name,
                    gaussianContainerFile="codebookWeights",
                    gaussMixtureFile="distribWeights"):
         """
@@ -51,9 +55,11 @@ class AirwritingRecognizer:
         self.gaussianContainerSet.readDescFile(makePath("codebookSet"))
         self.gaussianContainerSet.loadDataFile(makePath(gaussianContainerFile))
 
-        log("Info", "Gaussian container set is: " + str(self.gaussianContainerSet))
+        log("Info",
+            "Gaussian container set is: " + str(self.gaussianContainerSet))
 
-        self.gaussMixtureSet = BioKIT.GaussMixturesSet(self.gaussianContainerSet)
+        self.gaussMixtureSet = BioKIT.GaussMixturesSet(
+            self.gaussianContainerSet)
         self.gaussMixtureSet.readDescFile(makePath("distribSet"))
         self.gaussMixtureSet.loadDataFile(makePath(gaussMixtureFile))
 
@@ -66,11 +72,12 @@ class AirwritingRecognizer:
         self.atomMap = BioKIT.AtomManager()
         self.atomMap.readAtomManager(makePath("phonesSet"))
 
-        log("Info","Generating model mapper")
+        log("Info", "Generating model mapper")
 
         self.modelMapper = BioKIT.ModelMapper.ReadTopology(
-            self.cacheScorer, self.atomMap, makePath("distribTree"), makePath("topologyTree"),
-            makePath("topologies"),makePath("transitionModels"))
+            self.cacheScorer, self.atomMap, makePath("distribTree"),
+            makePath("topologyTree"), makePath("topologies"),
+            makePath("transitionModels"))
 
         log("Info", "Loading dictionary")
         with open(makePath("rec.conf.tcl")) as fh:
@@ -79,7 +86,7 @@ class AirwritingRecognizer:
         self.dictionary = BioKIT.Dictionary(self.atomMap)
         self.dictionary.registerAttributeHandler("FILLER",
                                                  BioKIT.NumericValueHandler())
-        dictfile = janusconfig["dict"].strip().strip('"')+".filler0.dec"
+        dictfile = janusconfig["dict"].strip().strip('"') + ".filler0.dec"
         self.dictionary.readDictionary(dictfile)
         self.dictionary.config().setStartToken("<s>")
         self.dictionary.config().setEndToken("</s>")
@@ -100,17 +107,16 @@ class AirwritingRecognizer:
             self.ngram.readArpaFile(arpafile, self.vocabulary)
 
             log('info', 'Creating tokensequence model with fillers')
-            
+
             self.fillerWrapper = BioKIT.FillerWrapper(self.ngram,
                                                       self.dictionary,
                                                       'FILLER')
 
             log('info', 'Creating cache tokensequence model')
-            self.cacheTsm = BioKIT.CacheTokenSequenceModel(self.fillerWrapper,
-                                                           self.dictionary)
+            self.cacheTsm = BioKIT.CacheTokenSequenceModel(
+                self.fillerWrapper, self.dictionary)
 
             self.tokenSequenceModel = self.cacheTsm
-
 
         log("Info", "Making search graph")
 
@@ -126,25 +132,24 @@ class AirwritingRecognizer:
 
         self.tokenSequenceModelWeight = float(janusconfig["lz"])
         self.tokenInsertionPenalty = float(janusconfig["wordPen"])
-        print(("tsm weight: %s, tokeninsertionpenalty: %s" % (
-                                    self.tokenSequenceModelWeight,
-                                    self.tokenInsertionPenalty)))
-        self.searchGraphHandler = BioKIT.SearchGraphHandler(self.tokenSequenceModel,
-                                    self.dictionary, self.vocabulary,
-                                    self.modelMapper, self.cacheScorer,
-                                    self.beams,
-                                    float(self.tokenSequenceModelWeight),
-                                    float(self.tokenInsertionPenalty))
-#        self.searchGraphHandler.createDotGraph("searchgraph.dot")
+        print(("tsm weight: %s, tokeninsertionpenalty: %s" %
+               (self.tokenSequenceModelWeight, self.tokenInsertionPenalty)))
+        self.searchGraphHandler = BioKIT.SearchGraphHandler(
+            self.tokenSequenceModel, self.dictionary, self.vocabulary,
+            self.modelMapper, self.cacheScorer, self.beams,
+            float(self.tokenSequenceModelWeight),
+            float(self.tokenInsertionPenalty))
+        #        self.searchGraphHandler.createDotGraph("searchgraph.dot")
 
         self.searchGraphHandler.createTsmLookAhead(-1)
-        self.searchGraphHandler.getTsmLookAhead().config().setTsmWeight(self.tokenSequenceModelWeight);
-        self.searchGraphHandler.getTsmLookAhead().config().setMaxNodeCache(3000)
+        self.searchGraphHandler.getTsmLookAhead().config().setTsmWeight(
+            self.tokenSequenceModelWeight)
+        self.searchGraphHandler.getTsmLookAhead().config().setMaxNodeCache(
+            3000)
 
-        log("Info","Creating BioKIT")
+        log("Info", "Creating BioKIT")
         self.decoder = BioKIT.Decoder(self.searchGraphHandler)
- 
-        
+
     def setup(self, config, modelparam, tmpdir=None):
         """
         Setup all necessary biokit classes to performa a decoding
@@ -169,7 +174,7 @@ class AirwritingRecognizer:
         if not tmpdir:
             tmpdir = tempfile.mkdtemp()
         os.chdir(tmpdir)
-        self.blamepath=tmpdir
+        self.blamepath = tmpdir
 
         db.write_blob(modelparam.gaussian_data, "gaussian_data")
         db.write_blob(modelparam.gaussian_desc, "gaussian_desc")
@@ -177,11 +182,13 @@ class AirwritingRecognizer:
         self.gaussianContainerSet.readDescFile("gaussian_desc")
         self.gaussianContainerSet.loadDataFile("gaussian_data")
 
-        log("Info", "Gaussian container set is: " + str(self.gaussianContainerSet))
+        log("Info",
+            "Gaussian container set is: " + str(self.gaussianContainerSet))
 
         db.write_blob(modelparam.mixture_data, "mixture_data")
         db.write_blob(modelparam.mixture_desc, "mixture_desc")
-        self.gaussMixtureSet = BioKIT.GaussMixturesSet(self.gaussianContainerSet)
+        self.gaussMixtureSet = BioKIT.GaussMixturesSet(
+            self.gaussianContainerSet)
         self.gaussMixtureSet.readDescFile("mixture_desc")
         self.gaussMixtureSet.loadDataFile("mixture_data")
 
@@ -195,15 +202,15 @@ class AirwritingRecognizer:
         self.atomMap = BioKIT.AtomManager()
         self.atomMap.readAtomManager("phones")
 
-        log("Info","Generating model mapper")
+        log("Info", "Generating model mapper")
 
         db.write_blob(modelparam.distrib_tree, "distrib_tree")
         db.write_blob(modelparam.topology_tree, "topology_tree")
         db.write_blob(modelparam.topologies, "topologies")
         db.write_blob(modelparam.transitions, "transitions")
         self.modelMapper = BioKIT.ModelMapper.ReadTopology(
-            self.cacheScorer, self.atomMap, "distrib_tree", "topology_tree", "topologies",
-                              "transitions")
+            self.cacheScorer, self.atomMap, "distrib_tree", "topology_tree",
+            "topologies", "transitions")
 
         log("Info", "Loading dictionary")
         self.dictionary = BioKIT.Dictionary(self.atomMap)
@@ -232,7 +239,8 @@ class AirwritingRecognizer:
             #self.tokenInsertionPenalty = 10000
         elif config.contextmodel.type.name == "ngram":
             self.ngram = BioKIT.NGram(self.dictionary)
-            self.ngram.readArpaFile(str(config.contextmodel.file), self.vocabulary)
+            self.ngram.readArpaFile(str(config.contextmodel.file),
+                                    self.vocabulary)
 
             log('info', 'Creating tokensequence model with fillers')
             self.fillerWrapper = BioKIT.FillerWrapper(self.ngram,
@@ -240,40 +248,39 @@ class AirwritingRecognizer:
                                                       'FILLER')
 
             log('info', 'Creating cache tokensequence model')
-            self.cacheTsm = BioKIT.CacheTokenSequenceModel(self.fillerWrapper,
-                                                           self.dictionary)
+            self.cacheTsm = BioKIT.CacheTokenSequenceModel(
+                self.fillerWrapper, self.dictionary)
 
             self.tokenSequenceModel = self.cacheTsm
-
 
         log("Info", "Making search graph")
 
         self.beams = BioKIT.Beams(config.biokitconfig.hypo_beam,
-                                   config.biokitconfig.hypo_topn,
-                                   config.biokitconfig.final_hypo_beam,
-                                   config.biokitconfig.final_hypo_topn,
-                                   config.biokitconfig.lattice_beam)
+                                  config.biokitconfig.hypo_topn,
+                                  config.biokitconfig.final_hypo_beam,
+                                  config.biokitconfig.final_hypo_topn,
+                                  config.biokitconfig.lattice_beam)
 
         print((self.beams))
 
         self.tokenSequenceModelWeight = config.biokitconfig.languagemodel_weight
         self.tokenInsertionPenalty = config.biokitconfig.token_insertion_penalty
-        print(("tsm weight: %s, tokeninsertionpenalty: %s" % (
-                                    self.tokenSequenceModelWeight,
-                                    self.tokenInsertionPenalty)))
-        self.searchGraphHandler = BioKIT.SearchGraphHandler(self.tokenSequenceModel,
-                                    self.dictionary, self.vocabulary,
-                                    self.modelMapper, self.cacheScorer,
-                                    self.beams,
-                                    float(self.tokenSequenceModelWeight),
-                                    float(self.tokenInsertionPenalty))
-#        self.searchGraphHandler.createDotGraph("searchgraph.dot")
+        print(("tsm weight: %s, tokeninsertionpenalty: %s" %
+               (self.tokenSequenceModelWeight, self.tokenInsertionPenalty)))
+        self.searchGraphHandler = BioKIT.SearchGraphHandler(
+            self.tokenSequenceModel, self.dictionary, self.vocabulary,
+            self.modelMapper, self.cacheScorer, self.beams,
+            float(self.tokenSequenceModelWeight),
+            float(self.tokenInsertionPenalty))
+        #        self.searchGraphHandler.createDotGraph("searchgraph.dot")
 
         self.searchGraphHandler.createTsmLookAhead(-1)
-        self.searchGraphHandler.getTsmLookAhead().config().setTsmWeight(self.tokenSequenceModelWeight);
-        self.searchGraphHandler.getTsmLookAhead().config().setMaxNodeCache(3000)
+        self.searchGraphHandler.getTsmLookAhead().config().setTsmWeight(
+            self.tokenSequenceModelWeight)
+        self.searchGraphHandler.getTsmLookAhead().config().setMaxNodeCache(
+            3000)
 
-        log("Info","Creating BioKIT")
+        log("Info", "Creating BioKIT")
         self.decoder = BioKIT.Decoder(self.searchGraphHandler)
 
         #self.trainset = config.trainset
@@ -281,7 +288,9 @@ class AirwritingRecognizer:
 
         #self.data_basedir = config.data_basedir
 
-    def saveModels(self, path, gaussianContainerSetFile="gaussianData",
+    def saveModels(self,
+                   path,
+                   gaussianContainerSetFile="gaussianData",
                    gaussMixtureSetFile="mixtureData"):
         """
         This method saves the class attributes of the Recognizer on disk,
@@ -294,45 +303,52 @@ class AirwritingRecognizer:
         if not os.path.exists(path):
             os.makedirs(path)
 
-        self.gaussianContainerSet.saveDataFile(os.sep.join([path,
-                                                gaussianContainerSetFile]))
-        self.gaussMixtureSet.saveDataFile(os.sep.join([path,
-                                                       gaussMixtureSetFile]))
+        self.gaussianContainerSet.saveDataFile(
+            os.sep.join([path, gaussianContainerSetFile]))
+        self.gaussMixtureSet.saveDataFile(
+            os.sep.join([path, gaussMixtureSetFile]))
 
     def _get_blamepath(self):
         if not self.blamepath:
             self.blamepath = tempfile.mkdtemp()
         return self.blamepath
-    
-    def decode_file(self, filename, reference = "", errorblame = False,
-                    generatePath = False, id = 0, samplingrate = 819.2):
+
+    def decode_file(self,
+                    filename,
+                    reference="",
+                    errorblame=False,
+                    generatePath=False,
+                    id=0,
+                    samplingrate=819.2):
         """blaming is not working for file only decoding at the moment since
         it relies on db.recording"""
-        log("Info", "decode: %s" % (filename,))
+        log("Info", "decode: %s" % (filename, ))
         self.prepro_time = time.time()
         self.mcfs = self.prepro.process(filename)
         self.prepro_time = time.time() - self.prepro_time
-        log("Info", "size of feature matrix: (%s, %s)" % (self.mcfs[0].getLength(),
-                 self.mcfs[0].getDimensionality()))
-        signalduration = self.mcfs[0].getLength()/float(samplingrate)
-        log("Info", "prepro took %ss (realtime factor %s)" % (self.prepro_time,
-                    self.prepro_time/self.prepro.duration))
-        
+        log(
+            "Info", "size of feature matrix: (%s, %s)" %
+            (self.mcfs[0].getLength(), self.mcfs[0].getDimensionality()))
+        signalduration = self.mcfs[0].getLength() / float(samplingrate)
+        log(
+            "Info", "prepro took %ss (realtime factor %s)" %
+            (self.prepro_time, self.prepro_time / self.prepro.duration))
+
         if errorblame:
             #self.searchGraphHandler.setKeepHyposAlive(True)
             filename = "hyp.%s.snp" % id
             snapshotName = os.path.join(self._get_blamepath(), filename)
             log("Info", "generate hypothesis snapshot in %s" % snapshotName)
-            self.searchGraphHandler.createSnapshot(snapshotName,
-                                        self.tokenSequenceModelWeight,
-                                        self.tokenInsertionPenalty)
+            self.searchGraphHandler.createSnapshot(
+                snapshotName, self.tokenSequenceModelWeight,
+                self.tokenInsertionPenalty)
 
         #if generatePath:
-            #self.searchGraphHandler.setKeepHyposAlive(True)
+        #self.searchGraphHandler.setKeepHyposAlive(True)
         self.decode_time = time.time()
         self.decoder.search(self.mcfs, True)
         results = self.decoder.extractSearchResult()
-        self.decode_time = time.time()-self.decode_time
+        self.decode_time = time.time() - self.decode_time
         log("Info", "search results")
         for res in results:
             log("Info", "hypo: %s, score: %s" % (res.toString(), res.score))
@@ -343,13 +359,14 @@ class AirwritingRecognizer:
         cleanResult = bestResult.replace("SIL", "").replace("_", "").strip()
         result = {'reference': reference, 'hypothesis': cleanResult}
         log("Info", str(result))
-        log("Info", "decoding took %ss (realtime factor %s)" % 
-                (self.decode_time, self.decode_time/self.prepro.duration))
+        log(
+            "Info", "decoding took %ss (realtime factor %s)" %
+            (self.decode_time, self.decode_time / self.prepro.duration))
         if generatePath:
-            self.path = self.searchGraphHandler.traceViterbiPath() 
-        return(result)
+            self.path = self.searchGraphHandler.traceViterbiPath()
+        return (result)
 
-    def decode(self, recording, errorblame = False, generatePath = False):
+    def decode(self, recording, errorblame=False, generatePath=False):
         filename = os.path.join(self.data_basedir,
                                 recording.experiment.base_dir,
                                 recording.filename)
@@ -357,16 +374,16 @@ class AirwritingRecognizer:
                                   generatePath, recording.id)
         if errorblame:
             self.blame(mcfs[0], recording)
-        return(result)
+        return (result)
 
-    def decode_set(self, set, errorblame = False):
+    def decode_set(self, set, errorblame=False):
         """
         decode a given set of recordings and return results.
 
         Keyword arguments:
         set - the dataset to decode given as db.Dataset
         """
-        log("Info", "decode set: %s" % (set.recordings,))
+        log("Info", "decode set: %s" % (set.recordings, ))
         resultlist = []
         self.blamelogs = {}
         self.confusionHandler = BioKIT.ConfusionHandler(self.gmmScorer)
@@ -374,7 +391,7 @@ class AirwritingRecognizer:
         for recording in set.recordings:
             result = self.decode(recording, errorblame)
             resultlist.append(result)
-        self.blamelog_fh.close()        
+        self.blamelog_fh.close()
         return resultlist
 
     def decode_list(self, reclist):
@@ -405,8 +422,11 @@ class AirwritingRecognizer:
         print("make EM update")
         self.finishTrainIteration()
 
-    def forcedSequenceAlignment(self, fs, listOfTokenNames, fillerTokenId = -1,
-                                doNotAllowOptionalFillersAndVariations = True):
+    def forcedSequenceAlignment(self,
+                                fs,
+                                listOfTokenNames,
+                                fillerTokenId=-1,
+                                doNotAllowOptionalFillersAndVariations=True):
         """
         Perform a forced viterbi alignment and return the viterbi path.
 
@@ -434,16 +454,15 @@ class AirwritingRecognizer:
         tokenIDs = []
         for tokenName in listOfTokenNames:
             tokenIds = self.dictionary.getTokenIds(tokenName)
-            assert(len(tokenIds) == 1)
+            assert (len(tokenIds) == 1)
             tokenIDs.append(tokenIds[0])
 
-        print(("building search graph for %s (%s)" % (listOfTokenNames, tokenIDs)))
+        print(("building search graph for %s (%s)" %
+               (listOfTokenNames, tokenIDs)))
         handler = BioKIT.SearchGraphHandler(
-            self.dictionary, tokenIDs,
-            fillerTokenId, doNotAllowOptionalFillersAndVariations,
-            self.modelMapper,
-            cacheScorer, self.beams,
-            self.tokenSequenceModelWeight,
+            self.dictionary, tokenIDs, fillerTokenId,
+            doNotAllowOptionalFillersAndVariations, self.modelMapper,
+            cacheScorer, self.beams, self.tokenSequenceModelWeight,
             self.tokenInsertionPenalty)
 
         decoder = BioKIT.Decoder(handler)
@@ -456,7 +475,9 @@ class AirwritingRecognizer:
         path = decoder.traceViterbiPath()
         return path
 
-    def storeTokenSequenceForTrain(self, fs, listOfTokenNames,
+    def storeTokenSequenceForTrain(self,
+                                   fs,
+                                   listOfTokenNames,
                                    ignoreNoPathException=False):
         """
         Add a sequence of tokens to the training iteration.
@@ -484,7 +505,7 @@ class AirwritingRecognizer:
         except RuntimeError as e:
             if ignoreNoPathException:
                 print(('Ignoring error in forced alignment for %s,'
-                      'error was: %s' % (listOfTokenNames, str(e))))
+                       'error was: %s' % (listOfTokenNames, str(e))))
             else:
                 print("raise NoViterbiPath exception")
                 raise BioKIT.NoViterbiPath(str(e))
@@ -500,19 +521,21 @@ class AirwritingRecognizer:
         """
         self.trainer.doUpdate()
         self.trainer.clear()
-    
-    def blame(self, fs, recording, flexibility = 0.7, hypos = 200):
+
+    def blame(self, fs, recording, flexibility=0.7, hypos=200):
         log("Info", "Perform Error Blaming")
         filename = os.path.join(self.data_basedir,
                                 recording.experiment.base_dir,
                                 recording.filename)
         self.blameReference(fs, recording)
-        errorBlamer = BioKIT.ErrorBlamer(self.dictionary,
-                                         flexibility,
+        errorBlamer = BioKIT.ErrorBlamer(self.dictionary, flexibility,
                                          self.gmmScorer)
-        hypsnapshot = os.path.join(self._get_blamepath(), "hyp.%s.snp" % recording.id)
-        refsnapshot = os.path.join(self._get_blamepath(), "ref.%s.snp" % recording.id)
-        shrinksnapshot = os.path.join(self._get_blamepath(), "shrink.%s.snp" % recording.id)
+        hypsnapshot = os.path.join(self._get_blamepath(),
+                                   "hyp.%s.snp" % recording.id)
+        refsnapshot = os.path.join(self._get_blamepath(),
+                                   "ref.%s.snp" % recording.id)
+        shrinksnapshot = os.path.join(self._get_blamepath(),
+                                      "shrink.%s.snp" % recording.id)
         BioKIT.SnapshotHandler.Shrink(hypsnapshot, hypos, shrinksnapshot)
         hypsnapshot = shrinksnapshot
         log("Info", "load snapshots %s, %s" % (hypsnapshot, refsnapshot))
@@ -521,7 +544,7 @@ class AirwritingRecognizer:
         self.blamelog_fh.write("Blame assignment for %s:\n" % recording.id)
         self.blamelog_fh.write(errorBlamer.blameAndWriteUtterance() + "\n\n")
         self.confusionHandler.collectConfusions(hypsnapshot, refsnapshot)
-                    
+
     def getBlameResults(self):
         """
         Return blame log and confusion mapping and reset error blaming
@@ -533,7 +556,7 @@ class AirwritingRecognizer:
         self.confusionHandler = None
         self.blamelogs = None
         return (blamelogs, confusion)
-    
+
     def blameReference(self, fs, recording):
         """
         Perform a forced viterbi alignment and return the viterbi path.
@@ -545,59 +568,65 @@ class AirwritingRecognizer:
         listOfTokenNames - ordered list of token names, that are to be trained
         """
         tokenIDs = []
-        listOfTokenNames =recording.reference.encode('ascii').split()
+        listOfTokenNames = recording.reference.encode('ascii').split()
         for tokenName in listOfTokenNames:
             tokenIds = self.dictionary.getTokenIds(tokenName)
-            assert(len(tokenIds) == 1)
+            assert (len(tokenIds) == 1)
             tokenIDs.append(tokenIds[0])
 
-        print(("building search graph for %s (%s)" % (listOfTokenNames, tokenIDs)))
-        handler = BioKIT.SearchGraphHandler(
-            self.dictionary, tokenIDs,
-            -1, True, self.modelMapper, self.gmmScorer,
-            self.beams,
-            self.tokenSequenceModelWeight,
-            self.tokenInsertionPenalty)
+        print(("building search graph for %s (%s)" %
+               (listOfTokenNames, tokenIDs)))
+        handler = BioKIT.SearchGraphHandler(self.dictionary, tokenIDs, -1,
+                                            True, self.modelMapper,
+                                            self.gmmScorer, self.beams,
+                                            self.tokenSequenceModelWeight,
+                                            self.tokenInsertionPenalty)
 
         # handler.setKeepHyposAlive(True)
         decoder = BioKIT.Decoder(handler)
- 
+
         filename = "ref.%s.snp" % recording.id
         snapshotName = os.path.join(self._get_blamepath(), filename)
-        handler.createSnapshot(snapshotName,
-                               self.tokenSequenceModelWeight,
+        handler.createSnapshot(snapshotName, self.tokenSequenceModelWeight,
                                self.tokenInsertionPenalty)
         decoder.search([fs], True)
-        print(("forcedalign result: %s" % decoder.extractSearchResult()[0].toString()))
-        
-
-
+        print(("forcedalign result: %s" %
+               decoder.extractSearchResult()[0].toString()))
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Perform training with " +
                                      "janus and decoding with biokit")
-    parser.add_argument('-p', '--path', help = "generate viterbi path",
-                        action = "store_true")
-    parser.add_argument('-sr', '--sampling-rate', help = "input sampling rate",
+    parser.add_argument('-p',
+                        '--path',
+                        help="generate viterbi path",
+                        action="store_true")
+    parser.add_argument('-sr',
+                        '--sampling-rate',
+                        help="input sampling rate",
                         default=819.2)
-    
+
     subparsers = parser.add_subparsers(help="subcommand help", dest="parsname")
-    parsdb = subparsers.add_parser("db", help = "use database")
-    parsdb.add_argument('database', help = "sqlalchemy conform database uri")
-    parsdb.add_argument('id', help = "row id of config to run")
-    parsdb.add_argument('iter', help = "number of training iterations")
+    parsdb = subparsers.add_parser("db", help="use database")
+    parsdb.add_argument('database', help="sqlalchemy conform database uri")
+    parsdb.add_argument('id', help="row id of config to run")
+    parsdb.add_argument('iter', help="number of training iterations")
     parsdb.add_argument('--datadir', default="/project/AMR/Handwriting/data")
-    parsdb.add_argument('--dir', type = str,
-                        help = "base directory to run job in (default tmp)")
-    parsdb.add_argument('-b', '--blame', help = "perform error blaming",
-                        action = "store_true")
-    parsdb.add_argument('-t', '--test', help = "only test given index in testset",
-                        type = int)
-    
-    parsfile = subparsers.add_parser("janus", help = "use janus config dir")
-    parsfile.add_argument('file', help = "file to decode")
-    parsfile.add_argument('janusdir', help = "directory with janus files")
+    parsdb.add_argument('--dir',
+                        type=str,
+                        help="base directory to run job in (default tmp)")
+    parsdb.add_argument('-b',
+                        '--blame',
+                        help="perform error blaming",
+                        action="store_true")
+    parsdb.add_argument('-t',
+                        '--test',
+                        help="only test given index in testset",
+                        type=int)
+
+    parsfile = subparsers.add_parser("janus", help="use janus config dir")
+    parsfile.add_argument('file', help="file to decode")
+    parsfile.add_argument('janusdir', help="directory with janus files")
     args = parser.parse_args()
 
     print()
@@ -607,60 +636,61 @@ if __name__ == "__main__":
 
     starttime = time.time()
     decodetime = None
-    
 
     if args.parsname == "db":
         airdb = db.AirDb(args.database)
         airrec = AirwritingRecognizer(args.datadir, airdb.session)
-        config = airdb.session.query(db.Configuration).filter(db.Configuration.id==args.id).one()
-    
+        config = airdb.session.query(
+            db.Configuration).filter(db.Configuration.id == args.id).one()
+
         log("Info", "Using config:")
         pprint.pprint(config.__dict__)
         print()
-    
+
         if args.iter == 0 and config.basemodel:
             modelparam = config.basemodel
         else:
             modelparam = airdb.find_equal_training_modelsparameters(
-                            config, args.iter)
-        log("Info", "Use models for iteration=%s: %s" % (args.iter,modelparam))
+                config, args.iter)
+        log("Info",
+            "Use models for iteration=%s: %s" % (args.iter, modelparam))
         airrec.setup(config, modelparam, args.dir)
         decodetime = time.time()
         if args.test is None:
             resultslist = airrec.decode_set(config.testset, args.blame)
         else:
-            resultslist = [airrec.decode(config.testset.recordings[args.test],
-                                         args.blame, args.path)]
+            resultslist = [
+                airrec.decode(config.testset.recordings[args.test], args.blame,
+                              args.path)
+            ]
     elif args.parsname == "janus":
         airrec = AirwritingRecognizer()
         prepro_name = "stdprepro"
         airrec.setupjanus(args.janusdir, prepro_name)
         decodetime = time.time()
         resultslist = airrec.decode_file(args.file)
-    
+
     stoptime = time.time()
-    
+
     if args.path:
         vis.plot_path_feat(airrec.path,
-                      airrec.searchGraphHandler.getSearchGraph(),
-                      airrec.gmmScorer,
-                      airrec.mcfs[0])
+                           airrec.searchGraphHandler.getSearchGraph(),
+                           airrec.gmmScorer, airrec.mcfs[0])
         vis.show()
     log("Info", str(resultslist))
     #ter = align.totalTokenErrorRate(resultslist)
     #log("Info", "Token Error Rate: " + str(ter))
     #if args.blame:
     #    blamelog, confusionmap = airrec.getBlameResults()
-    
-    
+
     duration = stoptime - starttime
     log("Info", "Duration: " + str(duration))
     if decodetime is not None:
-        duration_setup = decodetime-starttime
-        duration_decode = stoptime-decodetime
+        duration_setup = decodetime - starttime
+        duration_decode = stoptime - decodetime
         log("Info", "Duration of setup: %s" % duration_setup)
         log("Info", "Duration of decode: %s" % duration_decode)
-    
+
     print("****job finished")
     print("exit with return code 0")
     sys.exit(0)

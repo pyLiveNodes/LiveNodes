@@ -4,6 +4,7 @@ from . import BioKIT
 from .BioKIT import *
 from math import *
 
+
 def correlateFilesWithFilter(xName, yName, whichName):
     """Calculate pearson correlation of two sequences loaded
        from files, leaving out items marked with 0 in which, using
@@ -14,8 +15,10 @@ def correlateFilesWithFilter(xName, yName, whichName):
         y = yFile.readlines()
     with open(whichName) as whichFile:
         which = whichFile.readlines()
-    return correlateWithFilter([float(v) for v in x], [float(v) for v in y], min(len(x), len(y)), which)
-        
+    return correlateWithFilter([float(v) for v in x], [float(v) for v in y],
+                               min(len(x), len(y)), which)
+
+
 def correlateWithFilter(x, y, which, n):
     """Calculate pearson correlation of two sequences of equal length n,
        leaving out items marked with 0 in which"""
@@ -29,7 +32,8 @@ def correlateWithFilter(x, y, which, n):
             xFilter.append(x[i])
             yFilter.append(y[i])
     return Correlate(xFilter, yFilter, filterSampleCount)
-        
+
+
 def correlateFiles(xName, yName):
     """Calculate pearson correlation of two sequences of equal length n loaded
        from files, using only data up to the length of the shorter one."""
@@ -37,12 +41,14 @@ def correlateFiles(xName, yName):
         x = xFile.readlines()
     with open(yName) as yFile:
         y = yFile.readlines()
-    return correlate([float(v) for v in x], [float(v) for v in y], min(len(x), len(y)))
-    
+    return correlate([float(v) for v in x], [float(v) for v in y],
+                     min(len(x), len(y)))
+
+
 def correlate(x, y, n):
     """Calculate pearson correlation of two sequences of equal length n"""
     sampleCount = n
-    
+
     xSum = 0
     ySum = 0
     for i in range(sampleCount):

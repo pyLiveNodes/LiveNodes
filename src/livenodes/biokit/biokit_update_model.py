@@ -9,6 +9,7 @@ from livenodes.biokit.biokit import BioKIT, logger, recognizer
 
 from . import local_registry
 
+
 # TODO: figure out if/how we can update an already trained model with only the new data
 # -> see notes: use learning rate that takes the number of samples into account of previous training
 # TODO: also figure out how to adapt a model to the current wearer -> should be a standard procedure somewhere...
@@ -72,6 +73,7 @@ class Biokit_update_model(Node):
     def _settings(self):
         return {\
             # "batch": self.batch,
+
 
             "token_insertion_penalty": self.token_insertion_penalty,
             "model_path": self.model_path,

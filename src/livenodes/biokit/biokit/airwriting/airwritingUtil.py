@@ -4,7 +4,8 @@ import glob
 
 #import BioKIT
 
-def readResultFile ( filehandle ):
+
+def readResultFile(filehandle):
     """
     read results from a janus decoding in csv format
     
@@ -21,14 +22,18 @@ def readResultFile ( filehandle ):
     results = [x for x in csvDictReader]
     return results
 
+
 def writeResultFile(filehandle, results):
     """write results of decoding in csv format to file"""
     assert len(results) > 0
-    csvDictWriter = csv.DictWriter(filehandle, list(results[0].keys()), delimiter=";")
+    csvDictWriter = csv.DictWriter(filehandle,
+                                   list(results[0].keys()),
+                                   delimiter=";")
     csvDictWriter.writeheader()
     for res in results:
         csvDictWriter.writerow(res)
-    
+
+
 def readJanusConfig(filehandle):
     """
     read Janus rec.conf.tcl file and return a dictionary with the values
@@ -39,7 +44,7 @@ def readJanusConfig(filehandle):
         keyval = line.split(" ", 1)
         data[keyval[0]] = keyval[1]
     return data
-            
+
 
 def collectResults(baseDir):
     '''
@@ -47,26 +52,32 @@ def collectResults(baseDir):
     '''
     subDirs = [d for d in os.listdir(baseDir) if os.path.isdir(d)]
     results = {}
-    for subdir in subDirs:    
+    for subdir in subDirs:
         werfiles = glob.glob(os.path.join(subdir, "wer*"))
         for werfile in werfiles:
             iteration = int(werfile[-1])
             with open(werfile, 'r') as f:
                 wer = float(f.read().rstrip())
-                    
-            print("found werfile for iteration: " + str(iteration) + "with WER: " + str(wer))
+
+            print("found werfile for iteration: " + str(iteration) +
+                  "with WER: " + str(wer))
             if iteration not in results:
                 results[iteration] = {}
             results[iteration][subdir] = wer
     #compute average wer
     for iteration in results:
-        avgwer = sum(results[iteration].values()) / len(list(results[iteration].values()))
+        avgwer = sum(results[iteration].values()) / len(
+            list(results[iteration].values()))
         results[iteration]["avg"] = avgwer
-    return results 
-             
-def concatFoldResultStrings(baseDir, writeResultFile = True):
+    return results
+
+
+def concatFoldResultStrings(baseDir, writeResultFile=True):
     print("test")
-    subDirs = [os.path.join(baseDir, d) for d in os.listdir(baseDir) if os.path.isdir(os.path.join(baseDir, d))]
+    subDirs = [
+        os.path.join(baseDir, d) for d in os.listdir(baseDir)
+        if os.path.isdir(os.path.join(baseDir, d))
+    ]
     print(subDirs)
     results = {}
     #collect results
@@ -85,9 +96,11 @@ def concatFoldResultStrings(baseDir, writeResultFile = True):
     #write out concatenated result files
     if writeResultFile:
         for iteration in list(results.keys()):
-            with open(os.path.join(baseDir, "result.iter"+str(iteration)), "w" ) as f:
+            with open(os.path.join(baseDir, "result.iter" + str(iteration)),
+                      "w") as f:
                 f.write(results[iteration] + "\n")
-    return results 
+    return results
+
 
 def writeSetFile(dataset, filename):
     '''
@@ -99,7 +112,8 @@ def writeSetFile(dataset, filename):
     '''
     with open(filename, 'w') as f:
         f.write(" ".join([str(x) for x in dataset]))
-                
+
+
 def writeJoblist(jobs, directory, filename="joblist.tcl"):
     '''
     Write a list of jobs to execute via globalRunDist
@@ -114,9 +128,10 @@ def writeJoblist(jobs, directory, filename="joblist.tcl"):
     for job in jobs:
         outString += "{ dirname \"" + job + "\" }\n"
     outString += "}\n"
-    with open(os.path.join(directory,filename), "w") as f:
+    with open(os.path.join(directory, filename), "w") as f:
         f.write(outString)
-            
+
+
 def writeMachineList(machines, directory, filename="machines.tcl"):
     """
     Write a globalRunDistributed compatible list of machines to use
@@ -128,18 +143,17 @@ def writeMachineList(machines, directory, filename="machines.tcl"):
     """
     outString = ""
     outString += "set distribconf {\n"
-    outString += " "*4 + "machines {\n"
+    outString += " " * 4 + "machines {\n"
     for host, cores in machines.items():
-        outString += " "*8 + host + " {\n"
-        outString += " "*12 + "maxproc " + str(cores) + "\n"
-        outString += " "*8 + "}\n"
-    outString += " "*4 + "}\n"
+        outString += " " * 8 + host + " {\n"
+        outString += " " * 12 + "maxproc " + str(cores) + "\n"
+        outString += " " * 8 + "}\n"
+    outString += " " * 4 + "}\n"
     outString += "\n"
-    outString += " "*4 + "active {"
+    outString += " " * 4 + "active {"
     for host in machines:
         outString += host + " "
     outString += "}\n"
     outString += "}"
     with open(os.path.join(directory, filename), "w") as f:
         f.write(outString)
-                

@@ -4,7 +4,6 @@ import argparse
 import re
 import subprocess
 import sys
-
 """
 Parse a BioKIT log file with a stack trace.
 Read functions, file names and line numbers of the addresses from the executable
@@ -24,21 +23,19 @@ def __get_functions_and_lines(addresses):
         list of tuples (function name, file:lineNo)
     """
     # get line number
-    output = subprocess.check_output(["addr2line",
-                                      "-Cf",
-                                      "-e", sys.executable]
-                                     + addresses,
-                                     universal_newlines=True)
+    output = subprocess.check_output(
+        ["addr2line", "-Cf", "-e", sys.executable] + addresses,
+        universal_newlines=True)
     output = output.split("\n")
 
     # merge names and lines
     output_merged = []
     for i in range(len(addresses)):
         # return address if no line number was found
-        if output[2*i+1] == "??:0":
-            output[2*i+1] = "[{}]".format(addresses[i])
+        if output[2 * i + 1] == "??:0":
+            output[2 * i + 1] = "[{}]".format(addresses[i])
         # merge
-        output_merged.append((output[2*i], output[2*i+1]))
+        output_merged.append((output[2 * i], output[2 * i + 1]))
 
     return output_merged
 
@@ -49,9 +46,8 @@ def __get_line(address):
     Uses the binutils program "addr2line".
     """
     # get line number
-    output = subprocess.check_output(["addr2line",
-                                      "-e", sys.executable,
-                                      address])
+    output = subprocess.check_output(
+        ["addr2line", "-e", sys.executable, address])
     output = output.strip()
 
     # return address if no line number was found
@@ -66,7 +62,9 @@ def parse(log_path):
     Parse the backtrace in the log file and print enriched back trace output
     """
     signal_expr = re.compile("signal [0-9]{1,2} \(.*?\), address is .*? from ")
-    trace_expr = re.compile("(?P<begin> \([0-9]+\) [^() ]*)( : |\(\) )(?P<middle>.*?)\[(?P<address>0x[0-9a-f]+)\]")
+    trace_expr = re.compile(
+        "(?P<begin> \([0-9]+\) [^() ]*)( : |\(\) )(?P<middle>.*?)\[(?P<address>0x[0-9a-f]+)\]"
+    )
 
     first_line = ""
     trace_line_begins = []
@@ -96,7 +94,9 @@ def parse(log_path):
     # print output
     print(first_line)
     print("backtrace:")
-    for begin, functionOrg, (function, lineNo) in zip(trace_line_begins, trace_line_functions, trace_line_addresses):
+    for begin, functionOrg, (function, lineNo) in zip(trace_line_begins,
+                                                      trace_line_functions,
+                                                      trace_line_addresses):
         if function == "??" and functionOrg != "":
             function = functionOrg
 
@@ -104,7 +104,10 @@ def parse(log_path):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Parse log file with a BioKIT stack trace. Run this script with the same BioKIT version that created the log file")
+    parser = argparse.ArgumentParser(
+        description=
+        "Parse log file with a BioKIT stack trace. Run this script with the same BioKIT version that created the log file"
+    )
     parser.add_argument("log", help="log file that includes the stack trace")
     args = parser.parse_args()
 

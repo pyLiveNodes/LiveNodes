@@ -6,6 +6,7 @@ import plux
 
 from . import local_registry
 
+
 @local_registry.register
 class NewDevice(plux.SignalsDev):
     """

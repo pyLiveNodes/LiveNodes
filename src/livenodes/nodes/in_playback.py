@@ -11,6 +11,7 @@ from .in_data import read_data
 
 from . import local_registry
 
+
 @local_registry.register
 class In_playback(Sender):
     """

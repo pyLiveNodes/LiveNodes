@@ -8,7 +8,6 @@ from matplotlib.mlab import normpdf
 
 #global variable that defines if plots should go to files or to the screen
 PLOTTARGET = None
-
 """
 TODO:
 - currently most of the code only works with GMMs, if it is changed to sample the
@@ -98,8 +97,12 @@ class PathPlot(object):
                                                support, 50)
             for i, ax in enumerate(self.fsax):
                 extent = [0, len(self.path), support[i][0], support[i][1]]
-                ax.imshow(data[i], extent=extent ,alpha=0.9, aspect='auto',
-                          cmap=colormap, interpolation='nearest')
+                ax.imshow(data[i],
+                          extent=extent,
+                          alpha=0.9,
+                          aspect='auto',
+                          cmap=colormap,
+                          interpolation='nearest')
         plt.tight_layout()
 
 
@@ -138,7 +141,7 @@ class RecoVis(object):
         plot_mixture(mixture, mixturename)
 
 
-def plot_mcfs(mcfs,borders=[], name=None):
+def plot_mcfs(mcfs, borders=[], name=None):
     '''
     plot all channels of a MultiChannelFeatureSequence in current figure
 
@@ -159,7 +162,7 @@ def plot_mcfs(mcfs,borders=[], name=None):
     return
 
 
-def plot_fs(fs,borders=[], name=None):
+def plot_fs(fs, borders=[], name=None):
     '''
     plot all columns of a feature sequence as line plot
 
@@ -185,10 +188,12 @@ def plotFS(fs, ax, xAxes, borders, layout="bottom", pad=0.05, color="b"):
     matrix = fs.getMatrix()
     allaxes = []
     for (i, col) in enumerate(matrix.T):
-        if i==0:
+        if i == 0:
             curax = ax
         else:
-            curax = divider.append_axes(layout, size="100%", pad=pad,
+            curax = divider.append_axes(layout,
+                                        size="100%",
+                                        pad=pad,
                                         sharex=ax)
         curax.plot(col, color)
         curax.yaxis.set_major_locator(mpl.ticker.MaxNLocator(2))
@@ -197,7 +202,7 @@ def plotFS(fs, ax, xAxes, borders, layout="bottom", pad=0.05, color="b"):
         for x in borders:
             plt.axvline(x=x, color='g')
         allaxes.append(curax)
-    return(allaxes)
+    return (allaxes)
 
 
 def plotVitPath(path, sg, scorer, ax):
@@ -237,6 +242,7 @@ def plotVitPath(path, sg, scorer, ax):
             return modelNames[int(x)]
         else:
             return ""
+
     formatter = mpl.ticker.FuncFormatter(statelabels)
     ax.yaxis.set_major_formatter(formatter)
     return [ax, mappedNodeIds, modelNames, xAxes]
@@ -286,17 +292,23 @@ def plot_path(path, sg, scorer, name=None):
     plt.tight_layout()
     return [pathax]
 
+
 def plot_model(gaussianContainer, gaussMixture, name=None):
     plot_mixture(gaussMixture, name)
+
 
 def plot_sequence(gmmset, modelnames, colormap='pink'):
     support, data = _get_mixture_values_of_sequence(gmmset, modelnames)
     fig = plt.figure()
     for dim in range(len(data)):
         pathax = fig.add_subplot(len(data), 1, dim + 1)
-        extent = [0,1,support[dim][0], support[dim][-1]]
-        pathax.imshow(numpy.atleast_2d(data[dim]), extent=extent,
-                      aspect='auto', interpolation='nearest', cmap=colormap)
+        extent = [0, 1, support[dim][0], support[dim][-1]]
+        pathax.imshow(numpy.atleast_2d(data[dim]),
+                      extent=extent,
+                      aspect='auto',
+                      interpolation='nearest',
+                      cmap=colormap)
+
 
 def _get_mixture_values_of_sequence(gmmset, modelnames, points=1000):
     """
@@ -306,7 +318,9 @@ def _get_mixture_values_of_sequence(gmmset, modelnames, points=1000):
     gmmset - instance of GaussMixtureSet, must contain all named models
     modelnames - sequence of strings with model names
     """
-    mixtures = [gmmset.getGaussMixture(gmmset.getModelId(m)) for m in modelnames]
+    mixtures = [
+        gmmset.getGaussMixture(gmmset.getModelId(m)) for m in modelnames
+    ]
     dimension = mixtures[0].getGaussianContainer().getDimensionality()
     support = [numpy.zeros((2, len(modelnames))) for x in range(dimension)]
     data = [numpy.zeros((points, len(modelnames))) for x in range(dimension)]
@@ -315,17 +329,16 @@ def _get_mixture_values_of_sequence(gmmset, modelnames, points=1000):
     for i, mixture in enumerate(mixtures):
         sup, mix_vals, comp_vals = _get_mixture_values(mixture, points=2)
         for dim in range(dimension):
-            support[dim][:,i] = sup[dim]
-    supportlimits = [(numpy.min(s[0,:]), numpy.max(s[1,:])) for s in support]
+            support[dim][:, i] = sup[dim]
+    supportlimits = [(numpy.min(s[0, :]), numpy.max(s[1, :])) for s in support]
     #print("sup-lim: %s" % supportlimits)
     #second pass, get the actual values
 
     for i, mixture in enumerate(mixtures):
-        sup, mix_vals, comp_vals = _get_mixture_values(mixture,
-                                        supportlimits=supportlimits,
-                                        points=points)
+        sup, mix_vals, comp_vals = _get_mixture_values(
+            mixture, supportlimits=supportlimits, points=points)
         for dim in range(dimension):
-            data[dim][:,i] = mix_vals[dim]
+            data[dim][:, i] = mix_vals[dim]
     for dim in range(dimension):
         data[dim] = numpy.flipud(data[dim])
     return supportlimits, data
@@ -357,6 +370,7 @@ def _get_gmm_param(gaussMixture):
     covsbydim = list(zip(*covlist))
     return (nrgaussians, dimension, weights, meansbydim, covsbydim)
 
+
 def _get_mixture_values(gaussMixture, supportlimits=None, points=1000):
     """
     Compute the values of a gaussian mixture and its individual components.
@@ -371,9 +385,12 @@ def _get_mixture_values(gaussMixture, supportlimits=None, points=1000):
     list with each list item representing one dimension:
     (support, mixture_vals, component_vals)
     """
-    nrgaussians, dimension, weights, meansbydim, covsbydim = _get_gmm_param(gaussMixture)
+    nrgaussians, dimension, weights, meansbydim, covsbydim = _get_gmm_param(
+        gaussMixture)
     mixture_vals = [numpy.zeros(points) for x in range(dimension)]
-    component_vals = [numpy.zeros((nrgaussians, points)) for x in range(dimension)]
+    component_vals = [
+        numpy.zeros((nrgaussians, points)) for x in range(dimension)
+    ]
     support = []
     for dim in range(dimension):
         if supportlimits is None:
@@ -392,9 +409,10 @@ def _get_mixture_values(gaussMixture, supportlimits=None, points=1000):
             y = weights[i] * normpdf(sup, meansbydim[dim][i],
                                      numpy.sqrt(covsbydim[dim][i]))
             mixture_vals[dim] += y
-            component_vals[dim][i,:] = y
+            component_vals[dim][i, :] = y
     assert len(mixture_vals) == len(component_vals)
     return (support, mixture_vals, component_vals)
+
 
 def _get_mixture_values_of_path(path, gaussMixtureSet, supportlimits, points):
     """
@@ -410,12 +428,14 @@ def _get_mixture_values_of_path(path, gaussMixtureSet, supportlimits, points):
     data = [numpy.zeros((points, len(path))) for x in range(dimension)]
     for i, pi in enumerate(path):
         mixture = gaussMixtureSet.getGaussMixture(pi.mModelId)
-        sup, mixture_val, comp_vals = _get_mixture_values(mixture, supportlimits, points)
+        sup, mixture_val, comp_vals = _get_mixture_values(
+            mixture, supportlimits, points)
         for dim in range(dimension):
-            data[dim][:,i] = mixture_val[dim]
+            data[dim][:, i] = mixture_val[dim]
     for dim in range(dimension):
         data[dim] = numpy.flipud(data[dim])
     return data
+
 
 def plot_mixture(gaussMixture, name=None, style="line"):
     """
@@ -434,13 +454,15 @@ def plot_mixture(gaussMixture, name=None, style="line"):
     for dim in range(dimension):
         pathax = fig.add_subplot(dimension, 1, dim + 1)
         for i in range(nrgaussians):
-            if style=="line":
-                pathax.plot(support[dim], component_vals[dim][i,:], 'b')
-        if style=="line":
+            if style == "line":
+                pathax.plot(support[dim], component_vals[dim][i, :], 'b')
+        if style == "line":
             pathax.plot(support[dim], mixture_vals[dim], 'r')
-        elif style=="intensitymap":
+        elif style == "intensitymap":
             extent = [support[dim][0], support[dim][-1], 0, 1]
-            pathax.imshow(numpy.atleast_2d(mixture_vals[dim]), extent=extent, aspect='auto')
+            pathax.imshow(numpy.atleast_2d(mixture_vals[dim]),
+                          extent=extent,
+                          aspect='auto')
         else:
             raise InvalidArgumentException("style %s not known" % style)
 
@@ -465,20 +487,23 @@ def posteriorgram(feature_vector_scorer, feature_sequence):
 
     """
     model_names = sorted(feature_vector_scorer.getAvailableModelNames())
-    model_ids = [feature_vector_scorer.getModelIdFromString(name) for name in model_names]
+    model_ids = [
+        feature_vector_scorer.getModelIdFromString(name)
+        for name in model_names
+    ]
 
     # calculate scores
     scores = numpy.zeros((len(model_ids), len(feature_sequence)))
     for f_idx, feature_vector in enumerate(feature_sequence):
         for m_idx, model_id in enumerate(model_ids):
-            scores[m_idx, f_idx] = feature_vector_scorer.score(model_id, feature_vector)
+            scores[m_idx, f_idx] = feature_vector_scorer.score(
+                model_id, feature_vector)
 
     # make plot
     plt.imshow(scores, aspect="auto", vmin=0)
     plt.xlabel("Time (feature vectors)")
     plt.ylabel("Models")
-    plt.yticks(numpy.arange(len(model_names)),
-               model_names)
+    plt.yticks(numpy.arange(len(model_names)), model_names)
 
     plt.colorbar()
     plt.tight_layout()

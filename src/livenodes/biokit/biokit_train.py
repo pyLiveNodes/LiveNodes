@@ -7,6 +7,7 @@ from livenodes.biokit.biokit import BioKIT, logger, recognizer
 
 from . import local_registry
 
+
 @local_registry.register
 class Biokit_train(Node):
     """
@@ -53,10 +54,10 @@ class Biokit_train(Node):
         self.annotations = []
         self.files = []
 
-
     def _settings(self):
         return {\
             # "batch": self.batch,
+
 
             "token_insertion_penalty": self.token_insertion_penalty,
             "model_path": self.model_path,
@@ -158,13 +159,21 @@ class Biokit_train(Node):
 
         self._train()
 
-    def _should_process(self, data=None, annotation=None, file=None, termination=None):
+    def _should_process(self,
+                        data=None,
+                        annotation=None,
+                        file=None,
+                        termination=None):
         return (data is not None \
             and annotation is not None \
             and file is not None)
 
-
-    def process(self, data=None, annotation=None, file=None, termination=None, **kwargs):
+    def process(self,
+                data=None,
+                annotation=None,
+                file=None,
+                termination=None,
+                **kwargs):
         if data is not None:
             # remove batches!
             self.files.extend(np.array(file).flatten())
@@ -175,8 +184,3 @@ class Biokit_train(Node):
         if termination:
             self.info('Starting Training')
             self.receive_data_end()
-        
-
-
-
-        

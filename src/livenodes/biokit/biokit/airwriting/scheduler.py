@@ -20,6 +20,7 @@ import zmq
 from . import db
 import sqlalchemy
 
+
 class ExitSignal(Exception):
     """Exception indicating, that an EXIT signal was received"""
     pass
@@ -30,14 +31,12 @@ class Scheduler(threading.Thread):
     Simple job scheduler based on ssh remote execution
     '''
 
-
-    def __init__(self, dbfile, command, directory,
-                 machines = {}):
+    def __init__(self, dbfile, command, directory, machines={}):
         '''
         Constructor
         '''
-        threading.Thread.__init__(self, name = "Scheduler")
-        
+        threading.Thread.__init__(self, name="Scheduler")
+
         self.verbosity = 0
         self.dbfile = dbfile
         #self.db = db.AirDb(dbfile)
@@ -46,18 +45,17 @@ class Scheduler(threading.Thread):
         if not os.path.isdir(directory):
             os.mkdir(directory)
         self.directory = directory
-        
+
         #setup queue to receive control commands
         self._configInQueue = queue.Queue()
         self._configOutQueue = queue.Queue()
-       
+
     def getConfigInQueue(self):
         return self._configInQueue
-    
+
     def getConfigOutQueue(self):
         return self._configOutQueue
-        
-        
+
     def getNumberOfCores(self, hostname):
         """
         Get number of cores from target linux machine via ssh
@@ -67,15 +65,16 @@ class Scheduler(threading.Thread):
         
         Returns number of cores or zero if an error in ssh execution occured
         """
-        cmd = ["cat", "/proc/cpuinfo", "|", "grep", "processor", "|", "wc", "-l"]
+        cmd = [
+            "cat", "/proc/cpuinfo", "|", "grep", "processor", "|", "wc", "-l"
+        ]
         retVal = self.remoteExec(hostname, cmd)
         if retVal:
             cores = int(retVal[:-1])
         else:
             cores = 0
         return cores
-    
-    
+
     def getLoad(self, hostname):
         """
         Get system load (1min average) of given host via ssh
@@ -91,27 +90,28 @@ class Scheduler(threading.Thread):
             load1min = None
         finally:
             return load1min
-    
+
     def startRemoteCommand(self, hostname, directory, logfile, command):
         """
         Execute the command in directory on remote host via ssh
         
         return pid of process or None if error occured
         """
-        try: 
+        try:
             print("start job in " + directory + " on host " + hostname)
             cmd = ['ssh', '-f', hostname, 'cd', directory, ';']
             cmd.append(" ".join(command))
-            cmd.extend([' &> ', os.path.join(directory, logfile), '&',
-                        'echo', '$!'])
+            cmd.extend(
+                [' &> ',
+                 os.path.join(directory, logfile), '&', 'echo', '$!'])
             pidstr = subprocess.check_output(cmd)
             return int(pidstr)
         except subprocess.CalledProcessError as err:
             print(("error, ssh returned " + str(err)))
-            print(("command line was: "+" ".join(cmd)))
+            print(("command line was: " + " ".join(cmd)))
             return None
-    
-    def getIdleCores(self, hostname, offset = 0.1):
+
+    def getIdleCores(self, hostname, offset=0.1):
         """get idle cores on host with respect to max cores set for the host"""
         cores = self.getNumberOfCores(hostname)
         load = self.getLoad(hostname)
@@ -128,7 +128,7 @@ class Scheduler(threading.Thread):
             #problems with remote machine
             idle = None
         return idle
-        
+
     def getNextJob(self):
         """get the next job with status waiting from the database"""
         job = self.db.session.query(db.Job).\
@@ -154,15 +154,16 @@ class Scheduler(threading.Thread):
         if job:
             job.status = "running"
             t = time.localtime()
-            timestr = str(t.tm_hour)+"_"+str(t.tm_min)+"_"+str(t.tm_sec)
+            timestr = str(t.tm_hour) + "_" + str(t.tm_min) + "_" + str(
+                t.tm_sec)
             logfile = str(job.id) + "_" + timestr + ".log"
             cmd = [self.command, self.dbfile, str(job.id)]
             pid = self.startRemoteCommand(hostname, self.directory, logfile,
                                           cmd)
-            retvalue =  {'id': job.id, 'pid': pid, 'host': hostname}
+            retvalue = {'id': job.id, 'pid': pid, 'host': hostname}
         self.db.session.commit()
         return retvalue
-        
+
     def isProcessFinished(self, hostname, pid):
         cmd = ['ps', '-p', str(pid)]
         ret = self.remoteExec(hostname, cmd)
@@ -171,7 +172,7 @@ class Scheduler(threading.Thread):
             return False
         else:
             return True
-        
+
     def killProcess(self, hostname, pid):
         # find out session id
         cmd = ['ps', 'h', '-p', str(pid), '-o sid']
@@ -180,7 +181,7 @@ class Scheduler(threading.Thread):
         if sidstr:
             cmd = ['pkill', '-s', sidstr]
             self.remoteExec(hostname, cmd)
-            
+
     def remoteExec(self, hostname, cmdlist):
         try:
             if self.verbosity > 0:
@@ -194,8 +195,7 @@ class Scheduler(threading.Thread):
             print("error: " + str(err))
             ret = None
         return ret
-                
-            
+
     def fillMachinesDict(self, machines):
         '''
         Fill missing number of cores in given machine configuration.
@@ -226,8 +226,7 @@ class Scheduler(threading.Thread):
             int(conf['maxcore'])
             int(conf['minfreecore'])
         return machines
-    
-    
+
     def _checkInQueue(self):
         """
         Handles messages in incoming queue.
@@ -242,11 +241,10 @@ class Scheduler(threading.Thread):
             if msg['command'] == 'MACHINECONF':
                 try:
                     self.machines = self.fillMachinesDict(msg['data'])
-                    print(("received new machine configuration: " + 
-                          str(self.machines)))
+                    print(("received new machine configuration: " +
+                           str(self.machines)))
                 except (ValueError, socket.gaierror) as e:
-                    print(("invalid machine configuration, error: " +
-                          str(e)))
+                    print(("invalid machine configuration, error: " + str(e)))
                     pass
                 finally:
                     self._configOutQueue.put(self.machines)
@@ -255,19 +253,20 @@ class Scheduler(threading.Thread):
             elif msg['command'] == 'EXIT':
                 print("received exit command, exiting...")
                 raise ExitSignal()
-            
+
     def reset_job_status(self, jobid, errstatus="error"):
         """
         reset the job status of erroneous finished jobs
         """
-        self.db.session.commit() #make sure the current transaction is finished
-        job = self.db.session.query(db.Job).filter(db.Job.id==jobid).one()
+        self.db.session.commit(
+        )  #make sure the current transaction is finished
+        job = self.db.session.query(db.Job).filter(db.Job.id == jobid).one()
         if job.status != 'finished':
-            print("job %s did not finish correctly, status is %s" % (jobid, job.status))
+            print("job %s did not finish correctly, status is %s" %
+                  (jobid, job.status))
             job.status = errstatus
             self.db.session.commit()
-            
-        
+
     def run(self):
         '''
         Starts the scheduling loop
@@ -288,7 +287,7 @@ class Scheduler(threading.Thread):
         try:
             self.db = db.AirDb(self.dbfile)
             while True:
-                
+
                 print("check for finished jobs")
                 finishedJobs = []
                 for job in self.runningJobs:
@@ -297,41 +296,44 @@ class Scheduler(threading.Thread):
                                (job['pid'], job['host'])))
                         finishedJobs.append(job)
                         self.reset_job_status(job['id'])
-                            
+
                 # delete finished jobs from runningJobs
-                self.runningJobs = [x for x in self.runningJobs if 
-                                    x not in finishedJobs]
+                self.runningJobs = [
+                    x for x in self.runningJobs if x not in finishedJobs
+                ]
                 print(("currently %s running jobs:" % len(self.runningJobs)))
                 for j in self.runningJobs:
                     print(j)
                 print(("%s jobs had errors" % len(self.getErrorJobs())))
-                
+
                 self._checkInQueue()
-                     
+
                 print("check for idle cores and run new jobs")
                 for host in self.machines:
-                    idleCores = self.getIdleCores(host) 
+                    idleCores = self.getIdleCores(host)
                     if idleCores != None:
-                        availIdleCores = (idleCores - 
+                        availIdleCores = (idleCores -
                                           self.machines[host]['minfreecore'])
-                        runningJobsHost = [x for x in self.runningJobs 
-                                           if x['host'] == host]
+                        runningJobsHost = [
+                            x for x in self.runningJobs if x['host'] == host
+                        ]
                         running = len(runningJobsHost)
                         allowed = self.machines[host]['maxcore'] - running
                         freeslots = min(availIdleCores, allowed)
-                        print(("host: " + host + "\t freeslots: " + str(freeslots) +
-                              "\t idleCores: " + str(idleCores) + "\t allowed: " +
-                              str(allowed) + "\t availIdleCores: " + 
-                              str(availIdleCores)))
+                        print(("host: " + host + "\t freeslots: " +
+                               str(freeslots) + "\t idleCores: " +
+                               str(idleCores) + "\t allowed: " + str(allowed) +
+                               "\t availIdleCores: " + str(availIdleCores)))
                         if freeslots < 0:
                             freeslots = 0
                         for i in range(freeslots):
                             jobinfo = self.runJob(host)
-                            if jobinfo: 
+                            if jobinfo:
                                 self.runningJobs.append(jobinfo)
                                 print("started job " + str(jobinfo))
                     else:
-                        print("idleCores is None, there seems to be a problem!")
+                        print(
+                            "idleCores is None, there seems to be a problem!")
                 #self.db.close()
                 for i in range(30):
                     self._checkInQueue()
@@ -339,26 +341,27 @@ class Scheduler(threading.Thread):
         except ExitSignal:
             print("terminating running remote processes:")
             for job in self.runningJobs:
-                print(("Killing process "+str(job['pid'])+" on "+job['host']))
+                print(("Killing process " + str(job['pid']) + " on " +
+                       job['host']))
                 self.killProcess(job['host'], job['pid'])
                 self.reset_job_status(job['id'])
             print("exiting scheduler thread...")
             self._configOutQueue.put({'command': 'EXIT', 'data': None})
-        
-            
+
+
 class ZmqServer(threading.Thread):
-    
+
     def __init__(self, port, fromSchedQueue, toSchedQueue):
         threading.Thread.__init__(self, name='ZmqServer')
         self.fromSchedQueue = fromSchedQueue
         self.toSchedQueue = toSchedQueue
-        
+
         self.msgqueue = queue.Queue()
-        
+
         self.context = zmq.Context()
         self.zmqsocket = self.context.socket(zmq.REP)
-        self.zmqsocket.bind('tcp://*:'+str(port))
-        
+        self.zmqsocket.bind('tcp://*:' + str(port))
+
     def run(self):
         while True:
             if not self.msgqueue.empty():
@@ -378,7 +381,6 @@ class ZmqServer(threading.Thread):
         self.context.term()
 
 
-                       
 def parseMachineConf(configList):
     """
     Parse list of machine configuration strings.
@@ -389,13 +391,13 @@ def parseMachineConf(configList):
     Returns a dictionary of dictionaries with the hostname as primary key and 
     maxcore and minfreecore as secondary keys.
     """
-    maxLen = 3 
+    maxLen = 3
     machineInfo = {}
     for machinfo in configList:
         conf = machinfo.split(":")
-        if len(conf) < 1 and len(conf) > maxLen: 
+        if len(conf) < 1 and len(conf) > maxLen:
             raise ValueError("%s is an invalid machine info" % machinfo)
-        conf.extend(['' for x in range(maxLen-len(conf))])
+        conf.extend(['' for x in range(maxLen - len(conf))])
         if int(conf[0]) not in list(range(255)):
             raise ValueError("%s is an invalid machine number" % conf[0])
         hostname = 'i19pc' + conf[0]
@@ -407,51 +409,61 @@ def parseMachineConf(configList):
             minfreecore = int(conf[2])
         else:
             minfreecore = None
-        machineInfo[hostname] = {'maxcore': maxcore, 'minfreecore': minfreecore}
-    return machineInfo        
-            
-            
+        machineInfo[hostname] = {
+            'maxcore': maxcore,
+            'minfreecore': minfreecore
+        }
+    return machineInfo
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Simple job scheduler")
     parser.add_argument('db', help="SQLAlchemy conform database url")
-    parser.add_argument('command', help="The command line to run, must " +
+    parser.add_argument('command',
+                        help="The command line to run, must " +
                         "accept <sqlite database> and <job id> as command " +
                         "line parameters. The command will be started as: " +
                         "command sqlitefile job_id")
     parser.add_argument('directory')
-    parser.add_argument('-p', '--port', default = 8888, type = int, 
-                        help = "port to listen on messages (default 8888)")
-    parser.add_argument('machines', nargs='+', help=("format is " +
-                        "machineNr:maxcores:minfreecores (e.g. 2:6:1 9::16 8)."+
-                        "Both maxcores and minfreecores can be omitted, if so"+
-                        " maxcores is set to the number of cores of the "+
-                        " machine and minfreecores is set to zero."))
-    
+    parser.add_argument('-p',
+                        '--port',
+                        default=8888,
+                        type=int,
+                        help="port to listen on messages (default 8888)")
+    parser.add_argument(
+        'machines',
+        nargs='+',
+        help=("format is " +
+              "machineNr:maxcores:minfreecores (e.g. 2:6:1 9::16 8)." +
+              "Both maxcores and minfreecores can be omitted, if so" +
+              " maxcores is set to the number of cores of the " +
+              " machine and minfreecores is set to zero."))
+
     print(sys.argv)
     args = parser.parse_args()
     print(args)
-    
+
     machineInfo = parseMachineConf(args.machines)
-            
+
     scheduler = Scheduler(args.db, args.command, args.directory, machineInfo)
     scheduler.start()
     toSchedQueue = scheduler.getConfigInQueue()
     fromSchedQueue = scheduler.getConfigOutQueue()
     schedtimeout = 30.0
-    
+
     server = ZmqServer(args.port, fromSchedQueue, toSchedQueue)
     serverQueue = server.msgqueue
     server.start()
     servertimeout = 5.0
-    
-    #loop until SIGINT is received or one of the threads died  
+
+    #loop until SIGINT is received or one of the threads died
     while scheduler.is_alive() and server.is_alive():
         try:
             time.sleep(0.1)
         except KeyboardInterrupt:
             print("Received SIGINT, exiting...")
             break
-        
+
     if scheduler.is_alive():
         toSchedQueue.put({'command': 'EXIT', 'data': None})
     if server.is_alive():
@@ -459,15 +471,11 @@ if __name__ == "__main__":
     print("Waiting for scheduler and server to shut down...")
     server.join(servertimeout)
     if server.is_alive():
-        print(("Server thread didn't commit suicide in " + 
-              str(servertimeout)+"s, exit anyway..."))
+        print(("Server thread didn't commit suicide in " + str(servertimeout) +
+               "s, exit anyway..."))
     scheduler.join(schedtimeout)
     if scheduler.is_alive():
         print(("Scheduler thread didn't commit suicide in " +
-              str(schedtimeout)+"s, exit anyway..."))
+               str(schedtimeout) + "s, exit anyway..."))
     print("Done, exit!")
     sys.exit()
-                
-            
-               
-        

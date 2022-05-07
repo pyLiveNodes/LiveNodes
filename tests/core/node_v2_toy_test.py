@@ -4,6 +4,7 @@ import multiprocessing as mp
 from livenodes.core.node import Node, Location
 from livenodes.core.sender import Sender
 
+
 class Data(Sender):
     channels_in = []
     # yes, "Data" would have been fine, but wanted to quickly test the naming parts

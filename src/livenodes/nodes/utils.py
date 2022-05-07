@@ -27,5 +27,3 @@ def printProgressBar(iteration,
     # Print New Line on Complete
     if iteration == total:
         print()
-
-

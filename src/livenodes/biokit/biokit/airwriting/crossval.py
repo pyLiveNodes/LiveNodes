@@ -2,6 +2,7 @@ import random
 import itertools
 from sqlalchemy import func
 
+
 class CrossValidation:
     """
     Generate training and test sets for n-fold cross validation
@@ -11,8 +12,8 @@ class CrossValidation:
     table of a database and can subsequently produce and return the individual
     cross validation folds.  
     """
-    
-    def __init__(self, session, seed = None):
+
+    def __init__(self, session, seed=None):
         """Constructs a cross validation instance
         
         Keyword arguments:
@@ -25,8 +26,8 @@ class CrossValidation:
         """
         random.seed(seed)
         self.session = session
-        
-    def getPerKeyCrossValidationFolds(self, key, subquery, slice_size = None):
+
+    def getPerKeyCrossValidationFolds(self, key, subquery, slice_size=None):
         """
         Return a generator for the folds of a per key cross-validation.
         
@@ -56,42 +57,45 @@ class CrossValidation:
             smaller than slice_size.
         """
         self.currentSetIndex = 0
-        
+
         #get all possible values of key
         keys = self.session.query(subquery.c.get(key).label('key')).\
                         group_by(subquery.c.get(key)).all()
         keys = [x[0] for x in keys]
-        print(("Found the following keys: %s" % (keys,)))
-        
+        print(("Found the following keys: %s" % (keys, )))
+
         stats = self.session.query(subquery.c.get(key).label('key'),
                               func.count(subquery.c.get(key)).label('count')).\
                         group_by(subquery.c.get(key)).subquery()
-        row_min =  self.session.query(func.min(stats.c.count).label('minimum'),
-                                 stats.c.key).one()
+        row_min = self.session.query(
+            func.min(stats.c.count).label('minimum'), stats.c.key).one()
         min_value = row_min.key
         min_size = row_min.minimum
-              
+
         if slice_size == None:
             slice_size = min_size
         #sanity check if the required number of entries per fold is present
         if min_size < slice_size:
             raise Exception("For " + key + "=" + min_value + " only " +
-                                str(min_size) + " entries in table, but " +
-                                "slice size of " + str(slice_size) +
-                                 " requested") 
+                            str(min_size) + " entries in table, but " +
+                            "slice size of " + str(slice_size) + " requested")
         #generate all folds
         folds = {}
         for keyval in keys:
-            print(("Generating fold for key value %s" % (keyval,)))
-            rows = self.session.query(subquery).filter(subquery.c.get(key) == keyval).all()
+            print(("Generating fold for key value %s" % (keyval, )))
+            rows = self.session.query(subquery).filter(
+                subquery.c.get(key) == keyval).all()
             folds[keyval] = random.sample(rows, slice_size)
-            
+
         #subsequently return each pair of test and train set
         nrfolds = len(folds)
         for keyval, fold in list(folds.items()):
             testSet = fold
             trainSet2d = [x for x in list(folds.values()) if x != testSet]
             trainSet = list(itertools.chain.from_iterable(trainSet2d))
-            yield({'keyval': keyval, 'trainSet' : trainSet,
-                   'testSet' : testSet, 'nrfolds': nrfolds})    
-        
+            yield ({
+                'keyval': keyval,
+                'trainSet': trainSet,
+                'testSet': testSet,
+                'nrfolds': nrfolds
+            })
