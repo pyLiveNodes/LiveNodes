@@ -4,7 +4,7 @@ import time
 import os
 import traceback
 
-from livenodes.core.node import Node
+from livenodes.core.node import Node, Location
 from livenodes.biokit.biokit import BioKIT, logger, recognizer
 
 from . import local_registry
@@ -54,6 +54,10 @@ class Biokit_update_model(Node):
                  name="Train",
                  **kwargs):
         super().__init__(name, **kwargs)
+
+        if kwargs['compute_on'] is Location.SAME:
+            # TODO: double check if/why this may be the case
+            raise ValueError(f'compute_on may not be same for {str(self)}.')
 
         self.model_path = model_path
         self.train_iterations = train_iterations
