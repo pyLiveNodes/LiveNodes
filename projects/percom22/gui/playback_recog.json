@@ -60,18 +60,12 @@
     },
     {
       "in_id": "32c742bc-8f17-4b6b-ad91-afdf1e86294e",
-      "in_index": 1,
+      "in_index": 0,
       "out_id": "4ede1cab-57fa-4d42-aea6-4549836cf511",
-      "out_index": 1
+      "out_index": 0
     },
     {
       "in_id": "32c742bc-8f17-4b6b-ad91-afdf1e86294e",
-      "in_index": 0,
-      "out_id": "4ede1cab-57fa-4d42-aea6-4549836cf511",
-      "out_index": 0
-    },
-    {
-      "in_id": "a852475f-38d5-407e-9c3f-bc0eedc83f97",
       "in_index": 1,
       "out_id": "4ede1cab-57fa-4d42-aea6-4549836cf511",
       "out_index": 1
@@ -83,7 +77,7 @@
       "out_index": 0
     },
     {
-      "in_id": "15dc6fb8-544b-4e4e-a2b2-4ed5c20afb37",
+      "in_id": "a852475f-38d5-407e-9c3f-bc0eedc83f97",
       "in_index": 1,
       "out_id": "4ede1cab-57fa-4d42-aea6-4549836cf511",
       "out_index": 1
@@ -95,15 +89,21 @@
       "out_index": 0
     },
     {
-      "in_id": "df3c8f36-fa92-4795-ae9c-ed89803b9184",
+      "in_id": "15dc6fb8-544b-4e4e-a2b2-4ed5c20afb37",
+      "in_index": 1,
+      "out_id": "4ede1cab-57fa-4d42-aea6-4549836cf511",
+      "out_index": 1
+    },
+    {
+      "in_id": "1d19adb1-b126-4930-9a38-ee54c42b3e8c",
       "in_index": 0,
       "out_id": "11d2516f-96ab-4d80-9263-7bf0aac6f2e9",
       "out_index": 0
     },
     {
-      "in_id": "1d19adb1-b126-4930-9a38-ee54c42b3e8c",
+      "in_id": "28dd2a2a-5008-4208-81fa-4cb6dc287754",
       "in_index": 0,
-      "out_id": "df3c8f36-fa92-4795-ae9c-ed89803b9184",
+      "out_id": "1d19adb1-b126-4930-9a38-ee54c42b3e8c",
       "out_index": 0
     },
     {
@@ -111,12 +111,6 @@
       "in_index": 2,
       "out_id": "1d19adb1-b126-4930-9a38-ee54c42b3e8c",
       "out_index": 1
-    },
-    {
-      "in_id": "28dd2a2a-5008-4208-81fa-4cb6dc287754",
-      "in_index": 0,
-      "out_id": "1d19adb1-b126-4930-9a38-ee54c42b3e8c",
-      "out_index": 0
     },
     {
       "in_id": "1d9a96cc-4863-4827-a197-d7811d1d3a63",
@@ -181,6 +175,12 @@
           "name": "Data"
         }
       }
+    },
+    {
+      "in_id": "1d19adb1-b126-4930-9a38-ee54c42b3e8c",
+      "in_index": 1,
+      "out_id": "4de88441-e9f1-486e-b8b9-cf9708ebff27",
+      "out_index": 1
     }
   ],
   "nodes": [
@@ -235,19 +235,8 @@
         "association_to_node": "Name [Biokit_to_fs]"
       },
       "position": {
-        "x": 405.54123456790126,
-        "y": 327.1843950617284
-      }
-    },
-    {
-      "id": "df3c8f36-fa92-4795-ae9c-ed89803b9184",
-      "model": {
-        "name": "Biokit_norm",
-        "association_to_node": "Norm [Biokit_norm]"
-      },
-      "position": {
-        "x": 575.4740740740741,
-        "y": 317.09155555555554
+        "x": 571.5412345679013,
+        "y": 386.1843950617284
       }
     },
     {
@@ -257,8 +246,8 @@
         "association_to_node": "Recognizer [Biokit_recognizer]"
       },
       "position": {
-        "x": 781.4711111111112,
-        "y": 347.25451851851847
+        "x": 792.4711111111112,
+        "y": 263.25451851851847
       }
     },
     {
@@ -268,7 +257,7 @@
         "association_to_node": "Recognition [Draw_recognition]"
       },
       "position": {
-        "x": 1137.1639506172842,
+        "x": 1136.1639506172842,
         "y": 59.24167901234557
       }
     },
@@ -290,8 +279,8 @@
         "association_to_node": "GMM X [Draw_gmm]"
       },
       "position": {
-        "x": 1216.1970370370368,
-        "y": 475.4273580246913
+        "x": 1188.1970370370368,
+        "y": 438.42735802469133
       }
     },
     {
@@ -301,8 +290,8 @@
         "association_to_node": "GMM Y [Draw_gmm]"
       },
       "position": {
-        "x": 1072.2098765432097,
-        "y": 677.040197530864
+        "x": 1372.2098765432097,
+        "y": 436.04019753086413
       }
     },
     {
@@ -312,8 +301,8 @@
         "association_to_node": "GMM Z [Draw_gmm]"
       },
       "position": {
-        "x": 1327.1027160493827,
-        "y": 672.733037037037
+        "x": 1563.1027160493827,
+        "y": 433.73303703703687
       }
     },
     {

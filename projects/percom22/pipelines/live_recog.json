@@ -160,20 +160,13 @@
       {
         "emitting_node": "Annot Filter [Transform_filter]",
         "receiving_node": "GMM X [Draw_gmm]",
-        "emitting_channel": "Channel Names",
-        "receiving_channel": "Channel Names",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
         "connection_counter": 0
       },
       {
         "emitting_node": "Annot Filter [Transform_filter]",
         "receiving_node": "GMM X [Draw_gmm]",
-        "emitting_channel": "Data",
-        "receiving_channel": "Data",
-        "connection_counter": 0
-      },
-      {
-        "emitting_node": "Annot Filter [Transform_filter]",
-        "receiving_node": "GMM Y [Draw_gmm]",
         "emitting_channel": "Channel Names",
         "receiving_channel": "Channel Names",
         "connection_counter": 0
@@ -187,7 +180,7 @@
       },
       {
         "emitting_node": "Annot Filter [Transform_filter]",
-        "receiving_node": "GMM Z [Draw_gmm]",
+        "receiving_node": "GMM Y [Draw_gmm]",
         "emitting_channel": "Channel Names",
         "receiving_channel": "Channel Names",
         "connection_counter": 0
@@ -197,6 +190,13 @@
         "receiving_node": "GMM Z [Draw_gmm]",
         "emitting_channel": "Data",
         "receiving_channel": "Data",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "Annot Filter [Transform_filter]",
+        "receiving_node": "GMM Z [Draw_gmm]",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
         "connection_counter": 0
       }
     ]
@@ -272,15 +272,15 @@
       {
         "emitting_node": "Recognizer [Biokit_recognizer]",
         "receiving_node": "Recognition [Draw_recognition]",
-        "emitting_channel": "HMM Meta",
-        "receiving_channel": "HMM Meta",
+        "emitting_channel": "Recognition",
+        "receiving_channel": "Recognition",
         "connection_counter": 0
       },
       {
         "emitting_node": "Recognizer [Biokit_recognizer]",
         "receiving_node": "Recognition [Draw_recognition]",
-        "emitting_channel": "Recognition",
-        "receiving_channel": "Recognition",
+        "emitting_channel": "HMM Meta",
+        "receiving_channel": "HMM Meta",
         "connection_counter": 0
       },
       {
@@ -357,15 +357,15 @@
       {
         "emitting_node": "Recognizer [Biokit_recognizer]",
         "receiving_node": "Recognition [Draw_recognition]",
-        "emitting_channel": "HMM Meta",
-        "receiving_channel": "HMM Meta",
+        "emitting_channel": "Recognition",
+        "receiving_channel": "Recognition",
         "connection_counter": 0
       },
       {
         "emitting_node": "Recognizer [Biokit_recognizer]",
         "receiving_node": "Recognition [Draw_recognition]",
-        "emitting_channel": "Recognition",
-        "receiving_channel": "Recognition",
+        "emitting_channel": "HMM Meta",
+        "receiving_channel": "HMM Meta",
         "connection_counter": 0
       }
     ],
@@ -416,15 +416,15 @@
       {
         "emitting_node": "Annot Filter [Transform_filter]",
         "receiving_node": "GMM X [Draw_gmm]",
-        "emitting_channel": "Channel Names",
-        "receiving_channel": "Channel Names",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
         "connection_counter": 0
       },
       {
         "emitting_node": "Annot Filter [Transform_filter]",
         "receiving_node": "GMM X [Draw_gmm]",
-        "emitting_channel": "Data",
-        "receiving_channel": "Data",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
         "connection_counter": 0
       },
       {
@@ -464,15 +464,15 @@
       {
         "emitting_node": "Annot Filter [Transform_filter]",
         "receiving_node": "GMM Y [Draw_gmm]",
-        "emitting_channel": "Channel Names",
-        "receiving_channel": "Channel Names",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
         "connection_counter": 0
       },
       {
         "emitting_node": "Annot Filter [Transform_filter]",
         "receiving_node": "GMM Y [Draw_gmm]",
-        "emitting_channel": "Data",
-        "receiving_channel": "Data",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
         "connection_counter": 0
       },
       {
@@ -512,15 +512,15 @@
       {
         "emitting_node": "Annot Filter [Transform_filter]",
         "receiving_node": "GMM Z [Draw_gmm]",
-        "emitting_channel": "Channel Names",
-        "receiving_channel": "Channel Names",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
         "connection_counter": 0
       },
       {
         "emitting_node": "Annot Filter [Transform_filter]",
         "receiving_node": "GMM Z [Draw_gmm]",
-        "emitting_channel": "Data",
-        "receiving_channel": "Data",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
         "connection_counter": 0
       },
       {

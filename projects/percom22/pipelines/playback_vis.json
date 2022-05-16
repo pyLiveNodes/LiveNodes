@@ -115,7 +115,7 @@
     "class": "Draw_lines",
     "settings": {
       "name": "Raw Data",
-      "compute_on": 1,
+      "compute_on": 3,
       "n_plots": 6,
       "xAxisLength": 1000,
       "sample_rate": 100,

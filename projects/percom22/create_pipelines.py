@@ -50,7 +50,7 @@ def add_riot_draw(pl, subset=2):
     return pl
 
 def riot_add_recog(pl, has_annotation=False):
-    filter1 =Transform_filter(name="Annot Filter", names=["ACC_X", "ACC_Y", "ACC_Z", "GYRO_X", "GYRO_Y", "GYRO_Z"])
+    filter1 = Transform_filter(name="Annot Filter", names=["ACC_X", "ACC_Y", "ACC_Z", "GYRO_X", "GYRO_Y", "GYRO_Z"])
     filter1.add_input(pl)
     filter1.add_input(pl, emitting_channel="Channel Names", receiving_channel="Channel Names")
 
@@ -127,6 +127,8 @@ if __name__ == "__main__":
     x_processed = 10
     n_bits = 16
 
+    # === Online stuff ========================================================
+
     print('=== Build RIoT Record Pipeline ===')
     pl = In_riot(id=0, listen_port=9000)
     # frm_ctr = Debug_frame_counter()
@@ -152,8 +154,8 @@ if __name__ == "__main__":
     to_fs = Biokit_to_fs()
     to_fs.add_input(filter1)
 
-    norm = Biokit_norm()
-    norm.add_input(to_fs)
+    # norm = Biokit_norm()
+    # norm.add_input(to_fs)
 
     pl_train_new = Biokit_update_model(model_path="./models/RIoT/sequence", \
         token_insertion_penalty=20,
@@ -161,13 +163,22 @@ if __name__ == "__main__":
         train_iterations=(7, 10),
         catch_all="None"
         )
-    pl_train_new.add_input(norm)
+    pl_train_new.add_input(to_fs)
     pl_train_new.add_input(annot, emitting_channel="Annotation", receiving_channel="Annotation")
 
     status_text = Draw_text_display(name="Training Status")
     status_text.add_input(pl_train_new, emitting_channel="Text", receiving_channel="Text")
     save(pl, "live_record_update.json")
     
+
+    print('=== Build RIoT Live Recognition ===')
+    pl = In_riot(id=0)
+    pl = add_riot_draw(pl, subset=0.5)
+    pl = riot_add_recog(pl, has_annotation=False)
+    save(pl, "live_recog.json")
+
+
+    # === Offline stuff ========================================================
 
 
     print('=== Build RIoT Playback Pipeline ===')
@@ -187,8 +198,4 @@ if __name__ == "__main__":
     save(pl, "playback_recog.json")
 
 
-    print('=== Build RIoT Live Recognition ===')
-    pl = In_riot(id=0)
-    pl = add_riot_draw(pl, subset=0.5)
-    pl = riot_add_recog(pl, has_annotation=False)
-    save(pl, "live_recog.json")
+    
