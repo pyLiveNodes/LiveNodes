@@ -1,3 +1,4 @@
+import importlib
 import multiprocessing as mp
 import sys
 from PyQt5 import QtWidgets
@@ -185,14 +186,12 @@ if __name__ == '__main__':
 
     from livenodes.core import global_registry
 
-    from livenodes.nodes import *
-    from livenodes.nodes import local_registry as node_registry
-    global_registry.add_register(node_registry)
-    # from livenodes.plux import *
-    # from livenodes.plux import local_registry as plux_registry
-    # global_registry.add_register(plux_registry)
-    # from livenodes.biokit import local_registry as biokit_registry
-    # global_registry.add_register(biokit_registry)
+    if os.path.exists('smart-state.json'):
+        with open('smart-state.json', 'r') as f:
+            settings = json.load(f)
+            for p in settings.get('packages', []):
+                m = importlib.import_module(p)
+                global_registry.add_register(m.local_registry)
 
     app = QtWidgets.QApplication([])
 
