@@ -15,6 +15,7 @@ dependencies:
   - h5py
   - graphviz
   - pyqt
+  - pip
   - pip:
     - qtpynodeeditor
     - tsfel
