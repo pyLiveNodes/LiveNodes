@@ -1,3 +1,5 @@
+
+# === BioKIT import ================================================
 from .biokit import BioKIT, logger
 
 logger.set_log_level(BioKIT.LogSeverityLevel.Information)
@@ -5,6 +7,8 @@ logger.set_log_level(BioKIT.LogSeverityLevel.Information)
 # use this for debugging
 # logger.set_log_level(BioKIT.LogSeverityLevel.Debug)
 
+
+# === Node Registry ================================================
 from class_registry import ClassRegistry
 
 local_registry = ClassRegistry('__name__')
