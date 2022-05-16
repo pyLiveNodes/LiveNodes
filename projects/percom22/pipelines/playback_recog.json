@@ -89,7 +89,7 @@
     "class": "Transform_filter",
     "settings": {
       "name": "Raw Filter",
-      "compute_on": 3,
+      "compute_on": 1,
       "names": [
         "ACC_X",
         "ACC_Y",
@@ -167,7 +167,7 @@
     "class": "Transform_filter",
     "settings": {
       "name": "Annot Filter",
-      "compute_on": 3,
+      "compute_on": 1,
       "names": [
         "ACC_X",
         "ACC_Y",
@@ -249,7 +249,7 @@
     "class": "Biokit_to_fs",
     "settings": {
       "name": "Name",
-      "compute_on": 3
+      "compute_on": 1
     },
     "inputs": [
       {
@@ -274,7 +274,7 @@
     "class": "Biokit_norm",
     "settings": {
       "name": "Norm",
-      "compute_on": 3
+      "compute_on": 1
     },
     "inputs": [
       {
@@ -299,7 +299,7 @@
     "class": "Biokit_recognizer",
     "settings": {
       "name": "Recognizer",
-      "compute_on": 3,
+      "compute_on": 1,
       "token_insertion_penalty": 50,
       "model_path": "./models/RIoT/sequence/"
     },
@@ -316,15 +316,15 @@
       {
         "emitting_node": "Recognizer [Biokit_recognizer]",
         "receiving_node": "Recognition [Draw_recognition]",
-        "emitting_channel": "Recognition",
-        "receiving_channel": "Recognition",
+        "emitting_channel": "HMM Meta",
+        "receiving_channel": "HMM Meta",
         "connection_counter": 0
       },
       {
         "emitting_node": "Recognizer [Biokit_recognizer]",
         "receiving_node": "Recognition [Draw_recognition]",
-        "emitting_channel": "HMM Meta",
-        "receiving_channel": "HMM Meta",
+        "emitting_channel": "Recognition",
+        "receiving_channel": "Recognition",
         "connection_counter": 0
       },
       {
@@ -344,20 +344,13 @@
       {
         "emitting_node": "Recognizer [Biokit_recognizer]",
         "receiving_node": "GMM X [Draw_gmm]",
-        "emitting_channel": "Hypo States",
-        "receiving_channel": "Hypo States",
+        "emitting_channel": "HMM Meta",
+        "receiving_channel": "HMM Meta",
         "connection_counter": 0
       },
       {
         "emitting_node": "Recognizer [Biokit_recognizer]",
         "receiving_node": "GMM X [Draw_gmm]",
-        "emitting_channel": "HMM Meta",
-        "receiving_channel": "HMM Meta",
-        "connection_counter": 0
-      },
-      {
-        "emitting_node": "Recognizer [Biokit_recognizer]",
-        "receiving_node": "GMM Y [Draw_gmm]",
         "emitting_channel": "Hypo States",
         "receiving_channel": "Hypo States",
         "connection_counter": 0
@@ -371,7 +364,7 @@
       },
       {
         "emitting_node": "Recognizer [Biokit_recognizer]",
-        "receiving_node": "GMM Z [Draw_gmm]",
+        "receiving_node": "GMM Y [Draw_gmm]",
         "emitting_channel": "Hypo States",
         "receiving_channel": "Hypo States",
         "connection_counter": 0
@@ -381,6 +374,13 @@
         "receiving_node": "GMM Z [Draw_gmm]",
         "emitting_channel": "HMM Meta",
         "receiving_channel": "HMM Meta",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "Recognizer [Biokit_recognizer]",
+        "receiving_node": "GMM Z [Draw_gmm]",
+        "emitting_channel": "Hypo States",
+        "receiving_channel": "Hypo States",
         "connection_counter": 0
       }
     ]
@@ -401,15 +401,15 @@
       {
         "emitting_node": "Recognizer [Biokit_recognizer]",
         "receiving_node": "Recognition [Draw_recognition]",
-        "emitting_channel": "Recognition",
-        "receiving_channel": "Recognition",
+        "emitting_channel": "HMM Meta",
+        "receiving_channel": "HMM Meta",
         "connection_counter": 0
       },
       {
         "emitting_node": "Recognizer [Biokit_recognizer]",
         "receiving_node": "Recognition [Draw_recognition]",
-        "emitting_channel": "HMM Meta",
-        "receiving_channel": "HMM Meta",
+        "emitting_channel": "Recognition",
+        "receiving_channel": "Recognition",
         "connection_counter": 0
       },
       {
@@ -481,15 +481,15 @@
       {
         "emitting_node": "Recognizer [Biokit_recognizer]",
         "receiving_node": "GMM X [Draw_gmm]",
-        "emitting_channel": "Hypo States",
-        "receiving_channel": "Hypo States",
+        "emitting_channel": "HMM Meta",
+        "receiving_channel": "HMM Meta",
         "connection_counter": 0
       },
       {
         "emitting_node": "Recognizer [Biokit_recognizer]",
         "receiving_node": "GMM X [Draw_gmm]",
-        "emitting_channel": "HMM Meta",
-        "receiving_channel": "HMM Meta",
+        "emitting_channel": "Hypo States",
+        "receiving_channel": "Hypo States",
         "connection_counter": 0
       }
     ],
@@ -529,15 +529,15 @@
       {
         "emitting_node": "Recognizer [Biokit_recognizer]",
         "receiving_node": "GMM Y [Draw_gmm]",
-        "emitting_channel": "Hypo States",
-        "receiving_channel": "Hypo States",
+        "emitting_channel": "HMM Meta",
+        "receiving_channel": "HMM Meta",
         "connection_counter": 0
       },
       {
         "emitting_node": "Recognizer [Biokit_recognizer]",
         "receiving_node": "GMM Y [Draw_gmm]",
-        "emitting_channel": "HMM Meta",
-        "receiving_channel": "HMM Meta",
+        "emitting_channel": "Hypo States",
+        "receiving_channel": "Hypo States",
         "connection_counter": 0
       }
     ],
@@ -577,15 +577,15 @@
       {
         "emitting_node": "Recognizer [Biokit_recognizer]",
         "receiving_node": "GMM Z [Draw_gmm]",
-        "emitting_channel": "Hypo States",
-        "receiving_channel": "Hypo States",
+        "emitting_channel": "HMM Meta",
+        "receiving_channel": "HMM Meta",
         "connection_counter": 0
       },
       {
         "emitting_node": "Recognizer [Biokit_recognizer]",
         "receiving_node": "GMM Z [Draw_gmm]",
-        "emitting_channel": "HMM Meta",
-        "receiving_channel": "HMM Meta",
+        "emitting_channel": "Hypo States",
+        "receiving_channel": "Hypo States",
         "connection_counter": 0
       }
     ],
@@ -595,7 +595,7 @@
     "class": "Memory",
     "settings": {
       "name": "Memory",
-      "compute_on": 3,
+      "compute_on": 1,
       "length": 1000,
       "concat_batches": true
     },

@@ -5,9 +5,9 @@
       "block": false,
       "name": "RIoT",
       "compute_on": 3,
-      "id": 1,
+      "id": 0,
       "listen_ip": "192.168.1.101",
-      "listen_port": 8888
+      "listen_port": 9000
     },
     "inputs": [],
     "outputs": [
@@ -31,7 +31,7 @@
     "class": "Transform_filter",
     "settings": {
       "name": "Raw Filter",
-      "compute_on": 3,
+      "compute_on": 1,
       "names": [
         "ACC_X",
         "ACC_Y",
