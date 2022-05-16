@@ -57,11 +57,10 @@ def riot_add_recog(pl, has_annotation=False):
     to_fs = Biokit_to_fs()
     to_fs.add_input(filter1)
 
-    norm = Biokit_norm()
-    norm.add_input(to_fs)
-
     recog = Biokit_recognizer(model_path="./models/RIoT/sequence/", token_insertion_penalty=50)
-    recog.add_input(norm)
+    recog.add_input(to_fs)
+    if "File" in pl.channels_out:
+        recog.add_input(pl, emitting_channel="File", receiving_channel="File")
 
     draw_recognition_path = Draw_recognition(xAxisLength=[x_raw, x_raw, x_raw, x_raw])
     draw_recognition_path.connect_inputs_to(recog)

@@ -52,7 +52,7 @@
     "class": "Transform_filter",
     "settings": {
       "name": "Raw Filter",
-      "compute_on": 1,
+      "compute_on": 2,
       "names": [
         "ACC_X",
         "ACC_Y",
@@ -177,7 +177,7 @@
     "class": "Out_data",
     "settings": {
       "name": "Save",
-      "compute_on": 1,
+      "compute_on": 2,
       "folder": "./data/Debug/"
     },
     "inputs": [
@@ -209,7 +209,7 @@
     "class": "Transform_filter",
     "settings": {
       "name": "Annot Filter",
-      "compute_on": 1,
+      "compute_on": 2,
       "names": [
         "ACC_X",
         "ACC_Y",
@@ -249,7 +249,7 @@
     "class": "Biokit_to_fs",
     "settings": {
       "name": "Name",
-      "compute_on": 1
+      "compute_on": 2
     },
     "inputs": [
       {
@@ -274,7 +274,7 @@
     "class": "Biokit_update_model",
     "settings": {
       "name": "Train",
-      "compute_on": 1,
+      "compute_on": 2,
       "token_insertion_penalty": 20,
       "model_path": "./models/RIoT/sequence",
       "train_iterations": [
