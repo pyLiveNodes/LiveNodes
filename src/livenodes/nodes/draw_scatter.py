@@ -79,7 +79,7 @@ class Draw_scatter(View):
             # -> could make stuff more efficient, but well...
             # changes = []
 
-            scatter.set_offsets(data)
+            scatter.set_offsets(data[::-1])
 
             return [scatter]
 
@@ -100,9 +100,9 @@ class Draw_scatter(View):
         # if (batch/file, time, channel)
         # d = np.vstack(np.array(data)[:, :2])
 
-        self.data = np.roll(self.data, d.shape[0], axis=0)
-        self.data[:d.shape[0]] = d
+        self.data = np.roll(self.data, -d.shape[0], axis=0)
+        self.data[-d.shape[0]:] = d
 
         # TODO: consider if we really always want to send the channel names? -> seems an unecessary overhead (but cleaner code atm, maybe massage later...)
-        self._emit_draw(data=self.data[:self.n_scatter_points],
+        self._emit_draw(data=self.data[-self.n_scatter_points:],
                         channel_names=self.channel_names)

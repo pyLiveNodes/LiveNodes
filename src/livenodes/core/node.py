@@ -204,7 +204,7 @@ class Node():
     # === Basic Stuff =================
     def __init__(self,
                  name="Name",
-                 compute_on=Location.SAME,
+                 compute_on=Location.THREAD,
                  should_time=False):
 
         self.name = name

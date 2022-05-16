@@ -5,7 +5,7 @@
       "block": false,
       "name": "Playback",
       "compute_on": 2,
-      "emit_at_once": 5,
+      "emit_at_once": 1,
       "files": "./data/RIoT/*.h5",
       "meta": {
         "sample_rate": 100,
@@ -68,7 +68,7 @@
     "class": "Transform_filter",
     "settings": {
       "name": "Raw Filter",
-      "compute_on": 1,
+      "compute_on": 2,
       "names": [
         "ACC_X",
         "ACC_Y",
@@ -115,7 +115,7 @@
     "class": "Draw_lines",
     "settings": {
       "name": "Raw Data",
-      "compute_on": 1,
+      "compute_on": 3,
       "n_plots": 6,
       "xAxisLength": 1000,
       "sample_rate": 100,

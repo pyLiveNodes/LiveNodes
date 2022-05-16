@@ -31,7 +31,7 @@
     "class": "Transform_filter",
     "settings": {
       "name": "Raw Filter",
-      "compute_on": 1,
+      "compute_on": 2,
       "names": [
         "ACC_X",
         "ACC_Y",

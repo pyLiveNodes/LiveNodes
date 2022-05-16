@@ -1,37 +1,31 @@
-from src.nodes.annotate_channel import Annotate_channel
-from src.nodes.annotate_ui_button import Annotate_ui_button
+from livenodes.nodes.memory import Memory
 
-from src.nodes.log_data import Log_data
-from src.nodes.memory import Memory
+from livenodes.biokit.biokit_norm import Biokit_norm
+from livenodes.biokit.biokit_to_fs import Biokit_to_fs
+from livenodes.biokit.biokit_from_fs import Biokit_from_fs
+from livenodes.biokit.biokit_recognizer import Biokit_recognizer
+from livenodes.biokit.biokit_train import Biokit_train
+from livenodes.biokit.biokit_update_model import Biokit_update_model
 
-from src.nodes.biokit_norm import Biokit_norm
-from src.nodes.biokit_to_fs import Biokit_to_fs
-from src.nodes.biokit_from_fs import Biokit_from_fs
-from src.nodes.biokit_recognizer import Biokit_recognizer
-from src.nodes.biokit_train import Biokit_train
-from src.nodes.biokit_update_model import Biokit_update_model
+from livenodes.nodes.transform_feature import Transform_feature
+from livenodes.nodes.transform_window import Transform_window
+from livenodes.nodes.transform_filter import Transform_filter
+from livenodes.nodes.annotate_ui_button import Annotate_ui_button
+from livenodes.nodes.transform_majority_select import Transform_majority_select
 
-from src.nodes.transform_scale import Transform_scale
-from src.nodes.transform_feature import Transform_feature
-from src.nodes.transform_window import Transform_window
-from src.nodes.transform_filter import Transform_filter
-from src.nodes.transform_majority_select import Transform_majority_select
+from livenodes.nodes.in_playback import In_playback
+from livenodes.plux.in_riot import In_riot
 
-from src.nodes.in_playback import In_playback
-from src.nodes.in_data import In_data
-from src.nodes.in_biosignalsplux import In_biosignalsplux
-from src.nodes.in_riot import In_riot
+from livenodes.nodes.out_data import Out_data
 
-from src.nodes.out_data import Out_data
+from livenodes.nodes.draw_lines import Draw_lines
+from livenodes.nodes.draw_recognition import Draw_recognition
+from livenodes.nodes.draw_search_graph import Draw_search_graph
+from livenodes.nodes.draw_gmm import Draw_gmm
+from livenodes.nodes.draw_text_display import Draw_text_display
 
-from src.nodes.draw_lines import Draw_lines
-from src.nodes.draw_recognition import Draw_recognition
-from src.nodes.draw_search_graph import Draw_search_graph
-from src.nodes.draw_gmm import Draw_gmm
-from src.nodes.draw_text_display import Draw_text_display
-
-from src.nodes.node import Node
-
+from livenodes.core.node import Node
+from livenodes.core import global_registry
 
 def add_riot_draw(pl, subset=2):
     if subset == 0:
@@ -56,18 +50,17 @@ def add_riot_draw(pl, subset=2):
     return pl
 
 def riot_add_recog(pl, has_annotation=False):
-    filter1 =Transform_filter(name="Annot Filter", names=["ACC_X", "ACC_Y", "ACC_Z", "GYRO_X", "GYRO_Y", "GYRO_Z"])
+    filter1 = Transform_filter(name="Annot Filter", names=["ACC_X", "ACC_Y", "ACC_Z", "GYRO_X", "GYRO_Y", "GYRO_Z"])
     filter1.add_input(pl)
     filter1.add_input(pl, emitting_channel="Channel Names", receiving_channel="Channel Names")
 
     to_fs = Biokit_to_fs()
     to_fs.add_input(filter1)
 
-    norm = Biokit_norm()
-    norm.add_input(to_fs)
-
     recog = Biokit_recognizer(model_path="./models/RIoT/sequence/", token_insertion_penalty=50)
-    recog.add_input(norm)
+    recog.add_input(to_fs)
+    if "File" in pl.channels_out:
+        recog.add_input(pl, emitting_channel="File", receiving_channel="File")
 
     draw_recognition_path = Draw_recognition(xAxisLength=[x_raw, x_raw, x_raw, x_raw])
     draw_recognition_path.connect_inputs_to(recog)
@@ -127,10 +120,13 @@ if __name__ == "__main__":
     if not os.path.exists(gui_folder):
         os.mkdir(gui_folder)
 
+    global_registry.collect_modules(['livenodes.nodes', 'livenodes.biokit', 'livenodes.plux'])
 
     x_raw = 1000
     x_processed = 10
     n_bits = 16
+
+    # === Online stuff ========================================================
 
     print('=== Build RIoT Record Pipeline ===')
     pl = In_riot(id=0, listen_port=9000)
@@ -157,8 +153,8 @@ if __name__ == "__main__":
     to_fs = Biokit_to_fs()
     to_fs.add_input(filter1)
 
-    norm = Biokit_norm()
-    norm.add_input(to_fs)
+    # norm = Biokit_norm()
+    # norm.add_input(to_fs)
 
     pl_train_new = Biokit_update_model(model_path="./models/RIoT/sequence", \
         token_insertion_penalty=20,
@@ -166,13 +162,22 @@ if __name__ == "__main__":
         train_iterations=(7, 10),
         catch_all="None"
         )
-    pl_train_new.add_input(norm)
+    pl_train_new.add_input(to_fs)
     pl_train_new.add_input(annot, emitting_channel="Annotation", receiving_channel="Annotation")
 
     status_text = Draw_text_display(name="Training Status")
     status_text.add_input(pl_train_new, emitting_channel="Text", receiving_channel="Text")
     save(pl, "live_record_update.json")
     
+
+    print('=== Build RIoT Live Recognition ===')
+    pl = In_riot(id=0)
+    pl = add_riot_draw(pl, subset=0.5)
+    pl = riot_add_recog(pl, has_annotation=False)
+    save(pl, "live_recog.json")
+
+
+    # === Offline stuff ========================================================
 
 
     print('=== Build RIoT Playback Pipeline ===')
@@ -192,8 +197,4 @@ if __name__ == "__main__":
     save(pl, "playback_recog.json")
 
 
-    print('=== Build RIoT Live Recognition ===')
-    pl = In_riot(id=0)
-    pl = add_riot_draw(pl, subset=0.5)
-    pl = riot_add_recog(pl, has_annotation=False)
-    save(pl, "live_recog.json")
+    

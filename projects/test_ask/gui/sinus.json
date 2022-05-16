@@ -1,0 +1,63 @@
+{
+  "connections": [
+    {
+      "in_id": "dc5c91ea-aa0b-4323-a53b-4e3d6068cb08",
+      "in_index": 1,
+      "out_id": "7fc7ec81-2bc0-445d-9134-b6873a53d9cd",
+      "out_index": 2
+    },
+    {
+      "in_id": "dc5c91ea-aa0b-4323-a53b-4e3d6068cb08",
+      "in_index": 0,
+      "out_id": "7fc7ec81-2bc0-445d-9134-b6873a53d9cd",
+      "out_index": 0
+    },
+    {
+      "in_id": "61cfabf0-a22f-466d-862b-c9f8084272b6",
+      "in_index": 1,
+      "out_id": "dc5c91ea-aa0b-4323-a53b-4e3d6068cb08",
+      "out_index": 1
+    },
+    {
+      "in_id": "61cfabf0-a22f-466d-862b-c9f8084272b6",
+      "in_index": 0,
+      "out_id": "dc5c91ea-aa0b-4323-a53b-4e3d6068cb08",
+      "out_index": 0
+    }
+  ],
+  "nodes": [
+    {
+      "id": "7fc7ec81-2bc0-445d-9134-b6873a53d9cd",
+      "model": {
+        "name": "In_function",
+        "association_to_node": "Function Input [In_function]"
+      },
+      "position": {
+        "x": 50.0,
+        "y": 50.0
+      }
+    },
+    {
+      "id": "dc5c91ea-aa0b-4323-a53b-4e3d6068cb08",
+      "model": {
+        "name": "Transform_filter",
+        "association_to_node": "Channel Filter [Transform_filter]"
+      },
+      "position": {
+        "x": 307.7600000000002,
+        "y": 61.19999999999999
+      }
+    },
+    {
+      "id": "61cfabf0-a22f-466d-862b-c9f8084272b6",
+      "model": {
+        "name": "Draw_lines",
+        "association_to_node": "Draw Output Lines [Draw_lines]"
+      },
+      "position": {
+        "x": 588.84,
+        "y": 61.80000000000021
+      }
+    }
+  ]
+}

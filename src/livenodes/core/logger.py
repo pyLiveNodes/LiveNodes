@@ -13,7 +13,7 @@ class LogLevel(IntEnum):
 
 
 class Logger():
-    _log_level = LogLevel.VERBOSE
+    _log_level = LogLevel.DEBUG
     _lock = mp.Lock()
 
     cbs = []

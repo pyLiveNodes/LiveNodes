@@ -84,4 +84,4 @@ def set_log_level(level):
 
 
 # Use this logging for BioKIT C++ logging when this module is imported
-BioKIT.LoggingUtilities.setLoggingCallback(loggingCallback)
+# BioKIT.LoggingUtilities.setLoggingCallback(loggingCallback)

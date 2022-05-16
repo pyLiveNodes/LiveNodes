@@ -1,3 +1,4 @@
+# === Node Registry ================================================
 from class_registry import ClassRegistry
 
 local_registry = ClassRegistry('__name__')

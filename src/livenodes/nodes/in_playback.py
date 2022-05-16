@@ -134,7 +134,11 @@ class In_playback(Sender):
                     #     print('Interesting')
                     # The data format is always: (batch/file, time, channel)
                     # self.debug(data[i:i+self.emit_at_once][0])
-                    self._emit_data(np.array([data[i:i + self.emit_at_once]]))
+                    tmp_data = np.array([data[i:i + self.emit_at_once]])
+                    # n_channels = len(self.channels)
+                    # tmp_data = np.array([np.array([np.arange(i, i + self.emit_at_once) / 1000] * n_channels).T])
+                    # print(tmp_data.shape)
+                    self._emit_data(tmp_data)
 
                     if len(targs[i:i + self.emit_at_once]) > 0:
                         # use reshape -1, as the data can also be shorter than emit_at_once and will be adjusted accordingly

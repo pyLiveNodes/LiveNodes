@@ -276,7 +276,7 @@ class CustomDialog(QDialog):
 
 class Config(QWidget):
 
-    def __init__(self, pipeline_path, pipeline=None, nodes=[], parent=None):
+    def __init__(self, pipeline_path, pipeline=None, node_registry=None, parent=None):
         super().__init__(parent)
 
         self._create_paths(pipeline_path)
@@ -285,7 +285,7 @@ class Config(QWidget):
         self.known_streams = set()
         self.known_dtypes = {}
 
-        self._create_known_classes(nodes)
+        self._create_known_classes(node_registry)
 
         ### Setup scene
         self.scene = qtpynodeeditor.FlowScene(registry=self.registry)
@@ -363,7 +363,7 @@ class Config(QWidget):
         if not os.path.exists(gui_folder):
             os.mkdir(gui_folder)
 
-    def _create_known_classes(self, nodes):
+    def _create_known_classes(self, node_registry):
         ### Setup Datastructures
         # style = StyleCollection.from_json(style_json)
 
@@ -371,39 +371,39 @@ class Config(QWidget):
         # TODO: figure out how to allow multiple connections to a single input!
         # Not relevant yet, but will be when there are sync nodes (ie sync 1-x sensor nodes) etc
 
+        if node_registry is None:
+            return 
+
+        # .values() returns a generator
+        nodes = list(node_registry.packages.values())
+
         # Collect and create Datatypes
         for node in nodes:
-            for val in node['channels_in'] + node['channels_out']:
+            for val in node.channels_in + node.channels_out:
                 self.known_dtypes[val] = NodeDataType(id=val, name=val)
 
         # Collect and create Node-Classes
         for node in nodes:
-            cls_name = node.get('class', 'Unknown Class')
-
-            # HACK! TODO: fix this proper (same as in node.py): the convention of filename and class will likely not hold and feels very hacky!
-            module = importlib.import_module(
-                f"src.nodes.{node['class'].lower()}")
+            cls_name = getattr(node, '__name__', 'Unknown Class')
 
             cls = type(cls_name, (CustomNodeDataModel,), \
                 { 'name': cls_name,
                 'caption': cls_name,
                 'caption_visible': True,
                 'num_ports': {
-                    PortType.input: len(node['channels_in']),
-                    PortType.output: len(node['channels_out'])
+                    PortType.input: len(node.channels_in),
+                    PortType.output: len(node.channels_out)
                 },
                 'data_type': {
-                    PortType.input: {i: self.known_dtypes[val] for i, val in enumerate(node['channels_in'])},
-                    PortType.output: {i: self.known_dtypes[val] for i, val in enumerate(node['channels_out'])}
+                    PortType.input: {i: self.known_dtypes[val] for i, val in enumerate(node.channels_in)},
+                    PortType.output: {i: self.known_dtypes[val] for i, val in enumerate(node.channels_out)}
                 }
-                , 'constructor': getattr(module, node['class'])
+                , 'constructor': node
                 })
             self.known_streams.update(
-                set(node['channels_in'] + node['channels_out']))
+                set(node.channels_in + node.channels_out))
             self.known_classes[cls_name] = cls
-            self.registry.register_model(cls,
-                                         category=node.get(
-                                             "category", "Unknown"))
+            self.registry.register_model(cls, category=getattr(node, "category", "Unknown"))
 
         # Create Converters
         # Allow any stream to map onto Data:

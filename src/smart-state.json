@@ -1,5 +1,10 @@
 {
   "Home": {
     "cur_project": "../projects/percom22"
-  }
+  },
+  "packages": [
+    "livenodes.nodes",
+    "livenodes.plux",
+    "livenodes.biokit"
+  ]
 }

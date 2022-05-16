@@ -18,7 +18,7 @@ class Draw_text_display(View):
     description = ""
 
     example_init = {
-        "name": "Text Outpuy",
+        "name": "Text Output",
         "initial_text": "",
     }
 

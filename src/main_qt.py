@@ -1,3 +1,4 @@
+import importlib
 import multiprocessing as mp
 import sys
 from PyQt5 import QtWidgets
@@ -7,14 +8,15 @@ from livenodes.gui.home import Home
 from livenodes.gui.config import Config
 from livenodes.gui.run import Run
 from livenodes.core.node import Node
-
-from nodes_collect import discover_infos
+from livenodes.core import global_registry
 
 from livenodes.core.logger import logger
+
 import datetime
 import time
 import os
 import json
+
 
 
 class SubView(QWidget):
@@ -155,17 +157,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self._set_state(widget_run)
 
     def onconfig(self, project_path, pipeline_path):
-        # in production we should switch this (no need to always load all modules!), but for now it's easier like this
-        # with open("nodes.json", 'r') as f:
-        #     known_nodes = json.load(f)
-        known_nodes = discover_infos()
-
         os.chdir(project_path)
         print('CWD:', os.getcwd())
 
         pipeline = Node.load(pipeline_path)
         widget_run = SubView(child=Config(pipeline=pipeline,
-                                          nodes=known_nodes,
+                                          node_registry=global_registry,
                                           pipeline_path=pipeline_path),
                              name=f"Configuring: {pipeline_path}",
                              back_fn=self.return_home)
@@ -183,16 +180,10 @@ if __name__ == '__main__':
         force=True)  # force=True doesn't seem like a too good idea, but hey
     # mp.set_start_method('fork')
 
-    from livenodes.core import global_registry
-
-    from livenodes.nodes import *
-    from livenodes.nodes import local_registry as node_registry
-    global_registry.add_register(node_registry)
-    # from livenodes.plux import *
-    # from livenodes.plux import local_registry as plux_registry
-    # global_registry.add_register(plux_registry)
-    # from livenodes.biokit import local_registry as biokit_registry
-    # global_registry.add_register(biokit_registry)
+    if os.path.exists('smart-state.json'):
+        with open('smart-state.json', 'r') as f:
+            settings = json.load(f)
+            global_registry.collect_modules(settings.get('packages', []))
 
     app = QtWidgets.QApplication([])
 

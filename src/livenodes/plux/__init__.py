@@ -1,3 +1,5 @@
+
+# === Plux import ================================================
 import os
 
 # Sniff out the correct plux api for this platform
@@ -25,6 +27,9 @@ full_path = os.path.join(os.path.dirname(__file__), path)
 print('Using Plux:', full_path)
 sys.path.append(full_path)
 
+import plux
+
+# === Node Registry ================================================
 from class_registry import ClassRegistry
 
 local_registry = ClassRegistry('__name__')

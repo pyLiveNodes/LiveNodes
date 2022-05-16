@@ -62,7 +62,8 @@ class Biokit_recognizer(Node):
         }
 
     def _should_process(self, data=None, file=None):
-        return data is not None
+        return data is not None \
+            and (file is not None or not self._is_input_connected('File'))
 
     def process(self, data, file=None, **kwargs):
         # IMPORTANT/TODO: check if this is equivalent to the previous behaviour,ie if we always receive the file together with the data
@@ -154,7 +155,7 @@ class Biokit_recognizer(Node):
                 hypothesis = self.reco.handler.getCurrentHypoNodeIds()
                 hypo_states = self.reco.handler.getCurrentHypoStates()
 
-            # We will be proactive and tell subsequent nodes if we failed to
+            # We will be proactive and tell subsequent nodes if we failed, rather than ommiting data (as this would break the clock approach)
             self._emit_data(res, channel="Recognition")
 
             # Maybe consider adding a mechanism that only calcs/gets this if someone requested it?

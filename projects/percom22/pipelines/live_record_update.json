@@ -52,7 +52,7 @@
     "class": "Transform_filter",
     "settings": {
       "name": "Raw Filter",
-      "compute_on": 1,
+      "compute_on": 2,
       "names": [
         "ACC_X",
         "ACC_Y",
@@ -177,7 +177,7 @@
     "class": "Out_data",
     "settings": {
       "name": "Save",
-      "compute_on": 1,
+      "compute_on": 2,
       "folder": "./data/Debug/"
     },
     "inputs": [
@@ -209,7 +209,7 @@
     "class": "Transform_filter",
     "settings": {
       "name": "Annot Filter",
-      "compute_on": 1,
+      "compute_on": 2,
       "names": [
         "ACC_X",
         "ACC_Y",
@@ -249,7 +249,7 @@
     "class": "Biokit_to_fs",
     "settings": {
       "name": "Name",
-      "compute_on": 1
+      "compute_on": 2
     },
     "inputs": [
       {
@@ -263,31 +263,6 @@
     "outputs": [
       {
         "emitting_node": "Name [Biokit_to_fs]",
-        "receiving_node": "Norm [Biokit_norm]",
-        "emitting_channel": "Data",
-        "receiving_channel": "Data",
-        "connection_counter": 0
-      }
-    ]
-  },
-  "Norm [Biokit_norm]": {
-    "class": "Biokit_norm",
-    "settings": {
-      "name": "Norm",
-      "compute_on": 1
-    },
-    "inputs": [
-      {
-        "emitting_node": "Name [Biokit_to_fs]",
-        "receiving_node": "Norm [Biokit_norm]",
-        "emitting_channel": "Data",
-        "receiving_channel": "Data",
-        "connection_counter": 0
-      }
-    ],
-    "outputs": [
-      {
-        "emitting_node": "Norm [Biokit_norm]",
         "receiving_node": "Train [Biokit_update_model]",
         "emitting_channel": "Data",
         "receiving_channel": "Data",
@@ -299,7 +274,7 @@
     "class": "Biokit_update_model",
     "settings": {
       "name": "Train",
-      "compute_on": 1,
+      "compute_on": 2,
       "token_insertion_penalty": 20,
       "model_path": "./models/RIoT/sequence",
       "train_iterations": [
@@ -312,7 +287,7 @@
     },
     "inputs": [
       {
-        "emitting_node": "Norm [Biokit_norm]",
+        "emitting_node": "Name [Biokit_to_fs]",
         "receiving_node": "Train [Biokit_update_model]",
         "emitting_channel": "Data",
         "receiving_channel": "Data",
