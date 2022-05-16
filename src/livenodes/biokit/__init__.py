@@ -1,9 +1,19 @@
 
 # === BioKIT import ================================================
-from .biokit import BioKIT, logger
+from .biokit import BioKIT
 
-logger.set_log_level(BioKIT.LogSeverityLevel.Information)
+from livenodes.core.logger import logger as node_logger
 
+
+def loggingCallback(fileName, level, message):
+    node = "BioKIT"
+    txt = f'BioKIT.{str(level)} -- {fileName}: {message}'
+    msg = f"{node: <40} | {txt}"
+    node_logger.debug(msg)
+
+BioKIT.LoggingUtilities.setLoggingCallback(loggingCallback) #<- this seems to be ignored atm... :/
+BioKIT.LoggingUtilities.setLogLevel(BioKIT.LogSeverityLevel.Information)
+        
 # use this for debugging
 # logger.set_log_level(BioKIT.LogSeverityLevel.Debug)
 
