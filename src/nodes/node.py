@@ -226,7 +226,7 @@ class Node():
     # === Basic Stuff =================
     def __init__(self,
                  name="Name",
-                 compute_on=Location.PROCESS,
+                 compute_on=Location.SAME,
                  should_time=False):
 
         self.name = name

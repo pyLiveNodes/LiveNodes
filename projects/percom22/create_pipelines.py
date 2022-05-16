@@ -133,7 +133,7 @@ if __name__ == "__main__":
     n_bits = 16
 
     print('=== Build RIoT Record Pipeline ===')
-    pl = In_riot(id=0)
+    pl = In_riot(id=0, listen_port=9000)
     # frm_ctr = Debug_frame_counter()
     # pl.add_input(frm_ctr)
     pl = add_riot_draw(pl, subset=0.5)
