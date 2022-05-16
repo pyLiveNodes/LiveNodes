@@ -5,7 +5,7 @@
       "block": false,
       "name": "Playback",
       "compute_on": 2,
-      "emit_at_once": 1,
+      "emit_at_once": 5,
       "files": "./data/RIoT/*.h5",
       "meta": {
         "sample_rate": 100,
@@ -115,7 +115,7 @@
     "class": "Draw_lines",
     "settings": {
       "name": "Raw Data",
-      "compute_on": 3,
+      "compute_on": 1,
       "n_plots": 6,
       "xAxisLength": 1000,
       "sample_rate": 100,

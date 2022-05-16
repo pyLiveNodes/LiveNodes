@@ -1,8 +1,7 @@
-src
-===
+livenodes
+=========
 
 .. toctree::
    :maxdepth: 4
 
-   gui
-   nodes
+   livenodes
