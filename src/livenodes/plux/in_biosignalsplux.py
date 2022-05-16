@@ -7,7 +7,6 @@ import plux
 from . import local_registry
 
 
-@local_registry.register
 class NewDevice(plux.SignalsDev):
     """
     Stub for a Plux based device.
@@ -34,7 +33,7 @@ class NewDevice(plux.SignalsDev):
     # It seems to work best when activating the plux hub and shortly after starting the pipline in qt interface
     # (which is weird) as on command line the timing is not important at all...
 
-
+@local_registry.register
 class In_biosignalsplux(BlockingSender):
     """
     Feeds data frames from a biosiagnal plux based device into the pipeline.
