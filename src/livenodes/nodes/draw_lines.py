@@ -121,6 +121,9 @@ class Draw_lines(View):
             # -> could make stuff more efficient, but well...
             # changes = []
 
+            # as the x-axis is reversed
+            # data = np.array(data)[::-1]
+
             if self.channel_names != channel_names:
                 self.channel_names = channel_names
 
@@ -128,7 +131,7 @@ class Draw_lines(View):
                     label.set_text(self.channel_names[i])
 
             for i in range(self.n_plots):
-                self.lines[i].set_ydata(data[i])
+                self.lines[i].set_ydata(data[i][::-1])
 
             return list(np.concatenate([self.lines, self.labels]))
 
@@ -151,8 +154,8 @@ class Draw_lines(View):
 
         # self.info(np.array(data).shape, d.shape, self.yData.shape)
 
-        self.yData = np.roll(self.yData, d.shape[0], axis=0)
-        self.yData[:d.shape[0]] = d
+        self.yData = np.roll(self.yData, -d.shape[0], axis=0)
+        self.yData[-d.shape[0]:] = d
 
         # TODO: consider if we really always want to send the channel names? -> seems an unecessary overhead (but cleaner code atm, maybe massage later...)
         # self.debug('emitting draw', self.yData.shape)

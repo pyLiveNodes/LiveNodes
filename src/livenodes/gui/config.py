@@ -374,8 +374,8 @@ class Config(QWidget):
         if node_registry is None:
             return 
 
+        # .values() returns a generator
         nodes = list(node_registry.packages.values())
-        print(nodes)
 
         # Collect and create Datatypes
         for node in nodes:
@@ -385,7 +385,6 @@ class Config(QWidget):
         # Collect and create Node-Classes
         for node in nodes:
             cls_name = getattr(node, '__name__', 'Unknown Class')
-            print(node, cls_name)
 
             cls = type(cls_name, (CustomNodeDataModel,), \
                 { 'name': cls_name,

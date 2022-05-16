@@ -183,12 +183,7 @@ if __name__ == '__main__':
     if os.path.exists('smart-state.json'):
         with open('smart-state.json', 'r') as f:
             settings = json.load(f)
-            for p in settings.get('packages', []):
-                m = importlib.import_module(p)
-                for m_name in m.__dict__["__all__"]:
-                    # just to load the file from the module to get it registered
-                    importlib.import_module(f"{p}.{m_name}")
-                global_registry.add_register(m.local_registry)
+            global_registry.collect_modules(settings.get('packages', []))
 
     app = QtWidgets.QApplication([])
 

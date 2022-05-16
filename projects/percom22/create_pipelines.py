@@ -1,37 +1,31 @@
-from src.nodes.annotate_channel import Annotate_channel
-from src.nodes.annotate_ui_button import Annotate_ui_button
+from livenodes.nodes.memory import Memory
 
-from src.nodes.log_data import Log_data
-from src.nodes.memory import Memory
+from livenodes.biokit.biokit_norm import Biokit_norm
+from livenodes.biokit.biokit_to_fs import Biokit_to_fs
+from livenodes.biokit.biokit_from_fs import Biokit_from_fs
+from livenodes.biokit.biokit_recognizer import Biokit_recognizer
+from livenodes.biokit.biokit_train import Biokit_train
+from livenodes.biokit.biokit_update_model import Biokit_update_model
 
-from src.nodes.biokit_norm import Biokit_norm
-from src.nodes.biokit_to_fs import Biokit_to_fs
-from src.nodes.biokit_from_fs import Biokit_from_fs
-from src.nodes.biokit_recognizer import Biokit_recognizer
-from src.nodes.biokit_train import Biokit_train
-from src.nodes.biokit_update_model import Biokit_update_model
+from livenodes.nodes.transform_feature import Transform_feature
+from livenodes.nodes.transform_window import Transform_window
+from livenodes.nodes.transform_filter import Transform_filter
+from livenodes.nodes.annotate_ui_button import Annotate_ui_button
+from livenodes.nodes.transform_majority_select import Transform_majority_select
 
-from src.nodes.transform_scale import Transform_scale
-from src.nodes.transform_feature import Transform_feature
-from src.nodes.transform_window import Transform_window
-from src.nodes.transform_filter import Transform_filter
-from src.nodes.transform_majority_select import Transform_majority_select
+from livenodes.nodes.in_playback import In_playback
+from livenodes.plux.in_riot import In_riot
 
-from src.nodes.in_playback import In_playback
-from src.nodes.in_data import In_data
-from src.nodes.in_biosignalsplux import In_biosignalsplux
-from src.nodes.in_riot import In_riot
+from livenodes.nodes.out_data import Out_data
 
-from src.nodes.out_data import Out_data
+from livenodes.nodes.draw_lines import Draw_lines
+from livenodes.nodes.draw_recognition import Draw_recognition
+from livenodes.nodes.draw_search_graph import Draw_search_graph
+from livenodes.nodes.draw_gmm import Draw_gmm
+from livenodes.nodes.draw_text_display import Draw_text_display
 
-from src.nodes.draw_lines import Draw_lines
-from src.nodes.draw_recognition import Draw_recognition
-from src.nodes.draw_search_graph import Draw_search_graph
-from src.nodes.draw_gmm import Draw_gmm
-from src.nodes.draw_text_display import Draw_text_display
-
-from src.nodes.node import Node
-
+from livenodes.core.node import Node
+from livenodes.core import global_registry
 
 def add_riot_draw(pl, subset=2):
     if subset == 0:
@@ -127,6 +121,7 @@ if __name__ == "__main__":
     if not os.path.exists(gui_folder):
         os.mkdir(gui_folder)
 
+    global_registry.collect_modules(['livenodes.nodes', 'livenodes.biokit', 'livenodes.plux'])
 
     x_raw = 1000
     x_processed = 10

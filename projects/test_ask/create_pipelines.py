@@ -1,6 +1,4 @@
-from numpy import block
 from livenodes.nodes.memory import Memory
-from livenodes.nodes.log_data import Log_data
 
 from livenodes.biokit.biokit_norm import Biokit_norm
 from livenodes.biokit.biokit_to_fs import Biokit_to_fs
@@ -23,6 +21,7 @@ from livenodes.nodes.draw_search_graph import Draw_search_graph
 from livenodes.nodes.draw_gmm import Draw_gmm
 
 from livenodes.core.node import Node
+from livenodes.core import global_registry
 
 def add_features(pl_in, x_raw, x_processed, vis=(True, True)):
     if vis[0]:
@@ -193,6 +192,7 @@ if __name__ == "__main__":
     if not os.path.exists(gui_folder):
         os.mkdir(gui_folder)
 
+    global_registry.collect_modules(['livenodes.nodes', 'livenodes.biokit', 'livenodes.plux'])
 
     channel_names_raw = ['EMG1', 'Gonio2', 'AccLow2']
     # channel_names_fts = ['EMG1__calc_mean', 'Gonio2__calc_mean', 'AccLow2__calc_mean']

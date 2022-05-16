@@ -33,8 +33,8 @@
         "association_to_node": "Playback [In_playback]"
       },
       "position": {
-        "x": -700.0,
-        "y": -233.33333333333331
+        "x": 50.0,
+        "y": 67.94451199999975
       }
     },
     {
@@ -44,8 +44,8 @@
         "association_to_node": "Raw Filter [Transform_filter]"
       },
       "position": {
-        "x": -423.9073279999999,
-        "y": -241.7818453333333
+        "x": 321.0926720000001,
+        "y": 60.49599999999975
       }
     },
     {
@@ -55,8 +55,8 @@
         "association_to_node": "Raw Data [Draw_lines]"
       },
       "position": {
-        "x": -34.3175040000001,
-        "y": -252.27784533333306
+        "x": 713.6824959999999,
+        "y": 50.0
       }
     }
   ]
