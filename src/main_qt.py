@@ -1,5 +1,3 @@
-import importlib
-import multiprocessing as mp
 import sys
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSizePolicy
@@ -51,13 +49,12 @@ class SubView(QWidget):
 
 class MainWindow(QtWidgets.QMainWindow):
 
-    def __init__(self, parent=None, projects='./projects/*'):
+    def __init__(self, parent=None, projects='./projects/*', home_dir=os.getcwd()):
         super(MainWindow, self).__init__(parent)
 
         self.central_widget = QtWidgets.QStackedWidget()
         self.setCentralWidget(self.central_widget)
 
-        print(projects)
         self.widget_home = Home(onconfig=self.onconfig,
                                 onstart=self.onstart,
                                 projects=projects)
@@ -65,12 +62,14 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.log_file = None
 
-        self.home_dir = os.getcwd()
+        self.home_dir = home_dir
+        print('Home Dir:', home_dir)
         print('CWD:', os.getcwd())
 
         self._save_dict = {}
-        if os.path.exists('smart-state.json'):
-            with open('smart-state.json', 'r') as f:
+        path_to_state = os.path.join(home_dir, 'smart-state.json')
+        if os.path.exists(path_to_state):
+            with open(path_to_state, 'r') as f:
                 self._save_dict = json.load(f)
 
         # for some fucking reason i cannot figure out how to set the css class only on the home class... so hacking this by adding and removign the class on view change...
@@ -203,17 +202,21 @@ def main():
 
     # === Setup application ========================================================================
     app = QtWidgets.QApplication([])
+    
+    home_dir = os.getcwd()
 
-    script_dir = os.path.dirname(__file__) #<-- absolute dir the script is in
-    rel_path = "livenodes/gui/static/style.qss"
-    abs_file_path = os.path.join(script_dir, rel_path)
-    with open(abs_file_path, 'r') as f:
-        app.setStyleSheet(f.read())
-
-    window = MainWindow(projects=env_projects)
+    window = MainWindow(projects=env_projects, home_dir=home_dir)
     # TODO: store the old size in state.json and re-apply here...
     window.resize(1400, 820)
     window.show()
+
+    # chdir because of relative imports in style.qss ....
+    script_dir = os.path.dirname(__file__) #<-- absolute dir the script is in
+    os.chdir(script_dir)
+    with open("./livenodes/gui/static/style.qss", 'r') as f:
+        app.setStyleSheet(f.read())
+    os.chdir(home_dir)
+
     sys.exit(app.exec())
 
 if __name__ == '__main__':
