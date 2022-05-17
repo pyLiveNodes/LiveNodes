@@ -23,7 +23,7 @@ There are different kind of Nodes. Each subtype slightly modifies the default ``
 
 
 
-Metya information
+Meta information
 --- 
 each node needs to provide meta information about the following topics:
 - which channels are provided

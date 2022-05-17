@@ -1,14 +1,6 @@
 livenodes.biokit package
 ========================
 
-Subpackages
------------
-
-.. toctree::
-   :maxdepth: 4
-
-   livenodes.biokit.biokit
-
 Submodules
 ----------
 
