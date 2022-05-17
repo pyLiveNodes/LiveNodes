@@ -27,10 +27,14 @@
 
 
 .. toctree::
-    :caption: Contributing
+    :caption: Repository
     :maxdepth: 2
 
     contributing/index.md
+    authors.rst
+    changelog.rst
+    
 
 ```
+
 
