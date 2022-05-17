@@ -12,11 +12,31 @@ from os.path import splitext
 from setuptools import find_packages
 from setuptools import setup
 
+import itertools
+
 
 def read(*names, **kwargs):
     with io.open(join(dirname(__file__), *names), encoding=kwargs.get('encoding', 'utf8')) as fh:
         return fh.read()
 
+extras_require = {
+        'dev': [
+            'pytest>=7.0.1'
+        ],
+        'plux': [
+            "python-osc>=1.8.0"
+        ],
+        'gui': [
+            "qtpynodeeditor>=0.2.0",
+            "PyQt5>=5.15.6",
+            "networkx>=2.6.3",
+        ],
+        'biokit': []
+        # eg:
+        #   'rst': ['docutils>=0.11'],
+        #   ':python_version=="2.6"': ['argparse'],
+    }
+extras_require['all'] = list(itertools.chain.from_iterable(extras_require.values()))
 
 setup(
     name='livenodes',
@@ -69,13 +89,21 @@ setup(
     ],
     python_requires='>=3.6',
     install_requires=[
-        # eg: 'aspectlib==1.1.1', 'six>=1.7',
+        "numpy>=1.22.1",
+        "pandas>=1.3.5",
+        "h5py>=3.6.0",
+        "tsfel>=0.1.4",
+        "matplotlib>=3.5.1",
+        "graphviz>=0.19.1",
+        "seaborn>=0.11.2",
+        "joblib>=1.1.0",
+        "scikit-learn>=1.0.2",
+        "scipy>=1.7.3",
+        "phx-class-registry",
+        "python-dotenv",
+        # eg: 'aspectlib>=1.1.1', 'six>=1.7',
     ],
-    extras_require={
-        # eg:
-        #   'rst': ['docutils>=0.11'],
-        #   ':python_version=="2.6"': ['argparse'],
-    },
+    extras_require=extras_require,
     entry_points={
         'console_scripts': [
             'livenodes = livenodes.cli:main',

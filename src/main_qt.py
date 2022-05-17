@@ -51,15 +51,16 @@ class SubView(QWidget):
 
 class MainWindow(QtWidgets.QMainWindow):
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, projects='./projects/*'):
         super(MainWindow, self).__init__(parent)
 
         self.central_widget = QtWidgets.QStackedWidget()
         self.setCentralWidget(self.central_widget)
 
+        print(projects)
         self.widget_home = Home(onconfig=self.onconfig,
                                 onstart=self.onstart,
-                                projects='../projects/*')
+                                projects=projects)
         self.central_widget.addWidget(self.widget_home)
 
         self.log_file = None
@@ -173,24 +174,44 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 if __name__ == '__main__':
+    # === Load environment variables ========================================================================
+    import os
+    from dotenv import dotenv_values
+    import json
+
+    config = {
+        **dotenv_values(".env"),  # load shared development variables
+        # **dotenv_values(".env.secret"),  # load sensitive variables
+        **os.environ,  # override loaded values with environment variables
+    }
+
+    env_projects = config.get('PROJECTS', './projects/*')
+    env_modules = json.loads(config.get('MODULES', '[ "livenodes.nodes", "livenodes.plux"]'))
+
+    print('Procects folder: ', env_projects)
+    print('Modules: ', env_modules)
+
+    # === Fix MacOS specifics ========================================================================
     # this fix is for macos (https://docs.python.org/3.8/library/multiprocessing.html#contexts-and-start-methods)
     # TODO: test/validate this works in all cases (ie increase test cases, coverage and machines to be tested on)
-    mp.set_start_method(
-        'fork',
-        force=True)  # force=True doesn't seem like a too good idea, but hey
+    # mp.set_start_method(
+    #     'fork',
+    #     force=True)  # force=True doesn't seem like a too good idea, but hey
     # mp.set_start_method('fork')
 
-    if os.path.exists('smart-state.json'):
-        with open('smart-state.json', 'r') as f:
-            settings = json.load(f)
-            global_registry.collect_modules(settings.get('packages', []))
+    # === Load modules ========================================================================
+    global_registry.collect_modules(env_modules)
 
+    # === Setup application ========================================================================
     app = QtWidgets.QApplication([])
 
-    with open('./livenodes/gui/static/style.qss', 'r') as f:
+    script_dir = os.path.dirname(__file__) #<-- absolute dir the script is in
+    rel_path = "livenodes/gui/static/style.qss"
+    abs_file_path = os.path.join(script_dir, rel_path)
+    with open(abs_file_path, 'r') as f:
         app.setStyleSheet(f.read())
 
-    window = MainWindow()
+    window = MainWindow(projects=env_projects)
     window.resize(1400, 820)
     window.show()
     sys.exit(app.exec())
