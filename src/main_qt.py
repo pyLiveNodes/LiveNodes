@@ -172,9 +172,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._set_state(widget_run)
 
-
-if __name__ == '__main__':
-    # === Load environment variables ========================================================================
+def main():
+# === Load environment variables ========================================================================
     import os
     from dotenv import dotenv_values
     import json
@@ -212,6 +211,10 @@ if __name__ == '__main__':
         app.setStyleSheet(f.read())
 
     window = MainWindow(projects=env_projects)
+    # TODO: store the old size in state.json and re-apply here...
     window.resize(1400, 820)
     window.show()
     sys.exit(app.exec())
+
+if __name__ == '__main__':
+    main()

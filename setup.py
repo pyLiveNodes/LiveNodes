@@ -106,7 +106,7 @@ setup(
     extras_require=extras_require,
     entry_points={
         'console_scripts': [
-            'livenodes = livenodes.cli:main',
+            'livenodes = main_qt:main',
         ]
     },
 )
