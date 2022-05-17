@@ -84,6 +84,14 @@ livenodes.nodes.in\_data module
    :undoc-members:
    :show-inheritance:
 
+livenodes.nodes.in\_function module
+-----------------------------------
+
+.. automodule:: livenodes.nodes.in_function
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 livenodes.nodes.in\_playback module
 -----------------------------------
 

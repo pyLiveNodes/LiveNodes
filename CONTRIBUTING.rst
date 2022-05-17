@@ -8,7 +8,7 @@ little bit helps, and credit will always be given.
 Bug reports
 ===========
 
-When `reporting a bug <https://gitlab.csl.uni-bremen.de/yale1/livenodes/issues>`_ please include:
+When `reporting a bug <https://gitlab.csl.uni-bremen.de/yale1/smart-studio/issues>`_ please include:
 
     * Your operating system name and version.
     * Any details about your local setup that might be helpful in troubleshooting.
@@ -24,7 +24,7 @@ articles, and such.
 Feature requests and feedback
 =============================
 
-The best way to send feedback is to file an issue at https://gitlab.csl.uni-bremen.de/yale1/livenodes/issues.
+The best way to send feedback is to file an issue at https://gitlab.csl.uni-bremen.de/yale1/smart-studio/issues.
 
 If you are proposing a feature:
 
@@ -37,7 +37,7 @@ Development
 
 To set up `livenodes` for local development:
 
-1. Fork `livenodes <https://gitlab.csl.uni-bremen.de/yale1/livenodes>`_
+1. Fork `livenodes <https://gitlab.csl.uni-bremen.de/yale1/smart-studio>`_
    (look for the "Fork" button).
 2. Clone your fork locally::
 
@@ -49,7 +49,7 @@ To set up `livenodes` for local development:
 
    Now you can make your changes locally.
 
-4. When you're done making changes run all the checks and docs builder with `tox <https://tox.readthedocs.io/en/latest/install.html>`_ one command::
+4. When you're done making changes run all the checks and docs builder with `tox <https://tox.wiki/en/latest/install.html>`_ one command::
 
     tox
 

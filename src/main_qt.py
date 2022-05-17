@@ -172,7 +172,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._set_state(widget_run)
 
 def main():
-# === Load environment variables ========================================================================
+    # === Load environment variables ========================================================================
     import os
     from dotenv import dotenv_values
     import json

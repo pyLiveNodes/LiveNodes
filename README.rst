@@ -20,8 +20,12 @@ You can also install the in-development version with::
 Documentation
 =============
 
+Hosted at:
+http://yale1.pages.csl.uni-bremen.de/smart-studio/
 
-https://yale1.pages.csl.uni-bremen.de/livenodes/
+Notes on sphinx: 
+- https://samnicholls.net/2016/06/15/how-to-sphinx-readthedocs/
+- https://www.sphinx-doc.org/en/master/usage/extensions/napoleon.html
 
 
 Development

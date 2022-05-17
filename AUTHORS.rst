@@ -2,4 +2,4 @@
 Authors
 =======
 
-* Yale Hartmann - https://yale1.pages.csl.uni-bremen.de/smart-studio/
+* Yale Hartmann - https://www.uni-bremen.de/en/csl/institute/team/staff/yale-hartmann
