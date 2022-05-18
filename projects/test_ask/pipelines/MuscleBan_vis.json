@@ -1,0 +1,70 @@
+{
+  "MuscleBan [In_biosignalsplux]": {
+    "class": "In_biosignalsplux",
+    "settings": {
+      "block": false,
+      "name": "MuscleBan",
+      "compute_on": 3,
+      "adr": "58:8E:81:A2:49:FC",
+      "freq": 400,
+      "n_bits": 16,
+      "channel_names": [
+        "ACC_X",
+        "ACC_Y",
+        "ACC_Z",
+        "MAG_X",
+        "MAG_Y",
+        "MAG_Z",
+        "EMG1"
+      ]
+    },
+    "inputs": [],
+    "outputs": [
+      {
+        "emitting_node": "MuscleBan [In_biosignalsplux]",
+        "receiving_node": "Draw Output Lines [Draw_lines]",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "MuscleBan [In_biosignalsplux]",
+        "receiving_node": "Draw Output Lines [Draw_lines]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      }
+    ]
+  },
+  "Draw Output Lines [Draw_lines]": {
+    "class": "Draw_lines",
+    "settings": {
+      "name": "Draw Output Lines",
+      "compute_on": 3,
+      "n_plots": 7,
+      "xAxisLength": 2000,
+      "sample_rate": 400,
+      "ylim": [
+        -1,
+        32
+      ]
+    },
+    "inputs": [
+      {
+        "emitting_node": "MuscleBan [In_biosignalsplux]",
+        "receiving_node": "Draw Output Lines [Draw_lines]",
+        "emitting_channel": "Channel Names",
+        "receiving_channel": "Channel Names",
+        "connection_counter": 0
+      },
+      {
+        "emitting_node": "MuscleBan [In_biosignalsplux]",
+        "receiving_node": "Draw Output Lines [Draw_lines]",
+        "emitting_channel": "Data",
+        "receiving_channel": "Data",
+        "connection_counter": 0
+      }
+    ],
+    "outputs": []
+  }
+}

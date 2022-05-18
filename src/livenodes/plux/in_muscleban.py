@@ -34,7 +34,7 @@ class NewDevice(plux.SignalsDev):
     # (which is weird) as on command line the timing is not important at all...
 
 @local_registry.register
-class In_biosignalsplux(BlockingSender):
+class In_muscleban(BlockingSender):
     """
     Feeds data frames from a biosiagnal plux based device into the pipeline.
 
@@ -52,7 +52,6 @@ class In_biosignalsplux(BlockingSender):
     example_init = {
         "adr": "mac address",
         "freq": 100,
-        "channel_names": ["Channel 1"],
         "n_bits": 16,
         "name": "Biosignalsplux",
     }
@@ -60,7 +59,6 @@ class In_biosignalsplux(BlockingSender):
     def __init__(self,
                  adr,
                  freq,
-                 channel_names=[],
                  n_bits=16,
                  name="Biosignalsplux",
                  **kwargs):
@@ -69,7 +67,9 @@ class In_biosignalsplux(BlockingSender):
         self.adr = adr
         self.freq = freq
         self.n_bits = n_bits
-        self.channel_names = channel_names
+        self.channel_names = [ "EMG1"
+            "ACC_X", "ACC_Y", "ACC_Z", 
+            "MAG_X", "MAG_Y", "MAG_Z"]
 
         self.device = None
 
@@ -77,8 +77,7 @@ class In_biosignalsplux(BlockingSender):
         return {\
             "adr": self.adr,
             "freq": self.freq,
-            "n_bits": self.n_bits,
-            "channel_names": self.channel_names
+            "n_bits": self.n_bits
         }
 
     def _onstop(self):
@@ -99,15 +98,28 @@ class In_biosignalsplux(BlockingSender):
         self._emit_data(self.channel_names, channel="Channel Names")
 
         self.device = NewDevice(self.adr)
-        self.device.frequency = self.freq
 
         # TODO: consider moving the start into the init and assign noop, then here overwrite noop with onRawFrame
         # Idea: connect pretty much as soon as possible, but only pass data once the rest is also ready
         # but: make sure to use the correct threads/processes :D
         self.device.onRawFrame = onRawFrame
-        # self.device.start(self.device.frequency, 0x01, 16)
-        # convert len of channel_names to bit mask for start (see top, or: https://github.com/biosignalsplux/python-samples/blob/master/MultipleDeviceThreadingExample.py)
-        self.device.start(self.device.frequency,
-                          2**len(self.channel_names) - 1, self.n_bits)
-        self.device.loop(
-        )  # calls self.device.onRawFrame until it returns True
+
+        emg_channel_src = plux.Source()
+        emg_channel_src.port = 1 # Number of the port used by this channel.
+        emg_channel_src.freqDivisor = 1 # Subsampling factor in relation with the freq, i.e., when this value is 
+                                        # equal to 1 then the channel collects data at a sampling rate identical to the freq, 
+                                        # otherwise, the effective sampling rate for this channel will be freq / freqDivisor
+        emg_channel_src.nBits = self.n_bits # Resolution in #bits used by this channel.
+        emg_channel_src.chMask = 0x01 # Hexadecimal number defining the number of channels streamed by this port, for example:
+                                    # 0x07 ---> 00000111 | Three channels are active.
+        # [3xACC + 3xMAG]
+        acc_mag_channel_src = plux.Source()
+        acc_mag_channel_src.port = 2 # or 11 depending on the muscleBAN hardware version.
+        acc_mag_channel_src.freqDivisor = 1
+        acc_mag_channel_src.nBits = self.n_bits
+        acc_mag_channel_src.chMask = 0x3F # 0x3F to activate the 6 sources (3xACC + 3xMAG) of the Accelerometer and Magnetometer sensors.
+        
+        self.device.start(self.freq, [emg_channel_src, acc_mag_channel_src])
+        
+        # calls self.device.onRawFrame until it returns True
+        self.device.loop() 

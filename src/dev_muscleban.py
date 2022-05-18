@@ -30,7 +30,7 @@ def exampleAcquisition(address, time, freq,
     device.time = time  # interval of acquisition
     device.onRawFrame = onRawFrame
     device.frequency = freq
-    device.start(device.frequency, code, 16)
+    device.start(device.frequency, code, 8)
     device.loop()  # calls device.onRawFrame until it returns True
     device.stop()
     device.close()
@@ -53,10 +53,10 @@ adr_mb2 = "84:FD:27:E5:04:C4"
 adr_bplx = "00:07:80:B3:83:ED"
 
 adr = adr_mb
-freq = 400
+freq = 100
 
 # exampleAcquisition(f"BTH{adr}", 20, freq, 0x01)
-exampleAcquisition(f"{adr}", 20, freq, 0x03)
+exampleAcquisition(f"{adr}", 20, freq, 0x05)
 # exampleAcquisition(f"BLE{adr}", 20, freq, 0x01)
 
 # from src.nodes.in_biosignalsplux import In_biosignalsplux
