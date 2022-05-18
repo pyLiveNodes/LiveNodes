@@ -56,6 +56,10 @@ class In_muscleban(BlockingSender):
         "name": "Biosignalsplux",
     }
 
+    channel_names = [ "EMG1"
+            "ACC_X", "ACC_Y", "ACC_Z", 
+            "MAG_X", "MAG_Y", "MAG_Z"]
+
     def __init__(self,
                  adr,
                  freq,
@@ -67,9 +71,6 @@ class In_muscleban(BlockingSender):
         self.adr = adr
         self.freq = freq
         self.n_bits = n_bits
-        self.channel_names = [ "EMG1"
-            "ACC_X", "ACC_Y", "ACC_Z", 
-            "MAG_X", "MAG_Y", "MAG_Z"]
 
         self.device = None
 

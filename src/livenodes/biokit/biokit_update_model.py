@@ -55,7 +55,7 @@ class Biokit_update_model(Node):
                  **kwargs):
         super().__init__(name, **kwargs)
 
-        if kwargs['compute_on'] is Location.SAME:
+        if self.compute_on is Location.SAME:
             # TODO: double check if/why this may be the case
             raise ValueError(f'compute_on may not be same for {str(self)}.')
 
