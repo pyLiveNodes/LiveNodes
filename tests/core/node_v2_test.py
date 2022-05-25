@@ -55,10 +55,6 @@ class TestGraphOperations():
     def test_relationships(self, create_simple_graph):
         node_a, node_b, node_c, node_d, node_e = create_simple_graph
 
-        # self relationships
-        assert node_a.requires_input_of(node_a)
-        assert node_a.provides_input_to(node_a)
-
         # direct relationships
         assert node_c.requires_input_of(node_a)
         assert node_a.provides_input_to(node_c)
