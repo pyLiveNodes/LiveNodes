@@ -29,8 +29,8 @@ class Biokit_update_model(Node):
     Requires a BioKIT Feature Sequence Stream
     """
 
-    channels_in = ["Data", "Annotation"]
-    channels_out = ["Text"]
+    channels_in = ["Data", "Annotation", "Train"]
+    channels_out = ["Training", "Text"]
 
     category = "BioKIT"
     description = ""
@@ -50,7 +50,6 @@ class Biokit_update_model(Node):
                  token_insertion_penalty,
                  train_iterations,
                  catch_all="None",
-                 update_every_s=60,
                  name="Train",
                  **kwargs):
         super().__init__(name, **kwargs)
@@ -63,7 +62,6 @@ class Biokit_update_model(Node):
         self.train_iterations = train_iterations
         self.phases_new_act = phases_new_act
         self.token_insertion_penalty = token_insertion_penalty
-        self.update_every_s = update_every_s
         self.catch_all = catch_all
 
         self.storage_annotation = []
@@ -74,16 +72,15 @@ class Biokit_update_model(Node):
 
         self.reco = None
 
+        self.currently_training = False
+
     def _settings(self):
         return {\
             # "batch": self.batch,
-
-
             "token_insertion_penalty": self.token_insertion_penalty,
             "model_path": self.model_path,
             "train_iterations": self.train_iterations,
             "phases_new_act": self.phases_new_act,
-            "update_every_s": self.update_every_s,
             "catch_all": self.catch_all,
         }
 
@@ -311,7 +308,7 @@ class Biokit_update_model(Node):
                         addFillerToBeginningAndEnd=False)
             self.reco.finishTrainIteration()
 
-    def _should_process(self, data=None, annotation=None):
+    def _should_process(self, data=None, annotation=None, train=None):
         return data is not None \
             and annotation is not None
 
@@ -323,19 +320,16 @@ class Biokit_update_model(Node):
         else:
             print('No model was trained')
 
-    def _onstart(self):
-        self.last_training = time.time()
-        self.last_msg = time.time()
-
-    def process(self, data, annotation, **kwargs):
+    def process(self, data, annotation, train=None, **kwargs):
         # TODO: make sure this is proper
         self.storage_data.extend(data)
         self.storage_annotation.extend(annotation)
 
-        cur_time = time.time()
-        if self.last_training + self.update_every_s <= cur_time:
-            self.last_training = cur_time
+        self._emit_data(int(self.currently_training), channel="Training")
 
+        self._emit_data(f"[{str(self)}]\n      Waiting for instructions", channel="Text")
+        
+        if train and not self.currently_training:
             print('Update!', len(self.storage_data))
 
             try:
@@ -350,8 +344,9 @@ class Biokit_update_model(Node):
                 print(traceback.format_exc())
                 print(err)
 
-        elif self.last_msg + 1 <= cur_time:
-            self._emit_data(
-                f"[{str(self)}]\n     Next training: {self.update_every_s - (self.last_msg - self.last_training):.2f}s.",
-                channel="Text")
-            self.last_msg = cur_time
+        # TODO: find a place to put this!
+        # elif self.last_msg + 1 <= cur_time:
+        #     self._emit_data(
+        #         f"[{str(self)}]\n     Next training: {self.update_every_s - (self.last_msg - self.last_training):.2f}s.",
+        #         channel="Text")
+        #     self.last_msg = cur_time

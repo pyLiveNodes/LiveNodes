@@ -54,13 +54,21 @@ class In_trigger(Sender):
             "resting": self.resting,
             "signal": self.signal,
             "interval": self.interval,
-            "duration": self.duration
+            "duration": self.duration,
+            "sample_rate": self.sample_rate
         }
 
     def _run(self):
         """
         Streams the data and calls frame callbacks for each frame.
         """
+        # # quick and easy test for problems with clock on multiple unsynced input sources
+        # # mostly usefull with the semi-online/arithmatic.json pipeline
+        # from random import randrange
+        # delay = randrange(10)
+        # print(str(self), delay)
+        # time.sleep(delay)
+
         self._emit_data(self.meta, channel="Meta")
 
         ctr = self.interval
