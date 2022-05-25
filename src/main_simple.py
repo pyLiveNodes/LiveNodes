@@ -84,7 +84,7 @@ if __name__ == '__main__':
 
         draws = {
             str(n): n.init_draw
-            for n in Node.discover_childs(pipeline) if isinstance(n, View)
+            for n in Node.discover_graph(pipeline) if isinstance(n, View)
         }.values()
         print(draws)
 

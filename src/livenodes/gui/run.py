@@ -75,7 +75,7 @@ class Run(FigureCanvasQTAgg):
         # the following works because the str representation of each node in a pipline must be unique
         draws = {
             str(n): n.init_draw
-            for n in Node.discover_childs(pipeline) if isinstance(n, View)
+            for n in Node.discover_graph(pipeline) if isinstance(n, View)
         }.values()
         # print(draws)
 

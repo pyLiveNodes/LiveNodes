@@ -19,6 +19,8 @@ def read_data(f):
         # Prepare framewise annotation to be send
         ref = pd.read_csv(f.replace('.h5', '.csv'),
                           names=["act", "start", "end"])
+        
+        # @deprecated (old format, that used to have holes, where no annotation was present)
         targs = []
         last_end = 0
         for _, row in ref.iterrows():
@@ -55,7 +57,7 @@ class In_data(Sender):
     description = ""
 
     example_init = {
-        "files": "./files/**/.h5",
+        "files": "./files/**.h5",
         "meta": {
             "sample_rate": 100,
             "targets": ["target 1"],

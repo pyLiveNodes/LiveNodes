@@ -3,6 +3,7 @@ from functools import partial
 import json
 import os
 import importlib
+import itertools
 
 from PyQt5.QtGui import QIntValidator
 from PyQt5.QtWidgets import QDialogButtonBox, QDialog, QFormLayout, QCheckBox, QLineEdit, QVBoxLayout, QWidget, QHBoxLayout, QScrollArea, QLabel
@@ -406,18 +407,19 @@ class Config(QWidget):
             self.registry.register_model(cls, category=getattr(node, "category", "Unknown"))
 
         # Create Converters
-        # Allow any stream to map onto Data:
-        for stream in self.known_streams:
-            converter = TypeConverter(self.known_dtypes[stream],
-                                      self.known_dtypes["Data"], noop)
-            self.registry.register_type_converter(self.known_dtypes[stream],
-                                                  self.known_dtypes["Data"],
+        # Allow any stream to map onto any other stream:
+        # TODO: this could be used properly for type checking, on build (in the gui only) but is not furhter integrated into the node system itself
+        for a, b in itertools.combinations(self.known_streams, 2):
+            converter = TypeConverter(self.known_dtypes[a],
+                                      self.known_dtypes[b], noop)
+            self.registry.register_type_converter(self.known_dtypes[a],
+                                                  self.known_dtypes[b],
                                                   converter)
 
-            converter = TypeConverter(self.known_dtypes["Data"],
-                                      self.known_dtypes[stream], noop)
-            self.registry.register_type_converter(self.known_dtypes["Data"],
-                                                  self.known_dtypes[stream],
+            converter = TypeConverter(self.known_dtypes[b],
+                                      self.known_dtypes[a], noop)
+            self.registry.register_type_converter(self.known_dtypes[b],
+                                                  self.known_dtypes[a],
                                                   converter)
 
     def _add_pipeline(self, layout, pipeline):
@@ -442,7 +444,7 @@ class Config(QWidget):
         ### Add nodes
         if pipeline is not None:
             # only keep uniques
-            p_nodes = {str(n): n for n in pipeline.discover_childs(pipeline)}
+            p_nodes = {str(n): n for n in pipeline.discover_graph(pipeline)}
 
             # first pass: create all nodes
             s_nodes = {}

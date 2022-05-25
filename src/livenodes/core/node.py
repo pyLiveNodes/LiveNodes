@@ -1,4 +1,5 @@
 from enum import IntEnum
+from functools import reduce
 import json
 import numpy as np
 import time
@@ -273,15 +274,13 @@ class Node():
     #     pass
 
     # === Seriallization Stuff =================
-    def copy(self, children=False, parents=False):
+    def copy(self, graph=False):
         """
         Copy the current node
         if deep=True copy all childs as well
         """
         # not sure if this will work, as from_dict expects a cls not self...
-        return self.from_dict(self.to_dict(
-            children=children,
-            parents=parents))  #, children=children, parents=parents)
+        return self.from_dict(self.to_dict(graph=graph))
 
     def _node_settings(self):
         return {"name": self.name, "compute_on": self.compute_on}
@@ -294,14 +293,11 @@ class Node():
             "outputs": [con.to_dict() for con in self.output_connections]
         }
 
-    def to_dict(self, children=False, parents=False):
+    def to_dict(self, graph=False):
         # Assume no nodes in the graph have the same name+node_class -> should be checked in the add_inputs
         res = {str(self): self.get_settings()}
-        if parents:
-            for node in self.discover_parents(self):
-                res[str(node)] = node.get_settings()
-        if children:
-            for node in self.discover_childs(self):
+        if graph:
+            for node in self.discover_graph(self):
                 res[str(node)] = node.get_settings()
         return res
 
@@ -346,16 +342,15 @@ class Node():
 
         return initial
 
-    def save(self, path, children=True, parents=True):
-        json_str = self.to_dict(children=children, parents=parents)
-        # check if folder exists?
+    def save(self, path, graph=True):
+        json_str = self.to_dict(graph=graph)
 
+        # TODO: check if folder exists
         with open(path, 'w') as f:
             json.dump(json_str, f, cls=NumpyEncoder, indent=2)
 
     @classmethod
     def load(cls, path):
-        # TODO: implement children=True, parents=True (ie implement it in from_dict)
         with open(path, 'r') as f:
             json_str = json.load(f)
         return cls.from_dict(json_str)
@@ -483,16 +478,23 @@ class Node():
             for x in self.input_connections
         ])
 
-    # TODO: actually start, ie design/test a sending node!
 
+    # TODO: actually start, ie design/test a sending node!
     # === Start/Stop Stuff =================
     def start(self, children=True, join=False):
+        start_nodes = list(filter(lambda x: len(x.channels_in) == 0,self.discover_graph(self)))
+        print(start_nodes)
+        for i, node in enumerate(start_nodes):
+            print(node, join, i + 1 == len(start_nodes))
+            node.start_node(children=children, join=join and i + 1 == len(start_nodes))
+
+    def start_node(self, children=True, join=False):
         if self._running == False:  # the node might be child to multiple parents, but we just want to start once
             # first start children, so they are ready to receive inputs
             # children cannot not have inputs, ie they are always relying on this node to send them data if they want to progress their clock
             if children:
                 for con in self.output_connections:
-                    con._receiving_node.start()
+                    con._receiving_node.start_node()
 
             # now start self
             self._running = True
@@ -727,38 +729,57 @@ class Node():
         return list(set(nodes))
 
     @staticmethod
-    def discover_childs(node):
+    def discover_output_deps(node):
+        # TODO: consider adding a channel parameter, ie only consider dependents of this channel
+        """
+        Find all nodes who depend on our output
+        """
         if len(node.output_connections) > 0:
-            childs = [
-                con._receiving_node.discover_childs(con._receiving_node)
+            output_deps = [
+                con._receiving_node.discover_output_deps(con._receiving_node)
                 for con in node.output_connections
             ]
-            return [node] + list(np.concatenate(childs))
-        return [node]
+            return list(np.concatenate(output_deps))
+        return []
 
     @staticmethod
-    def discover_parents(node):
+    def discover_input_deps(node):
         if len(node.input_connections) > 0:
-            parents = [
-                con._emitting_node.discover_parents(con._emitting_node)
+            input_deps = [
+                con._emitting_node.discover_input_deps(con._emitting_node)
                 for con in node.input_connections
             ]
-            return [node] + list(np.concatenate(parents))
-        return [node]
+            return list(np.concatenate(input_deps))
+        return []
 
-    # TODO: this will not find the parent of it's own child (same applies to discover_parents and discover_children)
     @staticmethod
-    def discover_full(node):
-        return node.remove_discovered_duplicates(
-            node.discover_parents(node) + node.discover_childs(node))
+    def discover_neighbors(node):
+        childs = [con._receiving_node for con in node.output_connections]
+        parents = [con._emitting_node for con in node.input_connections]
+        return node.remove_discovered_duplicates([node] + childs + parents)
 
-    def is_child_of(self, node):
+    @staticmethod
+    def discover_graph(node):
+        discovered_nodes = node.discover_neighbors(node)
+        found_nodes = [node]
+        stack = queue.Queue()
+        for node in discovered_nodes:
+            if not node in found_nodes:
+                found_nodes.append(node)
+                for n in node.discover_neighbors(node):
+                    if not n in discovered_nodes:
+                        discovered_nodes.append(n)
+                        stack.put(n)
+
+        return node.remove_discovered_duplicates(found_nodes)
+
+    def requires_input_of(self, node):
         # self is always a child of itself
-        return self in self.discover_childs(node)
+        return self in self.discover_output_deps(node)
 
-    def is_parent_of(self, node):
+    def provides_input_to(self, node):
         # self is always a parent of itself
-        return self in self.discover_parents(node)
+        return self in self.discover_input_deps(node)
 
     # === Drawing Graph Stuff =================
     def dot_graph(self, nodes, name=False, transparent_bg=False):
@@ -789,14 +810,8 @@ class Node():
 
         return Image.open(BytesIO(dot.pipe()))
 
-    def dot_graph_childs(self, **kwargs):
-        return self.dot_graph(self.discover_childs(self), **kwargs)
-
-    def dot_graph_parents(self, **kwargs):
-        return self.dot_graph(self.discover_parents(self), **kwargs)
-
     def dot_graph_full(self, **kwargs):
-        return self.dot_graph(self.discover_full(self), **kwargs)
+        return self.dot_graph(self.discover_graph(self), **kwargs)
 
     # === Performance Stuff =================
     # def timeit(self):

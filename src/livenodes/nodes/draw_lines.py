@@ -61,7 +61,7 @@ class Draw_lines(View):
             (xAxisLength, n_plots))
 
         # render process
-        self.channel_names = list(map(str, range(n_plots)))
+        self.channel_names = ["" for _ in range(n_plots)]
 
     def _settings(self):
         return {\

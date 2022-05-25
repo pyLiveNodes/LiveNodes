@@ -56,27 +56,27 @@ class TestGraphOperations():
         node_a, node_b, node_c, node_d, node_e = create_simple_graph
 
         # self relationships
-        assert node_a.is_child_of(node_a)
-        assert node_a.is_parent_of(node_a)
+        assert node_a.requires_input_of(node_a)
+        assert node_a.provides_input_to(node_a)
 
         # direct relationships
-        assert node_c.is_child_of(node_a)
-        assert node_a.is_parent_of(node_c)
+        assert node_c.requires_input_of(node_a)
+        assert node_a.provides_input_to(node_c)
 
         # further relationships
-        assert node_d.is_child_of(node_a)
-        assert node_a.is_parent_of(node_d)
+        assert node_d.requires_input_of(node_a)
+        assert node_a.provides_input_to(node_d)
 
     def test_remove_connection(self, create_simple_graph_complex_nodes):
         node_a, node_b, _ = create_simple_graph_complex_nodes
 
-        assert node_b.is_child_of(node_a)
+        assert node_b.requires_input_of(node_a)
 
         # Remove the "Data" connection
         node_b.remove_input(node_a)
 
         # They are still children, as the "Meta" connection remains
-        assert node_b.is_child_of(node_a)
+        assert node_b.requires_input_of(node_a)
 
         # Remove the "Meta" connection
         node_b.remove_input(node_a,
@@ -84,7 +84,7 @@ class TestGraphOperations():
                             receiving_channel="Meta")
 
         # Now they shouldn't be related anymore
-        assert not node_b.is_child_of(node_a)
+        assert not node_b.requires_input_of(node_a)
 
 
 @pytest.fixture

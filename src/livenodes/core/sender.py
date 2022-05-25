@@ -82,8 +82,8 @@ class Sender(Node):
         self._on_runner()
         self.info('Finished subprocess', self._ctr)
 
-    def start(self, children=True, join=False):
-        super().start(children, join=False)
+    def start_node(self, children=True, join=False):
+        super().start_node(children, join=False)
 
         if self.compute_on in [Location.PROCESS, Location.THREAD
                                ] and self.block:
