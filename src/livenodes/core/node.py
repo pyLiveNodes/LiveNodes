@@ -739,8 +739,8 @@ class Node():
                 con._receiving_node.discover_output_deps(con._receiving_node)
                 for con in node.output_connections
             ]
-            return list(np.concatenate(output_deps))
-        return []
+            return [node] + list(np.concatenate(output_deps))
+        return [node]
 
     @staticmethod
     def discover_input_deps(node):
@@ -749,8 +749,8 @@ class Node():
                 con._emitting_node.discover_input_deps(con._emitting_node)
                 for con in node.input_connections
             ]
-            return list(np.concatenate(input_deps))
-        return []
+            return [node] + list(np.concatenate(input_deps))
+        return [node]
 
     @staticmethod
     def discover_neighbors(node):
@@ -775,11 +775,11 @@ class Node():
 
     def requires_input_of(self, node):
         # self is always a child of itself
-        return self in self.discover_output_deps(node)
+        return node in self.discover_input_deps(self)
 
     def provides_input_to(self, node):
         # self is always a parent of itself
-        return self in self.discover_input_deps(node)
+        return node in self.discover_output_deps(self)
 
     # === Drawing Graph Stuff =================
     def dot_graph(self, nodes, name=False, transparent_bg=False):
