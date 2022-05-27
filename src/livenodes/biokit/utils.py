@@ -49,7 +49,7 @@ def train_sequence(biokit_hmm, iterations, seq_tokens, seq_data, model_path, emi
         emit_fn(f'Finished Iteration: {i + 1}')
     
     with open(f'{model_path}/train_samples.json', 'w') as f:
-        json.dump(calc_samples_per_token(seq_tokens, seq_data), f)
+        json.dump(calc_samples_per_token(seq_tokens, seq_data), f, indent=4)
     
     biokit_hmm.saveToFiles(model_path)
     emit_fn(f'Written Model to Disc: {model_path}')

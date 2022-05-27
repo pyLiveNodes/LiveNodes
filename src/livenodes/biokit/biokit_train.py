@@ -1,5 +1,6 @@
 from functools import partial
 from itertools import groupby
+import os
 import traceback
 import numpy as np
 from filelock import FileLock
@@ -101,19 +102,21 @@ class Biokit_train(Node):
         split_indices = diffs.nonzero()[0] + 1
         
         # split the annotations and data arrays accordingly
-        processedAnnotations = np.split(annotations, split_indices)
+        processedAnnotations = [[x[0]] for x in np.split(annotations, split_indices)]
         processedSequences = []
         for seq in np.split(data, split_indices):
             # this feels stupid, but kinda makes sense, as in the split we create FeatureVectors instead of Sequences, which then need to be stiched together
             # TODO: check if there is a more elegant / faster option to this
             # this is stupid. i should not have a node to_fs if we use it just to get the data out and in again.
             tmp = np.array([x.getVector() for x in seq]) 
+            # print(tmp)
             pro_sq = BioKIT.FeatureSequence()
             pro_sq.setMatrix(tmp)
             processedSequences.append(pro_sq)
 
         self._emit_data('converted data format', channel="Text")
 
+        print(processedSequences[0])
         self.reco = recognizer.Recognizer.createCompletelyNew(
             self.atomList, self.tokenDictionary, 1,
             len(processedSequences[0][0]), True)
@@ -131,6 +134,10 @@ class Biokit_train(Node):
             and annotation is not None \
             and file is not None \
             and (train in [0, 1] or not self._is_input_connected('Train'))
+
+    def _onstart(self):
+        if not os.path.exists(self.model_path):
+            os.mkdir(self.model_path)
 
     def process(self,
                 data=None,
@@ -151,6 +158,7 @@ class Biokit_train(Node):
         if train and not self.currently_training:
             self.currently_training = True
             self.info('Starting Training')
+
             try:
                 with biokit_utils.model_lock(self.model_path):
                     self.info('Got lock')
