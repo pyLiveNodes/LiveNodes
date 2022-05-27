@@ -1,10 +1,11 @@
 from itertools import groupby
 import json
-from typing import DefaultDict
 import time
+from typing import DefaultDict
 import os
 import traceback
 import numpy as np
+from filelock import FileLock
 
 import livenodes.biokit.utils as biokit_utils
 from livenodes.core.node import Node, Location
@@ -43,7 +44,7 @@ class Biokit_update_model(Node):
         "model_path": "./models/",
         "atomList": [],
         "tokenDictionary": {},
-        "train_iterations": [5, 5],
+        "train_iterations": 5,
         "token_insertion_penalty": 0,
     }
 
@@ -304,7 +305,7 @@ class Biokit_update_model(Node):
         
         self.info("Learning Tokens:", keep_tokens)
 
-        biokit_utils.train_sequence(self.reco, iterations=self.train_iterations[0], seq_tokens=np.expand_dims(tokens[idx], axis=-1), seq_data=data[idx], model_path=self.model_path)
+        biokit_utils.train_sequence(self.reco, iterations=self.train_iterations, seq_tokens=np.expand_dims(tokens[idx], axis=-1), seq_data=data[idx], model_path=self.model_path)
 
 
     def _should_process(self, data=None, annotation=None, train=None):
@@ -322,20 +323,23 @@ class Biokit_update_model(Node):
         if train and not self.currently_training:
             self.currently_training = True
             self._emit_data(1, channel="Training")
-            print('Update!', len(self.storage_data))
-
+            
             try:
-                self._emit_data(f"[{str(self)}]\n      Starting training.",
-                                channel="Text")
-                self._train()
-                self._emit_data(f"[{str(self)}]\n      Finished training.",
-                                channel="Text")
+                with biokit_utils.model_lock(self.model_path):
+                    print('Update!', len(self.storage_data))
 
-                print('Trained model')
+                    self._emit_data(f"[{str(self)}]\n      Starting training.",
+                                    channel="Text")
+                    self._train()
+                    self._emit_data(f"[{str(self)}]\n      Finished training.",
+                                    channel="Text")
+
+                    print('Trained model')
             except Exception as err:
                 print(traceback.format_exc())
                 print(err)
             self.currently_training = False
+            time.sleep(1)
         else:
             self._emit_data(0, channel="Training")
             self._emit_data(f"[{str(self)}]\n      Waiting for instructions", channel="Text")

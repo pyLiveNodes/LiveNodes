@@ -1,5 +1,6 @@
 from collections import defaultdict
 import json 
+from filelock import FileLock
 
 from livenodes.biokit.biokit import BioKIT, logger, recognizer
 
@@ -11,8 +12,10 @@ def calc_samples_per_token(seq_tokens, seq_data):
             training_data[token] += samples_estimate
     return training_data
 
+def noop (*args):
+    pass
 
-def train_sequence(biokit_hmm, iterations, seq_tokens, seq_data, model_path):
+def train_sequence(biokit_hmm, iterations, seq_tokens, seq_data, model_path, emit_fn=noop):
     ### Setup trainer
     biokit_hmm.setTrainerType(
         recognizer.TrainerType('merge_and_split_trainer'))
@@ -29,11 +32,12 @@ def train_sequence(biokit_hmm, iterations, seq_tokens, seq_data, model_path):
             fillerToken=-1,
             addFillerToBeginningAndEnd=False)
     biokit_hmm.initializeStoredModels()
+    emit_fn('Finished Initialization')
 
     logger.info('=== Train Tokens ===')
     # Use the fact that we know each tokens start and end
     for i in range(iterations):
-        logger.info(f'--- Iteration {i} ---')
+        logger.info(f'--- Iteration {i + 1} ---')
         for tokens, data in zip(seq_tokens, seq_data):
             # Says sequence, but is used for small chunks, so that the initial gmm training etc is optimized before we use the full sequences
             biokit_hmm.storeTokenSequenceForTrain(
@@ -42,8 +46,14 @@ def train_sequence(biokit_hmm, iterations, seq_tokens, seq_data, model_path):
                 ignoreNoPathException=True,
                 addFillerToBeginningAndEnd=False)
         biokit_hmm.finishTrainIteration()
+        emit_fn(f'Finished Iteration: {i + 1}')
     
     with open(f'{model_path}/train_samples.json', 'w') as f:
         json.dump(calc_samples_per_token(seq_tokens, seq_data), f)
     
     biokit_hmm.saveToFiles(model_path)
+    emit_fn(f'Written Model to Disc: {model_path}')
+
+
+def model_lock(model_path, timeout=1):
+    return FileLock(f"{model_path}/.model.lock", timeout=timeout)

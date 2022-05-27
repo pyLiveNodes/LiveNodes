@@ -1,3 +1,4 @@
+from functools import reduce
 import numpy as np
 import glob, random
 import h5py
@@ -7,9 +8,6 @@ from joblib import Parallel, delayed
 
 from livenodes.core.sender import Sender
 
-from .utils import printProgressBar
-
-
 def read_data(f):
     # Read and send data from file
     with h5py.File(f, "r") as dataFile:
@@ -17,16 +15,16 @@ def read_data(f):
         data = dataSet[:]  # load into mem
 
         # Prepare framewise annotation to be send
-        ref = pd.read_csv(f.replace('.h5', '.csv'),
-                          names=["act", "start", "end"])
+        ref = pd.read_csv(f.replace('.h5', '.csv'))
         
         # @deprecated (old format, that used to have holes, where no annotation was present)
         targs = []
         last_end = 0
         for _, row in ref.iterrows():
-            filler = "stand"  # use stand as filler for unknown. #Hack! TODO: remove
+            filler = "None"  # use stand as filler for unknown. #Hack! TODO: remove
             targs.append([filler] * (row['start'] - last_end))
-            targs.append([row['act']] * (row['end'] - row['start']))
+            # +1 as the numbers are samples, ie the last sample still has that label
+            targs.append([row['act']] * (row['end'] - row['start'])) # +1 as the numbers are samples, ie the last sample still has that label
             last_end = row['end']
         targs.append([filler] * (len(data) - last_end))
         targs = list(np.concatenate(targs))
@@ -50,7 +48,7 @@ class In_data(Sender):
 
     channels_in = []
     channels_out = [
-        'Data', 'File', 'Annotation', 'Meta', 'Channel Names', 'Termination'
+        'Data', 'File', 'Annotation', 'Meta', 'Channel Names', 'Percent'
     ]
 
     category = "Data Source"
@@ -111,38 +109,31 @@ class In_data(Sender):
         # for now: just preload everything
         in_mem = Parallel(n_jobs=10)(delayed(read_data)(f) for f in fs)
 
+        sent_samples = 0
+        total_n_samples = reduce(lambda cur, nxt: cur + len(nxt[1]), in_mem, 0)
+
         l = len(fs)
-        printProgressBar(0, l, prefix='Progress:', suffix='', length=50)
         for file_number, (f, (data, targs)) in enumerate(zip(fs, in_mem)):
-            # for file_number, f in enumerate(fs):
-            printProgressBar(file_number,
-                             l,
-                             prefix='Progress:',
-                             suffix=f,
-                             length=50)
-
-            # self.info(f)
-
-            # data, targs = read_data(f)
-
             for i in range(0, len(data), self.emit_at_once):
-                d_len = len(data[i:i + self.emit_at_once]
-                            )  # usefull if i+self.emit_at_once > len(data)
+                # usefull if i+self.emit_at_once > len(data)
+                d_len = len(data[i:i + self.emit_at_once])  
+                sent_samples += d_len
+
                 self._emit_data(np.array([data[i:i + self.emit_at_once]]))
+                
                 # use reshape -1, as the data can also be shorter than emit_at_once and will be adjusted accordingly
                 self._emit_data(np.array(
-                    targs[i:i + self.emit_at_once]).reshape((1, -1, 1)),
+                targs[i:i + self.emit_at_once]).reshape((1, -1, 1)),
                                 channel='Annotation')
-                # self.info('send', np.unique(targs[i:i + self.emit_at_once], return_counts=True))
+                
                 self._emit_data(np.array([file_number] * d_len).reshape(
                     (1, -1, 1)),
                                 channel="File")
 
+                print(sent_samples, total_n_samples)
+                self._emit_data(sent_samples / total_n_samples, channel='Percent')  
+
                 finished = (l == file_number +
                             1) and (i + self.emit_at_once >= len(data))
-                self._emit_data(
-                    finished, channel='Termination'
-                )  # TODO: maybe we could use something like this for syncing... ie seperate stream with just a counter
-
                 self.info('finished?', not finished)
                 yield not finished

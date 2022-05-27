@@ -48,6 +48,7 @@ class Out_data(Node):
     def _onstart(self):
         self.outputFile = h5py.File(self.outputFilename + '.h5', 'w')
         self.outputFileAnnotation = open(f"{self.outputFilename}.csv", "w")
+        self.outputFileAnnotation.write("start,end,act")
 
     def _onstop(self):
         self.outputFile.close()
