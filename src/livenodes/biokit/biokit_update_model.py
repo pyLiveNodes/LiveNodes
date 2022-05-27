@@ -310,7 +310,8 @@ class Biokit_update_model(Node):
 
     def _should_process(self, data=None, annotation=None, train=None):
         return data is not None \
-            and annotation is not None
+            and annotation is not None \
+            and train in [0, 1] # train should be either 0 or 1, but not None
 
     def _onstop(self):
         if self.reco is not None:
@@ -320,16 +321,16 @@ class Biokit_update_model(Node):
         else:
             print('No model was trained')
 
-    def process(self, data, annotation, train=None, **kwargs):
+    def process(self, data, annotation, train, **kwargs):
         # TODO: make sure this is proper
         self.storage_data.extend(data)
         self.storage_annotation.extend(annotation)
 
-        self._emit_data(int(self.currently_training), channel="Training")
 
-        self._emit_data(f"[{str(self)}]\n      Waiting for instructions", channel="Text")
-        
+        self.info(train, self.currently_training)
         if train and not self.currently_training:
+            self.currently_training = True
+            self._emit_data(1, channel="Training")
             print('Update!', len(self.storage_data))
 
             try:
@@ -343,6 +344,11 @@ class Biokit_update_model(Node):
             except Exception as err:
                 print(traceback.format_exc())
                 print(err)
+            self.currently_training = False
+        else:
+            self._emit_data(0, channel="Training")
+            self._emit_data(f"[{str(self)}]\n      Waiting for instructions", channel="Text")
+
 
         # TODO: find a place to put this!
         # elif self.last_msg + 1 <= cur_time:
