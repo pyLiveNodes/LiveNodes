@@ -1,9 +1,12 @@
 from itertools import groupby
+import json
 from typing import DefaultDict
 import time
 import os
 import traceback
+import numpy as np
 
+import livenodes.biokit.utils as biokit_utils
 from livenodes.core.node import Node, Location
 from livenodes.biokit.biokit import BioKIT, logger, recognizer
 
@@ -202,19 +205,26 @@ class Biokit_update_model(Node):
                                      initSearchGraph=True)
 
     def _train(self):
-        len_d, len_a = len(self.storage_data), len(self.storage_annotation)
+        # we should never ever change the self.storage data as this will make everything out of sync!
+        # ie if len(data) = 10 and len(annotation) = 9 (and 1 is in queue to be added) then we remove the last data, but the queue will still be added.
+        #   -> every new label is shifted by 1 package. this propagates until nothing fits to nothing anymore
+        # Note: this is a very unlikely scenario due to the clock mechanism, but still.
+        storage_data = self.storage_data
+        storage_annotation = self.storage_annotation
+
+        len_d, len_a = len(storage_data), len(storage_annotation)
         keep = min(len_d, len_a)
         if len_d != len_a:
             logger.warn(
                 f"Data length ({len_d}) did not match annotation length ({len_a})"
             )
-            self.storage_data = self.storage_data[:keep]
-            self.storage_annotation = self.storage_annotation[:keep]
+            storage_data = storage_data[:keep]
+            storage_annotation = storage_annotation[:keep]
 
-        if len(self.storage_data) <= 0:
+        if len(storage_data) <= 0:
             return
 
-        featuredimensionality = len(self.storage_data[0][0])
+        featuredimensionality = len(storage_data[0][0])
 
         ### Create Recognizer instance
         is_new = not os.path.exists(self.model_path)
@@ -224,7 +234,7 @@ class Biokit_update_model(Node):
                 self.model_path, sequenceRecognition=True)
         else:
             print('Adding new activities to new model')
-            print('Feature dim:', len(self.storage_data[0][0]))
+            print('Feature dim:', len(storage_data[0][0]))
             # This is kinda ugly, but biokit does not allow empty dicts here :/
             self.reco = recognizer.Recognizer.createCompletelyNew(
                 {
@@ -236,90 +246,71 @@ class Biokit_update_model(Node):
         self.reco.setTokenInsertionPenalty(self.token_insertion_penalty)
 
         ### Prepare Data
-        processedTokens = DefaultDict(list)
+        tokens = []
+        data = []
 
         # TODO: clean this up and make sure we don't need store the data twice (once on self and once in fs)
-        n_groups = len(list(groupby(self.storage_annotation)))
-        grouped_atoms = groupby(zip(self.storage_annotation,
-                                    self.storage_data),
+        n_groups = len(list(groupby(storage_annotation)))
+        grouped_tokens = groupby(zip(storage_annotation,
+                                    storage_data),
                                 key=lambda x: x[0])
-        for i, (atom, g) in enumerate(grouped_atoms):
+        for i, (token, g) in enumerate(grouped_tokens):
             if i < n_groups - 1:
                 pro_sq = BioKIT.FeatureSequence()
                 for x in g:
                     pro_sq.append(x[1])  # accumulate
-                processedTokens[atom].append(pro_sq)
+                tokens.append(token)
+                data.append(pro_sq)
             else:
                 print("Skipped last group, as its not finished yet", n_groups,
                       i)
 
         ### remove known tokens from processed list (they are already trained, and will atm not be updated, see future work)
         known_tokens = self.reco.getDictionary().getTokenList()
+        if is_new:
+            # catch all is not known (ie not trained) if the recognizer is new (it had to be added in init, as biokit throws an error otherwise)
+            known_tokens.remove(self.catch_all)
 
-        for t in known_tokens:
-            if t in processedTokens:
-                if t != self.catch_all or not is_new:
-                    del processedTokens[t]
-
-        print("Now training:", processedTokens.keys())
-
-        for token in processedTokens.keys():
-            if token != self.catch_all:
+        stored_tokens = np.unique(tokens)
+        # add new tokens (except catch_all )
+        for token in stored_tokens:
+            if token != self.catch_all and not token in known_tokens:
                 self.reco = self._add_token(
                     token,
                     [f"{token}_{i}" for i in range(self.phases_new_act)],
                     featuredimensionality=featuredimensionality,
                     nrofmixtures=1)
 
-        ### Setup trainer
-        self.reco.setTrainerType(
-            recognizer.TrainerType('merge_and_split_trainer'))
-        config = self.reco.trainer.getConfig()
-        config.setSplitThreshold(500)
-        config.setMergeThreshold(100)
-        config.setKeepThreshold(10)
-        config.setMaxGaussians(10)
+        # decide which tokens to train
+        tokens = np.array(tokens, dtype=object)
+        data = np.array(data, dtype=object)
 
+        available_samples = biokit_utils.calc_samples_per_token(np.expand_dims(tokens, axis=-1), data)
+        if is_new or not os.path.exists(f'{self.model_path}/train_samples.json'):
+            trained_samples = DefaultDict(int)
+        else:
+            with open(f'{self.model_path}/train_samples.json', 'r') as f:
+                trained_samples = json.load(f)
+
+        self.debug(trained_samples, available_samples)
+        # keep tokens that are not in known_tokens unless the stored data is more than the trained data
+        keep_tokens = list(filter(lambda x: (not x in known_tokens) or (available_samples.get(x, 0) > trained_samples.get(x, 0)), stored_tokens))
+        idx = np.isin(tokens, keep_tokens)
+        
         ### Train
-        if len(processedTokens.keys()) == 0:
-            print("No new activities")
+        if len(tokens[idx]) == 0:
+            self.info("No new activities")
             return
+        
+        self.info("Learning Tokens:", keep_tokens)
 
-        logger.info('=== Initializaion ===')
-        for atom in processedTokens:
-            for trainingData in processedTokens[atom]:
-                self.reco.storeTokenSequenceForInit(
-                    trainingData, [atom],
-                    fillerToken=-1,
-                    addFillerToBeginningAndEnd=False)
-        self.reco.initializeStoredModels()
+        biokit_utils.train_sequence(self.reco, iterations=self.train_iterations[0], seq_tokens=np.expand_dims(tokens[idx], axis=-1), seq_data=data[idx], model_path=self.model_path)
 
-        logger.info('=== Train Tokens ===')
-        # Use the fact that we know each tokens start and end
-        for i in range(self.train_iterations[0]):
-            logger.info(f'--- Iteration {i} ---')
-            for atom in processedTokens:
-                for trainingData in processedTokens[atom]:
-                    # Says sequence, but is used for small chunks, so that the initial gmm training etc is optimized before we use the full sequences
-                    self.reco.storeTokenSequenceForTrain(
-                        trainingData, [atom],
-                        fillerToken=-1,
-                        ignoreNoPathException=True,
-                        addFillerToBeginningAndEnd=False)
-            self.reco.finishTrainIteration()
 
     def _should_process(self, data=None, annotation=None, train=None):
         return data is not None \
             and annotation is not None \
             and train in [0, 1] # train should be either 0 or 1, but not None
-
-    def _onstop(self):
-        if self.reco is not None:
-            # Save the model when stop_processing is called
-            self.reco.saveToFiles(self.model_path)
-            print('Saved recognizer to disk')
-        else:
-            print('No model was trained')
 
     def process(self, data, annotation, train, **kwargs):
         # TODO: make sure this is proper
@@ -350,7 +341,7 @@ class Biokit_update_model(Node):
             self._emit_data(f"[{str(self)}]\n      Waiting for instructions", channel="Text")
 
 
-        # TODO: find a place to put this!
+        # TODO: find a place to put this! -> some separate node probably
         # elif self.last_msg + 1 <= cur_time:
         #     self._emit_data(
         #         f"[{str(self)}]\n     Next training: {self.update_every_s - (self.last_msg - self.last_training):.2f}s.",

@@ -31,7 +31,9 @@ extras_require = {
             "PyQt5>=5.15.6",
             "networkx>=2.6.3",
         ],
-        'biokit': []
+        'biokit': [
+            "filelock>=3.7.0"
+        ]
         # eg:
         #   'rst': ['docutils>=0.11'],
         #   ':python_version=="2.6"': ['argparse'],

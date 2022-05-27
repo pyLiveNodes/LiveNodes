@@ -21,4 +21,5 @@ dependencies:
     - tsfel
     - python-osc
     - phx-class-registry
+    - filelock
 prefix: /Users/yale/miniconda3/envs/livenodes
