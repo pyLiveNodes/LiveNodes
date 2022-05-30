@@ -248,6 +248,9 @@ class Node():
 
     # === Logging Stuff =================
     # TODO: move this into it's own module/file?
+    def error(self, *text):
+        logger.error(self._prep_log(*text))
+
     def warn(self, *text):
         logger.warn(self._prep_log(*text))
 
@@ -675,7 +678,11 @@ class Node():
             # sender will never receive inputs and therefore will never have
             # TODO: IMPORTANT: every node it's own clock seems to have been a mistake: go back to the original idea of "senders and syncs implement clocks and everyone else just passes them along"
             self._ctr = ctr
-            self.process(**_current_data, _ctr=ctr)
+            try:
+                self.process(**_current_data, _ctr=ctr)
+            except Exception as e:
+                self.error(e)
+                self.info('Continuing anyway')
             self.verbose('process fn finished')
             for queue in self._received_data.values():
                 queue.discard_before(ctr)

@@ -1,5 +1,6 @@
 from collections import defaultdict
 import json 
+import os
 from filelock import FileLock
 
 from livenodes.biokit.biokit import BioKIT, logger, recognizer
@@ -48,8 +49,15 @@ def train_sequence(biokit_hmm, iterations, seq_tokens, seq_data, model_path, emi
         biokit_hmm.finishTrainIteration()
         emit_fn(f'Finished Iteration: {i + 1}')
     
-    with open(f'{model_path}/train_samples.json', 'w') as f:
-        json.dump(calc_samples_per_token(seq_tokens, seq_data), f, indent=4)
+    prev_counts = {}
+    train_samples_count_file = f'{model_path}/train_samples.json'
+    # TODO: there is probably a more elegant version to read and update this file...
+    if os.path.exists(train_samples_count_file):
+        with open(train_samples_count_file, 'r') as f:
+            prev_counts = json.load(f)
+    
+    with open(train_samples_count_file, 'w') as f:
+        json.dump({**prev_counts, **calc_samples_per_token(seq_tokens, seq_data)}, f, indent=4)
     
     biokit_hmm.saveToFiles(model_path)
     emit_fn(f'Written Model to Disc: {model_path}')

@@ -1,4 +1,5 @@
 # Print iterations progress
+from distutils.log import ERROR
 from enum import IntEnum
 import multiprocessing as mp
 import threading
@@ -6,6 +7,7 @@ import datetime
 
 
 class LogLevel(IntEnum):
+    ERROR = 0
     WARN = 1
     INFO = 2
     DEBUG = 3
@@ -30,6 +32,9 @@ class Logger():
 
     def remove_cb(self, cb):
         self.cbs.remove(cb)
+
+    def error(self, *args):
+        self._log(LogLevel.ERROR, *args)
 
     def warn(self, *args):
         self._log(LogLevel.WARN, *args)

@@ -158,7 +158,7 @@ if __name__ == "__main__":
 
     pl_train_new = Biokit_update_model(model_path="./models/RIoT/sequence", \
         token_insertion_penalty=20,
-        phases_new_act=1,
+        phases_new_token=1,
         train_iterations=(7, 10),
         catch_all="None"
         )

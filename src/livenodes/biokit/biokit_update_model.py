@@ -14,6 +14,11 @@ from livenodes.biokit.biokit import BioKIT, logger, recognizer
 from . import local_registry
 
 
+def element_wise_diff(arr):
+    w = np.array(arr, dtype=object)
+    return np.concatenate([[False], w[1:] != w[:-1]], axis=0).astype(int)
+
+
 # TODO: figure out if/how we can update an already trained model with only the new data
 # -> see notes: use learning rate that takes the number of samples into account of previous training
 # TODO: also figure out how to adapt a model to the current wearer -> should be a standard procedure somewhere...
@@ -33,7 +38,7 @@ class Biokit_update_model(Node):
     Requires a BioKIT Feature Sequence Stream
     """
 
-    channels_in = ["Data", "Annotation", "Train"]
+    channels_in = ["Data", "File", "Annotation", "Train"]
     channels_out = ["Training", "Text"]
 
     category = "BioKIT"
@@ -46,15 +51,20 @@ class Biokit_update_model(Node):
         "tokenDictionary": {},
         "train_iterations": 5,
         "token_insertion_penalty": 0,
+        "rm_last_data_group": True
     }
 
     def __init__(self,
                  model_path,
-                 phases_new_act,
-                 token_insertion_penalty,
-                 train_iterations,
-                 catch_all="None",
-                 name="Train",
+                 phases_new_atom = 1,
+                 phases_new_token = 1,
+                 token_insertion_penalty = 20,
+                 train_iterations = 5,
+                 atomList = {},
+                 tokenDictionary = {},
+                 catch_all = "None",
+                 name = "Train",
+                 rm_last_data_group = True, # set to true if online annotation + training, set to false if offline training
                  **kwargs):
         super().__init__(name, **kwargs)
 
@@ -64,12 +74,17 @@ class Biokit_update_model(Node):
 
         self.model_path = model_path
         self.train_iterations = train_iterations
-        self.phases_new_act = phases_new_act
+        self.atomList = atomList
+        self.tokenDictionary = tokenDictionary
+        self.phases_new_atom = phases_new_atom
+        self.phases_new_token = phases_new_token
         self.token_insertion_penalty = token_insertion_penalty
         self.catch_all = catch_all
+        self.rm_last_data_group = rm_last_data_group
 
         self.storage_annotation = []
         self.storage_data = []
+        self.storage_file = []
 
         self.last_training = None
         self.last_msg = None
@@ -84,8 +99,12 @@ class Biokit_update_model(Node):
             "token_insertion_penalty": self.token_insertion_penalty,
             "model_path": self.model_path,
             "train_iterations": self.train_iterations,
-            "phases_new_act": self.phases_new_act,
+            "atomList": self.atomList,
+            "tokenDictionary": self.tokenDictionary,
+            "phases_new_atom": self.phases_new_atom,
+            "phases_new_token": self.phases_new_token,
             "catch_all": self.catch_all,
+            "rm_last_data_group": self.rm_last_data_group,
         }
 
     def _add_atoms_to_topo(self, atomList, topologyInfo):
@@ -164,7 +183,7 @@ class Biokit_update_model(Node):
 
         atomList = {}
         for atom in atoms:
-            atomList[atom] = ["0"]
+            atomList[atom] = self.atomList.get(atom, list(map(str, range(self.phases_new_atom))))
             atomManager.addAtom(atom, ["atoms"], True)
         dictionary.addToken(token, atoms)
 
@@ -210,61 +229,86 @@ class Biokit_update_model(Node):
         # ie if len(data) = 10 and len(annotation) = 9 (and 1 is in queue to be added) then we remove the last data, but the queue will still be added.
         #   -> every new label is shifted by 1 package. this propagates until nothing fits to nothing anymore
         # Note: this is a very unlikely scenario due to the clock mechanism, but still.
-        storage_data = self.storage_data
-        storage_annotation = self.storage_annotation
+        self._emit_data('in _train', channel="Text")
+        
+        data = self.storage_data
+        annotations = self.storage_annotation
+        files = self.storage_file
 
-        len_d, len_a = len(storage_data), len(storage_annotation)
-        keep = min(len_d, len_a)
-        if len_d != len_a:
+        # Check lengths and process only the first data, keep everything in self tho!
+        len_d, len_a, len_f = len(data), len(annotations), len(files)
+        keep = min(len_d, len_a, len_f)
+        if len_d != len_a or len_d != len_f or len_a != len_f:
             logger.warn(
-                f"Data length ({len_d}) did not match annotation length ({len_a})"
+                f"Data length ({len_d}) did not match annotation length ({len_a}) and file length ({len_f})"
             )
-            storage_data = storage_data[:keep]
-            storage_annotation = storage_annotation[:keep]
+            data = np.array(data, dtype=object)[:keep]
+            annotations = np.array(annotations, dtype=object)[:keep]
+            files = np.array(files, dtype=object)[:keep]
 
-        if len(storage_data) <= 0:
+        self._emit_data('checked lengths', channel="Text")
+
+        if len(data) <= 0:
             return
 
-        featuredimensionality = len(storage_data[0][0])
+        ### Prepare Data
+
+        # get the diffs where either files changed or annotations changed
+        diffs = np.clip(element_wise_diff(files) + element_wise_diff(annotations), 0, 1)
+        # the indice splits are at the nonzero locations of the diffs +1 (as the diff is one index before the new value)
+        split_indices = diffs.nonzero()[0] + 1
+        
+        # split the annotations and data arrays accordingly
+        processedAnnotations = [[x[0]] for x in np.split(annotations, split_indices)]
+        processedSequences = []
+        for seq in np.split(data, split_indices):
+            # this feels stupid, but kinda makes sense, as in the split we create FeatureVectors instead of Sequences, which then need to be stiched together
+            # TODO: check if there is a more elegant / faster option to this
+            # this is stupid. i should not have a node to_fs if we use it just to get the data out and in again.
+            tmp = np.array([x.getVector() for x in seq]) 
+            # print(tmp)
+            pro_sq = BioKIT.FeatureSequence()
+            pro_sq.setMatrix(tmp)
+            processedSequences.append(pro_sq)
+
+        if self.rm_last_data_group:
+            # This is only useful in online training, as the last started annoation will never be finished exactly when the training starts
+            processedAnnotations = processedAnnotations[:-1]
+            processedSequences = processedSequences[:-1]
+            self.info("Skipped last group, as its likely not finished yet, in accordance with the setting rm_last_data_group=", self.rm_last_data_group)
+
+        processedAnnotations = np.array(processedAnnotations, dtype=object)
+        processedSequences = np.array(processedSequences, dtype=object)
+
+        print(processedSequences[0][0])
+        print(processedAnnotations.shape, processedSequences.shape)
+
+        self._emit_data('converted data format', channel="Text")
+
 
         ### Create Recognizer instance
-        is_new = not os.path.exists(self.model_path)
+        featuredimensionality = len(processedSequences[0][0])
+        is_new = not os.path.exists(self.model_path) or not os.path.exists(f"{self.model_path}/dictionary")
+        
         if not is_new:
             print('Adding new activities to existing model')
             self.reco = recognizer.Recognizer.createNewFromFile(
                 self.model_path, sequenceRecognition=True)
         else:
             print('Adding new activities to new model')
-            print('Feature dim:', len(storage_data[0][0]))
+            print('Feature dim:', featuredimensionality)
             # This is kinda ugly, but biokit does not allow empty dicts here :/
             self.reco = recognizer.Recognizer.createCompletelyNew(
                 {
                     f"{self.catch_all}_1": ["0"],
                 }, {self.catch_all: [f"{self.catch_all}_1"]},
-                1,
-                featuredimensionality=featuredimensionality)
+                nrofmixtures=1, # will be auto expanded in merge and split training
+                featuredimensionality=featuredimensionality, initDecoding=True)
             # self.reco = recognizer.Recognizer.createCompletelyNew({}, {}, 1, featuredimensionality=featuredimensionality)
         self.reco.setTokenInsertionPenalty(self.token_insertion_penalty)
 
-        ### Prepare Data
-        tokens = []
-        data = []
-
-        # TODO: clean this up and make sure we don't need store the data twice (once on self and once in fs)
-        n_groups = len(list(groupby(storage_annotation)))
-        grouped_tokens = groupby(zip(storage_annotation,
-                                    storage_data),
-                                key=lambda x: x[0])
-        for i, (token, g) in enumerate(grouped_tokens):
-            if i < n_groups - 1:
-                pro_sq = BioKIT.FeatureSequence()
-                for x in g:
-                    pro_sq.append(x[1])  # accumulate
-                tokens.append(token)
-                data.append(pro_sq)
-            else:
-                print("Skipped last group, as its not finished yet", n_groups,
-                      i)
+       
+        ### Figure out which tokens to train
 
         ### remove known tokens from processed list (they are already trained, and will atm not be updated, see future work)
         known_tokens = self.reco.getDictionary().getTokenList()
@@ -272,21 +316,17 @@ class Biokit_update_model(Node):
             # catch all is not known (ie not trained) if the recognizer is new (it had to be added in init, as biokit throws an error otherwise)
             known_tokens.remove(self.catch_all)
 
-        stored_tokens = np.unique(tokens)
+        stored_tokens = np.unique(processedAnnotations)
         # add new tokens (except catch_all )
         for token in stored_tokens:
             if token != self.catch_all and not token in known_tokens:
                 self.reco = self._add_token(
-                    token,
-                    [f"{token}_{i}" for i in range(self.phases_new_act)],
+                    token, self.tokenDictionary.get(token, [f"{token}_{i}" for i in range(self.phases_new_token)]),
                     featuredimensionality=featuredimensionality,
                     nrofmixtures=1)
 
-        # decide which tokens to train
-        tokens = np.array(tokens, dtype=object)
-        data = np.array(data, dtype=object)
-
-        available_samples = biokit_utils.calc_samples_per_token(np.expand_dims(tokens, axis=-1), data)
+        # decide which tokens to train, ie which tokens have more new data now than the model on disk has
+        available_samples = biokit_utils.calc_samples_per_token(processedAnnotations, processedSequences)
         if is_new or not os.path.exists(f'{self.model_path}/train_samples.json'):
             trained_samples = DefaultDict(int)
         else:
@@ -296,27 +336,38 @@ class Biokit_update_model(Node):
         self.debug(trained_samples, available_samples)
         # keep tokens that are not in known_tokens unless the stored data is more than the trained data
         keep_tokens = list(filter(lambda x: (not x in known_tokens) or (available_samples.get(x, 0) > trained_samples.get(x, 0)), stored_tokens))
-        idx = np.isin(tokens, keep_tokens)
+        # TODO: not sure if any is the right call here...
+        idx = np.any(np.isin(processedAnnotations, keep_tokens), axis=-1)
         
+        print(stored_tokens, keep_tokens)
+        print(processedAnnotations.shape, processedSequences.shape, idx)
+
         ### Train
-        if len(tokens[idx]) == 0:
+        if len(processedAnnotations[idx]) == 0:
             self.info("No new activities")
             return
         
         self.info("Learning Tokens:", keep_tokens)
 
-        biokit_utils.train_sequence(self.reco, iterations=self.train_iterations, seq_tokens=np.expand_dims(tokens[idx], axis=-1), seq_data=data[idx], model_path=self.model_path)
+        biokit_utils.train_sequence(self.reco, iterations=self.train_iterations, seq_tokens=processedAnnotations[idx], seq_data=processedSequences[idx], model_path=self.model_path)
 
 
-    def _should_process(self, data=None, annotation=None, train=None):
+    def _should_process(self, data=None, annotation=None, file=None, train=None):
         return data is not None \
             and annotation is not None \
+            and (file is not None or not self._is_input_connected('File')) \
             and train in [0, 1] # train should be either 0 or 1, but not None
 
-    def process(self, data, annotation, train, **kwargs):
-        # TODO: make sure this is proper
-        self.storage_data.extend(data)
-        self.storage_annotation.extend(annotation)
+    def process(self, data, annotation, train, file=None, **kwargs):
+        # remove batches! TODO: check and test this!
+        self.storage_data.extend(np.array(data, dtype=object).flatten())
+        annot = np.array(annotation).flatten()
+        self.storage_annotation.extend(annot)
+
+        if file is None:
+            self.storage_file.extend(np.zeros_like(annot, dtype=int) - 1)
+        else:
+            self.storage_file.extend(np.array(file).flatten())
 
 
         self.info(train, self.currently_training)
