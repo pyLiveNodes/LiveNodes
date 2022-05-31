@@ -27,4 +27,9 @@ class Mimic_variable(Node):
         return {"value": self.value}
 
     def process(self, data, **kwargs):
-        self._emit_data([self.value] * len(data))
+        d = np.array(data, dtype=object)
+        r = d.size
+        if len(d.shape) > 0:
+            r = d.shape[0]
+
+        self._emit_data(np.repeat(self.value, r))
