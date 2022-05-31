@@ -1,6 +1,8 @@
 import numpy as np
-from pythonosc.osc_server import BlockingOSCUDPServer
+from pythonosc.osc_server import BlockingOSCUDPServer, AsyncIOOSCUDPServer, ForkingOSCUDPServer
 from pythonosc.dispatcher import Dispatcher
+import asyncio
+import threading
 
 from livenodes.core.sender_blocking import BlockingSender
 
@@ -112,4 +114,17 @@ class In_riot(BlockingSender):
         self._emit_data(self.channels, channel="Channel Names")
 
         server = BlockingOSCUDPServer((self.listen_ip, self.listen_port), disp)
+        # server = ForkingOSCUDPServer((self.listen_ip, self.listen_port), disp)
+        self.info('Serving')
         server.serve_forever()  # Blocks forever
+        
+
+        # The threading idea works, but returns imediately due to the asyncio calls -> therefore ending the subprocess directly
+        # if threading.current_thread() is not threading.main_thread():
+        #     # let's create a new eventloop, since we're not in the main thread and thus non is created for us
+        #     asyncio.set_event_loop(asyncio.new_event_loop())
+
+
+        # server = AsyncIOOSCUDPServer((self.listen_ip, self.listen_port), disp, asyncio.get_event_loop())
+        # self.info('Serving')
+        # server.serve()

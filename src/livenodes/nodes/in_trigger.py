@@ -16,6 +16,9 @@ class In_trigger(Sender):
         'Trigger', 'Meta', 'Time to Event'
     ]
 
+    # TODO: create variante that has an optional input stream that it uses to sync itself with
+    # maybe just introduce a counter trigger, ie every x samples send a trigger?
+
     category = "Data Source"
     description = ""
 

@@ -1,5 +1,3 @@
-import numpy as np
-
 from livenodes.core.node import Node
 
 from . import local_registry
@@ -22,8 +20,6 @@ class Buffer_stream_switch(Node):
         self.last_sent_clock = -1
         self.buffer_1 = []
         self.buffer_2 = []
-        
-        self.index_helper = np.array(['buffer_1', 'buffer_2'])
 
     # Alg: 
     # a) The stream that we are toggled to has data -> process by sending the data and remembering, that we did so
@@ -42,17 +38,10 @@ class Buffer_stream_switch(Node):
             or (toggle == 1 and data_2 is not None)
 
     def process(self, toggle, _ctr, data_1=None, data_2=None, **kwargs):
-        data_to_send, data_to_buffer = [data_1, data_2][toggle]
-        buffer_to_empty, buffer_to_fill = self.index_helper[toggle, int(not toggle)]
-        
-        # TODO: i'm not sure if we can should actually send multiple emits in one call!
-        # IMPORTANT: do check that! it's very likely, that this results in lost data!
-        # TODO: -> this is solved now by uncommenting the code below, however, do check if the node code would detect something like this and issue a warning or error
-
-        # # first send all data in our buffer for this toggle
-        # for item in getattr(self, buffer_to_empty):
-        #     self._emit_data(item)
-        # setattr(self, buffer_to_empty, [])
+        data_to_send = [data_1, data_2][toggle]
+        data_to_buffer = [data_1, data_2][int(not toggle)]
+        buffer_to_empty = ['buffer_1', 'buffer_2'][int(not toggle)] 
+        buffer_to_fill = ['buffer_1', 'buffer_2'][toggle]
 
         # send data
         # the _ctr is important, as `process` might (and should) be called twice once for stream 1 and once for stream 1 and 2

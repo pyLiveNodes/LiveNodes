@@ -7,16 +7,18 @@ from . import local_registry
 
 
 @local_registry.register
-class Variable_mimic(Node):
+class Mimic_variable(Node):
     channels_in = ['Data']
     channels_out = ['Data']
 
-    category = "Transform"
+    category = "Mimic"
     description = ""
 
-    example_init = {'name': 'To Data', 'value': -1}
+    example_init = {'name': 'Variable Mimic', 'value': -1}
 
-    def __init__(self, value=0, name="To Data", **kwargs):
+    # TODO: technically this is a special case of the mimic last input, consider merging. (it's a purely esthetical / testing difference)
+
+    def __init__(self, value=0, name="Variable Mimic", **kwargs):
         super().__init__(name=name, **kwargs)
 
         self.value = value

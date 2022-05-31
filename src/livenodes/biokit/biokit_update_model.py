@@ -46,7 +46,7 @@ class Biokit_update_model(Node):
 
     example_init = {
         "name": "Train",
-        "model_path": "./models/",
+        "model_path": "./models",
         "atomList": [],
         "tokenDictionary": {},
         "train_iterations": 5,
@@ -71,6 +71,10 @@ class Biokit_update_model(Node):
         if self.compute_on is Location.SAME:
             # TODO: double check if/why this may be the case
             raise ValueError(f'compute_on may not be same for {str(self)}.')
+
+        if model_path[-1] == '/':
+            self.warn('Model Paths should not end with a slash, removing')
+            model_path = model_path[:-1]
 
         self.model_path = model_path
         self.train_iterations = train_iterations
@@ -249,6 +253,7 @@ class Biokit_update_model(Node):
         self._emit_data('checked lengths', channel="Text")
 
         if len(data) <= 0:
+            self._emit_data('No data to Train on', channel="Text")
             return
 
         ### Prepare Data
@@ -280,8 +285,9 @@ class Biokit_update_model(Node):
         processedAnnotations = np.array(processedAnnotations, dtype=object)
         processedSequences = np.array(processedSequences, dtype=object)
 
-        print(processedSequences[0][0])
-        print(processedAnnotations.shape, processedSequences.shape)
+        if len(processedSequences) == 0:
+            self._emit_data('No data to Train on', channel="Text")
+            return
 
         self._emit_data('converted data format', channel="Text")
 
@@ -375,6 +381,9 @@ class Biokit_update_model(Node):
             self.currently_training = True
             self._emit_data(1, channel="Training")
             
+            if not os.path.exists(self.model_path):
+                os.makedirs(self.model_path)
+
             try:
                 with biokit_utils.model_lock(self.model_path):
                     print('Update!', len(self.storage_data))

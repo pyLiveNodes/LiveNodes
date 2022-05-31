@@ -4,7 +4,7 @@ import h5py
 import json
 import os
 
-from livenodes.core.node import Node
+from livenodes.core.node import Node, Location
 
 from . import local_registry
 
@@ -19,8 +19,8 @@ class Out_data(Node):
 
     example_init = {'name': 'Save', 'folder': './data/Debug/'}
 
-    def __init__(self, folder, name="Save", **kwargs):
-        super().__init__(name, **kwargs)
+    def __init__(self, folder, name="Save", compute_on=Location.PROCESS, **kwargs):
+        super().__init__(name, compute_on=compute_on, **kwargs)
 
         self.folder = folder
 
@@ -49,6 +49,7 @@ class Out_data(Node):
         self.outputFile = h5py.File(self.outputFilename + '.h5', 'w')
         self.outputFileAnnotation = open(f"{self.outputFilename}.csv", "w")
         self.outputFileAnnotation.write("start,end,act\n")
+        self.info('Created Files')
 
     def _onstop(self):
         self.outputFile.close()
@@ -57,7 +58,7 @@ class Out_data(Node):
                 f"{self.last_annotation[1]},{self.last_annotation[2]},{self.last_annotation[0]}"
             )
         self.outputFileAnnotation.close()
-        self.info('Stopped Writing out')
+        self.info('Stopped writing out and closed files')
 
     def _should_process(self,
                         data=None,

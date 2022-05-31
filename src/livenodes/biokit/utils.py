@@ -17,6 +17,10 @@ def noop (*args):
     pass
 
 def train_sequence(biokit_hmm, iterations, seq_tokens, seq_data, model_path, emit_fn=noop):
+
+    # TODO: implement version that ignores seq_data if it contains a channel with only zeros! (as this will lead to a "covariance is singular cannot invert error in biokit")
+    # alternatively: create nodes to do so
+
     ### Setup trainer
     biokit_hmm.setTrainerType(
         recognizer.TrainerType('merge_and_split_trainer'))
@@ -63,5 +67,5 @@ def train_sequence(biokit_hmm, iterations, seq_tokens, seq_data, model_path, emi
     emit_fn(f'Written Model to Disc: {model_path}')
 
 
-def model_lock(model_path, timeout=1):
-    return FileLock(f"{model_path}/.model.lock", timeout=timeout)
+def model_lock(model_path, timeout=0.1):
+    return FileLock(f"{model_path}/.lock", timeout=timeout)

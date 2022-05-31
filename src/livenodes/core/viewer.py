@@ -13,7 +13,7 @@ class Canvas(IntEnum):
 class View(Node):
     canvas = Canvas.MPL
 
-    def __init__(self, name, compute_on=Location.PROCESS, should_time=False):
+    def __init__(self, name, compute_on=Location.THREAD, should_time=False):
         super().__init__(name, compute_on, should_time)
 
         # TODO: consider if/how to disable the visualization of a node?

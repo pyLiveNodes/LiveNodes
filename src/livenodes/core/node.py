@@ -6,6 +6,7 @@ import time
 import multiprocessing as mp
 import queue
 import threading
+import traceback
 
 from .logger import logger, LogLevel
 from .utils import NumpyEncoder
@@ -484,12 +485,33 @@ class Node():
 
     # TODO: actually start, ie design/test a sending node!
     # === Start/Stop Stuff =================
+    def _get_start_nodes(self):
+        # TODO: this should not be channels_in, but channels connected!
+        # self._is_input_connected
+        # return list(filter(lambda x: len(x.channels_in) == 0, self.discover_graph(self)))
+        return list(filter(lambda x: len(x.channels_in) == 0, self.discover_graph(self)))
+
     def start(self, children=True, join=False):
-        start_nodes = list(filter(lambda x: len(x.channels_in) == 0,self.discover_graph(self)))
+        start_nodes = self._get_start_nodes()
         print(start_nodes)
         for i, node in enumerate(start_nodes):
-            print(node, join, i + 1 == len(start_nodes))
+            print('Starting:', node, join, i + 1 == len(start_nodes), children)
             node.start_node(children=children, join=join and i + 1 == len(start_nodes))
+
+    def stop(self, children=True):
+        start_nodes = self._get_start_nodes()
+        print(start_nodes)
+        for node in start_nodes:
+            print("Stopping:", node, children)
+            node.stop_node(children=children)
+
+    def _call_user_fn(self, _fn, _fn_name, *args, **kwargs):
+        try:
+            return _fn(*args, **kwargs)
+        except Exception as e:
+            self.error(f'failed to execute {_fn_name}')
+            self.error(e) # TODO: add stack trace?
+            self.error(traceback.format_exc())
 
     def start_node(self, children=True, join=False):
         if self._running == False:  # the node might be child to multiple parents, but we just want to start once
@@ -516,7 +538,7 @@ class Node():
                 self.info('start subprocess')
                 self._subprocess_info['process'].start()
             elif self.compute_on in [Location.SAME]:
-                self._onstart()
+                self._call_user_fn(self._onstart, '_onstart')
                 self.info('Executed _onstart')
 
         if join:
@@ -524,9 +546,10 @@ class Node():
         else:
             self._clocks.set_passthrough()
 
-    def stop(self, children=True):
-        # first stop self, so that non-existing children don't receive inputs
+    def stop_node(self, children=True):
+        # first stop self, so that non-running children don't receive inputs
         if self._running == True:  # the node might be child to multiple parents, but we just want to stop once
+            self.info('Stopping')
             self._running = False
 
             if self.compute_on in [Location.PROCESS, Location.THREAD]:
@@ -543,13 +566,13 @@ class Node():
                               self._subprocess_info['process'].name)
             elif self.compute_on in [Location.SAME]:
                 self.info('Executing _onstop')
-                self._onstop()
+                self._call_user_fn(self._onstop, '_onstop')
             self.info('Stopped')
 
             # now stop children
             if children:
                 for con in self.output_connections:
-                    con._receiving_node.stop()
+                    con._receiving_node.stop_node()
 
     def _join(self):
         # blocks until all nodes in the graph reached the same clock as the node we are calling this from
@@ -598,7 +621,7 @@ class Node():
     def _process_on_proc(self):
         self.info('Started subprocess')
 
-        self._onstart()
+        self._call_user_fn(self._onstart, '_onstart')
         self.info('Executed _onstart')
 
         # as long as we do not receive a termination signal, we will wait for data to be processed
@@ -628,7 +651,7 @@ class Node():
                 was_queue_empty_last_iteration = 0
 
         self.info('Executing _onstop')
-        self._onstop()
+        self._call_user_fn(self._onstop, '_onstop')
 
         self.info('Finished subprocess')
 
@@ -678,11 +701,7 @@ class Node():
             # sender will never receive inputs and therefore will never have
             # TODO: IMPORTANT: every node it's own clock seems to have been a mistake: go back to the original idea of "senders and syncs implement clocks and everyone else just passes them along"
             self._ctr = ctr
-            try:
-                self.process(**_current_data, _ctr=ctr)
-            except Exception as e:
-                self.error(e)
-                self.info('Continuing anyway')
+            self._call_user_fn(self.process, 'process', **_current_data, _ctr=ctr)
             self.verbose('process fn finished')
             for queue in self._received_data.values():
                 queue.discard_before(ctr)

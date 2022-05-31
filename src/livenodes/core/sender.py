@@ -11,7 +11,7 @@ class Sender(Node):
     def __init__(self,
                  name,
                  block=False,
-                 compute_on=Location.PROCESS,
+                 compute_on=Location.THREAD,
                  should_time=False):
         super().__init__(name, compute_on, should_time)
 
@@ -57,7 +57,7 @@ class Sender(Node):
             self._ctr = self._clock.tick()
         else:
             raise Exception(
-                'Runner did not emit data, yet said it would do so in the previous run. Please check your implementation.'
+                f'Runner did not emit data, yet said it would do so in the previous run. Please check your implementation of {self}.'
             )
         self._emit_ctr_fallback = 0
         # self.debug('Next(Runner) returned')
