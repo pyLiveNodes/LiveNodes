@@ -94,7 +94,7 @@ class Draw_lines(View):
         xData = range(0, self.xAxisLength)
         self.lines = [
             axes[i].plot(xData,
-                         np.zeros((self.xAxisLength)),
+                         np.zeros((self.xAxisLength)) - 1,
                          lw=2,
                          animated=True)[0] for i in range(self.n_plots)
         ]

@@ -32,6 +32,7 @@ class Mimic_last_input(Node):
         
     def process(self, data=None, input=None, **kwargs):
         if input is not None:
+            # TODO: this is a multiprocessing hazard, as the input and data calls may come from different processes
             self.last_value = input
         if data is not None:
             self._emit_data(self.last_value)

@@ -90,9 +90,6 @@ class Biokit_train(Node):
         self.storage_data = []
         self.storage_file = []
 
-        self.last_training = None
-        self.last_msg = None
-
         self.reco = None
 
         self.currently_training = False
@@ -376,9 +373,10 @@ class Biokit_train(Node):
             self.storage_file.extend(np.array(file).flatten())
 
 
-        self.info(train, self.currently_training)
+        self.info("Should train?", train, self.currently_training)
         if train and not self.currently_training:
             self.currently_training = True
+            self.info('Now training')
             self._emit_data(1, channel="Training")
             
             if not os.path.exists(self.model_path):
@@ -399,15 +397,7 @@ class Biokit_train(Node):
                 print(traceback.format_exc())
                 print(err)
             self.currently_training = False
-            time.sleep(1)
         else:
+            self.info('Not training')
             self._emit_data(0, channel="Training")
             self._emit_data(f"[{str(self)}]\n      Waiting for instructions", channel="Text")
-
-
-        # TODO: find a place to put this! -> some separate node probably
-        # elif self.last_msg + 1 <= cur_time:
-        #     self._emit_data(
-        #         f"[{str(self)}]\n     Next training: {self.update_every_s - (self.last_msg - self.last_training):.2f}s.",
-        #         channel="Text")
-        #     self.last_msg = cur_time
