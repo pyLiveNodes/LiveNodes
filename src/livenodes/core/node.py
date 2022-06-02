@@ -503,6 +503,8 @@ class Node():
         return list(filter(lambda x: len(x.channels_in) == 0, self.discover_graph(self)))
 
     def start(self, children=True, join=False):
+        self.spawn_processes()
+        
         start_nodes = self._get_start_nodes()
         print(start_nodes)
         for i, node in enumerate(start_nodes):

@@ -46,7 +46,6 @@ class Run(FigureCanvasQTAgg):
 
 
     def worker_start(self):
-        self.pipeline.spawn_processes()
         self.pipeline.start()
         self.worker_term_lock.acquire()
 
