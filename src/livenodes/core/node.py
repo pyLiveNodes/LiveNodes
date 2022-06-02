@@ -23,13 +23,22 @@ class Location(IntEnum):
 
 class QueueHelperHack():
 
-    def __init__(self, compute_on=Location.PROCESS):
+    def __init__(self, compute_on=Location.THREAD):
+        # self.queue = mp.Queue()
+        # The assumption behind this compute_on check is not correct -> (as long as the processes are created inside the node.node_start() method)
+        # if we are on thread or queue -> always use mp as we are in a suprocess to the *first* parent, that called start_node on us
+        # if we are on same, but any of our parents is in a different thread/process -> still use mp
+        # if we are on same and all our parents are in the same thread/process -> only now we can use the normal queue
+        #   -> but again: only if they are in the same thread/process, not if they have the same compute_on value!
+
+        # TODO: figure out how to incorporate this tho, as queue.Queue() is probably more efficient
         if compute_on in [Location.PROCESS, Location.THREAD]:
             self.queue = mp.Queue()
         elif compute_on in [Location.SAME]:
             self.queue = queue.Queue()
 
         self.compute_on = compute_on
+
         self._read = {}
 
     def put(self, ctr, item):
@@ -49,6 +58,7 @@ class QueueHelperHack():
         while not self.queue.empty():
             itm_ctr, item = self.queue.get()
             # TODO: if itm_ctr already exists, should we not rather extend than overwrite it? (thinking of the mulitple emit_data per process call examples (ie window))
+            # TODO: yes! this is what we should do :D
             self._read[itm_ctr] = item
 
     def discard_before(self, ctr):
@@ -206,8 +216,7 @@ class Node():
     # === Basic Stuff =================
     def __init__(self,
                  name="Name",
-                 compute_on=Location.THREAD,
-                 should_time=False):
+                 compute_on=Location.THREAD):
 
         self.name = name
 
@@ -218,6 +227,7 @@ class Node():
 
         self._received_data = {
             key: QueueHelperHack(compute_on=compute_on)
+            # key: QueueHelperHack(compute_on=Location.THREAD)
             for key in self.channels_in
         }
 
@@ -228,12 +238,14 @@ class Node():
         self._subprocess_info = {}
         if self.compute_on in [Location.PROCESS]:
             self._subprocess_info = {
-                "process": None,
+                "process": mp.Process(target=self._process_on_proc),
+                # "process": None,
                 "termination_lock": mp.Lock()
             }
         elif self.compute_on in [Location.THREAD]:
             self._subprocess_info = {
-                "process": None,
+                "process": threading.Thread(target=self._process_on_proc),
+                # "process": None,
                 "termination_lock":
                 threading.Lock()  # as this is called from the main process
             }
@@ -287,14 +299,15 @@ class Node():
         return self.from_dict(self.to_dict(graph=graph))
 
     def _node_settings(self):
-        return {"name": self.name, "compute_on": self.compute_on}
+        return {"name": self.name, "compute_on": self.compute_on, **self._settings()}
 
     def get_settings(self):
         return { \
             "class": self.__class__.__name__,
-            "settings": dict(self._node_settings(), **self._settings()),
+            "settings": self._node_settings(),
             "inputs": [con.to_dict() for con in self.input_connections],
-            "outputs": [con.to_dict() for con in self.output_connections]
+            # Assumption: we do not actually need the outputs, as they just mirror the inputs and the outputs can always be reconstructed from those
+            # "outputs": [con.to_dict() for con in self.output_connections]
         }
 
     def to_dict(self, graph=False):
@@ -525,13 +538,14 @@ class Node():
             self._running = True
 
             # TODO: consider moving this in the node constructor, so that we do not have this nested behaviour processeses due to parents calling their childs start()
+            # TODO: but maybe this is wanted, just buggy af atm
             if self.compute_on in [Location.PROCESS, Location.THREAD]:
-                if self.compute_on == Location.PROCESS:
-                    self._subprocess_info['process'] = mp.Process(
-                        target=self._process_on_proc)
-                elif self.compute_on == Location.THREAD:
-                    self._subprocess_info['process'] = threading.Thread(
-                        target=self._process_on_proc)
+                # if self.compute_on == Location.PROCESS:
+                #     self._subprocess_info['process'] = mp.Process(
+                #         target=self._process_on_proc)
+                # elif self.compute_on == Location.THREAD:
+                #     self._subprocess_info['process'] = threading.Thread(
+                #         target=self._process_on_proc)
 
                 self.info('create subprocess')
                 self._acquire_lock(self._subprocess_info['termination_lock'])

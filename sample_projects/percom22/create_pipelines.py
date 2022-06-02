@@ -5,7 +5,7 @@ from livenodes.biokit.biokit_to_fs import Biokit_to_fs
 from livenodes.biokit.biokit_from_fs import Biokit_from_fs
 from livenodes.biokit.biokit_recognizer import Biokit_recognizer
 from livenodes.biokit.biokit_train import Biokit_train
-from livenodes.biokit.biokit_update_model import Biokit_update_model
+from livenodes.biokit.biokit_train import Biokit_update_model
 
 from livenodes.nodes.transform_feature import Transform_feature
 from livenodes.nodes.transform_window import Transform_window

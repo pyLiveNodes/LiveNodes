@@ -103,7 +103,7 @@ class In_riot(BlockingSender):
         def onRawFrame(addr, *data):
             # nonlocal factors
             # print(addr, data)
-            # print(np.array(data).shape)
+            # print(addr, np.array(data).shape)
             self._emit_data([[np.array(list(data)) * factors]])
             # self._emit_data([data])
 

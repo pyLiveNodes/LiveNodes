@@ -11,9 +11,8 @@ class Sender(Node):
     def __init__(self,
                  name,
                  block=False,
-                 compute_on=Location.THREAD,
-                 should_time=False):
-        super().__init__(name, compute_on, should_time)
+                 compute_on=Location.THREAD):
+        super().__init__(name, compute_on)
 
         if not block and compute_on == Location.SAME:
             # TODO: consider how to not block this in Location.Same?
@@ -22,7 +21,7 @@ class Sender(Node):
         # TODO: also consider if this is better suited as parameter to start?
         self.block = block
 
-        self._clock = Clock(node=self, should_time=should_time)
+        self._clock = Clock(node=self, should_time=False)
         self._ctr = self._clock.ctr
         self._emit_ctr_fallback = 0
 

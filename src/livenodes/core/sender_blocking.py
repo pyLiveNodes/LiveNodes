@@ -8,16 +8,15 @@ class BlockingSender(Sender):
     def __init__(self,
                  name,
                  block=False,
-                 compute_on=Location.PROCESS,
-                 should_time=False):
-        super().__init__(name, block, compute_on, should_time)
+                 compute_on=Location.PROCESS):
+        super().__init__(name, block, compute_on)
 
         if compute_on != Location.PROCESS:
             raise NotImplementedError('Other than process is not implemented at this point')
             # TODO: not exactly true, but there defenitely is a bug in the other implementations!
             # ie, in the RIoT example from semi-online, with compute=thread claims to have stopped, but continues to send data and does not stop its children
             # which is mainly due to the fact, that it just calls _onstop, which is not implemented and just passed in node._onstop (line 887)
-        self._clock = Clock(node=self, should_time=should_time)
+        self._clock = Clock(node=self, should_time=False)
         self._ctr = self._clock.ctr
 
     def _emit_data(self, data, channel="Data"):
