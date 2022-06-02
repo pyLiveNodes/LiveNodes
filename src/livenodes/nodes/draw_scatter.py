@@ -1,12 +1,12 @@
 import numpy as np
 
-from livenodes.core.viewer import View
+from livenodes.core.viewer import View_MPL
 
 from . import local_registry
 
 
 @local_registry.register
-class Draw_scatter(View):
+class Draw_scatter(View_MPL):
     """
     Draw all the first two received data channels as scatter plot.
     

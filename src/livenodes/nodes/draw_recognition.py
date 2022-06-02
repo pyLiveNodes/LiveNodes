@@ -2,7 +2,7 @@ import numpy as np
 from itertools import groupby
 import seaborn as sns
 
-from livenodes.core.viewer import View
+from livenodes.core.viewer import View_MPL
 
 from . import local_registry
 
@@ -31,7 +31,7 @@ def convert_list_pos(itms, x_max, yrange):
 
 
 @local_registry.register
-class Draw_recognition(View):
+class Draw_recognition(View_MPL):
     """
     Draws the BioKIT recognition as broken bar plot over time.
 

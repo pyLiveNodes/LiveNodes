@@ -1,10 +1,10 @@
-from livenodes.core.viewer import View
+from livenodes.core.viewer import View_MPL
 
 from . import local_registry
 
 
 @local_registry.register
-class Draw_text_display(View):
+class Draw_text_display(View_MPL):
     """
     Draws any given Text replacing previosly drawn text.
     

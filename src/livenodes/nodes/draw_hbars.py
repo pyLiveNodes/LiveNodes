@@ -1,6 +1,6 @@
 import numpy as np
 
-from livenodes.core.viewer import View
+from livenodes.core.viewer import View_MPL
 
 # The draw pattern works as follows:
 # 1. init_draw is called externally by matplotlib or qt and provides access to the subfig.
@@ -18,7 +18,7 @@ from . import local_registry
 
 
 @local_registry.register
-class Draw_hbars(View):
+class Draw_hbars(View_MPL):
     """
     Draw all received data channels as line plot over time.
 

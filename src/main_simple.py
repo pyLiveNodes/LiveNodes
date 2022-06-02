@@ -15,7 +15,7 @@ import os
 # from livenodes.nodes.in_playback import In_playback
 # from livenodes.nodes.draw_lines import Draw_lines
 from livenodes.core.node import Node
-from livenodes.core.viewer import View
+from livenodes.core.viewer import View_MPL
 from livenodes.core.logger import logger
 
 # from src.realtime_animation import RealtimeAnimation
