@@ -100,7 +100,6 @@ class TestNodeOperations():
             "compute_on":
             node_a.compute_on
         })
-        assert len(d['outputs']) == 0
         assert len(d['inputs']) == 0
 
     def test_copy(self, node_a):
