@@ -2,7 +2,7 @@ import multiprocessing as mp
 from matplotlib.widgets import TextBox, Button
 
 from livenodes.core.viewer import View_QT
-from PyQt5.QtWidgets import QLineEdit, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSizePolicy
+from PyQt5.QtWidgets import QLineEdit, QVBoxLayout, QFormLayout, QHBoxLayout, QLabel, QPushButton, QSizePolicy
 
 from . import local_registry
 
@@ -85,9 +85,17 @@ class Annotate_ui_button(View_QT):
         self.button.setSizePolicy(QSizePolicy())
         self.button.clicked.connect(self.__activity_toggle_rec)
 
-        layout = QVBoxLayout(parent)
-        layout.addWidget(QLabel("Annotate"), stretch=0)
-        layout.addWidget(qline_fallback)
-        layout.addWidget(qline_current)
-        layout.addWidget(self.button, stretch=2)
+
+        layout = QFormLayout(parent)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addRow(QLabel("Annotate"))
+        layout.addRow(QLabel('Fallback:'), qline_fallback)
+        layout.addRow(QLabel('Performing:'), qline_current)
+        layout.addRow(self.button)
+
+        # layout = QVBoxLayout(parent)
+        # layout.addWidget(QLabel("Annotate"), stretch=0)
+        # layout.addWidget(qline_fallback)
+        # layout.addWidget(qline_current)
+        # layout.addWidget(self.button, stretch=2)
 
