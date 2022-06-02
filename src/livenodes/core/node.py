@@ -238,19 +238,17 @@ class Node():
         self._subprocess_info = {}
         if self.compute_on in [Location.PROCESS]:
             self._subprocess_info = {
-                "process": mp.Process(target=self._process_on_proc),
-                # "process": None,
+                "process": None,
                 "termination_lock": mp.Lock()
             }
         elif self.compute_on in [Location.THREAD]:
             self._subprocess_info = {
-                "process": threading.Thread(target=self._process_on_proc),
-                # "process": None,
+                "process": None,
                 "termination_lock":
                 threading.Lock()  # as this is called from the main process
             }
 
-        self.info('Computing on: ', self.compute_on)
+        self.info('Computing on: ', self.compute_on)        
 
     def __repr__(self):
         return str(self)
@@ -525,6 +523,19 @@ class Node():
             self.error(f'failed to execute {_fn_name}')
             self.error(e) # TODO: add stack trace?
             self.error(traceback.format_exc())
+    
+    # required if we do the same=main process thing, as we cannot create the processes on instantiation
+    def spawn_processes(self):
+        graph_nodes = self.discover_graph(self)
+        for node in graph_nodes:
+            if 'process' in node._subprocess_info and node._subprocess_info['process'] is None:
+                if node.compute_on == Location.PROCESS:
+                    node._subprocess_info['process'] = mp.Process(
+                        target=node._process_on_proc)
+                elif node.compute_on == Location.THREAD:
+                    node._subprocess_info['process'] = threading.Thread(
+                        target=node._process_on_proc)
+
 
     def start_node(self, children=True, join=False):
         if self._running == False:  # the node might be child to multiple parents, but we just want to start once
