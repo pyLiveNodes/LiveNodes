@@ -93,14 +93,13 @@ class TestNodeOperations():
     def test_settings(self, node_a):
         # check direct serialization
         d = node_a.get_settings()
-        assert set(d.keys()) == set(["class", "settings", "outputs", "inputs"])
+        assert set(d.keys()) == set(["class", "settings", "inputs"])
         assert json.dumps(d['settings']) == json.dumps({
             "name":
             "A",
             "compute_on":
             node_a.compute_on
         })
-        assert len(d['outputs']) == 0
         assert len(d['inputs']) == 0
 
     def test_copy(self, node_a):

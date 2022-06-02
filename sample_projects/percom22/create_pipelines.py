@@ -5,7 +5,7 @@ from livenodes.biokit.biokit_to_fs import Biokit_to_fs
 from livenodes.biokit.biokit_from_fs import Biokit_from_fs
 from livenodes.biokit.biokit_recognizer import Biokit_recognizer
 from livenodes.biokit.biokit_train import Biokit_train
-from livenodes.biokit.biokit_update_model import Biokit_update_model
+from livenodes.biokit.biokit_train import Biokit_update_model
 
 from livenodes.nodes.transform_feature import Transform_feature
 from livenodes.nodes.transform_window import Transform_window
@@ -158,7 +158,7 @@ if __name__ == "__main__":
 
     pl_train_new = Biokit_update_model(model_path="./models/RIoT/sequence", \
         token_insertion_penalty=20,
-        phases_new_act=1,
+        phases_new_token=1,
         train_iterations=(7, 10),
         catch_all="None"
         )

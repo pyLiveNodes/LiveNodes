@@ -40,8 +40,10 @@ class Run(FigureCanvasQTAgg):
         self.worker = mp.Process(target=self.worker_start)
         # self.worker.daemon = True
         self.worker.start()
-
+        
+        # self.pipeline.start()
         self.show()
+
 
     def worker_start(self):
         self.pipeline.start()
@@ -60,7 +62,8 @@ class Run(FigureCanvasQTAgg):
 
         # yes, sometimes the program will then not return, but only if we also really need to kill the subprocesses!
         self.worker_term_lock.acquire()
-
+        # self.pipeline.stop()
+        
         print('Termination time in view!')
         self.worker.terminate()
         self.animation.pause()

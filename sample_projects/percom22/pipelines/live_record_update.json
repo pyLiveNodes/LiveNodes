@@ -281,7 +281,7 @@
         7,
         10
       ],
-      "phases_new_act": 1,
+      "phases_new_token": 1,
       "update_every_s": 60,
       "catch_all": "None"
     },

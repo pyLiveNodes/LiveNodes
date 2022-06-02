@@ -196,7 +196,7 @@ class NodeParameterSetter(QWidget):
         # let's assume we only have class instances here and no classes
         # for classes we would need a combination of info() and something else...
         if node is not None:
-            self.edit = EditDict(in_dict=node._settings())
+            self.edit = EditDict(in_dict=node._node_settings())
             # let's assume the edit interfaces do not overwrite any of the references
             # otherwise we would need to do a recursive set_attr here....
 

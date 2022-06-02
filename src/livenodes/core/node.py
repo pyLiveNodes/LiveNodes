@@ -6,6 +6,7 @@ import time
 import multiprocessing as mp
 import queue
 import threading
+import traceback
 
 from .logger import logger, LogLevel
 from .utils import NumpyEncoder
@@ -22,13 +23,22 @@ class Location(IntEnum):
 
 class QueueHelperHack():
 
-    def __init__(self, compute_on=Location.PROCESS):
+    def __init__(self, compute_on=Location.THREAD):
+        # self.queue = mp.Queue()
+        # The assumption behind this compute_on check is not correct -> (as long as the processes are created inside the node.node_start() method)
+        # if we are on thread or queue -> always use mp as we are in a suprocess to the *first* parent, that called start_node on us
+        # if we are on same, but any of our parents is in a different thread/process -> still use mp
+        # if we are on same and all our parents are in the same thread/process -> only now we can use the normal queue
+        #   -> but again: only if they are in the same thread/process, not if they have the same compute_on value!
+
+        # TODO: figure out how to incorporate this tho, as queue.Queue() is probably more efficient
         if compute_on in [Location.PROCESS, Location.THREAD]:
             self.queue = mp.Queue()
         elif compute_on in [Location.SAME]:
             self.queue = queue.Queue()
 
         self.compute_on = compute_on
+
         self._read = {}
 
     def put(self, ctr, item):
@@ -48,6 +58,7 @@ class QueueHelperHack():
         while not self.queue.empty():
             itm_ctr, item = self.queue.get()
             # TODO: if itm_ctr already exists, should we not rather extend than overwrite it? (thinking of the mulitple emit_data per process call examples (ie window))
+            # TODO: yes! this is what we should do :D
             self._read[itm_ctr] = item
 
     def discard_before(self, ctr):
@@ -205,8 +216,7 @@ class Node():
     # === Basic Stuff =================
     def __init__(self,
                  name="Name",
-                 compute_on=Location.THREAD,
-                 should_time=False):
+                 compute_on=Location.THREAD):
 
         self.name = name
 
@@ -217,6 +227,7 @@ class Node():
 
         self._received_data = {
             key: QueueHelperHack(compute_on=compute_on)
+            # key: QueueHelperHack(compute_on=Location.THREAD)
             for key in self.channels_in
         }
 
@@ -237,7 +248,7 @@ class Node():
                 threading.Lock()  # as this is called from the main process
             }
 
-        self.info('Computing on: ', self.compute_on)
+        self.info('Computing on: ', self.compute_on)        
 
     def __repr__(self):
         return str(self)
@@ -248,6 +259,9 @@ class Node():
 
     # === Logging Stuff =================
     # TODO: move this into it's own module/file?
+    def error(self, *text):
+        logger.error(self._prep_log(*text))
+
     def warn(self, *text):
         logger.warn(self._prep_log(*text))
 
@@ -283,14 +297,15 @@ class Node():
         return self.from_dict(self.to_dict(graph=graph))
 
     def _node_settings(self):
-        return {"name": self.name, "compute_on": self.compute_on}
+        return {"name": self.name, "compute_on": self.compute_on, **self._settings()}
 
     def get_settings(self):
         return { \
             "class": self.__class__.__name__,
-            "settings": dict(self._node_settings(), **self._settings()),
+            "settings": self._node_settings(),
             "inputs": [con.to_dict() for con in self.input_connections],
-            "outputs": [con.to_dict() for con in self.output_connections]
+            # Assumption: we do not actually need the outputs, as they just mirror the inputs and the outputs can always be reconstructed from those
+            # "outputs": [con.to_dict() for con in self.output_connections]
         }
 
     def to_dict(self, graph=False):
@@ -481,12 +496,48 @@ class Node():
 
     # TODO: actually start, ie design/test a sending node!
     # === Start/Stop Stuff =================
+    def _get_start_nodes(self):
+        # TODO: this should not be channels_in, but channels connected!
+        # self._is_input_connected
+        # return list(filter(lambda x: len(x.channels_in) == 0, self.discover_graph(self)))
+        return list(filter(lambda x: len(x.channels_in) == 0, self.discover_graph(self)))
+
     def start(self, children=True, join=False):
-        start_nodes = list(filter(lambda x: len(x.channels_in) == 0,self.discover_graph(self)))
+        self.spawn_processes()
+        
+        start_nodes = self._get_start_nodes()
         print(start_nodes)
         for i, node in enumerate(start_nodes):
-            print(node, join, i + 1 == len(start_nodes))
+            print('Starting:', node, join, i + 1 == len(start_nodes), children)
             node.start_node(children=children, join=join and i + 1 == len(start_nodes))
+
+    def stop(self, children=True):
+        start_nodes = self._get_start_nodes()
+        print(start_nodes)
+        for node in start_nodes:
+            print("Stopping:", node, children)
+            node.stop_node(children=children)
+
+    def _call_user_fn(self, _fn, _fn_name, *args, **kwargs):
+        try:
+            return _fn(*args, **kwargs)
+        except Exception as e:
+            self.error(f'failed to execute {_fn_name}')
+            self.error(e) # TODO: add stack trace?
+            self.error(traceback.format_exc())
+    
+    # required if we do the same=main process thing, as we cannot create the processes on instantiation
+    def spawn_processes(self):
+        graph_nodes = self.discover_graph(self)
+        for node in graph_nodes:
+            if 'process' in node._subprocess_info and node._subprocess_info['process'] is None:
+                if node.compute_on == Location.PROCESS:
+                    node._subprocess_info['process'] = mp.Process(
+                        target=node._process_on_proc)
+                elif node.compute_on == Location.THREAD:
+                    node._subprocess_info['process'] = threading.Thread(
+                        target=node._process_on_proc)
+
 
     def start_node(self, children=True, join=False):
         if self._running == False:  # the node might be child to multiple parents, but we just want to start once
@@ -500,20 +551,21 @@ class Node():
             self._running = True
 
             # TODO: consider moving this in the node constructor, so that we do not have this nested behaviour processeses due to parents calling their childs start()
+            # TODO: but maybe this is wanted, just buggy af atm
             if self.compute_on in [Location.PROCESS, Location.THREAD]:
-                if self.compute_on == Location.PROCESS:
-                    self._subprocess_info['process'] = mp.Process(
-                        target=self._process_on_proc)
-                elif self.compute_on == Location.THREAD:
-                    self._subprocess_info['process'] = threading.Thread(
-                        target=self._process_on_proc)
+                # if self.compute_on == Location.PROCESS:
+                #     self._subprocess_info['process'] = mp.Process(
+                #         target=self._process_on_proc)
+                # elif self.compute_on == Location.THREAD:
+                #     self._subprocess_info['process'] = threading.Thread(
+                #         target=self._process_on_proc)
 
                 self.info('create subprocess')
                 self._acquire_lock(self._subprocess_info['termination_lock'])
                 self.info('start subprocess')
                 self._subprocess_info['process'].start()
             elif self.compute_on in [Location.SAME]:
-                self._onstart()
+                self._call_user_fn(self._onstart, '_onstart')
                 self.info('Executed _onstart')
 
         if join:
@@ -521,9 +573,10 @@ class Node():
         else:
             self._clocks.set_passthrough()
 
-    def stop(self, children=True):
-        # first stop self, so that non-existing children don't receive inputs
+    def stop_node(self, children=True):
+        # first stop self, so that non-running children don't receive inputs
         if self._running == True:  # the node might be child to multiple parents, but we just want to stop once
+            self.info('Stopping')
             self._running = False
 
             if self.compute_on in [Location.PROCESS, Location.THREAD]:
@@ -540,13 +593,13 @@ class Node():
                               self._subprocess_info['process'].name)
             elif self.compute_on in [Location.SAME]:
                 self.info('Executing _onstop')
-                self._onstop()
+                self._call_user_fn(self._onstop, '_onstop')
             self.info('Stopped')
 
             # now stop children
             if children:
                 for con in self.output_connections:
-                    con._receiving_node.stop()
+                    con._receiving_node.stop_node()
 
     def _join(self):
         # blocks until all nodes in the graph reached the same clock as the node we are calling this from
@@ -595,7 +648,7 @@ class Node():
     def _process_on_proc(self):
         self.info('Started subprocess')
 
-        self._onstart()
+        self._call_user_fn(self._onstart, '_onstart')
         self.info('Executed _onstart')
 
         # as long as we do not receive a termination signal, we will wait for data to be processed
@@ -625,7 +678,7 @@ class Node():
                 was_queue_empty_last_iteration = 0
 
         self.info('Executing _onstop')
-        self._onstop()
+        self._call_user_fn(self._onstop, '_onstop')
 
         self.info('Finished subprocess')
 
@@ -675,7 +728,7 @@ class Node():
             # sender will never receive inputs and therefore will never have
             # TODO: IMPORTANT: every node it's own clock seems to have been a mistake: go back to the original idea of "senders and syncs implement clocks and everyone else just passes them along"
             self._ctr = ctr
-            self.process(**_current_data, _ctr=ctr)
+            self._call_user_fn(self.process, 'process', **_current_data, _ctr=ctr)
             self.verbose('process fn finished')
             for queue in self._received_data.values():
                 queue.discard_before(ctr)

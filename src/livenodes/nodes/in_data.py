@@ -1,5 +1,6 @@
+from functools import reduce
 import numpy as np
-import glob, random
+from glob import glob
 import h5py
 import pandas as pd
 import random
@@ -7,31 +8,32 @@ from joblib import Parallel, delayed
 
 from livenodes.core.sender import Sender
 
-from .utils import printProgressBar
-
-
 def read_data(f):
-    # Read and send data from file
-    with h5py.File(f, "r") as dataFile:
-        dataSet = dataFile.get("data")
-        data = dataSet[:]  # load into mem
+    try:
+        # Read and send data from file
+        with h5py.File(f, "r") as dataFile:
+            dataSet = dataFile.get("data")
+            data = dataSet[:]  # load into mem
 
-        # Prepare framewise annotation to be send
-        ref = pd.read_csv(f.replace('.h5', '.csv'),
-                          names=["act", "start", "end"])
-        
-        # @deprecated (old format, that used to have holes, where no annotation was present)
-        targs = []
-        last_end = 0
-        for _, row in ref.iterrows():
-            filler = "stand"  # use stand as filler for unknown. #Hack! TODO: remove
-            targs.append([filler] * (row['start'] - last_end))
-            targs.append([row['act']] * (row['end'] - row['start']))
-            last_end = row['end']
-        targs.append([filler] * (len(data) - last_end))
-        targs = list(np.concatenate(targs))
+            # Prepare framewise annotation to be send
+            ref = pd.read_csv(f.replace('.h5', '.csv'))
+            
+            # @deprecated (old format, that used to have holes, where no annotation was present)
+            targs = []
+            last_end = 0
+            for _, row in ref.iterrows():
+                filler = "None"  # use stand as filler for unknown. #Hack! TODO: remove
+                targs.append([filler] * (row['start'] - last_end))
+                # +1 as the numbers are samples, ie the last sample still has that label
+                targs.append([row['act']] * (row['end'] - row['start'])) # +1 as the numbers are samples, ie the last sample still has that label
+                last_end = row['end']
+            targs.append([filler] * (len(data) - last_end))
+            targs = list(np.concatenate(targs))
 
-    return data, targs
+        return data, targs
+    except (OSError, TypeError):
+        print('Could not open file, skipping', f)
+        return [], []
 
 
 from . import local_registry
@@ -50,7 +52,7 @@ class In_data(Sender):
 
     channels_in = []
     channels_out = [
-        'Data', 'File', 'Annotation', 'Meta', 'Channel Names', 'Termination'
+        'Data', 'File', 'Annotation', 'Meta', 'Channel Names', 'Percent'
     ]
 
     category = "Data Source"
@@ -58,6 +60,7 @@ class In_data(Sender):
 
     example_init = {
         "files": "./files/**.h5",
+        "files_exclude": './files/part0*.h5',
         "meta": {
             "sample_rate": 100,
             "targets": ["target 1"],
@@ -72,6 +75,7 @@ class In_data(Sender):
     def __init__(self,
                  files,
                  meta,
+                 files_exclude = '',
                  shuffle=True,
                  emit_at_once=1,
                  name="Data input",
@@ -80,6 +84,7 @@ class In_data(Sender):
 
         self.meta = meta
         self.files = files
+        self.files_exclude = files_exclude
         self.emit_at_once = emit_at_once
         self.shuffle = shuffle
 
@@ -91,6 +96,7 @@ class In_data(Sender):
         return {\
             "emit_at_once": self.emit_at_once,
             "files": self.files,
+            "files_exclude": self.files_exclude,
             "meta": self.meta,
             "shuffle": self.shuffle
         }
@@ -99,10 +105,12 @@ class In_data(Sender):
         """
         Streams the data and calls frame callbacks for each frame.
         """
-        fs = glob.glob(self.files)
+        fs = sorted(list(set(glob(self.files)) - set(glob(self.files_exclude))))
 
         if self.shuffle:
             random.shuffle(fs)
+
+        self.info('Reading these files (in this order):', fs)
 
         self._emit_data(self.meta, channel="Meta")
         self._emit_data(self.channels, channel="Channel Names")
@@ -110,39 +118,30 @@ class In_data(Sender):
         # TODO: create a producer/consumer (blocking)queue (with fixed items) here for best of both worlds ie fixed amount of mem with no hw access delay
         # for now: just preload everything
         in_mem = Parallel(n_jobs=10)(delayed(read_data)(f) for f in fs)
+        in_mem = list(filter(lambda x: len(x[0]), in_mem)) # Remove all empty lists from when we couldn't open files
 
-        l = len(fs)
-        printProgressBar(0, l, prefix='Progress:', suffix='', length=50)
+        sent_samples = 0
+        total_n_samples = reduce(lambda cur, nxt: cur + len(nxt[1]), in_mem, 0)
+
         for file_number, (f, (data, targs)) in enumerate(zip(fs, in_mem)):
-            # for file_number, f in enumerate(fs):
-            printProgressBar(file_number,
-                             l,
-                             prefix='Progress:',
-                             suffix=f,
-                             length=50)
-
-            # self.info(f)
-
-            # data, targs = read_data(f)
-
             for i in range(0, len(data), self.emit_at_once):
-                d_len = len(data[i:i + self.emit_at_once]
-                            )  # usefull if i+self.emit_at_once > len(data)
+                # usefull if i+self.emit_at_once > len(data)
+                d_len = len(data[i:i + self.emit_at_once])  
+                sent_samples += d_len
+
                 self._emit_data(np.array([data[i:i + self.emit_at_once]]))
+                
                 # use reshape -1, as the data can also be shorter than emit_at_once and will be adjusted accordingly
                 self._emit_data(np.array(
-                    targs[i:i + self.emit_at_once]).reshape((1, -1, 1)),
+                targs[i:i + self.emit_at_once]).reshape((1, -1, 1)),
                                 channel='Annotation')
-                # self.info('send', np.unique(targs[i:i + self.emit_at_once], return_counts=True))
+                
                 self._emit_data(np.array([file_number] * d_len).reshape(
                     (1, -1, 1)),
                                 channel="File")
 
-                finished = (l == file_number +
-                            1) and (i + self.emit_at_once >= len(data))
-                self._emit_data(
-                    finished, channel='Termination'
-                )  # TODO: maybe we could use something like this for syncing... ie seperate stream with just a counter
+                self._emit_data(sent_samples / total_n_samples, channel='Percent')  
 
+                finished = sent_samples >= total_n_samples
                 self.info('finished?', not finished)
                 yield not finished

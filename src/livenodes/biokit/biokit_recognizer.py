@@ -1,5 +1,6 @@
 from livenodes.core.node import Node
 from livenodes.biokit.biokit import recognizer
+import livenodes.biokit.utils as biokit_utils
 
 import json
 
@@ -20,7 +21,7 @@ class Biokit_recognizer(Node):
     Requires a BioKIT Feature Sequence Stream
     """
 
-    channels_in = ['Data', 'File']
+    channels_in = ['Data', 'File', 'Reload']
     channels_out = ['Recognition', 'HMM Meta', 'Hypothesis', 'Hypo States']
 
     category = "BioKIT"
@@ -42,30 +43,36 @@ class Biokit_recognizer(Node):
         self.model_path = model_path
         self.token_insertion_penalty = token_insertion_penalty
 
-        self.reco = recognizer.Recognizer.createNewFromFile(
-            self.model_path, sequenceRecognition=True)
-        # self.reco.limitSearchGraph(self.recognize_atoms) # TODO: enable this
-        self.reco.setTokenInsertionPenalty(self.token_insertion_penalty)
-
-        self.topology = self._get_topology()
-
-        self._initial = True
+        self._load_recognizer()
         self.file = None
+
+    def _load_recognizer(self):
+        self.info('Loading Recognizer')
+        with biokit_utils.model_lock(self.model_path):
+            self.reco = recognizer.Recognizer.createNewFromFile(
+                self.model_path, sequenceRecognition=True)
+            # self.reco.limitSearchGraph(self.recognize_atoms) # TODO: enable this
+            self.reco.setTokenInsertionPenalty(self.token_insertion_penalty)
+            self.topology = self._get_topology()
+            self._initial = True
+            self.info('Recognizer loaded')
 
     def _settings(self):
         return {\
             # "batch": self.batch,
-
-
             "token_insertion_penalty": self.token_insertion_penalty,
             "model_path": self.model_path
         }
 
-    def _should_process(self, data=None, file=None):
+    def _should_process(self, data=None, file=None, reload=None):
         return data is not None \
+            and (reload in [0, 1] or not self._is_input_connected('Reload')) \
             and (file is not None or not self._is_input_connected('File'))
 
-    def process(self, data, file=None, **kwargs):
+    def process(self, data, file=None, reload=None, **kwargs):
+        if reload and not self._initial:
+            self._load_recognizer()
+
         # IMPORTANT/TODO: check if this is equivalent to the previous behaviour,ie if we always receive the file together with the data
         # file is optional, if it is not passed (ie None) it doesn't change except in the first send
         if file is not None:

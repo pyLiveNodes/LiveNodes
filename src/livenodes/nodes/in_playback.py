@@ -46,7 +46,6 @@ class In_playback(Sender):
                  meta,
                  emit_at_once=1,
                  annotation_holes="stand",
-                 csv_columns=["act", "start", "end"],
                  name="Playback",
                  compute_on=Location.THREAD,
                  block=False,
@@ -57,7 +56,6 @@ class In_playback(Sender):
         self.files = files
         self.emit_at_once = emit_at_once
         self.annotation_holes = annotation_holes
-        self.csv_columns = csv_columns  # TODO: remove theses asap and rather convert the old datasets to a consistent format!
 
         self.sample_rate = meta.get('sample_rate')
         self.targets = meta.get('targets')
@@ -69,7 +67,6 @@ class In_playback(Sender):
             "files": self.files,
             "meta": self.meta,
             "annotation_holes": self.annotation_holes,
-            "csv_columns": self.csv_columns,
         }
 
     def _run(self):
@@ -107,8 +104,7 @@ class In_playback(Sender):
                 # Prepare framewise annotation to be send
                 targs = []
                 if os.path.exists(f.replace('.h5', '.csv')):
-                    ref = pd.read_csv(f.replace('.h5', '.csv'),
-                                      names=self.csv_columns)
+                    ref = pd.read_csv(f.replace('.h5', '.csv'))
                     j = 0
                     for _, row in ref.iterrows():
                         # This is hacky af, but hey... achieves that we cann playback annotaitons with holes (and fill those) and also playback annotations without holes
