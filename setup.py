@@ -30,6 +30,7 @@ extras_require = {
             "qtpynodeeditor>=0.2.0",
             "PyQt5>=5.15.6",
             "networkx>=2.6.3",
+            "PyQtAds>=3.8.1"
         ],
         'biokit': [
             "filelock>=3.7.0"
