@@ -12,6 +12,7 @@ import multiprocessing as mp
 
 from vispy import app as vp_app
 import vispy.plot as vp
+from vispy import scene
 # vp_app.use_app('pyqt5')
 
 from livenodes.core.node import Node
@@ -113,7 +114,8 @@ class Qt_node_vispy(QWidget):
             raise ValueError('Node must be of Type (Vispy) View')
 
         # self.fig = vp.Fig(size=(400, 300), app="pyqt5", show=False, parent=parent)
-        self.fig = vp.Fig(size=(400, 300), show=False, parent=parent)
+        # self.fig = vp.Fig(size=(400, 300), show=False, parent=parent)
+        self.fig = scene.SceneCanvas(size=(400, 300), show=False, parent=parent, bgcolor='white')
         node_update_fn = node.init_draw(self.fig)
 
         def update(*args, **kwargs):

@@ -78,10 +78,18 @@ class Draw_lines(View_Vispy):
         for i, channel in enumerate(self.channel_names):
             viewbox = grid.add_view(row=i, col=0, camera='panzoom')
             line = scene.Line(self.data[:, i], parent=viewbox.scene, width=2)
+
+            if i + 1 == self.n_plots:
+                x_axis = scene.AxisWidget(orientation='bottom', text_color="black")
+                # x_axis.stretch = (1, 0.5)
+                grid.add_widget(x_axis, row=self.n_plots, col=0)
+                x_axis.link_view(viewbox)
+
             viewbox.camera.set_range(x_range, y_range)
 
             self.lines.append(line)
             self.viewboxes.append(viewbox)
+
 
             # for fig[i, 0].plot(data=(self.xData, self.yData[:, i]), marker_size=0, width=2.0)
 
