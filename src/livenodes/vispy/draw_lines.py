@@ -2,6 +2,7 @@ import numpy as np
 
 from livenodes.core.viewer import View_Vispy
 import vispy.plot as vp
+from vispy import scene
 
 from . import local_registry
 
@@ -47,9 +48,13 @@ class Draw_lines(View_Vispy):
         # yData follows the structure (time, channel)
         self.yData = np.zeros(xAxisLength * n_plots).reshape(
             (xAxisLength, n_plots))
-        self.xData = (-np.arange(xAxisLength)/sample_rate)[::-1]
 
         # render process
+        self.data = np.zeros(xAxisLength * n_plots * 2).reshape(
+            (xAxisLength, n_plots, 2))
+        for i in range(n_plots):
+            self.data[:, i, 0] = (-np.arange(xAxisLength)/sample_rate)[::-1]
+
         self.channel_names = [str(i) for i in range(n_plots)]
 
     def _settings(self):
@@ -62,35 +67,57 @@ class Draw_lines(View_Vispy):
            }
 
     def _init_draw(self, fig):
-        # TODO: consider creating the vp.fig in the View_Vispy class and pass it here (similar to the matplotlib design)
+        grid = fig.central_widget.add_grid(spacing=0)
 
-        # for name, ax in zip(self.channel_names, axes):
-        #     ax.set_ylim(*self.ylim)
-        #     ax.set_xlim(0, self.xAxisLength)
-        #     ax.set_yticks([])
+        self.lines = []
+        self.viewboxes = []
 
-        #     ticks = np.linspace(0, self.xAxisLength, 11).astype(np.int)
-        #     ax.set_xticks(ticks)
-        #     ax.set_xticklabels(-ticks / self.sample_rate)
-        #     ax.invert_xaxis()
-        #     # ax.xaxis.grid(False)
+        x_range = (-self.xAxisLength / self.sample_rate, 0)
+        y_range = (-1.1, 1.1)
+
+        for i, channel in enumerate(self.channel_names):
+            viewbox = grid.add_view(row=i, col=0, camera='panzoom')
+            line = scene.Line(self.data[:, i], parent=viewbox.scene, width=2)
+            viewbox.camera.set_range(x_range, y_range)
+
+            self.lines.append(line)
+            self.viewboxes.append(viewbox)
+
+            # for fig[i, 0].plot(data=(self.xData, self.yData[:, i]), marker_size=0, width=2.0)
+
+
+        # add some axes
+        # x_axis = scene.AxisWidget(orientation='bottom')
+        # x_axis.stretch = (1, 0.1)
+        # grid.add_widget(x_axis, row=1, col=1)
+        # x_axis.link_view(viewbox)
+        # y_axis = scene.AxisWidget(orientation='left')
+        # y_axis.stretch = (0.1, 1)
+        # grid.add_widget(y_axis, row=0, col=0)
+        # y_axis.link_view(viewbox)
+
+        # add a line plot inside the viewbox
+        # line = scene.Line(pos, color, parent=viewbox.scene)
+
+        # auto-scale to see the whole line.
+        # viewbox.camera.set_range()
 
         # axes[-1].set_xlabel("Time [sec]")
 
         # https://vispy.org/api/vispy.plot.plotwidget.html?highlight=plotwidget#vispy.plot.plotwidget.PlotWidget.plot
-        self.lines = [
-            fig[i, 0].plot(data=(self.xData, self.yData[:, i]), marker_size=0, width=2.0) for i, channel in enumerate(self.channel_names)
-        ]
+        # self.lines = [
+        #     fig[i, 0].plot(data=(self.xData, self.yData[:, i]), marker_size=0, width=2.0) for i, channel in enumerate(self.channel_names)
+        # ]
 
-        for line, pwidget in zip(self.lines, fig.plot_widgets):
-            # x_data = line._line.pos[:, 0]
-            # y_data = line._line.pos[:, 1]
-            x_range = (-self.xAxisLength / self.sample_rate, 0)
-            y_range = (-1.1, 1.1)
-            # x_range = x_data.min(), x_data.max()
-            # y_range = y_data.min(), y_data.max()
+        # for line, pwidget in zip(self.lines, fig.plot_widgets):
+        #     # x_data = line._line.pos[:, 0]
+        #     # y_data = line._line.pos[:, 1]
+        #     x_range = (-self.xAxisLength / self.sample_rate, 0)
+        #     y_range = (-1.1, 1.1)
+        #     # x_range = x_data.min(), x_data.max()
+        #     # y_range = y_data.min(), y_data.max()
 
-            pwidget.view.camera.set_range(x=x_range, y=y_range)
+        #     pwidget.view.camera.set_range(x=x_range, y=y_range)
 
         # self.labels = []
         # self.labels = [
@@ -118,7 +145,9 @@ class Draw_lines(View_Vispy):
             #         label.set_text(self.channel_names[i])
 
             for i in range(self.n_plots):
-                self.lines[i].set_data((self.xData, data[i]))
+                # self.lines[i].set_data((self.xData, data[i]))
+                self.data[:, i, 1] = data[i]
+                self.lines[i].set_data(self.data[:, i])
             
             # x_range = 0, 1000
             # y_range = np.min(data), y_data.max()

@@ -1,6 +1,5 @@
 import sys
 import numpy as np
-from vispy import app, scene
 
 # vertex positions of data to draw
 N = 200
@@ -10,6 +9,7 @@ y_lim = [-2., 2.]
 pos[:, 0] = np.linspace(x_lim[0], x_lim[1], N)
 pos[:, 1] = np.random.normal(size=N)
 
+from vispy import app, scene
 # color array
 color = np.ones((N, 4), dtype=np.float32)
 color[:, 0] = np.linspace(0, 1, N)
@@ -18,22 +18,27 @@ color[:, 1] = color[::-1, 0]
 canvas = scene.SceneCanvas(keys='interactive', show=True)
 grid = canvas.central_widget.add_grid(spacing=0)
 
-viewbox = grid.add_view(row=0, col=1, camera='panzoom')
+viewbox = grid.add_view(row=0, col=0, camera='panzoom')
+viewbox2 = grid.add_view(row=0, col=1, camera='panzoom')
 
 # add some axes
-x_axis = scene.AxisWidget(orientation='bottom')
-x_axis.stretch = (1, 0.1)
-grid.add_widget(x_axis, row=1, col=1)
-x_axis.link_view(viewbox)
-y_axis = scene.AxisWidget(orientation='left')
-y_axis.stretch = (0.1, 1)
-grid.add_widget(y_axis, row=0, col=0)
-y_axis.link_view(viewbox)
+# x_axis = scene.AxisWidget(orientation='bottom')
+# x_axis.stretch = (1, 0.1)
+# grid.add_widget(x_axis, row=1, col=1)
+# x_axis.link_view(viewbox)
+# y_axis = scene.AxisWidget(orientation='left')
+# y_axis.stretch = (0.1, 1)
+# grid.add_widget(y_axis, row=0, col=0)
+# y_axis.link_view(viewbox)
 
 # add a line plot inside the viewbox
+line2 = scene.Line(pos, color, parent=viewbox2.scene)
 line = scene.Line(pos, color, parent=viewbox.scene)
 
+print(line)
+
 # auto-scale to see the whole line.
+viewbox2.camera.set_range()
 viewbox.camera.set_range()
 
 
