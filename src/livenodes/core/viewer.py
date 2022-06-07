@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QLabel, QVBoxLayout
 
 
 from .node import Node, Location
+from .utils import noop
 
 
 class View(Node):
@@ -93,8 +94,8 @@ class View_MPL(View):
         Should be either or, not sure how to check that...
         """
 
-        def update():
-            pass
+        def update(**kwargs):
+            raise NotImplementedError()
 
         return update
         
@@ -150,4 +151,52 @@ class View_QT(View):
         Heart of the nodes drawing, should be a functional function
         """
         self._init_draw(parent=parent)
-        
+
+
+class View_Vispy(View):
+    def _init_draw(self):
+        def update(**kwargs):
+            raise NotImplementedError()
+        return None, update
+
+    def init_draw(self, fig):
+        """
+        Heart of the nodes drawing, should be a functional function
+        """
+        update_fn = self._init_draw(fig)
+
+        self.timer = time.time()
+        # self.frames = 0
+        n_frames = 0
+        fps_every_x_frames = 500
+
+        # TODO: figure out more elegant way to not have this blocking until new data is available...
+        def update_blocking():
+            nonlocal update_fn, n_frames
+            cur_state = {}
+
+            try:
+                # cur_state = self._draw_state.get_nowait()
+                cur_state = self._draw_state.get(block=True, timeout=0.05)
+            except queue.Empty:
+                pass
+            n_frames += 1
+
+            if n_frames % fps_every_x_frames == 0 and n_frames != 0:
+                el_time = time.time() - self.timer
+                self.timer = time.time()
+                # self.frames = n_frames - self.frames
+                # self.info(f"Current fps: {fps_every_x_frames / el_time:.2f} (Total frames: {n_frames})")
+                print(f"Current fps ({str(self)}): {fps_every_x_frames / el_time:.2f} (Total frames: {n_frames})")
+
+            if self._should_draw(**cur_state):
+                self.verbose('Decided to draw', cur_state.keys())
+                update_fn(**cur_state)
+                return True
+            else:
+                self.debug('Decided not to draw', cur_state.keys())
+
+            return False
+
+        return update_blocking
+   

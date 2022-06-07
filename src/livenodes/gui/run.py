@@ -1,4 +1,4 @@
-import math
+from functools import partial
 import traceback
 from livenodes.core import viewer
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
@@ -6,11 +6,13 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 from matplotlib import animation
 import matplotlib.pyplot as plt
-import time
 from PyQt5 import QtCore
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QGridLayout, QWidget
+from PyQt5.QtWidgets import QGridLayout, QWidget, QHBoxLayout
 import multiprocessing as mp
+
+from vispy import app as vp_app
+import vispy.plot as vp
+# vp_app.use_app('pyqt5')
 
 from livenodes.core.node import Node
 
@@ -22,11 +24,13 @@ sns.set_context("paper")
 # TODO: make each subplot their own animation and use user customizable panels
 # TODO: allow nodes to use qt directly -> also consider how to make this understandable to user (ie some nodes will not run everywhere then)
 
-def node_view_mapper(node):
+def node_view_mapper(parent, node):
     if isinstance(node, viewer.View_MPL):
-        return MPL_View(node)
+        return Qt_node_mpl(node)
+    elif isinstance(node, viewer.View_Vispy):
+        return Qt_node_vispy(node, parent=parent)
     elif isinstance(node, viewer.View_QT):
-        return QT_View(node)
+        return Qt_node_qt(node, parent=parent)
     else:
         raise ValueError(f'Unkown Node type {str(node)}')
 
@@ -39,22 +43,19 @@ class Run(QWidget):
         self.pipeline = pipeline
 
         # === Setup draw canvases =================================================
+        self.qt_grid = QGridLayout(self)
+
         self.nodes = [n for n in Node.discover_graph(pipeline) if isinstance(n, viewer.View)]
-        self.draw_widgets = list(map(node_view_mapper, self.nodes))
+        self.draw_widgets = list(map(partial(node_view_mapper, self), self.nodes))
 
         n_figs = len(self.draw_widgets)
         cols = min(3, n_figs)
 
-        self.qt_grid = QGridLayout(self)
-        widget_positions = {} # TODO: implement saving loading this to a file
         for i, (widget, node) in enumerate(zip(self.draw_widgets, self.nodes)):
             col = i % cols
             row = int((i - col) / cols)
-            widget_positions[str(node)] = (row, col)
-            self.qt_grid.addWidget(widget, row, col)
+            self.qt_grid.addWidget(widget.get_qt_widget(), row, col)
         
-        print(widget_positions)
-
         # === Start pipeline =================================================
         self.worker_term_lock = mp.Lock()
         self.worker_term_lock.acquire()
@@ -89,27 +90,85 @@ class Run(QWidget):
         for widget in self.draw_widgets:
             widget.stop()
 
-class QT_View(QWidget):
+class Qt_node_qt(QWidget):
     def __init__(self, node, parent=None):
         super().__init__(parent=parent)
 
         if not isinstance(node, viewer.View_QT):
-            raise ValueError('Node must be of Type (MPL) View')
+            raise ValueError('Node must be of Type (Qt) View')
 
-        # self.setStyleSheet("QWidget { background-color: 'white' }") 
-        self.setProperty("cssClass", "bg-white")
         node.init_draw(self)
-
-        # self.setBackgroundRole(True)
-        # p = self.palette()
-        # p.setColor(self.backgroundRole(), Qt.white)
-        # self.setPalette(p)
+    
+    def get_qt_widget(self):
+        return self
     
     def stop(self):
         pass
 
+class Qt_node_vispy(QWidget):
+    def __init__(self, node, parent=None):
+        super().__init__(parent=parent)
 
-class MPL_View(FigureCanvasQTAgg):
+        if not isinstance(node, viewer.View_Vispy):
+            raise ValueError('Node must be of Type (Vispy) View')
+
+        # self.fig = vp.Fig(size=(400, 300), app="pyqt5", show=False, parent=parent)
+        self.fig = vp.Fig(size=(400, 300), show=False, parent=parent)
+        node_update_fn = node.init_draw(self.fig)
+
+        def update(*args, **kwargs):
+            nonlocal self, node_update_fn
+            if node_update_fn():
+                self.update()
+
+        self._timer = vp_app.Timer('auto', connect=update, start=True)
+    
+    def get_qt_widget(self):
+        return self.fig.native
+    
+    def stop(self):
+        self._timer.stop()
+
+# class Qt_node_vispy(vp_app.Canvas):
+#     def __init__(self, node, parent=None, *args, **kwargs):
+#         # no clue, why we cannot just use super().__init__ here....
+#         vp_app.Canvas.__init__(self, app="pyqt5", parent=parent, *args, **kwargs)
+
+#         if not isinstance(node, viewer.View_Vispy):
+#             raise ValueError('Node must be of Type (Vispy) View')
+
+#         self.fig = vp.Fig(size=(400, 300))
+#         node_update_fn = node.init_draw(self.fig)
+
+#         # layout = QHBoxLayout(self)
+#         # layout.addWidget(fig.native)
+
+#         # repeat forever, todo: figure out how to end this
+#         # while True:
+#         #     # the call to node_update_fn should block until there is something new to be rendered
+#         #     re_render = node_update_fn()
+#         #     if re_render:
+#         #         self.update()
+#         def update(*args, **kwargs):
+#             nonlocal self, node_update_fn
+#             if node_update_fn():
+#                 self.update()
+
+#         self._timer = vp_app.Timer('auto', connect=update, start=True)
+#         # self.tick = 0
+
+#     def on_timer(self, *args, **kwargs):
+#         if self.node_update_fn():
+#             self.update()
+    
+#     def get_qt_widget(self):
+#         return self.native
+    
+#     def stop(self):
+#         self._timer.stop()
+
+
+class Qt_node_mpl(FigureCanvasQTAgg):
 
     def __init__(self, node, figsize=(4, 4), font = {'size': 10}, interval=0):
         super().__init__(Figure(figsize=figsize))
@@ -119,9 +178,6 @@ class MPL_View(FigureCanvasQTAgg):
 
         plt.rc('font', **font)
 
-        # https://matplotlib.org/stable/gallery/subplots_axes_and_figures/subfigures.html
-        # subfigs = self.figure.subfigures(rows, cols)  #, wspace=1, hspace=0.07)
-        # we might create subfigs, but if each node has it's own qwidget, we do not need to and can instead just pass the entire figure
         artist_update_fn = node.init_draw(self.figure)
 
         def draw_update(i, **kwargs):
@@ -132,14 +188,6 @@ class MPL_View(FigureCanvasQTAgg):
                 print(traceback.format_exc())
             return []
 
-            # # TODO: move this into a node :D
-            # if i % 100 == 0 and i != 0:
-            #     el_time = time.time() - self.timer
-            #     self.fps = i / el_time
-            #     print(
-            #         f"Rendered {i} frames in {el_time:.2f} seconds. This equals {self.fps:.2f}fps."
-            #     )
-
         self.animation = animation.FuncAnimation(fig=self.figure,
                                                  func=draw_update,
                                                  interval=interval,
@@ -148,7 +196,10 @@ class MPL_View(FigureCanvasQTAgg):
         self.setFocusPolicy(QtCore.Qt.ClickFocus)
         self.setFocus()
         
-        self.show()
+        # self.show()
+
+    def get_qt_widget(self):
+        return self
 
     def stop(self):
         self.animation.pause()
