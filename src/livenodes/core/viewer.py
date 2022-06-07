@@ -1,5 +1,6 @@
 import multiprocessing as mp
 import queue
+import time
 from PyQt5.QtWidgets import QLabel, QVBoxLayout
 
 
@@ -107,8 +108,12 @@ class View_MPL(View):
         # ie create a variable outside of the update scope, that we can assign lists to
         artis_storage = {'returns': []}
 
-        def update():
-            nonlocal update_fn, artis_storage
+        self.timer = time.time()
+        # self.frames = 0
+        fps_every_x_frames = 500
+
+        def update(n_frames, **kwargs):
+            nonlocal update_fn, artis_storage, self, fps_every_x_frames
             cur_state = {}
 
             try:
@@ -122,6 +127,13 @@ class View_MPL(View):
                 self.verbose('Decided to draw', cur_state.keys())
             else:
                 self.debug('Decided not to draw', cur_state.keys())
+                    
+            if n_frames % fps_every_x_frames == 0 and n_frames != 0:
+                el_time = time.time() - self.timer
+                self.timer = time.time()
+                # self.frames = n_frames - self.frames
+                # self.info(f"Current fps: {fps_every_x_frames / el_time:.2f} (Total frames: {n_frames})")
+                print(f"Current fps ({str(self)}): {fps_every_x_frames / el_time:.2f} (Total frames: {n_frames})")
 
             return artis_storage['returns']
 

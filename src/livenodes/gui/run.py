@@ -1,3 +1,4 @@
+import math
 import traceback
 from livenodes.core import viewer
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
@@ -7,7 +8,8 @@ from matplotlib import animation
 import matplotlib.pyplot as plt
 import time
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import QHBoxLayout, QWidget
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QGridLayout, QWidget
 import multiprocessing as mp
 
 from livenodes.core.node import Node
@@ -37,19 +39,21 @@ class Run(QWidget):
         self.pipeline = pipeline
 
         # === Setup draw canvases =================================================
-        # self.timer = time.time()
+        self.nodes = [n for n in Node.discover_graph(pipeline) if isinstance(n, viewer.View)]
+        self.draw_widgets = list(map(node_view_mapper, self.nodes))
 
-        # TODO: let nodes explizitly declare this!
-        # TODO: while we're at it: let nodes declare available/required input and output streams
-        # the following works because the str representation of each node in a pipline must be unique
-        self.draw_widgets = {
-            str(n): node_view_mapper(node=n)
-            for n in Node.discover_graph(pipeline) if isinstance(n, viewer.View)
-        }.values()
+        n_figs = len(self.draw_widgets)
+        cols = min(3, n_figs)
 
-        self.qt_grid = QHBoxLayout(self)
-        for widget in self.draw_widgets:
-            self.qt_grid.addWidget(widget)
+        self.qt_grid = QGridLayout(self)
+        widget_positions = {} # TODO: implement saving loading this to a file
+        for i, (widget, node) in enumerate(zip(self.draw_widgets, self.nodes)):
+            col = i % cols
+            row = int((i - col) / cols)
+            widget_positions[str(node)] = (row, col)
+            self.qt_grid.addWidget(widget, row, col)
+        
+        print(widget_positions)
 
         # === Start pipeline =================================================
         self.worker_term_lock = mp.Lock()
@@ -92,7 +96,14 @@ class QT_View(QWidget):
         if not isinstance(node, viewer.View_QT):
             raise ValueError('Node must be of Type (MPL) View')
 
+        # self.setStyleSheet("QWidget { background-color: 'white' }") 
+        self.setProperty("cssClass", "bg-white")
         node.init_draw(self)
+
+        # self.setBackgroundRole(True)
+        # p = self.palette()
+        # p.setColor(self.backgroundRole(), Qt.white)
+        # self.setPalette(p)
     
     def stop(self):
         pass
@@ -115,7 +126,7 @@ class MPL_View(FigureCanvasQTAgg):
 
         def draw_update(i, **kwargs):
             try:
-                return artist_update_fn(**kwargs)
+                return artist_update_fn(i, **kwargs)
             except Exception as err:
                 print(err)
                 print(traceback.format_exc())
