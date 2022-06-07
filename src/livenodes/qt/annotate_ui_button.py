@@ -1,13 +1,14 @@
 import multiprocessing as mp
 from matplotlib.widgets import TextBox, Button
 
-from livenodes.core.viewer import View
+from livenodes.core.viewer import View_QT
+from PyQt5.QtWidgets import QLineEdit, QVBoxLayout, QFormLayout, QHBoxLayout, QLabel, QPushButton, QSizePolicy
 
 from . import local_registry
 
 
 @local_registry.register
-class Annotate_ui_button(View):
+class Annotate_ui_button(View_QT):
     channels_in = ['Data']
     channels_out = ['Data', 'Annotation']
 
@@ -53,14 +54,14 @@ class Annotate_ui_button(View):
         self._emit_data([self.current_target] * len(data),
                         channel="Annotation")
 
-    def __activity_toggle_rec(self, event):
+    def __activity_toggle_rec(self):
         if self.recording:
             # Stop recording
-            self.bnext.label.set_text('Start')
+            self.button.setText('Start')
             self.target_q.put((self.fall_back_target, self.fall_back_target))
         else:
             # Start recording
-            self.bnext.label.set_text('Stop')
+            self.button.setText('Stop')
             self.target_q.put((self.fall_back_target, self.annot_target))
 
         self.recording = not self.recording
@@ -72,32 +73,29 @@ class Annotate_ui_button(View):
     def __update_annot(self, text):
         self.annot_target = text
 
-    def _init_draw(self, subfig):
-        subfig.suptitle("Annotate", fontsize=14)
+    def _init_draw(self, parent):
 
-        axes = subfig.subplots(3, 1, sharex=True)
+        qline_fallback = QLineEdit(str(self.fall_back_target))
+        qline_fallback.textChanged.connect(self.__update_fallback)
 
-        self.target_default = TextBox(axes[0],
-                                      'Fallback:',
-                                      initial=self.fall_back_target)
-        # self.target_default.label.set_fontsize(20)
-        self.target_default.on_submit(self.__update_fallback)
+        qline_current = QLineEdit(str(self.annot_target))
+        qline_current.textChanged.connect(self.__update_annot)
 
-        self.target_annotate = TextBox(axes[1],
-                                       'Recognize:',
-                                       initial=self.annot_target)
-        # self.target_annotate.label.set_fontsize(20)
-        self.target_annotate.on_submit(self.__update_annot)
+        self.button = QPushButton("Start")
+        self.button.setSizePolicy(QSizePolicy())
+        self.button.clicked.connect(self.__activity_toggle_rec)
 
-        self.bnext = Button(axes[2], 'Start')
-        self.bnext.label.set_fontsize(20)
-        self.bnext.on_clicked(self.__activity_toggle_rec)
 
-        def update(**kwargs):
-            nonlocal axes
-            return axes
+        layout = QFormLayout(parent)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addRow(QLabel("Annotate"))
+        layout.addRow(QLabel('Fallback:'), qline_fallback)
+        layout.addRow(QLabel('Performing:'), qline_current)
+        layout.addRow(self.button)
 
-        return update
+        # layout = QVBoxLayout(parent)
+        # layout.addWidget(QLabel("Annotate"), stretch=0)
+        # layout.addWidget(qline_fallback)
+        # layout.addWidget(qline_current)
+        # layout.addWidget(self.button, stretch=2)
 
-    def _should_draw(self, **kwargs):
-        return True

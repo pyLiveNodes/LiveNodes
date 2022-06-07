@@ -1,13 +1,13 @@
 import numpy as np
 import seaborn as sns
 
-from livenodes.core.viewer import View
+from livenodes.core.viewer import View_MPL
 
 from . import local_registry
 
 
 @local_registry.register
-class Draw_search_graph(View):
+class Draw_search_graph(View_MPL):
     """
     Draws the BioKIT search graph as broken bar plot.
     Highlights the current best hypothesis.

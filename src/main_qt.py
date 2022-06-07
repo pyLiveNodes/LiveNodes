@@ -37,8 +37,8 @@ class SubView(QWidget):
         toolbar.addWidget(QLabel(name))
 
         l1 = QVBoxLayout(self)
-        l1.addLayout(toolbar)
-        l1.addWidget(child)
+        l1.addLayout(toolbar, stretch=0)
+        l1.addWidget(child, stretch=2)
 
         self.child = child
 
