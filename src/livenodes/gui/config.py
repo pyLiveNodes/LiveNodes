@@ -86,13 +86,6 @@ def attatch_click_cb(node_graphic_ob, cb):
 def noop(*args, **kwargs):
     pass
 
-
-# From: https://stackoverflow.com/questions/2556108/rreplace-how-to-replace-the-last-occurrence-of-an-expression-in-a-string
-def rreplace(s, old, new, occurrence):
-    li = s.rsplit(old, occurrence)
-    return new.join(li)
-
-
 def update_node_attr(node, attr, type_cast, val):
     node._set_attr(**{attr: type_cast(val)})
 
