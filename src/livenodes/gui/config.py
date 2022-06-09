@@ -146,18 +146,25 @@ def type_switch(update_state_fn, key, val):
 class EditList(QWidget):
     changed = pyqtSignal(list)
 
-    def __init__(self, in_items=[], extendable=True, parent=None):
+    def __init__(self, in_items=[], extendable=True, parent=None, show=True):
         super().__init__(parent)
 
         self.in_items = in_items
         self.extendable = extendable
 
-        self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(0, 0, 0, 0)
-        self._add_gui_items()
+        if show:
+            self.layout = QVBoxLayout(self)
+            self.layout.setContentsMargins(0, 0, 0, 0)
+            self._add_gui_items()
 
     def _helper_items(self):
         return enumerate(self.in_items)
+
+    def _add_row(self, widget, key=None):
+        self.layout.addWidget(widget)
+
+    def _add_layout(self, layout):
+        self.layout.addLayout(layout)
 
     def _rm_gui_items(self):
         # from: https://stackoverflow.com/questions/4528347/clear-all-widgets-in-a-layout-in-pyqt
@@ -169,7 +176,7 @@ class EditList(QWidget):
     def _add_gui_items(self):
         for key, val in self._helper_items():
             q_in = type_switch(self._update_state, key=key, val=val)
-            self.layout.addWidget(q_in)
+            self._add_row(widget=q_in, key=key)
 
             if self.extendable:
                 plus = QPushButton("+")
@@ -179,7 +186,7 @@ class EditList(QWidget):
                 l2 = QHBoxLayout()
                 l2.addWidget(plus)
                 l2.addWidget(minus)
-                self.layout.addLayout(l2)
+                self._add_layout(l2)
 
     def _add_itm(self, key):
         # print('Added item', key, self.in_items[key])
@@ -201,29 +208,23 @@ class EditList(QWidget):
 
 
 class EditDict(EditList):
-      def _helper_items(self):
+    changed = pyqtSignal(dict)
+
+    def __init__(self, in_items={}, extendable=True, parent=None):
+        super().__init__(in_items=in_items, extendable=extendable, parent=parent, show=False)
+
+        self.layout = QFormLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self._add_gui_items()
+
+    def _helper_items(self):
         return self.in_items.items()
 
-# class EditDict(EditList):
-#     changed = pyqtSignal(dict)
-
-#     def __init__(self, in_dict={}, parent=None):
-#         super().__init__(parent)
-
-#         # Store reference and never create a new dict, only update!
-#         # otherwise we'll need to apply changes recursively in other parts of the code base (ie set_state)
-#         self.in_dict = in_dict
-
-#         layout = QFormLayout(self)
-#         layout.setContentsMargins(0, 0, 0, 0)
-
-#         for key, val in in_dict.items():
-#             q_in = type_switch(self._update_state, key=key, val=val)
-#             layout.addRow(QLabel(key), q_in)
-
-#     def _update_state(self, key, type_cast, val):
-#         self.in_dict[key] = type_cast(val)
-#         self.changed.emit(self.in_dict)
+    def _add_row(self, widget, key=None):
+        self.layout.addRow(QLabel(key), widget)
+    
+    def _add_layout(self, layout):
+        self.layout.addRow(layout)
 
 class NodeParameterSetter(QWidget):
 
