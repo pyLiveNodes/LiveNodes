@@ -1,4 +1,7 @@
+from collections import defaultdict
+from functools import partial, reduce
 import sys
+import traceback
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSizePolicy
 
@@ -47,9 +50,12 @@ class SubView(QWidget):
             self.child.stop()
 
 
+def noop(*args, **kwargs):
+    pass
+
 class MainWindow(QtWidgets.QMainWindow):
 
-    def __init__(self, parent=None, projects='./projects/*', home_dir=os.getcwd()):
+    def __init__(self, state_handler, parent=None, projects='./projects/*', home_dir=os.getcwd(), _on_close_cb=noop):
         super(MainWindow, self).__init__(parent)
 
         self.central_widget = QtWidgets.QStackedWidget()
@@ -66,11 +72,10 @@ class MainWindow(QtWidgets.QMainWindow):
         print('Home Dir:', home_dir)
         print('CWD:', os.getcwd())
 
-        self._save_dict = {}
-        path_to_state = os.path.join(home_dir, 'smart-state.json')
-        if os.path.exists(path_to_state):
-            with open(path_to_state, 'r') as f:
-                self._save_dict = json.load(f)
+        self._on_close_cb = _on_close_cb
+
+
+        self.state_handler = state_handler
 
         # for some fucking reason i cannot figure out how to set the css class only on the home class... so hacking this by adding and removign the class on view change...
         # self.central_widget.setProperty("cssClass", "home")
@@ -94,20 +99,18 @@ class MainWindow(QtWidgets.QMainWindow):
         print('CWD:', os.getcwd())
 
         self._save_state(self.widget_home)
-        with open('smart-state.json', 'w') as f:
-            json.dump(self._save_dict, f, indent=2)
+        self._on_close_cb()
 
         return super().closeEvent(event)
 
     def _set_state(self, view):
-        print(view)
         if hasattr(view,
-                   'set_state') and view.__class__.__name__ in self._save_dict:
-            view.set_state(**self._save_dict[view.__class__.__name__])
+                   'set_state') and self.state_handler.val_exists(view.__class__.__name__):
+            view.set_state(**self.state_handler.val_get(view.__class__.__name__))
 
     def _save_state(self, view):
         if hasattr(view, 'get_state'):
-            self._save_dict[view.__class__.__name__] = view.get_state()
+            self.state_handler.val_set(view.__class__.__name__, view.get_state())
 
     def return_home(self):
         cur = self.central_widget.currentWidget()
@@ -171,20 +174,101 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._set_state(widget_run)
 
+class State():
+    def __init__(self, values={}):
+        self.__spaces = {}
+        self.__values = values
+
+    def space_create(self, name, values={}):
+        if name in self.__spaces:
+            raise ValueError('Space already exists')
+        self.__spaces[name] = State(values=values)
+        return self.__spaces[name]
+    
+    def space_add(self, name, state):
+        if name in self.__spaces:
+            raise ValueError('Space already exists')
+        self.__spaces[name] = state
+
+    def space_get(self, name, fallback={}):
+        if name not in self.__spaces:
+            return self.space_create(name, values=fallback)
+        return self.__spaces.get(name)
+
+    def __repr__(self):
+        return '{values: ' + ','.join(self.__values.keys()) + 'spaces: ' + ','.join(self.__spaces.keys()) + '}'
+
+    def val_merge(self, *args):
+        # merges all dicts that are passed as arguments into the current values
+        # later dicts overwrite earlier ones
+        # self.__values is maintained
+        self.__values = reduce(lambda cur, nxt: {**nxt, **cur}, reversed([*args, self.__values]), {})
+
+    def val_exists(self, key):
+        return key in self.__values
+
+    def val_get(self, key, fallback=None):
+        if key not in self.__values and fallback is not None:
+            self.__values[key] = fallback
+        return self.__values[key]
+
+    def val_set(self, key, val):
+        self.__values[key] = val
+
+    def dict_to(self):
+        return {
+            'spaces': {key: val.dict_to() for key, val in self.__spaces.items()},
+            'values': self.__values
+        }
+
+    @staticmethod
+    def dict_from(dct):
+        state = State(dct.get('values', {}))
+        for key, space in dct.get('spaces', {}).items():
+            state.space_add(key, State.dict_from(space))
+        return state
+
+    def save(self, path):
+        with open(path, 'w') as f:
+            json.dump(self.dict_to(), f, indent=2)
+
+    @staticmethod
+    def load(path):
+        if os.path.exists(path):
+            with open(path, 'r') as f:
+                space = json.load(f)
+                return State.dict_from(space)
+        return State()
+
+
 def main():
     # === Load environment variables ========================================================================
     import os
+    import shutil
     from dotenv import dotenv_values
     import json
 
-    config = {
-        **dotenv_values(".env"),  # load shared development variables
-        # **dotenv_values(".env.secret"),  # load sensitive variables
-        **os.environ,  # override loaded values with environment variables
-    }
+    home_dir = os.getcwd()
 
-    env_projects = config.get('PROJECTS', './projects/*')
-    env_modules = json.loads(config.get('MODULES', '[ "livenodes.nodes", "livenodes.plux"]'))
+    path_to_state = os.path.join(home_dir, 'smart-state.json')
+    try:
+        smart_state = State.load(path_to_state)
+    except Exception as err:
+        print(f'Could not open state, saving file and creating new ({path_to_state}.backup)')
+        print(err)
+        print(traceback.format_exc())
+        shutil.copyfile(path_to_state, f"{path_to_state}.backup")
+        smart_state = State({})
+        
+    env_vars = {key.lower(): val for key, val in {
+        **dotenv_values(".env"),
+        **os.environ
+    }.items() if key in ['PROJECTS', 'MODULES']}
+
+    smart_state.val_merge(env_vars)
+
+    env_projects = smart_state.val_get('projects', './projects/*')
+    env_modules = json.loads(smart_state.val_get('modules', '[ "livenodes.nodes", "livenodes.plux"]'))
 
     print('Procects folder: ', env_projects)
     print('Modules: ', env_modules)
@@ -202,12 +286,16 @@ def main():
 
     # === Setup application ========================================================================
     app = QtWidgets.QApplication([])
-    
-    home_dir = os.getcwd()
+    # print(smart_state)
+    # print(smart_state.space_get('views'))
+    def onclose():
+        smart_state.val_set('window_size', (window.size().width(), window.size().height()))
+        smart_state.save(path_to_state)
 
-    window = MainWindow(projects=env_projects, home_dir=home_dir)
+    
+    window = MainWindow(state_handler=smart_state.space_get('views'), projects=env_projects, home_dir=home_dir, _on_close_cb=onclose)
     # TODO: store the old size in state.json and re-apply here...
-    window.resize(1400, 820)
+    window.resize(*smart_state.val_get('window_size', (1400, 820)))
     window.show()
 
     # chdir because of relative imports in style.qss ....
