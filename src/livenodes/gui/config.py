@@ -5,8 +5,8 @@ import os
 import importlib
 import itertools
 
-from PyQt5.QtGui import QIntValidator
-from PyQt5.QtWidgets import QDialogButtonBox, QDialog, QFormLayout, QCheckBox, QLineEdit, QVBoxLayout, QWidget, QHBoxLayout, QScrollArea, QLabel
+from PyQt5.QtGui import QIntValidator, QDoubleValidator
+from PyQt5.QtWidgets import QSplitter, QDialogButtonBox, QPushButton, QDialog, QFormLayout, QCheckBox, QLineEdit, QVBoxLayout, QWidget, QHBoxLayout, QScrollArea, QLabel
 from PyQt5.QtCore import Qt, pyqtSignal
 
 import qtpynodeeditor
@@ -96,97 +96,135 @@ def rreplace(s, old, new, occurrence):
 def update_node_attr(node, attr, type_cast, val):
     node._set_attr(**{attr: type_cast(val)})
 
+def convert_str_float(x):
+    try:
+        return float(x)
+    except Exception:
+        return 0.0
+
+def convert_str_int(x):
+    try:
+        return int(x)
+    except Exception:
+        return 0
+    
+
+def type_switch(update_state_fn, key, val):
+    if type(val) == int:
+        q_in = QLineEdit(str(val))
+        q_in.setValidator(QIntValidator())
+        q_in.textChanged.connect(
+            partial(update_state_fn, key, convert_str_int))
+    elif type(val) == float:
+        q_in = QLineEdit(str(val))
+        q_in.setValidator(QDoubleValidator())
+        q_in.textChanged.connect(
+            partial(update_state_fn, key, convert_str_float))
+    elif type(val) == str:
+        q_in = QLineEdit(str(val))
+        q_in.textChanged.connect(partial(update_state_fn, key, str))
+    elif type(val) == bool:
+        q_in = QCheckBox()
+        q_in.setChecked(val)
+        q_in.stateChanged.connect(
+            partial(update_state_fn, key, bool))
+    elif type(val) == tuple:
+        q_in = EditList(in_items=val, extendable=False)
+        q_in.changed.connect(partial(update_state_fn, key, tuple))
+    elif type(val) == dict:
+        q_in = EditDict(in_items=val)
+        q_in.changed.connect(partial(update_state_fn, key, dict))
+    elif type(val) == list:
+        q_in = EditList(in_items=val)
+        q_in.changed.connect(partial(update_state_fn, key, list))
+    else:
+        q_in = QLineEdit(str(val))
+        print("Type not implemented yet", type(val), key)
+    return q_in
+
 
 class EditList(QWidget):
     changed = pyqtSignal(list)
 
-    def __init__(self, in_list=[], parent=None):
+    def __init__(self, in_items=[], extendable=True, parent=None, show=True):
         super().__init__(parent)
 
-        self.in_list = in_list
+        self.in_items = in_items
+        self.extendable = extendable
 
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+        if show:
+            self.layout = QVBoxLayout(self)
+            self.layout.setContentsMargins(0, 0, 0, 0)
+            self._add_gui_items()
 
-        for i, val in enumerate(self.in_list):
-            if type(val) == int:
-                q_in = QLineEdit(str(val))
-                q_in.setValidator(QIntValidator())
-                q_in.textChanged.connect(
-                    partial(self._update_state, i, lambda x: int(x)
-                            if x != '' else 0))
-            elif type(val) == str:
-                q_in = QLineEdit(str(val))
-                q_in.textChanged.connect(partial(self._update_state, i, str))
-            elif type(val) == bool:
-                q_in = QCheckBox()
-                q_in.setChecked(val)
-                q_in.stateChanged.connect(partial(self._update_state, i, bool))
-            elif type(val) == dict:
-                q_in = EditDict(in_dict=val)
-                q_in.changed.connect(partial(self._update_state, i, dict))
-            elif type(val) == list:
-                q_in = EditList(in_list=val)
-                q_in.changed.connect(partial(self._update_state, i, list))
-            else:
-                q_in = QLineEdit(str(val))
-                print("Type not implemented yet", type(val), i)
+    def _helper_items(self):
+        return enumerate(self.in_items)
 
-            layout.addWidget(q_in)
+    def _add_row(self, widget, key=None):
+        self.layout.addWidget(widget)
 
-            # plus = QPushButton("+")
-            # minus = QPushButton("-")
+    def _add_layout(self, layout):
+        self.layout.addLayout(layout)
+
+    def _rm_gui_items(self):
+        # from: https://stackoverflow.com/questions/4528347/clear-all-widgets-in-a-layout-in-pyqt
+        while self.layout.count():
+            child = self.layout.takeAt(0)
+            if child.widget():
+                child.widget().deleteLater()
+
+    def _add_gui_items(self):
+        for key, val in self._helper_items():
+            q_in = type_switch(self._update_state, key=key, val=val)
+            self._add_row(widget=q_in, key=key)
+
+            if self.extendable:
+                plus = QPushButton("+")
+                plus.clicked.connect(partial(self._add_itm, key=key))
+                minus = QPushButton("-")
+                minus.clicked.connect(partial(self._rm_itm, key=key))
+                l2 = QHBoxLayout()
+                l2.addWidget(plus)
+                l2.addWidget(minus)
+                self._add_layout(l2)
+
+    def _add_itm(self, key):
+        # print('Added item', key, self.in_items[key])
+        self.in_items.insert(key, self.in_items[key])
+        self.changed.emit(self.in_items)
+        self._rm_gui_items()
+        self._add_gui_items()
+
+    def _rm_itm(self, key):
+        # print('RM item', key, self.in_items[key])
+        del self.in_items[key]
+        self.changed.emit(self.in_items)
+        self._rm_gui_items()
+        self._add_gui_items()
 
     def _update_state(self, key, type_cast, val):
-        self.in_list[key] = type_cast(val)
-        self.changed.emit(self.in_list)
+        self.in_items[key] = type_cast(val)
+        self.changed.emit(self.in_items)
 
 
-# For the moment let's assume a dict can be recursive, but a list cannot
-class EditDict(QWidget):
+class EditDict(EditList):
     changed = pyqtSignal(dict)
 
-    def __init__(self, in_dict={}, parent=None):
-        super().__init__(parent)
+    def __init__(self, in_items={}, extendable=True, parent=None):
+        super().__init__(in_items=in_items, extendable=extendable, parent=parent, show=False)
 
-        # Store reference and never create a new dict, only update!
-        # otherwise we'll need to apply changes recursively in other parts of the code base (ie set_state)
-        self.in_dict = in_dict
+        self.layout = QFormLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self._add_gui_items()
 
-        layout = QFormLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+    def _helper_items(self):
+        return self.in_items.items()
 
-        for key, val in in_dict.items():
-            if type(val) == int:
-                q_in = QLineEdit(str(val))
-                q_in.setValidator(QIntValidator())
-                q_in.textChanged.connect(
-                    partial(self._update_state, key, lambda x: int(x)
-                            if x != '' else 0))
-            elif type(val) == str:
-                q_in = QLineEdit(str(val))
-                q_in.textChanged.connect(partial(self._update_state, key, str))
-            elif type(val) == bool:
-                q_in = QCheckBox()
-                q_in.setChecked(val)
-                q_in.stateChanged.connect(
-                    partial(self._update_state, key, bool))
-            elif type(val) == dict:
-                q_in = EditDict(in_dict=val)
-                q_in.changed.connect(partial(self._update_state, key, dict))
-            elif type(val) == list:
-                q_in = EditList(in_list=val)
-                q_in.changed.connect(partial(self._update_state, key, list))
-            else:
-                q_in = QLineEdit(str(val))
-                print("Type not implemented yet", type(val), key)
-
-            layout.addRow(QLabel(key), q_in)
-
-    def _update_state(self, key, type_cast, val):
-        self.in_dict[key] = type_cast(val)
-        self.changed.emit(self.in_dict)
-
+    def _add_row(self, widget, key=None):
+        self.layout.addRow(QLabel(key), widget)
+    
+    def _add_layout(self, layout):
+        self.layout.addRow(layout)
 
 class NodeParameterSetter(QWidget):
 
@@ -196,17 +234,21 @@ class NodeParameterSetter(QWidget):
         # let's assume we only have class instances here and no classes
         # for classes we would need a combination of info() and something else...
         if node is not None:
-            self.edit = EditDict(in_dict=node._node_settings())
+            self.edit = EditDict(in_items=node._node_settings(), extendable=False)
             # let's assume the edit interfaces do not overwrite any of the references
             # otherwise we would need to do a recursive set_attr here....
 
             # TODO: remove _set_attr in node, this is no good design
             self.edit.changed.connect(lambda attrs: node._set_attr(**attrs))
         else:
-            self.edit = EditDict(in_dict={})
+            self.edit = EditDict(in_items={})
 
         self.layout = QVBoxLayout(self)
-        self.layout.addWidget(self.edit)
+        self.layout.addWidget(self.edit, stretch=1)
+        if node.__doc__ is not None:
+            label = QLabel(node.__doc__)
+            label.setWordWrap(True)
+            self.layout.addWidget(label, stretch=0)
 
 
 class NodeConfigureContainer(QWidget):
@@ -221,18 +263,16 @@ class NodeConfigureContainer(QWidget):
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setVerticalScrollBarPolicy(
             Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
-        self.scroll_area.setHorizontalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        # self.scroll_area.setHorizontalScrollBarPolicy(
+        #     Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.scroll_area.setWidget(self.scroll_panel)
 
         self._title = QLabel("Click node to configure.")
-        self._description = QLabel("")
         self._category = QLabel("")
 
         self.l1 = QVBoxLayout(self)
         self.l1.setContentsMargins(0, 0, 0, 0)
         self.l1.addWidget(self._title)
-        self.l1.addWidget(self._description)
         self.l1.addWidget(self._category)
         self.l1.addWidget(self.scroll_area, stretch=1)
 
@@ -306,9 +346,13 @@ class Config(QWidget):
         # self.view_configure.setFixedWidth(300)
         self.view_configure.setMinimumWidth(300)
 
-        grid = QHBoxLayout(self)
-        grid.addWidget(view_nodes)
-        grid.addWidget(self.view_configure)
+
+        grid = QSplitter()
+        grid.addWidget(view_nodes) #, stretch=2)
+        grid.addWidget(self.view_configure) #, stretch=1)
+
+        layout = QHBoxLayout(self)
+        layout.addWidget(grid)
 
         ### Add nodes and layout
         layout = None
