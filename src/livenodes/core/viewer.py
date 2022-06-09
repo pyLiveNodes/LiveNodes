@@ -117,6 +117,13 @@ class View_MPL(View):
             nonlocal update_fn, artis_storage, self, fps_every_x_frames
             cur_state = {}
 
+            if n_frames % fps_every_x_frames == 0 and n_frames != 0:
+                el_time = time.time() - self.timer
+                self.timer = time.time()
+                # self.frames = n_frames - self.frames
+                # self.info(f"Current fps: {fps_every_x_frames / el_time:.2f} (Total frames: {n_frames})")
+                print(f"Current fps ({str(self)}): {fps_every_x_frames / el_time:.2f} (Total frames: {n_frames})")
+
             try:
                 cur_state = self._draw_state.get_nowait()
             except queue.Empty:
@@ -129,12 +136,6 @@ class View_MPL(View):
             else:
                 self.debug('Decided not to draw', cur_state.keys())
                     
-            if n_frames % fps_every_x_frames == 0 and n_frames != 0:
-                el_time = time.time() - self.timer
-                self.timer = time.time()
-                # self.frames = n_frames - self.frames
-                # self.info(f"Current fps: {fps_every_x_frames / el_time:.2f} (Total frames: {n_frames})")
-                print(f"Current fps ({str(self)}): {fps_every_x_frames / el_time:.2f} (Total frames: {n_frames})")
 
             return artis_storage['returns']
 
@@ -174,12 +175,7 @@ class View_Vispy(View):
         def update_blocking():
             nonlocal update_fn, n_frames
             cur_state = {}
-
-            try:
-                # cur_state = self._draw_state.get_nowait()
-                cur_state = self._draw_state.get(block=True, timeout=0.05)
-            except queue.Empty:
-                pass
+            
             n_frames += 1
 
             if n_frames % fps_every_x_frames == 0 and n_frames != 0:
@@ -188,6 +184,12 @@ class View_Vispy(View):
                 # self.frames = n_frames - self.frames
                 # self.info(f"Current fps: {fps_every_x_frames / el_time:.2f} (Total frames: {n_frames})")
                 print(f"Current fps ({str(self)}): {fps_every_x_frames / el_time:.2f} (Total frames: {n_frames})")
+
+            try:
+                cur_state = self._draw_state.get_nowait()
+                # cur_state = self._draw_state.get(block=True, timeout=0.05)
+            except queue.Empty:
+                pass
 
             if self._should_draw(**cur_state):
                 self.verbose('Decided to draw', cur_state.keys())

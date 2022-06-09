@@ -7,7 +7,8 @@ from vispy import scene
 from . import local_registry
 
 @local_registry.register
-class Draw_lines(View_Vispy):
+# class Draw_lines(View_Vispy):
+class Draw_lines_vp(View_Vispy):
     """
     Draw all received data channels as line plot over time.
 

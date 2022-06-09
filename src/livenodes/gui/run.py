@@ -107,7 +107,7 @@ class Qt_node_qt(QWidget):
         pass
 
 class Qt_node_vispy(QWidget):
-    def __init__(self, node, parent=None):
+    def __init__(self, node, interval=0, parent=None):
         super().__init__(parent=parent)
 
         if not isinstance(node, viewer.View_Vispy):
@@ -115,7 +115,7 @@ class Qt_node_vispy(QWidget):
 
         # self.fig = vp.Fig(size=(400, 300), app="pyqt5", show=False, parent=parent)
         # self.fig = vp.Fig(size=(400, 300), show=False, parent=parent)
-        self.fig = scene.SceneCanvas(size=(400, 300), show=False, parent=parent, bgcolor='white')
+        self.fig = scene.SceneCanvas(show=False, parent=parent, bgcolor='white')
         node_update_fn = node.init_draw(self.fig)
 
         def update(*args, **kwargs):
@@ -123,7 +123,7 @@ class Qt_node_vispy(QWidget):
             if node_update_fn():
                 self.update()
 
-        self._timer = vp_app.Timer('auto', connect=update, start=True)
+        self._timer = vp_app.Timer(interval=interval, connect=update, start=True)
     
     def get_qt_widget(self):
         return self.fig.native
