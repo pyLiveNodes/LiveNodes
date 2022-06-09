@@ -6,7 +6,7 @@ import importlib
 import itertools
 
 from PyQt5.QtGui import QIntValidator, QDoubleValidator
-from PyQt5.QtWidgets import QDialogButtonBox, QPushButton, QDialog, QFormLayout, QCheckBox, QLineEdit, QVBoxLayout, QWidget, QHBoxLayout, QScrollArea, QLabel
+from PyQt5.QtWidgets import QSplitter, QDialogButtonBox, QPushButton, QDialog, QFormLayout, QCheckBox, QLineEdit, QVBoxLayout, QWidget, QHBoxLayout, QScrollArea, QLabel
 from PyQt5.QtCore import Qt, pyqtSignal
 
 import qtpynodeeditor
@@ -244,7 +244,11 @@ class NodeParameterSetter(QWidget):
             self.edit = EditDict(in_items={})
 
         self.layout = QVBoxLayout(self)
-        self.layout.addWidget(self.edit)
+        self.layout.addWidget(self.edit, stretch=1)
+        if node.__doc__ is not None:
+            label = QLabel(node.__doc__)
+            label.setWordWrap(True)
+            self.layout.addWidget(label, stretch=0)
 
 
 class NodeConfigureContainer(QWidget):
@@ -259,18 +263,16 @@ class NodeConfigureContainer(QWidget):
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setVerticalScrollBarPolicy(
             Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
-        self.scroll_area.setHorizontalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        # self.scroll_area.setHorizontalScrollBarPolicy(
+        #     Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.scroll_area.setWidget(self.scroll_panel)
 
         self._title = QLabel("Click node to configure.")
-        self._description = QLabel("")
         self._category = QLabel("")
 
         self.l1 = QVBoxLayout(self)
         self.l1.setContentsMargins(0, 0, 0, 0)
         self.l1.addWidget(self._title)
-        self.l1.addWidget(self._description)
         self.l1.addWidget(self._category)
         self.l1.addWidget(self.scroll_area, stretch=1)
 
@@ -344,9 +346,13 @@ class Config(QWidget):
         # self.view_configure.setFixedWidth(300)
         self.view_configure.setMinimumWidth(300)
 
-        grid = QHBoxLayout(self)
-        grid.addWidget(view_nodes)
-        grid.addWidget(self.view_configure)
+
+        grid = QSplitter()
+        grid.addWidget(view_nodes) #, stretch=2)
+        grid.addWidget(self.view_configure) #, stretch=1)
+
+        layout = QHBoxLayout(self)
+        layout.addWidget(grid)
 
         ### Add nodes and layout
         layout = None
