@@ -68,4 +68,4 @@ def train_sequence(biokit_hmm, iterations, seq_tokens, seq_data, model_path, emi
 
 
 def model_lock(model_path, timeout=0.1):
-    return FileLock(f"{model_path}/.lock", timeout=timeout)
+    return FileLock(f"{model_path}.lock", timeout=timeout)
