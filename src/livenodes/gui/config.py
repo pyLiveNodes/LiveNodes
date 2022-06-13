@@ -129,7 +129,7 @@ def type_switch(update_state_fn, key, val):
         q_in.stateChanged.connect(
             partial(update_state_fn, key, bool))
     elif type(val) == tuple:
-        q_in = EditList(in_items=val, extendable=False)
+        q_in = EditTuple(in_items=val)
         q_in.changed.connect(partial(update_state_fn, key, tuple))
     elif type(val) == dict:
         q_in = EditDict(in_items=val)
@@ -225,6 +225,22 @@ class EditDict(EditList):
     
     def _add_layout(self, layout):
         self.layout.addRow(layout)
+
+class EditTuple(EditList):
+    changed = pyqtSignal(tuple)
+
+    def __init__(self, in_items=(), parent=None):
+        super().__init__(in_items=in_items, extendable=False, parent=parent, show=False)
+
+        self.layout = QFormLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self._add_gui_items()
+
+    def _update_state(self, key, type_cast, val):
+        tmp = list(self.in_items)
+        tmp[key] = type_cast(val)
+        self.in_items = tuple(tmp)
+        self.changed.emit(self.in_items)
 
 class NodeParameterSetter(QWidget):
 
