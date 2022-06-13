@@ -65,8 +65,9 @@ class Biokit_train(Node):
                  catch_all = "None",
                  name = "Train",
                  rm_last_data_group = True, # set to true if online annotation + training, set to false if offline training
+                 compute_on=Location.PROCESS,
                  **kwargs):
-        super().__init__(name, **kwargs)
+        super().__init__(name, compute_on=compute_on, **kwargs)
 
         if self.compute_on is Location.SAME:
             # TODO: double check if/why this may be the case
