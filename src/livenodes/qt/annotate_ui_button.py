@@ -9,6 +9,13 @@ from . import local_registry
 
 @local_registry.register
 class Annotate_ui_button(View_QT):
+    """QT Buttons add Annotation to a Datastream
+
+    The Annotation node provides to input fields and one button. 
+    When the button is toggled either the first or second value of the input fields is send out.
+    The Annotation Stream matches the data stream
+    """
+    
     channels_in = ['Data']
     channels_out = ['Data', 'Annotation']
 
@@ -24,6 +31,20 @@ class Annotate_ui_button(View_QT):
                  fall_back_target="Unknown",
                  name="GUI Button Annotation",
                  **kwargs):
+        """QT Buttons add Annotation to a Datastream
+
+        The Annotation node provides to input fields and one button. 
+        When the button is toggled either the first or second value of the input fields is send out.
+        The Annotation Stream matches the data stream
+
+        Args:
+            fall_back_target: default field fill-ins. Defaults to "Unknown".
+            name: Name of the Node. Defaults to "GUI Button Annotation".
+
+        Todo:
+            * consider a less expensive stream than Data
+
+        """
         super().__init__(name=name, **kwargs)
 
         self.fall_back_target = fall_back_target
