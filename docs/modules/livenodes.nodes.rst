@@ -20,58 +20,34 @@ livenodes.nodes.annotate\_channel module
    :undoc-members:
    :show-inheritance:
 
-livenodes.nodes.annotate\_ui\_button module
--------------------------------------------
+livenodes.nodes.buffer\_stream\_switch module
+---------------------------------------------
 
-.. automodule:: livenodes.nodes.annotate_ui_button
+.. automodule:: livenodes.nodes.buffer_stream_switch
    :members:
    :undoc-members:
    :show-inheritance:
 
-livenodes.nodes.draw\_gmm module
---------------------------------
-
-.. automodule:: livenodes.nodes.draw_gmm
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-livenodes.nodes.draw\_lines module
+livenodes.nodes.gatter\_and module
 ----------------------------------
 
-.. automodule:: livenodes.nodes.draw_lines
+.. automodule:: livenodes.nodes.gatter_and
    :members:
    :undoc-members:
    :show-inheritance:
 
-livenodes.nodes.draw\_recognition module
-----------------------------------------
+livenodes.nodes.gatter\_not module
+----------------------------------
 
-.. automodule:: livenodes.nodes.draw_recognition
+.. automodule:: livenodes.nodes.gatter_not
    :members:
    :undoc-members:
    :show-inheritance:
 
-livenodes.nodes.draw\_scatter module
-------------------------------------
+livenodes.nodes.gatter\_or module
+---------------------------------
 
-.. automodule:: livenodes.nodes.draw_scatter
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-livenodes.nodes.draw\_search\_graph module
-------------------------------------------
-
-.. automodule:: livenodes.nodes.draw_search_graph
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-livenodes.nodes.draw\_text\_display module
-------------------------------------------
-
-.. automodule:: livenodes.nodes.draw_text_display
+.. automodule:: livenodes.nodes.gatter_or
    :members:
    :undoc-members:
    :show-inheritance:
@@ -100,10 +76,34 @@ livenodes.nodes.in\_playback module
    :undoc-members:
    :show-inheritance:
 
+livenodes.nodes.in\_trigger module
+----------------------------------
+
+.. automodule:: livenodes.nodes.in_trigger
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 livenodes.nodes.log\_data module
 --------------------------------
 
 .. automodule:: livenodes.nodes.log_data
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+livenodes.nodes.math\_floor module
+----------------------------------
+
+.. automodule:: livenodes.nodes.math_floor
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+livenodes.nodes.math\_subtract module
+-------------------------------------
+
+.. automodule:: livenodes.nodes.math_subtract
    :members:
    :undoc-members:
    :show-inheritance:
@@ -116,10 +116,42 @@ livenodes.nodes.memory module
    :undoc-members:
    :show-inheritance:
 
+livenodes.nodes.mimic\_last\_input module
+-----------------------------------------
+
+.. automodule:: livenodes.nodes.mimic_last_input
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+livenodes.nodes.mimic\_variable module
+--------------------------------------
+
+.. automodule:: livenodes.nodes.mimic_variable
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 livenodes.nodes.out\_data module
 --------------------------------
 
 .. automodule:: livenodes.nodes.out_data
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+livenodes.nodes.transform\_add\_dims module
+-------------------------------------------
+
+.. automodule:: livenodes.nodes.transform_add_dims
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+livenodes.nodes.transform\_delay module
+---------------------------------------
+
+.. automodule:: livenodes.nodes.transform_delay
    :members:
    :undoc-members:
    :show-inheritance:
@@ -168,6 +200,14 @@ livenodes.nodes.transform\_window\_multiplier module
 ----------------------------------------------------
 
 .. automodule:: livenodes.nodes.transform_window_multiplier
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+livenodes.nodes.trigger\_counter module
+---------------------------------------
+
+.. automodule:: livenodes.nodes.trigger_counter
    :members:
    :undoc-members:
    :show-inheritance:

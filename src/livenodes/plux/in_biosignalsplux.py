@@ -35,13 +35,12 @@ class NewDevice(plux.SignalsDev):
 
 @local_registry.register
 class In_biosignalsplux(BlockingSender):
-    """
+    """Biosignalsplux Hub input node
+
     Feeds data frames from a biosiagnal plux based device into the pipeline.
-
-    Examples for biosignal plux devices are: biosignalplux hup and muscleban (for RIoT and Bitalino please have a look at in_riot.py)
-
-    Requires the plux libaray.
-    """
+    For RIoT, Bitalino, or MuscleBan please have a look at their respective nodes.
+    Requires the plux library.
+    """    
 
     channels_in = []
     channels_out = ['Data', 'Channel Names']

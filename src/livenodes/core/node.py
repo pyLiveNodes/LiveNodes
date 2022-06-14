@@ -900,18 +900,18 @@ class Node():
         return ts
 
     def process(self, data, **kwargs):
-        """
-        Heart of the nodes processing, should be a stateless(/functional) processing function, 
-        ie "self" should only be used to call _emit_[data|draw]. 
-        However, if you really require a separate state management of your own, you may use self
+        # """
+        # Heart of the nodes processing, should be a stateless(/functional) processing function, 
+        # ie "self" should only be used to call _emit_[data|draw]. 
+        # However, if you really require a separate state management of your own, you may use self
 
-        TODO: consider later on if we might change this to not call _emit but just return the stuff needed...
-        -> pro: clearer process functions, more likely to actually be funcitonal; cannot have confusion when emitting twice in the same channel
-        -> con: children need to wait until the full node is finished with processing (ie: no ability to do partial computations (not sure if we want those, tho))
+        # TODO: consider later on if we might change this to not call _emit but just return the stuff needed...
+        # -> pro: clearer process functions, more likely to actually be funcitonal; cannot have confusion when emitting twice in the same channel
+        # -> con: children need to wait until the full node is finished with processing (ie: no ability to do partial computations (not sure if we want those, tho))
 
-        params: **channels_in
-        returns None
-        """
+        # params: **channels_in
+        # returns None
+        # """
         res = list(map(self.process_time_series, data))
         self._emit_data(res)
 

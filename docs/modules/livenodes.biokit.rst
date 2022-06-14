@@ -44,10 +44,10 @@ livenodes.biokit.biokit\_train module
    :undoc-members:
    :show-inheritance:
 
-livenodes.biokit.biokit\_update\_model module
----------------------------------------------
+livenodes.biokit.utils module
+-----------------------------
 
-.. automodule:: livenodes.biokit.biokit_update_model
+.. automodule:: livenodes.biokit.utils
    :members:
    :undoc-members:
    :show-inheritance:

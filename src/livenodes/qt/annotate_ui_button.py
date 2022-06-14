@@ -9,13 +9,13 @@ from . import local_registry
 
 @local_registry.register
 class Annotate_ui_button(View_QT):
-    """QT Buttons add Annotation to a Datastream
+    """QT Buttons creates `Annotation`-stream
 
-    The Annotation node provides to input fields and one button. 
-    When the button is toggled either the first or second value of the input fields is send out.
-    The Annotation Stream matches the data stream
+    The Annotation node provides two input fields and one button. 
+    When the button is toggled either the first or second value of the input fields is send out through the `Annotation`-stream.
+    The Annotation Stream matches the input `Data`-stream.
     """
-    
+
     channels_in = ['Data']
     channels_out = ['Data', 'Annotation']
 
@@ -31,11 +31,7 @@ class Annotate_ui_button(View_QT):
                  fall_back_target="Unknown",
                  name="GUI Button Annotation",
                  **kwargs):
-        """QT Buttons add Annotation to a Datastream
-
-        The Annotation node provides to input fields and one button. 
-        When the button is toggled either the first or second value of the input fields is send out.
-        The Annotation Stream matches the data stream
+        """Instantiates QT Annotation Buttons
 
         Args:
             fall_back_target: default field fill-ins. Defaults to "Unknown".
@@ -66,6 +62,12 @@ class Annotate_ui_button(View_QT):
         }
 
     def process(self, data, **kwargs):
+        """
+        On every received data package, send out the data as well as the current label state.
+
+        Args:
+            data: _description_
+        """
         # IMPORTANT: we assume that the length of data is always short enough that we do not care about timing issues with the label
         self._emit_data(data)
 

@@ -12,6 +12,14 @@ livenodes.plux.in\_biosignalsplux module
    :undoc-members:
    :show-inheritance:
 
+livenodes.plux.in\_muscleban module
+-----------------------------------
+
+.. automodule:: livenodes.plux.in_muscleban
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 livenodes.plux.in\_riot module
 ------------------------------
 
