@@ -238,7 +238,7 @@ class State():
             with open(path, 'r') as f:
                 space = json.load(f)
                 return State.dict_from(space)
-        return State()
+        return State({})
 
 
 def main():
@@ -270,7 +270,7 @@ def main():
     env_projects = smart_state.val_get('projects', './projects/*')
     env_modules = json.loads(smart_state.val_get('modules', '[ "livenodes.nodes", "livenodes.plux"]'))
 
-    print('Procects folder: ', env_projects)
+    print('Projects folder: ', env_projects)
     print('Modules: ', env_modules)
 
     # === Fix MacOS specifics ========================================================================
