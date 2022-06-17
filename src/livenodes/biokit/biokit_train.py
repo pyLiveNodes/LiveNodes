@@ -62,7 +62,7 @@ class Biokit_train(Node):
                  train_iterations = 5,
                  atomList = {},
                  tokenDictionary = {},
-                 catch_all = "None",
+                 catch_all = "none",
                  name = "Train",
                  rm_last_data_group = True, # set to true if online annotation + training, set to false if offline training
                  compute_on=Location.PROCESS,
@@ -84,7 +84,7 @@ class Biokit_train(Node):
         self.phases_new_atom = phases_new_atom
         self.phases_new_token = phases_new_token
         self.token_insertion_penalty = token_insertion_penalty
-        self.catch_all = catch_all
+        self.catch_all = catch_all.lower()
         self.rm_last_data_group = rm_last_data_group
 
         self.storage_annotation = []
@@ -176,7 +176,7 @@ class Biokit_train(Node):
             else:
                 rootNode.setChildNode(False, BioKIT.TopoTreeNode(atom, atom))
 
-        n_topoTree.createDotGraph('topo.dot')
+        # n_topoTree.createDotGraph('topo.dot')
         return n_topologyInfo
 
     def _add_token(self, token, atoms, featuredimensionality, nrofmixtures):
@@ -262,7 +262,8 @@ class Biokit_train(Node):
         split_indices = diffs.nonzero()[0] + 1
         
         # split the annotations and data arrays accordingly
-        processedAnnotations = [[x[0]] for x in np.split(annotations, split_indices)]
+        # the x[0].split, results in sentences passed to us to be treated as sequence of tokens, rather than a token with spaces
+        processedAnnotations = [x[0].lower().split(' ') for x in np.split(annotations, split_indices)]
         processedSequences = []
         for seq in np.split(data, split_indices):
             # this feels stupid, but kinda makes sense, as in the split we create FeatureVectors instead of Sequences, which then need to be stiched together
@@ -320,7 +321,9 @@ class Biokit_train(Node):
             # catch all is not known (ie not trained) if the recognizer is new (it had to be added in init, as biokit throws an error otherwise)
             known_tokens.remove(self.catch_all)
 
-        stored_tokens = np.unique(processedAnnotations)
+        # TODO: properly fix this up and then we do have sequence training for free :D
+        stored_tokens = np.unique(np.concatenate(processedAnnotations))
+        print('TOKENS', stored_tokens, known_tokens, processedAnnotations)
         # add new tokens (except catch_all )
         for token in stored_tokens:
             if token != self.catch_all and not token in known_tokens:
@@ -340,11 +343,14 @@ class Biokit_train(Node):
         self.debug(trained_samples, available_samples)
         # keep tokens that are not in known_tokens unless the stored data is more than the trained data
         keep_tokens = list(filter(lambda x: (not x in known_tokens) or (available_samples.get(x, 0) > trained_samples.get(x, 0)), stored_tokens))
-        # TODO: not sure if any is the right call here...
-        idx = np.any(np.isin(processedAnnotations, keep_tokens), axis=-1)
+        # with the ragged lists in the processedAnnotations, we cannot just use numpy 
+        # this checks for each annotation segment if the tokens we want to train on are present
+        # TODO: check if it matters, that other tokens might be present as well (ie if np.all would be the better call)
+        # -> i think we should use np.all instead of np.any, as the tokens, that are not in to be kept, will also be trained in which case they should have all data available to them not just that data, because they are next to another token.
+        idx = np.array([np.all(np.isin(annot, keep_tokens)) for annot in processedAnnotations])
         
-        print(stored_tokens, keep_tokens)
-        print(processedAnnotations.shape, processedSequences.shape, idx)
+        print('token lists', stored_tokens, keep_tokens)
+        print('shapes and idx', processedAnnotations.shape, processedSequences.shape, idx)
 
         ### Train
         if len(processedAnnotations[idx]) == 0:
