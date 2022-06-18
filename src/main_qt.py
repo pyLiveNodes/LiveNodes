@@ -1,6 +1,7 @@
 from collections import defaultdict
 from functools import partial, reduce
 import sys
+import multiprocessing as mp
 import traceback
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSizePolicy
@@ -276,9 +277,9 @@ def main():
     # === Fix MacOS specifics ========================================================================
     # this fix is for macos (https://docs.python.org/3.8/library/multiprocessing.html#contexts-and-start-methods)
     # TODO: test/validate this works in all cases (ie increase test cases, coverage and machines to be tested on)
-    # mp.set_start_method(
-    #     'fork',
-    #     force=True)  # force=True doesn't seem like a too good idea, but hey
+    mp.set_start_method(
+        'fork',
+        force=True)  # force=True doesn't seem like a too good idea, but hey
     # mp.set_start_method('fork')
 
     # === Load modules ========================================================================
