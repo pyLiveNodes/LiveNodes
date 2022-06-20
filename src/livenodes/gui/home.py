@@ -2,10 +2,13 @@ from functools import partial
 import sys
 from PyQt5 import QtWidgets
 from glob import glob
+import os
+import shutil
 
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QToolButton, QComboBox, QComboBox, QPushButton, QVBoxLayout, QWidget, QGridLayout, QHBoxLayout, QScrollArea, QLabel
+from PyQt5.QtWidgets import QInputDialog, QMessageBox, QToolButton, QComboBox, QComboBox, QPushButton, QVBoxLayout, QWidget, QGridLayout, QHBoxLayout, QScrollArea, QLabel
 from PyQt5.QtCore import Qt, QSize, pyqtSignal
+from pexpect import ExceptionPexpect
 
 
 class Home(QWidget):
@@ -33,7 +36,6 @@ class Home(QWidget):
 
         # TODO: figure out how to fucking get this to behave as i woudl like it, ie no fucking rescales to fit because thats what images should do not fucking buttons
         self.qt_grid = QVBoxLayout(self)
-
         self.qt_grid.addWidget(self.qt_projects)
         # grid.addStretch(1)
         # l1.setFixedWidth(80)
@@ -160,6 +162,12 @@ class Selection(QWidget):
         selection = Pipline_Selection(pipelines)
         selection.clicked.connect(self.text_changed)
 
+        copy = QPushButton("Copy")
+        copy.clicked.connect(self.oncopy)
+
+        delete = QPushButton("Delete")
+        delete.clicked.connect(self.ondelete)
+
         start = QPushButton("Start")
         start.clicked.connect(self.onstart)
 
@@ -169,8 +177,10 @@ class Selection(QWidget):
         self.selected = QLabel(self.text)
 
         buttons = QHBoxLayout()
+        buttons.addWidget(delete)
         buttons.addStretch(1)
         buttons.addWidget(self.selected)
+        buttons.addWidget(copy)
         buttons.addWidget(config)
         buttons.addWidget(start)
 
@@ -194,6 +204,30 @@ class Selection(QWidget):
 
     def onconfig(self):
         self.cb_onconfig(self.text)
+
+    def _associated_files(self, path):
+        return [
+            path,
+            path.replace('.json', '.png'),
+            path.replace('/pipelines/', '/gui/'),
+            path.replace('/pipelines/', '/gui/').replace('.json', '.png'),
+        ]
+
+    def oncopy(self):
+        name = self.text.split('/')[-1].replace('.json', '')
+        text, ok = QInputDialog.getText(self, f'Copy {name}', 'New name:')
+        if ok:
+            if os.path.exists(self.text.replace(name, text)):
+                raise Exception('Pipeline already exists')
+            for f in self._associated_files(self.text):
+                shutil.copyfile(f, f.replace(name, text))
+
+    def ondelete(self):
+        reply = QMessageBox.question(self, 'Delete', f'Are you sure you want to delete {self.text}', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            for f in self._associated_files(self.text):
+                if os.path.exists(f):
+                    os.remove(f)
 
     def text_changed(self, text):
         self.selected.setText(text)
