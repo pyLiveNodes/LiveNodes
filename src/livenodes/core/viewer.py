@@ -8,7 +8,7 @@ from .node import Node, Location
 
 
 class View(Node):
-    def __init__(self, name, compute_on=Location.THREAD):
+    def __init__(self, name, compute_on=Location.SAME):
         super().__init__(name, compute_on)
 
         # TODO: consider if/how to disable the visualization of a node?

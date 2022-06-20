@@ -1,4 +1,5 @@
-from livenodes.core.node import Node
+import traceback
+from livenodes.core.node import Node, Location
 from livenodes.biokit.biokit import recognizer
 import livenodes.biokit.utils as biokit_utils
 
@@ -37,13 +38,19 @@ class Biokit_recognizer(Node):
                  model_path,
                  token_insertion_penalty,
                  name="Recognizer",
+                 compute_on=Location.THREAD,
                  **kwargs):
-        super().__init__(name, **kwargs)
+        super().__init__(name, compute_on=compute_on, **kwargs)
 
         self.model_path = model_path
         self.token_insertion_penalty = token_insertion_penalty
 
-        self._load_recognizer()
+        try:
+            self._load_recognizer()
+        except Exception as err:
+            print(err)
+            print(traceback.format_exc())
+            self.warn('Could not load recognizer')
         self.file = None
 
     def _load_recognizer(self):

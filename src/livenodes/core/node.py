@@ -23,7 +23,7 @@ class Location(IntEnum):
 
 class QueueHelperHack():
 
-    def __init__(self, compute_on=Location.THREAD):
+    def __init__(self, compute_on=Location.SAME):
         # self.queue = mp.Queue()
         # The assumption behind this compute_on check is not correct -> (as long as the processes are created inside the node.node_start() method)
         # if we are on thread or queue -> always use mp as we are in a suprocess to the *first* parent, that called start_node on us
@@ -216,7 +216,7 @@ class Node():
     # === Basic Stuff =================
     def __init__(self,
                  name="Name",
-                 compute_on=Location.THREAD):
+                 compute_on=Location.SAME):
 
         self.name = name
 
@@ -312,7 +312,7 @@ class Node():
         # Assume no nodes in the graph have the same name+node_class -> should be checked in the add_inputs
         res = {str(self): self.get_settings()}
         if graph:
-            for node in self.discover_graph(self):
+            for node in self.sort_discovered_nodes(self.discover_graph(self)):
                 res[str(node)] = node.get_settings()
         return res
 
@@ -782,6 +782,10 @@ class Node():
         return list(set(nodes))
 
     @staticmethod
+    def sort_discovered_nodes(nodes):
+        return list(sorted(nodes, key=lambda x: f"{len(x.discover_output_deps(x))}_{str(x)}"))
+
+    @staticmethod
     def discover_output_deps(node):
         # TODO: consider adding a channel parameter, ie only consider dependents of this channel
         """
@@ -824,7 +828,7 @@ class Node():
                         discovered_nodes.append(n)
                         stack.put(n)
 
-        return node.remove_discovered_duplicates(found_nodes)
+        return node.sort_discovered_nodes(node.remove_discovered_duplicates(found_nodes))
 
     def requires_input_of(self, node):
         # self is always a child of itself
