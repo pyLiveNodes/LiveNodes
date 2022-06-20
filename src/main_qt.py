@@ -1,7 +1,6 @@
 import sys
 import traceback
 from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSizePolicy
 
 from livenodes.gui.home import Home
 from livenodes.gui.config import Config
@@ -17,7 +16,6 @@ import time
 import os
 
 from state import State
-from traitlets import HasTraits
 
 
 def noop(*args, **kwargs):
