@@ -5,7 +5,7 @@ import multiprocessing as mp
 
 from livenodes.core.node import Node
 from .components.node_views import node_view_mapper
-from .pages.page import Page
+from .components.page import Page
 
 # adapted from: https://stackoverflow.com/questions/39835300/python-qt-and-matplotlib-scatter-plots-with-blitting
 class Run(Page):

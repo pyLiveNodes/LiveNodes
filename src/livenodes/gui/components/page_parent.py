@@ -1,18 +1,13 @@
 from functools import partial
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSizePolicy
-from livenodes.gui.components.utils import noop
 
-from livenodes.gui.pages.page import ActionKind, Action
+from .utils import noop
+from .page import ActionKind, Action
 
 class Parent(QWidget):
 
     def __init__(self, child, name, back_fn, parent=None):
         super().__init__(parent)
-
-        # toolbar = self.addToolBar(name)
-        # toolbar.setMovable(False)
-        # home = QAction("Home", self)
-        # toolbar.addAction(home)
 
         self.back_fn = back_fn
 

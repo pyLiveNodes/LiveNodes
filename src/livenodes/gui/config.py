@@ -4,7 +4,7 @@ import json
 import os
 import itertools
 
-from PyQt5.QtWidgets import QSplitter, QWidget, QHBoxLayout
+from PyQt5.QtWidgets import QSplitter, QHBoxLayout
 from livenodes.gui.components import CustomDialog
 
 import qtpynodeeditor
@@ -13,7 +13,7 @@ from qtpynodeeditor.type_converter import TypeConverter
 
 from .components.edit import NodeConfigureContainer, CustomDialog
 from .components.utils import noop
-from .pages.page import ActionKind, Page, Action
+from .components.page import ActionKind, Page, Action
 
 class CustomNodeDataModel(NodeDataModel, verify=False):
 

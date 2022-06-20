@@ -1,9 +1,7 @@
-from functools import partial
 from enum import IntEnum
-from re import L
 
 from PyQt5.QtWidgets import QWidget
-from livenodes.gui.components.utils import noop
+from .utils import noop
 
 
 class ActionKind(IntEnum):

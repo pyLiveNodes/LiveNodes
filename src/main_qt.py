@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButt
 from livenodes.gui.home import Home
 from livenodes.gui.config import Config
 from livenodes.gui.run import Run
-from livenodes.gui.pages.parent_page import Parent
+from livenodes.gui.components.page_parent import Parent
 from livenodes.core.node import Node
 from livenodes.core import global_registry
 
@@ -17,6 +17,7 @@ import time
 import os
 
 from state import State
+from traitlets import HasTraits
 
 
 def noop(*args, **kwargs):
@@ -53,7 +54,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def stop(self):
         cur = self.central_widget.currentWidget()
-        cur.stop()
+        if hasattr(cur, 'stop'):
+            cur.stop()
 
         if self.log_file is not None:
             logger.remove_cb(self._log_helper)
