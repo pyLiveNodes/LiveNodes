@@ -13,9 +13,8 @@ import qtpynodeeditor
 from qtpynodeeditor import (NodeDataModel, NodeDataType, PortType)
 from qtpynodeeditor.type_converter import TypeConverter
 
-from .edit import NodeConfigureContainer, CustomDialog
+from .edit_node import CreateNodeDialog
 from .utils import noop
-from .page import ActionKind, Page, Action
 
 class CustomNodeDataModel(NodeDataModel, verify=False):
 
@@ -79,7 +78,7 @@ def attatch_click_cb(node_graphic_ob, cb):
     prev_fn = node_graphic_ob.mousePressEvent
 
     def new_fn(event):
-        cb(event)
+        cb()
         prev_fn(event)
 
     node_graphic_ob.mousePressEvent = new_fn
@@ -88,7 +87,6 @@ def attatch_click_cb(node_graphic_ob, cb):
 
 class QT_Graph_edit(QWidget):
     node_selected = pyqtSignal(Node)
-    node_create = pyqtSignal(Node)
 
     def __init__(self, pipeline_path, pipeline=None, node_registry=None, parent=None):
         super().__init__(parent)
@@ -115,8 +113,8 @@ class QT_Graph_edit(QWidget):
 
         view_nodes = qtpynodeeditor.FlowView(self.scene)
 
-        layout = QHBoxLayout(self)
-        layout.addWidget(view_nodes)
+        self.layout = QHBoxLayout(self)
+        self.layout.addWidget(view_nodes)
 
         ### Add nodes and layout
         layout = None
@@ -143,9 +141,9 @@ class QT_Graph_edit(QWidget):
             smart_node.remove_all_inputs()
 
     def _create_pl_node(self, node):
-        print("Added:", node)
+        # print("Added:", node)
         # TODO: make this more in line with the qtpynodeetitor style
-        msg = CustomDialog(node)
+        msg = CreateNodeDialog(node)
         if msg.exec():
             # Successed
             try:
@@ -153,7 +151,7 @@ class QT_Graph_edit(QWidget):
                 node.model.set_node_association(pl_node)
                 node._graphics_obj = attatch_click_cb(
                     node._graphics_obj,
-                    partial(self.node_create, pl_node))
+                    partial(self.node_selected.emit, pl_node))
                     # partial(self.view_configure.set_pl_node, pl_node))
             except Exception as err:
                 # Failed
@@ -289,7 +287,8 @@ class QT_Graph_edit(QWidget):
                 # COMMENT: ouch, this feels very wrong...
                 s_nodes[name]._graphics_obj = attatch_click_cb(
                     s_nodes[name]._graphics_obj,
-                    partial(self.view_configure.set_pl_node, n))
+                    partial(self.node_selected.emit, n))
+                    # partial(self.view_configure.set_pl_node, n))
 
     def _find_initial_pl(self, pl_nodes):
         # initial node: assume the first node we come across, that doesn't have any inputs is our initial node
