@@ -13,6 +13,7 @@ from qtpynodeeditor.type_converter import TypeConverter
 
 from .components.edit import NodeConfigureContainer, CustomDialog
 from .components.utils import noop
+from .pages.page import ActionKind, Page, Action
 
 class CustomNodeDataModel(NodeDataModel, verify=False):
 
@@ -83,7 +84,7 @@ def attatch_click_cb(node_graphic_ob, cb):
     return node_graphic_ob
 
 
-class Config(QWidget):
+class Config(Page):
 
     def __init__(self, pipeline_path, pipeline=None, node_registry=None, parent=None):
         super().__init__(parent)
@@ -141,11 +142,11 @@ class Config(QWidget):
         # self.scene.auto_arrange('graphviz_layout', prog='dot', scale=1)
         # self.scene.auto_arrange('graphviz_layout', scale=3)
 
-    # def get_actions(self):
-    #     return [ \
-    #         dict(label="Cancel", fn=self.save, kind='back'),
-    #         dict(label="Back", fn=noop, kind='back'),
-    #     ]
+    def get_actions(self):
+        return [ \
+            Action(label="Back", kind=ActionKind.BACK),
+            Action(label="Cancel", fn=self.save, kind=ActionKind.BACK),
+        ]
 
     def _remove_pl_node(self, node):
         smart_node = node.model.association_to_node

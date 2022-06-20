@@ -1,23 +1,14 @@
-import math
-import traceback
 from livenodes.core import viewer
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 
-from matplotlib.figure import Figure
-from matplotlib import animation
-import matplotlib.pyplot as plt
-import time
-from PyQt5 import QtCore
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QGridLayout, QWidget
+from PyQt5.QtWidgets import QGridLayout
 import multiprocessing as mp
 
 from livenodes.core.node import Node
-
 from .components.node_views import node_view_mapper
+from .pages.page import Page
 
 # adapted from: https://stackoverflow.com/questions/39835300/python-qt-and-matplotlib-scatter-plots-with-blitting
-class Run(QWidget):
+class Run(Page):
 
     def __init__(self, pipeline, parent=None):
         super().__init__(parent=parent)

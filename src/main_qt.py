@@ -1,5 +1,3 @@
-from collections import defaultdict
-from functools import partial, reduce
 import sys
 import traceback
 from PyQt5 import QtWidgets
@@ -8,6 +6,7 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButt
 from livenodes.gui.home import Home
 from livenodes.gui.config import Config
 from livenodes.gui.run import Run
+from livenodes.gui.pages.parent_page import Parent
 from livenodes.core.node import Node
 from livenodes.core import global_registry
 
@@ -16,38 +15,8 @@ from livenodes.core.logger import logger
 import datetime
 import time
 import os
-import json
 
-
-
-class SubView(QWidget):
-
-    def __init__(self, child, name, back_fn, parent=None):
-        super().__init__(parent)
-
-        # toolbar = self.addToolBar(name)
-        # toolbar.setMovable(False)
-        # home = QAction("Home", self)
-        # toolbar.addAction(home)
-
-        button = QPushButton("Back")
-        button.setSizePolicy(QSizePolicy())
-        button.clicked.connect(back_fn)
-
-        toolbar = QHBoxLayout()
-        toolbar.addWidget(button)
-        toolbar.addStretch(1)
-        toolbar.addWidget(QLabel(name))
-
-        l1 = QVBoxLayout(self)
-        l1.addLayout(toolbar, stretch=0)
-        l1.addWidget(child, stretch=2)
-
-        self.child = child
-
-    def stop(self):
-        if hasattr(self.child, 'stop'):
-            self.child.stop()
+from state import State
 
 
 def noop(*args, **kwargs):
@@ -114,17 +83,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def return_home(self):
         cur = self.central_widget.currentWidget()
-
-        # TODO: this shoudl really be in a onclose event inside of config rather than here..., but i don't know yet when/how those are called or connected to...
-        if isinstance(cur.child, Config):
-            cur.child.save()
-            # vis_state, new_pl = cur.child.get_nodes()
-            # print(vis_state)
-            # for n in cur.child.get_nodes().values():
-            #     print(n.__getstate__())
-
         self._save_state(cur)
-
         self.stop()
         self.central_widget.setCurrentWidget(self.widget_home)
         self.central_widget.removeWidget(cur)
@@ -151,7 +110,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         pipeline = Node.load(pipeline_path)
         # TODO: make these logs project dependent as well
-        widget_run = SubView(child=Run(pipeline=pipeline),
+        widget_run = Parent(child=Run(pipeline=pipeline),
                              name=f"Running: {pipeline_path}",
                              back_fn=self.return_home)
         self.central_widget.addWidget(widget_run)
@@ -164,7 +123,7 @@ class MainWindow(QtWidgets.QMainWindow):
         print('CWD:', os.getcwd())
 
         pipeline = Node.load(pipeline_path)
-        widget_run = SubView(child=Config(pipeline=pipeline,
+        widget_run = Parent(child=Config(pipeline=pipeline,
                                           node_registry=global_registry,
                                           pipeline_path=pipeline_path),
                              name=f"Configuring: {pipeline_path}",
@@ -174,71 +133,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._set_state(widget_run)
 
-class State():
-    def __init__(self, values={}):
-        self.__spaces = {}
-        self.__values = values
-
-    def space_create(self, name, values={}):
-        if name in self.__spaces:
-            raise ValueError('Space already exists')
-        self.__spaces[name] = State(values=values)
-        return self.__spaces[name]
-    
-    def space_add(self, name, state):
-        if name in self.__spaces:
-            raise ValueError('Space already exists')
-        self.__spaces[name] = state
-
-    def space_get(self, name, fallback={}):
-        if name not in self.__spaces:
-            return self.space_create(name, values=fallback)
-        return self.__spaces.get(name)
-
-    def __repr__(self):
-        return '{values: ' + ','.join(self.__values.keys()) + 'spaces: ' + ','.join(self.__spaces.keys()) + '}'
-
-    def val_merge(self, *args):
-        # merges all dicts that are passed as arguments into the current values
-        # later dicts overwrite earlier ones
-        # self.__values is maintained
-        self.__values = reduce(lambda cur, nxt: {**nxt, **cur}, reversed([*args, self.__values]), {})
-
-    def val_exists(self, key):
-        return key in self.__values
-
-    def val_get(self, key, fallback=None):
-        if key not in self.__values and fallback is not None:
-            self.__values[key] = fallback
-        return self.__values[key]
-
-    def val_set(self, key, val):
-        self.__values[key] = val
-
-    def dict_to(self):
-        return {
-            'spaces': {key: val.dict_to() for key, val in self.__spaces.items()},
-            'values': self.__values
-        }
-
-    @staticmethod
-    def dict_from(dct):
-        state = State(dct.get('values', {}))
-        for key, space in dct.get('spaces', {}).items():
-            state.space_add(key, State.dict_from(space))
-        return state
-
-    def save(self, path):
-        with open(path, 'w') as f:
-            json.dump(self.dict_to(), f, indent=2)
-
-    @staticmethod
-    def load(path):
-        if os.path.exists(path):
-            with open(path, 'r') as f:
-                space = json.load(f)
-                return State.dict_from(space)
-        return State({})
 
 
 def main():
