@@ -31,15 +31,4 @@ class Config(Page):
         ]
 
     def save(self):
-        vis_state, pipeline = self.get_state()
-        print('initial node used for saving: ', str(pipeline))
-
-        with open(self.pipeline_gui_path, 'w') as f:
-            json.dump(vis_state, f, indent=2)
-
-        # TODO: For the moment, lets assume the start node stays the same, otherwise we'll have a problem...
-        pipeline.save(self.pipeline_path)
-        pipeline.dot_graph_full(transparent_bg=True).save(
-            self.pipeline_gui_path.replace('.json', '.png'), 'PNG')
-        pipeline.dot_graph_full(transparent_bg=False).save(
-            self.pipeline_path.replace('.json', '.png'), 'PNG')
+        self.edit_graph.save()
