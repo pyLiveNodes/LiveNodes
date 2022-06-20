@@ -144,8 +144,8 @@ class Config(Page):
 
     def get_actions(self):
         return [ \
-            Action(label="Back", kind=ActionKind.BACK),
-            Action(label="Cancel", fn=self.save, kind=ActionKind.BACK),
+            Action(label="Back", fn=self.save, kind=ActionKind.BACK),
+            Action(label="Cancel", kind=ActionKind.BACK),
         ]
 
     def _remove_pl_node(self, node):

@@ -53,8 +53,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def stop(self):
         cur = self.central_widget.currentWidget()
-        if hasattr(cur, 'stop'):
-            cur.stop()
+        cur.stop()
 
         if self.log_file is not None:
             logger.remove_cb(self._log_helper)
