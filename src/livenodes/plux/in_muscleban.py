@@ -1,4 +1,5 @@
 import numpy as np
+import time
 
 from livenodes.core.sender_blocking import BlockingSender
 
@@ -114,7 +115,7 @@ class In_muscleban(BlockingSender):
             # d = np.array(data)
             # if nSeq % 1000 == 0:
             #     print(nSeq, d, d.shape)
-            self._emit_data([[data]])
+            self._emit_data(np.array([[data]]) / 2**15 - 1)
 
         self._emit_data(self.channel_names, channel="Channel Names")
 
@@ -143,4 +144,9 @@ class In_muscleban(BlockingSender):
         self.device.start(self.freq, [emg_channel_src, acc_mag_channel_src])
         
         # calls self.device.onRawFrame until it returns True
-        self.device.loop() 
+        try:
+            self.device.loop() 
+        except RuntimeError:
+            self.info('Connection lost, trying to reconnect.')
+            time.sleep(0.1)
+            self._onstart()

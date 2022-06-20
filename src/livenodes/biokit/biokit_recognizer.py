@@ -1,3 +1,4 @@
+import traceback
 from livenodes.core.node import Node, Location
 from livenodes.biokit.biokit import recognizer
 import livenodes.biokit.utils as biokit_utils
@@ -47,6 +48,8 @@ class Biokit_recognizer(Node):
         try:
             self._load_recognizer()
         except Exception as err:
+            print(err)
+            print(traceback.format_exc())
             self.warn('Could not load recognizer')
         self.file = None
 
