@@ -6,8 +6,17 @@ from PyQtAds import QtAds
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
+        QtAds.CDockManager.setConfigFlag(QtAds.CDockManager.XmlCompressionEnabled, False)
+        # QtAds.CDockManager.setConfigFlag(QtAds.CDockManager.AllTabsHaveCloseButton, False)
+        
         self.setup_ui()
+        # QtAds.CDockManager.setConfigFlag(QtAds.CDockManager.AllTabsHaveCloseButton, False)
+        # print(QtAds.CDockManager.AllTabsHaveCloseButton)
+        # QtAds.CDockManager.XmlCompressionEnabled = False
+        # QtAds.CDockManager.AllTabsHaveCloseButton = False
         self.dock_manager = QtAds.CDockManager(self)
+        # help(self.dock_manager.saveState)
+        # help(self.dock_manager.addDockWidget)
 
         self.dock_widgets = []
 
@@ -28,6 +37,7 @@ class MainWindow(QtWidgets.QMainWindow):
             # as the dock widget content
             dock_widget = QtAds.CDockWidget(label_text)
             dock_widget.setWidget(label)
+            dock_widget.setFeature(QtAds.CDockWidget.DockWidgetClosable, False)
             # self.dock_widgets.append(dock_widget)
 
             # Add the toggleViewAction of the dock widget to the menu to give
@@ -65,7 +75,7 @@ def main(app):
     main.show()
     state = main.dock_manager.saveState()
     print('This is what the saved state looks like in XML:')
-    print(state)
+    print(str(state))#.decode("utf-16"))
     print()
     main.dock_manager.restoreState(state)
     return main
