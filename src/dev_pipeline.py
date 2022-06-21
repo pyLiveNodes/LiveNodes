@@ -47,9 +47,9 @@ if __name__ == '__main__':
 
     # # pipeline = In_playback(compute_on=Location.THREAD, block=False, files="./data/KneeBandageCSL2018/**/*.h5", meta=meta)
     # pipeline = In_playback(block=False, files="./data/bub/*.h5", meta=meta, annotation_holes="None")
-    pipeline = In_data(files="./data/bub/*.h5", meta=meta, emit_at_once=1)
+    pipeline = In_data(files="./data/bub/*.h5", meta=meta, emit_at_once=1, compute_on=3)
 
-    out = Out_data(folder="data/test/")
+    out = Out_data(folder="data/test/", compute_on=1)
     out.connect_inputs_to(pipeline)
 
     # channel_names = ['Gonio2', 'GyroLow1', 'GyroLow2', 'GyroLow3']
@@ -68,5 +68,6 @@ if __name__ == '__main__':
     # pipeline = Node.load('./pipelines/recognize_no_vis.json')
 
     pipeline.start()
-    time.sleep(1000000)
+    time.sleep(10)
+    # time.sleep(1000000)
     pipeline.stop()

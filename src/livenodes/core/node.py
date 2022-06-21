@@ -1,4 +1,5 @@
 from enum import IntEnum
+from functools import partial
 import json
 import numpy as np
 import time
@@ -12,6 +13,7 @@ from .logger import logger, LogLevel
 from .utils import NumpyEncoder
 from .clock_register import Clock_Register
 from .connection import Connection
+from .perf import Time_Per_Call, Time_Between_Call
 
 from . import global_registry
 
@@ -95,6 +97,10 @@ class Node():
     # have a register of clock ticks in the graph on the node class (should never be overwritten)
     # everytime a child node processes something it registers this here
     # then we can join the whole graph by waiting until in this register all ctrs are as high as the highest senders (if all senders have stopped sending)
+    # ---
+    # TODO: figure out how this behaves when loading the module only once, but executing the piplines twice!
+    # Worst case: the state is kept and all the ctrs are wrong :/
+    # I think this should be fine tho, as the logger seems to work and is the same (?!?)
     _clocks = Clock_Register()
 
     # === Basic Stuff =================
@@ -135,10 +141,12 @@ class Node():
 
         self.info('Computing on: ', self.compute_on)        
 
+        self._perf_user_fn = Time_Per_Call()
+        self._perf_framework = Time_Between_Call()
         if should_time:
-            self._call_user_fn = self._call_fn_time
+            self._call_user_fn_process = partial(self._perf_framework.call_fn, partial(self._perf_user_fn.call_fn, self._call_user_fn))
         else:
-            self._call_user_fn = self._call_fn
+            self._call_user_fn_process = self._call_user_fn
 
     def __repr__(self):
         return str(self)
@@ -408,13 +416,7 @@ class Node():
             print("Stopping:", node, children)
             node.stop_node(children=children)
 
-    def _call_fn_time(self, _fn, _fn_name, *args, **kwargs):
-        start = timer()
-        res = self._call_fn(_fn, _fn_name, *args, **kwargs)
-        self.debug(timer() - start)
-        return res
-
-    def _call_fn(self, _fn, _fn_name, *args, **kwargs):
+    def _call_user_fn(self, _fn, _fn_name, *args, **kwargs):
         try:
             return _fn(*args, **kwargs)
         except Exception as e:
@@ -604,6 +606,11 @@ class Node():
     #         self.debug('next tick data:', self._retrieve_current_data(ctr=ctr + 1).keys())
     #     return False
 
+    def _report_perf(self):
+        processing_duration = self._perf_user_fn.average()
+        invocation_duration = self._perf_framework.average()
+        self.debug(f'Processing: {processing_duration * 1000:.5f}ms; Time between calls: {(invocation_duration - processing_duration) * 1000:.5f}ms; Time between invocations: {invocation_duration * 1000:.5f}ms')
+
     def _process(self, ctr):
         """
         called in location of self
@@ -624,8 +631,9 @@ class Node():
             # sender will never receive inputs and therefore will never have
             # TODO: IMPORTANT: every node it's own clock seems to have been a mistake: go back to the original idea of "senders and syncs implement clocks and everyone else just passes them along"
             self._ctr = ctr
-            self._call_user_fn(self.process, 'process', **_current_data, _ctr=ctr)
+            self._call_user_fn_process(self.process, 'process', **_current_data, _ctr=ctr)
             self.verbose('process fn finished')
+            self._report_perf()
             for queue in self._received_data.values():
                 queue.discard_before(ctr)
 

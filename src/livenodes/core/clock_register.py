@@ -9,18 +9,18 @@ class Clock_Register():
 
     _store = mp.Event()
 
-    def __init__(self, should_time=False):
+    def __init__(self):
         self._owner_process = mp.current_process()
         self._owner_thread = threading.current_thread()
-        self.should_time = should_time
+        # self.should_time = should_time
 
     # called in sub-processes
     def register(self, name, ctr):
-        if self.should_time:
-            raise NotImplementedError()
-        else:
-            if not self._store.is_set():
-                self.queue.put((name, ctr, None))
+        # if self.should_time:
+        #     raise NotImplementedError()
+        # else:
+        if not self._store.is_set():
+            self.queue.put((name, ctr, None))
 
     def set_passthrough(self):
         self._store.set()

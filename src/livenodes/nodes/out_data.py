@@ -3,6 +3,7 @@ import datetime
 import h5py
 import json
 import os
+import numpy as np
 
 from livenodes.core.node import Node, Location
 
@@ -40,6 +41,8 @@ class Out_data(Node):
 
         self.channels = None
 
+        self.buffer = []
+
     def _settings(self):
         return {\
             "folder": self.folder
@@ -52,6 +55,7 @@ class Out_data(Node):
         self.info('Created Files')
 
     def _onstop(self):
+        self._append_buffer_to_file()
         self.outputFile.close()
         if self.last_annotation is not None:
             self.outputFileAnnotation.write(
@@ -97,11 +101,21 @@ class Out_data(Node):
             self._write_meta(m_dict)
 
         if annotation is not None:
-            self.receive_annotation(annotation)
+            self.receive_annotation(np.vstack(annotation))
+        
+        # self.outputDataset.resize(self.outputDataset.shape[0] + len(data),
+        #                           axis=0)
+        # self.outputDataset[-len(data):] = data
+        self.buffer.append(np.vstack(data)) # remove batches
+        if len(self.buffer) > 100:
+            self._append_buffer_to_file()
 
-        self.outputDataset.resize(self.outputDataset.shape[0] + len(data),
+    def _append_buffer_to_file(self):
+        d = np.concatenate(self.buffer, axis=0) # concat buffer and write to file
+        self.buffer = []
+        self.outputDataset.resize(self.outputDataset.shape[0] + len(d),
                                   axis=0)
-        self.outputDataset[-len(data):] = data
+        self.outputDataset[-len(d):] = d
 
     def receive_annotation(self, data_frame, **kwargs):
         # For now lets assume the file is always open before this is called.

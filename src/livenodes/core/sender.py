@@ -1,5 +1,7 @@
+from functools import partial
 from .node import Node, Location
 from .clock import Clock
+from .utils import noop
 
 class Sender(Node):
     """
@@ -64,11 +66,13 @@ class Sender(Node):
     def _process_on_proc(self):
         self.info('Started subprocess')
         runner = self._run()
+        fn = partial(self._call_user_fn_process, next, "runner")
         try:
             # as long as we do not receive a termination signal and there is data, we will send data
             while not self._acquire_lock(
                     self._subprocess_info['termination_lock'],
-                    block=False) and next(runner):
+                    block=False) and fn(runner):
+                self._report_perf()
                 self._on_runner()
 
         except StopIteration:
@@ -91,7 +95,9 @@ class Sender(Node):
             # iterate until the generator that is run() returns false, ie no further data is to be processed
             try:
                 runner = self._run()
-                while next(runner):
+                fn = partial(self._call_user_fn_process, next, "runner")
+                while fn(runner):
+                    self._report_perf()
                     self._on_runner()
             except StopIteration:
                 self.warn(
