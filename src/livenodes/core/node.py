@@ -1,5 +1,4 @@
 from enum import IntEnum
-from functools import reduce
 import json
 import numpy as np
 import time
@@ -7,9 +6,12 @@ import multiprocessing as mp
 import queue
 import threading
 import traceback
+from timeit import default_timer as timer
 
 from .logger import logger, LogLevel
 from .utils import NumpyEncoder
+from .clock_register import Clock_Register
+from .connection import Connection
 
 from . import global_registry
 
@@ -78,124 +80,6 @@ class QueueHelperHack():
         return False, None
 
 
-class Clock():
-
-    def __init__(self, node, should_time):
-        self.ctr = 0
-        self.times = []
-        self.node = node
-
-        if should_time:
-            self.tick = self._tick_with_time
-        else:
-            self.tick = self._tick
-
-    def _tick_with_time(self):
-        self.ctr += 1
-        self.times.append(time.time())
-        return self.ctr
-
-    def _tick(self):
-        self.ctr += 1
-        return self.ctr
-
-
-class Connection():
-    # TODO: consider creating a channel registry instead of using strings?
-    def __init__(self,
-                 emitting_node,
-                 receiving_node,
-                 emitting_channel="Data",
-                 receiving_channel="Data",
-                 connection_counter=0):
-        self._emitting_node = emitting_node
-        self._receiving_node = receiving_node
-        self._emitting_channel = emitting_channel
-        self._receiving_channel = receiving_channel
-        self._connection_counter = connection_counter
-
-    def __repr__(self):
-        return f"{str(self._emitting_node)}.{self._emitting_channel} -> {str(self._receiving_node)}.{self._receiving_channel}"
-
-    def to_dict(self):
-        return {
-            "emitting_node": str(self._emitting_node),
-            "receiving_node": str(self._receiving_node),
-            "emitting_channel": self._emitting_channel,
-            "receiving_channel": self._receiving_channel,
-            "connection_counter": self._connection_counter
-        }
-
-    def _set_connection_counter(self, counter):
-        self._connection_counter = counter
-
-    def _similar(self, other):
-        return self._emitting_node == other._emitting_node and \
-            self._receiving_node == other._receiving_node and \
-            self._emitting_channel == other._emitting_channel and \
-            self._receiving_channel == other._receiving_channel
-
-    def __eq__(self, other):
-        return self._similar(
-            other) and self._connection_counter == other._connection_counter
-
-
-# class LogLevels(Enum):
-#     Debug
-
-
-class Clock_Register():
-    state = {}
-    times = {}
-
-    queue = mp.SimpleQueue()
-
-    _store = mp.Event()
-
-    def __init__(self, should_time=False):
-        self._owner_process = mp.current_process()
-        self._owner_thread = threading.current_thread()
-        self.should_time = should_time
-
-    # called in sub-processes
-    def register(self, name, ctr):
-        if self.should_time:
-            raise NotImplementedError()
-        else:
-            if not self._store.is_set():
-                self.queue.put((name, ctr, None))
-
-    def set_passthrough(self):
-        self._store.set()
-        self.queue = None
-
-    # called in main/handling process
-    def read_state(self):
-        if self._owner_process != mp.current_process():
-            raise Exception('Called from wrong process')
-        if self._owner_thread != threading.current_thread():
-            raise Exception('Called from wrong thread')
-
-        while not self.queue.empty():
-            name, ctr, time = self.queue.get()
-            if name not in self.state:
-                self.state[name] = []
-                self.times[name] = []
-
-            self.state[name].append(ctr)
-            self.times[name].append(time)
-
-        return self.state, self.times
-
-    def all_at(self, ctr):
-        states, _ = self.read_state()
-
-        for name, ctrs in states.items():
-            if max(ctrs) < ctr:
-                return False
-
-        return True
-
 
 class Node():
     # === Information Stuff =================
@@ -216,7 +100,8 @@ class Node():
     # === Basic Stuff =================
     def __init__(self,
                  name="Name",
-                 compute_on=Location.SAME):
+                 compute_on=Location.SAME, 
+                 should_time=False):
 
         self.name = name
 
@@ -249,6 +134,11 @@ class Node():
             }
 
         self.info('Computing on: ', self.compute_on)        
+
+        if should_time:
+            self._call_user_fn = self._call_fn_time
+        else:
+            self._call_user_fn = self._call_fn
 
     def __repr__(self):
         return str(self)
@@ -518,7 +408,13 @@ class Node():
             print("Stopping:", node, children)
             node.stop_node(children=children)
 
-    def _call_user_fn(self, _fn, _fn_name, *args, **kwargs):
+    def _call_fn_time(self, _fn, _fn_name, *args, **kwargs):
+        start = timer()
+        res = self._call_fn(_fn, _fn_name, *args, **kwargs)
+        self.debug(timer() - start)
+        return res
+
+    def _call_fn(self, _fn, _fn_name, *args, **kwargs):
         try:
             return _fn(*args, **kwargs)
         except Exception as e:
@@ -926,11 +822,3 @@ class Node():
         executed on stop, should return! (if you need always running -> blockingSender)
         """
         pass
-
-
-# class Transform(Node):
-#     """
-#     The default node.
-#     Takes input and produces output
-#     """
-#     pass

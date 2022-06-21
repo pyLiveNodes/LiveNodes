@@ -1,5 +1,5 @@
-from .node import Node, Location, Clock
-
+from .node import Node, Location
+from .clock import Clock
 
 class Sender(Node):
     """

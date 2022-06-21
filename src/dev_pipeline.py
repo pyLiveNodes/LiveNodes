@@ -1,6 +1,9 @@
 import os
+import time
+from livenodes.nodes.in_data import In_data
 
-# from livenodes.nodes.in_playback import In_playback
+from livenodes.nodes.in_playback import In_playback
+from livenodes.nodes.out_data import Out_data
 # from livenodes.nodes.draw_lines import Draw_lines
 from livenodes.core.node import Node, Location
 from livenodes.core.logger import logger, LogLevel
@@ -14,7 +17,7 @@ if __name__ == '__main__':
     logger.register_cb(_log_helper)
     logger.set_log_level(LogLevel.VERBOSE)
 
-    os.chdir('./projects/test_ask')
+    os.chdir('./sl')
 
     print('=== Construct Pipeline ====')
     # channel_names_raw = ['EMG1', 'Gonio2', 'AccLow2']
@@ -30,14 +33,24 @@ if __name__ == '__main__':
     #     'GyroUp1', 'GyroUp2', 'GyroUp3',
     #     'GyroLow1', 'GyroLow2', 'GyroLow3']
 
-    # meta = {
-    #     "sample_rate": 1000,
-    #     "channels": recorded_channels,
-    #     "targets": ['cspin-ll', 'run', 'jump-2', 'shuffle-l', 'sit', 'cstep-r', 'vcut-rr', 'stair-down', 'stand-sit', 'jump-1', 'sit-stand', 'stand', 'cspin-lr', 'cspin-rr', 'cstep-l', 'vcut-ll', 'vcut-rl', 'shuffle-r', 'stair-up', 'walk', 'cspin-rl', 'vcut-lr']
-    # }
+    meta = {
+        "sample_rate": 400,
+        "channels": [    "EMG1",
+                "ACC_X",
+                "ACC_Y",
+                "ACC_Z",
+                "MAG_X",
+                "MAG_Y",
+                "MAG_Z"],
+        "targets": ["None", "Left Right"]
+    }
 
     # # pipeline = In_playback(compute_on=Location.THREAD, block=False, files="./data/KneeBandageCSL2018/**/*.h5", meta=meta)
-    # pipeline = In_playback(compute_on=Location.PROCESS, block=False, files="./data/KneeBandageCSL2018/**/*.h5", meta=meta)
+    # pipeline = In_playback(block=False, files="./data/bub/*.h5", meta=meta, annotation_holes="None")
+    pipeline = In_data(files="./data/bub/*.h5", meta=meta, emit_at_once=1)
+
+    out = Out_data(folder="data/test/")
+    out.connect_inputs_to(pipeline)
 
     # channel_names = ['Gonio2', 'GyroLow1', 'GyroLow2', 'GyroLow3']
     # idx = np.isin(recorded_channels, channel_names).nonzero()[0]
@@ -51,10 +64,9 @@ if __name__ == '__main__':
     # pipeline = Node.load('./pipelines/recognize.json')
     # pipeline = Node.load('./pipelines/preprocess.json')
     # pipeline = Node.load('./pipelines/train.json')
-    pipeline = Node.load('./pipelines/preprocess_no_vis.json')
+    # pipeline = Node.load('./pipelines/preprocess_no_vis.json')
     # pipeline = Node.load('./pipelines/recognize_no_vis.json')
 
     pipeline.start()
-    pipeline.join()
-    # time.sleep(1000000)
+    time.sleep(1000000)
     pipeline.stop()
