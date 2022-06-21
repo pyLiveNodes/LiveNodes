@@ -1,6 +1,7 @@
 name: livenodes
 channels:
   - defaults
+  - conda-forge
 dependencies:
   - python=3.8
   - seaborn
@@ -16,6 +17,7 @@ dependencies:
   - graphviz
   - pyqt
   - PyQtAds
+  - python-dotenv
   - pip
   - pip:
     - qtpynodeeditor
