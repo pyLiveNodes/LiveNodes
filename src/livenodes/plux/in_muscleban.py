@@ -1,4 +1,5 @@
 import numpy as np
+import time
 
 from livenodes.core.sender_blocking import BlockingSender
 
@@ -56,7 +57,7 @@ class In_muscleban(BlockingSender):
         "name": "Biosignalsplux",
     }
 
-    channel_names = [ "EMG1"
+    channel_names = [ "EMG1",
             "ACC_X", "ACC_Y", "ACC_Z", 
             "MAG_X", "MAG_Y", "MAG_Z"]
 
@@ -91,10 +92,30 @@ class In_muscleban(BlockingSender):
         """
 
         def onRawFrame(nSeq, data):
+            # nonlocal self
+            # array = np.asarray(data).astype(float)
+            # for x in range(len(array)):
+            #     if x == 0:
+            #         # EMG RAW TRANSFER FUNCTION
+            #         array[x] = (((array[x] / (np.power(2, self.n_bits)) - 1) - 1 / 2.0) * 2.5) / 1100.0
+            #         # EMG ENVELOPED TRANSFER FUNCTION
+            #         # out[x] = ((array[x] / (np.power(2, self.n_bits) - 1)) * 2.5) / 1100
+            #     if 0 < x < 4:
+            #         # ACCELEROMETER TRANSFER FUNCTION
+            #         if x == 3:
+            #             array[x] = (array[x] - (np.power(2, self.n_bits) / 2.0)) * (8 / (np.power(2, self.n_bits))) - 1
+            #         else:
+            #             array[x] = (array[x] - (np.power(2, self.n_bits) / 2.0)) * (8 / (np.power(2, self.n_bits)))
+            #     else:
+            #         # MAGNETOMETER TRANSFER FUNCTION
+            #         array[x] = (array[x] - (np.power(2, self.n_bits) / 2.0)) * 0.1
+            # # data = tuple(array)
+            # data = array
+
             # d = np.array(data)
             # if nSeq % 1000 == 0:
             #     print(nSeq, d, d.shape)
-            self._emit_data([[data]])
+            self._emit_data(np.array([[data]]) / 2**15 - 1)
 
         self._emit_data(self.channel_names, channel="Channel Names")
 
@@ -123,4 +144,9 @@ class In_muscleban(BlockingSender):
         self.device.start(self.freq, [emg_channel_src, acc_mag_channel_src])
         
         # calls self.device.onRawFrame until it returns True
-        self.device.loop() 
+        try:
+            self.device.loop() 
+        except RuntimeError:
+            self.info('Connection lost, trying to reconnect.')
+            time.sleep(0.1)
+            self._onstart()
