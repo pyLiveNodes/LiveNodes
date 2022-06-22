@@ -7,6 +7,7 @@ from matplotlib import animation
 import matplotlib.pyplot as plt
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QWidget
+from PyQt5.QtCore import QTimer
 
 
 import seaborn as sns
@@ -35,7 +36,13 @@ class QT_View(QWidget):
 
         # self.setStyleSheet("QWidget { background-color: 'white' }") 
         self.setProperty("cssClass", "bg-white")
-        node.init_draw(self)
+        artist_update_fn = node.init_draw(self)
+
+        if artist_update_fn is not None:
+            self.timer = QTimer(self)
+            self.timer.setInterval(10) # max 100fps
+            self.timer.timeout.connect(artist_update_fn)
+            self.timer.start()
 
         # self.setBackgroundRole(True)
         # p = self.palette()

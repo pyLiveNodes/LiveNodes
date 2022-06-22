@@ -101,7 +101,8 @@ class Out_data(Node):
             self._write_meta(m_dict)
 
         if annotation is not None:
-            self.receive_annotation(np.vstack(annotation))
+            # self.receive_annotation(np.vstack(annotation))
+            self.receive_annotation(annotation)
         
         # self.outputDataset.resize(self.outputDataset.shape[0] + len(data),
         #                           axis=0)

@@ -57,11 +57,6 @@ class MainWindow(QtWidgets.QMainWindow):
         # self.widget_home.setProperty("cssClass", "home")
         self._set_state(self.widget_home)
 
-    # def resizeEvent(self, event):
-    #     # self.resized.emit()
-    #     self.widget_home.refresh_selection()
-    #     return super().resizeEvent(event)
-
     def stop(self):
         cur = self.central_widget.currentWidget()
         if hasattr(cur, 'stop'):

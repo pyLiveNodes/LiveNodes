@@ -3,8 +3,8 @@ import queue
 import time
 from PyQt5.QtWidgets import QLabel, QVBoxLayout
 
-
 from .node import Node, Location
+
 
 
 class View(Node):
@@ -85,6 +85,22 @@ class View(Node):
             self._draw_state.put_nowait(kwargs)
             # self.verbose('Stored for draw')
 
+class FPS_Helper():
+    def __init__(self, name):
+        self.name = name
+        self.n_frames = 0
+        self.n_frames_total = 0
+        self.report_every_x_seconds = 10
+        self.timer = time.time()
+        
+    def count(self):
+        self.n_frames += 1
+        el_time = time.time() - self.timer
+        if el_time > self.report_every_x_seconds:
+            self.n_frames_total += self.n_frames
+            print(f"Current fps: {self.n_frames / el_time:.2f} (Total frames: {self.n_frames_total}) -- {self.name}")
+            self.timer = time.time()
+            self.n_frames = 0
 
 class View_MPL(View):
     def _init_draw(self, subfig):
@@ -108,13 +124,13 @@ class View_MPL(View):
         # ie create a variable outside of the update scope, that we can assign lists to
         artis_storage = {'returns': []}
 
-        self.timer = time.time()
-        # self.frames = 0
-        fps_every_x_frames = 500
+        fps = FPS_Helper(str(self))
 
         def update(n_frames, **kwargs):
-            nonlocal update_fn, artis_storage, self, fps_every_x_frames
+            nonlocal update_fn, artis_storage, self, fps
             cur_state = {}
+
+            fps.count()
 
             try:
                 cur_state = self._draw_state.get_nowait()
@@ -128,13 +144,6 @@ class View_MPL(View):
             else:
                 self.debug('Decided not to draw', cur_state.keys())
                     
-            if n_frames % fps_every_x_frames == 0 and n_frames != 0:
-                el_time = time.time() - self.timer
-                self.timer = time.time()
-                # self.frames = n_frames - self.frames
-                # self.info(f"Current fps: {fps_every_x_frames / el_time:.2f} (Total frames: {n_frames})")
-                print(f"Current fps ({str(self)}): {fps_every_x_frames / el_time:.2f} (Total frames: {n_frames})")
-
             return artis_storage['returns']
 
         return update
@@ -149,5 +158,30 @@ class View_QT(View):
         """
         Heart of the nodes drawing, should be a functional function
         """
-        self._init_draw(parent=parent)
+        update_fn = self._init_draw(parent=parent)
         
+        fps = FPS_Helper(str(self))
+
+        # TODO: figure out more elegant way to not have this blocking until new data is available...
+        def update_blocking():
+            nonlocal update_fn, fps
+            cur_state = {}
+            
+            fps.count()
+
+            try:
+                cur_state = self._draw_state.get_nowait()
+                # cur_state = self._draw_state.get(block=True, timeout=0.05)
+            except queue.Empty:
+                pass
+
+            if self._should_draw(**cur_state):
+                self.verbose('Decided to draw', cur_state.keys())
+                update_fn(**cur_state)
+                return True
+            else:
+                self.debug('Decided not to draw', cur_state.keys())
+
+            return False
+
+        return update_blocking

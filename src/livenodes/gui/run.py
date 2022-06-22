@@ -1,3 +1,5 @@
+from functools import partial
+from turtle import width
 from livenodes.core import viewer
 import os
 import json
@@ -32,9 +34,12 @@ class Run(Page):
         self.layout = QHBoxLayout(self)
         self.dock_manager = QtAds.CDockManager(self)
         self.layout.addWidget(self.dock_manager)
+        self.widgets = []
 
         for widget, node in zip(self.draw_widgets, self.nodes):
             dock_widget = QtAds.CDockWidget(node.name)
+            self.widgets.append(dock_widget)
+            dock_widget.viewToggled.connect(partial(print, '=======', str(node), "qt emitted signal"))
             dock_widget.setWidget(widget)
             dock_widget.setFeature(QtAds.CDockWidget.DockWidgetClosable, False)
 
@@ -43,6 +48,14 @@ class Run(Page):
         if os.path.exists(self.pipeline_gui_path):
             with open(self.pipeline_gui_path, 'r') as f:
                 self.dock_manager.restoreState(QtCore.QByteArray(f.read().encode()))
+
+        # restore might remove some of the newly added widgets -> add it back in here
+        for widget, node in zip(self.widgets, self.nodes):
+            if widget.isClosed():
+                # print('----', str(node))
+                widget.setClosedState(False)
+                self.dock_manager.addDockWidget(QtAds.RightDockWidgetArea, widget)
+
 
         # === Start pipeline =================================================
         self.worker_term_lock = mp.Lock()
