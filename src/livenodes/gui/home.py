@@ -8,7 +8,6 @@ import shutil
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QInputDialog, QMessageBox, QToolButton, QComboBox, QComboBox, QPushButton, QVBoxLayout, QWidget, QGridLayout, QHBoxLayout, QScrollArea, QLabel
 from PyQt5.QtCore import Qt, QSize, pyqtSignal
-from pexpect import ExceptionPexpect
 
 
 class Home(QWidget):
@@ -37,7 +36,7 @@ class Home(QWidget):
         # TODO: figure out how to fucking get this to behave as i woudl like it, ie no fucking rescales to fit because thats what images should do not fucking buttons
         self.qt_grid = QVBoxLayout(self)
         self.qt_grid.addWidget(self.qt_projects)
-        # grid.addStretch(1)
+        self.qt_grid.addStretch(1)
         # l1.setFixedWidth(80)
 
         self.select_project_by_id(0)
@@ -74,6 +73,7 @@ class Home(QWidget):
 
         if self.qt_selection is not None:
             self.qt_grid.removeWidget(self.qt_selection)
+            self.qt_selection.deleteLater()
         self.qt_grid.addWidget(qt_selection)
         self.qt_selection = qt_selection
 
@@ -202,10 +202,10 @@ class Selection(QWidget):
 
         l1 = QVBoxLayout(self)
         # l1.addWidget(self.pixmap, stretch=1)
-        l1.addStretch(
-            1
-        )  # idea from: https://zetcode.com/gui/pysidetutorial/layoutmanagement/
-        l1.addWidget(selection)
+        # l1.addStretch(
+        #     1
+        # )  # idea from: https://zetcode.com/gui/pysidetutorial/layoutmanagement/
+        l1.addWidget(selection, stretch=0)
         l1.addLayout(buttons)
 
     def onstart(self):
@@ -220,6 +220,7 @@ class Selection(QWidget):
             path.replace('.json', '.png'),
             path.replace('/pipelines/', '/gui/'),
             path.replace('/pipelines/', '/gui/').replace('.json', '.png'),
+            path.replace('/pipelines/', '/gui/').replace('.json', '_dock.xml'),
         ]
 
     def oncopy(self):

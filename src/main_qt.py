@@ -1,6 +1,7 @@
 import sys
 import traceback
 from PyQt5 import QtWidgets
+from PyQt5.QtWidgets import QApplication, QMainWindow, QFrame, QHBoxLayout, QLabel
 
 from livenodes.gui.home import Home
 from livenodes.gui.config import Config
@@ -26,13 +27,21 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, state_handler, parent=None, projects='./projects/*', home_dir=os.getcwd(), _on_close_cb=noop):
         super(MainWindow, self).__init__(parent)
 
-        self.central_widget = QtWidgets.QStackedWidget()
+        # frm = QFrame()
+        # self.setCentralWidget(frm)
+        # self.layout = QHBoxLayout(self)
+        # self.setLayout(QHBoxLayout())
+
+        self.central_widget = QtWidgets.QStackedWidget(self)
         self.setCentralWidget(self.central_widget)
+        # self.layout.addWidget(self.central_widget)
+        # self.layout.addWidget(QLabel('Test'))
 
         self.widget_home = Home(onconfig=self.onconfig,
                                 onstart=self.onstart,
                                 projects=projects)
         self.central_widget.addWidget(self.widget_home)
+        # self.resized.connect(self.widget_home.refresh_selection)
 
         self.log_file = None
 
@@ -41,14 +50,17 @@ class MainWindow(QtWidgets.QMainWindow):
         print('CWD:', os.getcwd())
 
         self._on_close_cb = _on_close_cb
-
-
         self.state_handler = state_handler
 
         # for some fucking reason i cannot figure out how to set the css class only on the home class... so hacking this by adding and removign the class on view change...
         # self.central_widget.setProperty("cssClass", "home")
         # self.widget_home.setProperty("cssClass", "home")
         self._set_state(self.widget_home)
+
+    # def resizeEvent(self, event):
+    #     # self.resized.emit()
+    #     self.widget_home.refresh_selection()
+    #     return super().resizeEvent(event)
 
     def stop(self):
         cur = self.central_widget.currentWidget()
@@ -184,10 +196,8 @@ def main():
     def onclose():
         smart_state.val_set('window_size', (window.size().width(), window.size().height()))
         smart_state.save(path_to_state)
-
     
     window = MainWindow(state_handler=smart_state.space_get('views'), projects=env_projects, home_dir=home_dir, _on_close_cb=onclose)
-    # TODO: store the old size in state.json and re-apply here...
     window.resize(*smart_state.val_get('window_size', (1400, 820)))
     window.show()
 
