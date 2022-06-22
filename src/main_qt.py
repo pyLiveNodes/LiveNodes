@@ -109,7 +109,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         pipeline = Node.load(pipeline_path)
         # TODO: make these logs project dependent as well
-        widget_run = Parent(child=Run(pipeline=pipeline),
+        widget_run = Parent(child=Run(pipeline=pipeline, pipeline_path=pipeline_path),
                              name=f"Running: {pipeline_path}",
                              back_fn=self.return_home)
         self.central_widget.addWidget(widget_run)

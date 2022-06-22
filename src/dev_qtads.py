@@ -21,9 +21,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.dock_widgets = []
 
         for label_text, area in (
-                ('1 Top', QtAds.TopDockWidgetArea),
-                ('2 Bottom', QtAds.BottomDockWidgetArea),
-                ('3 Left', QtAds.LeftDockWidgetArea),
+                ('2 Right', QtAds.RightDockWidgetArea),
+                ('1 Bottom', QtAds.RightDockWidgetArea),
+                ('3 Bottom', QtAds.RightDockWidgetArea),
                 ('4 Right', QtAds.RightDockWidgetArea),
         ):
             # Create example content label - this can be any application specific
@@ -74,10 +74,11 @@ def main(app):
     main = MainWindow()
     main.show()
     state = main.dock_manager.saveState()
+    state_str = state.data().decode()
     print('This is what the saved state looks like in XML:')
-    print(str(state))#.decode("utf-16"))
-    print()
-    main.dock_manager.restoreState(state)
+    print(state_str)
+    # main.dock_manager.restoreState(state)
+    main.dock_manager.restoreState(QtCore.QByteArray(state_str.encode()))
     return main
 
 
