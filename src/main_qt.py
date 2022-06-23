@@ -91,11 +91,12 @@ class MainWindow(QtWidgets.QMainWindow):
         cur = self.central_widget.currentWidget()
         self._save_state(cur)
         self.stop()
-        self.central_widget.setCurrentWidget(self.widget_home)
-        self.central_widget.removeWidget(cur)
-        print("Nr of views: ", self.central_widget.count())
         os.chdir(self.home_dir)
         print('CWD:', os.getcwd())
+        self.central_widget.setCurrentWidget(self.widget_home)
+        self.central_widget.removeWidget(cur)
+        self.widget_home.refresh_selection()
+        print("Nr of views: ", self.central_widget.count())
 
     def _log_helper(self, msg):
         self.log_file.write(msg + '\n')
