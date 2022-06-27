@@ -75,8 +75,8 @@ build-package:
       - .ln_build
   script:
     - cat $PYPIRC > /tmp/.pypirc
-    - pip install twine
-    - python -m build --wheel
-    - python -m twine upload --repository gitlab dist/mypackage-${CI_COMMIT_TAG}-py3-none-any.whl --config-file /tmp/.pypirc
+    - pip install twine build
+    - python3 -m build --wheel
+    - python3 -m twine upload --repository gitlab dist/mypackage-${CI_COMMIT_TAG}-py3-none-any.whl --config-file /tmp/.pypirc
   only:
     - tags
