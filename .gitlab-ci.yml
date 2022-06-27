@@ -68,15 +68,12 @@ pages:
 
 build-package:
   stage: deploy
-  image: python:3.9-slim
-  cache:
-    key: livenodes-build
-    paths:
-      - .ln_build
+  image: python:3.9
   script:
     - cat $PYPIRC > /tmp/.pypirc
+    - echo $PYPIRC
     - pip install twine build
     - python3 -m build --wheel
-    - python3 -m twine upload --repository gitlab dist/mypackage-${CI_COMMIT_TAG}-py3-none-any.whl --config-file /tmp/.pypirc
+    - python3 -m twine upload --repository gitlab dist/livenodes-${CI_COMMIT_TAG}-py3-none-any.whl --config-file /tmp/.pypirc
   only:
     - tags
