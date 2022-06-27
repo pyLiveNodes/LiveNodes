@@ -16,7 +16,7 @@ format:
 test:
   stage: test
   # TODO: build a custom image for this, needs to include biokit stuff in the future as well...
-  image: python:3.9
+  image: python:3.8
   cache:
     key: tox-test
     paths:
