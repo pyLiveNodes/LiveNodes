@@ -1,4 +1,4 @@
-# SMART
+# Livenodes
 
 ```{eval-rst}
 .. toctree::

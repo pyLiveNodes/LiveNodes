@@ -1,5 +1,0 @@
-I honestly do not remember anymore how i compiled this BioKIT.so.
-So todo obviously is to figure that out again.
-I am guessing it was a docker ubuntu 20.04 build...
-
-Description said: BioKIT_python38_arm_m1.so

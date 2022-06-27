@@ -1,1 +1,0 @@
-in the future i'd like to have project specific nodes, but for now this is just a palceholder folder
