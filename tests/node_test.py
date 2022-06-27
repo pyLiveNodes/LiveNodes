@@ -1,8 +1,8 @@
 import pytest
 import json
 
-from livenodes.core.node import Node
-from livenodes.core import global_registry
+from livenodes.node import Node
+from livenodes import global_registry
 
 
 @global_registry.packages.register

@@ -1,8 +1,8 @@
 import pytest
 import multiprocessing as mp
 
-from livenodes.core.node import Node, Location
-from livenodes.core.sender import Sender
+from livenodes.node import Node, Location
+from livenodes.sender import Sender
 
 
 class Data(Sender):

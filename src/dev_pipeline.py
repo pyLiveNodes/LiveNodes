@@ -5,8 +5,8 @@ from livenodes.nodes.in_data import In_data
 from livenodes.nodes.in_playback import In_playback
 from livenodes.nodes.out_data import Out_data
 # from livenodes.nodes.draw_lines import Draw_lines
-from livenodes.core.node import Node, Location
-from livenodes.core.logger import logger, LogLevel
+from livenodes.node import Node, Location
+from livenodes.logger import logger, LogLevel
 
 
 def _log_helper(msg):

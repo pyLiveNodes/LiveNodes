@@ -22,22 +22,7 @@ def read(*names, **kwargs):
 extras_require = {
         'dev': [
             'pytest>=7.0.1'
-        ],
-        'plux': [
-            "python-osc>=1.8.0"
-        ],
-        'gui': [
-            "qtpynodeeditor>=0.2.0",
-            "PyQt5>=5.15.6",
-            "networkx>=2.6.3",
-            "PyQtAds>=3.8.1"
-        ],
-        'biokit': [
-            "filelock>=3.7.0"
         ]
-        # eg:
-        #   'rst': ['docutils>=0.11'],
-        #   ':python_version=="2.6"': ['argparse'],
     }
 extras_require['all'] = list(itertools.chain.from_iterable(extras_require.values()))
 
@@ -93,9 +78,6 @@ setup(
     python_requires='>=3.6',
     install_requires=[
         "numpy>=1.22.1",
-        "pandas>=1.3.5",
-        "h5py>=3.6.0",
-        "tsfel>=0.1.4",
         "matplotlib>=3.5.1",
         "graphviz>=0.19.1",
         "seaborn>=0.11.2",

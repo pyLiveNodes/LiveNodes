@@ -7,10 +7,10 @@ from livenodes.gui.home import Home
 from livenodes.gui.config import Config
 from livenodes.gui.run import Run
 from livenodes.gui.components.page_parent import Parent
-from livenodes.core.node import Node
-from livenodes.core import global_registry
+from livenodes.node import Node
+from livenodes import global_registry
 
-from livenodes.core.logger import logger
+from livenodes.logger import logger
 
 import datetime
 import time
