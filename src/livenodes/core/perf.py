@@ -3,7 +3,7 @@ import numpy as np
 
 class Abstract_Perf():
     def __init__(self):
-        self.calls = []
+        self.calls = [0]
 
     def call_fn(self, fn, *args, **kwargs):
         pass
