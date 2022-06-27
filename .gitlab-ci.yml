@@ -64,3 +64,19 @@ pages:
     - public
   rules:
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+
+
+build-package:
+  stage: deploy
+  image: python:3.9-slim
+  cache:
+    key: livenodes-build
+    paths:
+      - .ln_build
+  script:
+    - cat $PYPIRC > /tmp/.pypirc
+    - pip install twine
+    - python -m build --wheel
+    - python -m twine upload --repository gitlab dist/mypackage-${CI_COMMIT_TAG}-py3-none-any.whl --config-file /tmp/.pypirc
+  only:
+    - tags
