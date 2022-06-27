@@ -10,5 +10,5 @@ class NumpyEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-def noop (*args, **kwargs):
+def noop(*args, **kwargs):
     pass

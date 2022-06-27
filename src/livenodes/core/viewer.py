@@ -4,6 +4,7 @@ import time
 from PyQt5.QtWidgets import QLabel, QVBoxLayout
 
 from .node import Node, Location
+from .utils import noop
 
 
 
@@ -109,8 +110,8 @@ class View_MPL(View):
         Should be either or, not sure how to check that...
         """
 
-        def update():
-            pass
+        def update(**kwargs):
+            raise NotImplementedError()
 
         return update
         
@@ -159,7 +160,49 @@ class View_QT(View):
         Heart of the nodes drawing, should be a functional function
         """
         update_fn = self._init_draw(parent=parent)
-        
+
+        # if there is no update function only _init_draw will be needed / called
+        if update_fn is not None:
+            fps = FPS_Helper(str(self))
+
+            # TODO: figure out more elegant way to not have this blocking until new data is available...
+            def update_blocking():
+                nonlocal update_fn, fps
+                cur_state = {}
+                
+                fps.count()
+
+                try:
+                    cur_state = self._draw_state.get_nowait()
+                    # cur_state = self._draw_state.get(block=True, timeout=0.05)
+                except queue.Empty:
+                    pass
+
+                if self._should_draw(**cur_state):
+                    self.verbose('Decided to draw', cur_state.keys())
+                    update_fn(**cur_state)
+                    return True
+                else:
+                    self.debug('Decided not to draw', cur_state.keys())
+
+                return False
+
+            return update_blocking
+        self.debug('No update function was returned, as none exists.')
+        return None
+
+class View_Vispy(View):
+    def _init_draw(self, fig):
+        def update(**kwargs):
+            raise NotImplementedError()
+        return update
+
+    def init_draw(self, fig):
+        """
+        Heart of the nodes drawing, should be a functional function
+        """
+        update_fn = self._init_draw(fig)
+
         fps = FPS_Helper(str(self))
 
         # TODO: figure out more elegant way to not have this blocking until new data is available...
