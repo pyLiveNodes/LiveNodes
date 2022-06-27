@@ -16,7 +16,7 @@ format:
 test:
   stage: test
   # TODO: build a custom image for this, needs to include biokit stuff in the future as well...
-  image: ubuntu:20.04
+  image: python:3.9
   cache:
     key: tox-test
     paths:
@@ -24,12 +24,6 @@ test:
   script:
     - tox -e py38
   before_script:
-    - apt-get update && apt-get install python3 python3.8-venv --no-install-recommends -y
-    - apt-get -qq update && apt-get -qq -y install curl bzip2
-    - curl -sSL https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -o /tmp/miniconda.sh
-    - bash /tmp/miniconda.sh -bfp /usr/local
-    - rm -rf /tmp/miniconda.sh
-    - python3 -m venv venv && source venv/bin/activate
     - pip install -r requirements_setup.txt
   artifacts:
     when: always
@@ -49,11 +43,6 @@ pages:
     paths:
       - .tox
   before_script:
-    - apt-get update && apt-get install make --no-install-recommends -y
-    - apt-get -qq update && apt-get -qq -y install curl bzip2
-    - curl -sSL https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -o /tmp/miniconda.sh
-    - bash /tmp/miniconda.sh -bfp /usr/local
-    - rm -rf /tmp/miniconda.sh
     - pip install -r requirements_setup.txt
   script:
     - tox -e docs
