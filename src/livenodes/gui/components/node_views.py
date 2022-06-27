@@ -12,7 +12,7 @@ from PyQt5.QtCore import QTimer
 from vispy import app as vp_app
 import vispy.plot as vp
 from vispy import scene
-# vp_app.use_app('pyqt5')
+vp_app.use_app('pyqt5')
 
 import seaborn as sns
 
@@ -67,7 +67,7 @@ class Vispy_View(QWidget):
 
         # self.fig = vp.Fig(size=(400, 300), app="pyqt5", show=False, parent=parent)
         # self.fig = vp.Fig(size=(400, 300), show=False, parent=parent)
-        self.fig = scene.SceneCanvas(show=False, parent=parent, bgcolor='white')
+        self.fig = scene.SceneCanvas(show=False, parent=self, bgcolor='white')
         node_update_fn = node.init_draw(self.fig)
 
         def update(*args, **kwargs):
@@ -106,14 +106,6 @@ class MPL_View(FigureCanvasQTAgg):
                 print(err)
                 print(traceback.format_exc())
             return []
-
-            # # TODO: move this into a node :D
-            # if i % 100 == 0 and i != 0:
-            #     el_time = time.time() - self.timer
-            #     self.fps = i / el_time
-            #     print(
-            #         f"Rendered {i} frames in {el_time:.2f} seconds. This equals {self.fps:.2f}fps."
-            #     )
 
         self.animation = animation.FuncAnimation(fig=self.figure,
                                                  func=draw_update,

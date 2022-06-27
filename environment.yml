@@ -17,6 +17,7 @@ dependencies:
   - graphviz
   - pyqt
   - PyQtAds
+  - vispy
   - python-dotenv
   - pip
   - pip:

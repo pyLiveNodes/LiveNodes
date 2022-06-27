@@ -25,7 +25,7 @@ class Run(Page):
 
         # === Setup draw canvases =================================================
         self.nodes = [n for n in Node.discover_graph(pipeline) if isinstance(n, viewer.View)]
-        self.draw_widgets = list(map(node_view_mapper, self.nodes))
+        self.draw_widgets = list(map(partial(node_view_mapper, self), self.nodes))
         
         QtAds.CDockManager.setConfigFlag(QtAds.CDockManager.XmlCompressionEnabled, False)
         
