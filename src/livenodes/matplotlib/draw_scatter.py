@@ -57,8 +57,8 @@ class Draw_scatter(View_MPL):
         subfig.suptitle(self.name, fontsize=14)
 
         self.ax = subfig.subplots(1, 1)
-        self.ax.set_xlim(-0.5, 0.5)
-        self.ax.set_ylim(-0.5, 0.5)
+        self.ax.set_xlim(*self.ylim)
+        self.ax.set_ylim(*self.ylim)
         self.ax.spines['top'].set_visible(False)
         self.ax.spines['right'].set_visible(False)
 

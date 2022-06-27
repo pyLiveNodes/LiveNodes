@@ -7,11 +7,12 @@ from matplotlib import animation
 import matplotlib.pyplot as plt
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QWidget
+from PyQt5.QtCore import QTimer
 
 from vispy import app as vp_app
 import vispy.plot as vp
 from vispy import scene
-# vp_app.use_app('pyqt5')
+vp_app.use_app('pyqt5')
 
 import seaborn as sns
 
@@ -41,7 +42,13 @@ class QT_View(QWidget):
 
         # self.setStyleSheet("QWidget { background-color: 'white' }") 
         self.setProperty("cssClass", "bg-white")
-        node.init_draw(self)
+        artist_update_fn = node.init_draw(self)
+
+        if artist_update_fn is not None:
+            self.timer = QTimer(self)
+            self.timer.setInterval(10) # max 100fps
+            self.timer.timeout.connect(artist_update_fn)
+            self.timer.start()
 
         # self.setBackgroundRole(True)
         # p = self.palette()
@@ -50,6 +57,31 @@ class QT_View(QWidget):
     
     def stop(self):
         pass
+
+class Vispy_View(QWidget):
+    def __init__(self, node, interval=0, parent=None):
+        super().__init__(parent=parent)
+
+        if not isinstance(node, viewer.View_Vispy):
+            raise ValueError('Node must be of Type (Vispy) View')
+
+        # self.fig = vp.Fig(size=(400, 300), app="pyqt5", show=False, parent=parent)
+        # self.fig = vp.Fig(size=(400, 300), show=False, parent=parent)
+        self.fig = scene.SceneCanvas(show=False, parent=self, bgcolor='white')
+        node_update_fn = node.init_draw(self.fig)
+
+        def update(*args, **kwargs):
+            nonlocal self, node_update_fn
+            if node_update_fn():
+                self.update()
+
+        self._timer = vp_app.Timer(interval=interval, connect=update, start=True)
+    
+    def get_qt_widget(self):
+        return self.fig.native
+    
+    def stop(self):
+        self._timer.stop()
 
 
 class MPL_View(FigureCanvasQTAgg):
@@ -75,14 +107,6 @@ class MPL_View(FigureCanvasQTAgg):
                 print(traceback.format_exc())
             return []
 
-            # # TODO: move this into a node :D
-            # if i % 100 == 0 and i != 0:
-            #     el_time = time.time() - self.timer
-            #     self.fps = i / el_time
-            #     print(
-            #         f"Rendered {i} frames in {el_time:.2f} seconds. This equals {self.fps:.2f}fps."
-            #     )
-
         self.animation = animation.FuncAnimation(fig=self.figure,
                                                  func=draw_update,
                                                  interval=interval,
@@ -96,27 +120,3 @@ class MPL_View(FigureCanvasQTAgg):
     def stop(self):
         self.animation.pause()
 
-class Vispy_View(QWidget):
-    def __init__(self, node, interval=0, parent=None):
-        super().__init__(parent=parent)
-
-        if not isinstance(node, viewer.View_Vispy):
-            raise ValueError('Node must be of Type (Vispy) View')
-
-        # self.fig = vp.Fig(size=(400, 300), app="pyqt5", show=False, parent=parent)
-        # self.fig = vp.Fig(size=(400, 300), show=False, parent=parent)
-        self.fig = scene.SceneCanvas(show=False, parent=parent, bgcolor='white')
-        node_update_fn = node.init_draw(self.fig)
-
-        def update(*args, **kwargs):
-            nonlocal self, node_update_fn
-            if node_update_fn():
-                self.update()
-
-        self._timer = vp_app.Timer(interval=interval, connect=update, start=True)
-    
-    def get_qt_widget(self):
-        return self.fig.native
-    
-    def stop(self):
-        self._timer.stop()

@@ -14,6 +14,6 @@ include AUTHORS.rst
 include CHANGELOG.rst
 include CONTRIBUTING.rst
 include LICENSE
-include README.rst
+include README.md
 
 global-exclude *.py[cod] __pycache__/* *.so *.dylib

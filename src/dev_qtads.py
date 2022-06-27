@@ -6,15 +6,24 @@ from PyQtAds import QtAds
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
+        QtAds.CDockManager.setConfigFlag(QtAds.CDockManager.XmlCompressionEnabled, False)
+        # QtAds.CDockManager.setConfigFlag(QtAds.CDockManager.AllTabsHaveCloseButton, False)
+        
         self.setup_ui()
+        # QtAds.CDockManager.setConfigFlag(QtAds.CDockManager.AllTabsHaveCloseButton, False)
+        # print(QtAds.CDockManager.AllTabsHaveCloseButton)
+        # QtAds.CDockManager.XmlCompressionEnabled = False
+        # QtAds.CDockManager.AllTabsHaveCloseButton = False
         self.dock_manager = QtAds.CDockManager(self)
+        # help(self.dock_manager.saveState)
+        # help(self.dock_manager.addDockWidget)
 
         self.dock_widgets = []
 
         for label_text, area in (
-                ('1 Top', QtAds.TopDockWidgetArea),
-                ('2 Bottom', QtAds.BottomDockWidgetArea),
-                ('3 Left', QtAds.LeftDockWidgetArea),
+                ('2 Right', QtAds.RightDockWidgetArea),
+                ('1 Bottom', QtAds.RightDockWidgetArea),
+                ('3 Bottom', QtAds.RightDockWidgetArea),
                 ('4 Right', QtAds.RightDockWidgetArea),
         ):
             # Create example content label - this can be any application specific
@@ -28,11 +37,12 @@ class MainWindow(QtWidgets.QMainWindow):
             # as the dock widget content
             dock_widget = QtAds.CDockWidget(label_text)
             dock_widget.setWidget(label)
-            self.dock_widgets.append(dock_widget)
+            dock_widget.setFeature(QtAds.CDockWidget.DockWidgetClosable, False)
+            # self.dock_widgets.append(dock_widget)
 
             # Add the toggleViewAction of the dock widget to the menu to give
             # the user the possibility to show the dock widget if it has been closed
-            self.menu_view.addAction(dock_widget.toggleViewAction())
+            # self.menu_view.addAction(dock_widget.toggleViewAction())
 
             # Add the dock widget to the top dock widget area
             self.dock_manager.addDockWidget(area, dock_widget)
@@ -40,34 +50,35 @@ class MainWindow(QtWidgets.QMainWindow):
     def setup_ui(self):
         self.setWindowTitle("MainWindow")
         self.setObjectName("MainWindow")
-        self.resize(400, 300)
+        self.resize(800, 600)
         self.central_widget = QtWidgets.QWidget(self)
         self.central_widget.setObjectName("central_widget")
         self.setCentralWidget(self.central_widget)
 
-        self.menu_bar = QtWidgets.QMenuBar(self)
-        self.menu_bar.setGeometry(QtCore.QRect(0, 0, 400, 21))
-        self.menu_bar.setObjectName("menuBar")
+        # self.menu_bar = QtWidgets.QMenuBar(self)
+        # self.menu_bar.setGeometry(QtCore.QRect(0, 0, 400, 21))
+        # self.menu_bar.setObjectName("menuBar")
 
-        self.menu_view = QtWidgets.QMenu(self.menu_bar)
-        self.menu_view.setObjectName("menu_view")
-        self.menu_view.setTitle("View")
-        self.setMenuBar(self.menu_bar)
+        # self.menu_view = QtWidgets.QMenu(self.menu_bar)
+        # self.menu_view.setObjectName("menu_view")
+        # self.menu_view.setTitle("View")
+        # self.setMenuBar(self.menu_bar)
 
-        self.status_bar = QtWidgets.QStatusBar(self)
-        self.status_bar.setObjectName("statusBar")
-        self.setStatusBar(self.status_bar)
-        self.menu_bar.addAction(self.menu_view.menuAction())
+        # self.status_bar = QtWidgets.QStatusBar(self)
+        # self.status_bar.setObjectName("statusBar")
+        # self.setStatusBar(self.status_bar)
+        # self.menu_bar.addAction(self.menu_view.menuAction())
 
 
 def main(app):
     main = MainWindow()
     main.show()
     state = main.dock_manager.saveState()
+    state_str = state.data().decode()
     print('This is what the saved state looks like in XML:')
-    print(state)
-    print()
-    main.dock_manager.restoreState(state)
+    print(state_str)
+    # main.dock_manager.restoreState(state)
+    main.dock_manager.restoreState(QtCore.QByteArray(state_str.encode()))
     return main
 
 

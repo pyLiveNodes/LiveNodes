@@ -1,5 +1,5 @@
 from enum import IntEnum
-from functools import reduce
+from functools import partial
 import json
 import numpy as np
 import time
@@ -7,9 +7,13 @@ import multiprocessing as mp
 import queue
 import threading
 import traceback
+from timeit import default_timer as timer
 
 from .logger import logger, LogLevel
 from .utils import NumpyEncoder
+from .clock_register import Clock_Register
+from .connection import Connection
+from .perf import Time_Per_Call, Time_Between_Call
 
 from . import global_registry
 
@@ -78,124 +82,6 @@ class QueueHelperHack():
         return False, None
 
 
-class Clock():
-
-    def __init__(self, node, should_time):
-        self.ctr = 0
-        self.times = []
-        self.node = node
-
-        if should_time:
-            self.tick = self._tick_with_time
-        else:
-            self.tick = self._tick
-
-    def _tick_with_time(self):
-        self.ctr += 1
-        self.times.append(time.time())
-        return self.ctr
-
-    def _tick(self):
-        self.ctr += 1
-        return self.ctr
-
-
-class Connection():
-    # TODO: consider creating a channel registry instead of using strings?
-    def __init__(self,
-                 emitting_node,
-                 receiving_node,
-                 emitting_channel="Data",
-                 receiving_channel="Data",
-                 connection_counter=0):
-        self._emitting_node = emitting_node
-        self._receiving_node = receiving_node
-        self._emitting_channel = emitting_channel
-        self._receiving_channel = receiving_channel
-        self._connection_counter = connection_counter
-
-    def __repr__(self):
-        return f"{str(self._emitting_node)}.{self._emitting_channel} -> {str(self._receiving_node)}.{self._receiving_channel}"
-
-    def to_dict(self):
-        return {
-            "emitting_node": str(self._emitting_node),
-            "receiving_node": str(self._receiving_node),
-            "emitting_channel": self._emitting_channel,
-            "receiving_channel": self._receiving_channel,
-            "connection_counter": self._connection_counter
-        }
-
-    def _set_connection_counter(self, counter):
-        self._connection_counter = counter
-
-    def _similar(self, other):
-        return self._emitting_node == other._emitting_node and \
-            self._receiving_node == other._receiving_node and \
-            self._emitting_channel == other._emitting_channel and \
-            self._receiving_channel == other._receiving_channel
-
-    def __eq__(self, other):
-        return self._similar(
-            other) and self._connection_counter == other._connection_counter
-
-
-# class LogLevels(Enum):
-#     Debug
-
-
-class Clock_Register():
-    state = {}
-    times = {}
-
-    queue = mp.SimpleQueue()
-
-    _store = mp.Event()
-
-    def __init__(self, should_time=False):
-        self._owner_process = mp.current_process()
-        self._owner_thread = threading.current_thread()
-        self.should_time = should_time
-
-    # called in sub-processes
-    def register(self, name, ctr):
-        if self.should_time:
-            raise NotImplementedError()
-        else:
-            if not self._store.is_set():
-                self.queue.put((name, ctr, None))
-
-    def set_passthrough(self):
-        self._store.set()
-        self.queue = None
-
-    # called in main/handling process
-    def read_state(self):
-        if self._owner_process != mp.current_process():
-            raise Exception('Called from wrong process')
-        if self._owner_thread != threading.current_thread():
-            raise Exception('Called from wrong thread')
-
-        while not self.queue.empty():
-            name, ctr, time = self.queue.get()
-            if name not in self.state:
-                self.state[name] = []
-                self.times[name] = []
-
-            self.state[name].append(ctr)
-            self.times[name].append(time)
-
-        return self.state, self.times
-
-    def all_at(self, ctr):
-        states, _ = self.read_state()
-
-        for name, ctrs in states.items():
-            if max(ctrs) < ctr:
-                return False
-
-        return True
-
 
 class Node():
     # === Information Stuff =================
@@ -211,12 +97,17 @@ class Node():
     # have a register of clock ticks in the graph on the node class (should never be overwritten)
     # everytime a child node processes something it registers this here
     # then we can join the whole graph by waiting until in this register all ctrs are as high as the highest senders (if all senders have stopped sending)
+    # ---
+    # TODO: figure out how this behaves when loading the module only once, but executing the piplines twice!
+    # Worst case: the state is kept and all the ctrs are wrong :/
+    # I think this should be fine tho, as the logger seems to work and is the same (?!?)
     _clocks = Clock_Register()
 
     # === Basic Stuff =================
     def __init__(self,
                  name="Name",
-                 compute_on=Location.SAME):
+                 compute_on=Location.SAME, 
+                 should_time=False):
 
         self.name = name
 
@@ -249,6 +140,13 @@ class Node():
             }
 
         self.info('Computing on: ', self.compute_on)        
+
+        self._perf_user_fn = Time_Per_Call()
+        self._perf_framework = Time_Between_Call()
+        if should_time:
+            self._call_user_fn_process = partial(self._perf_framework.call_fn, partial(self._perf_user_fn.call_fn, self._call_user_fn))
+        else:
+            self._call_user_fn_process = self._call_user_fn
 
     def __repr__(self):
         return str(self)
@@ -708,6 +606,11 @@ class Node():
     #         self.debug('next tick data:', self._retrieve_current_data(ctr=ctr + 1).keys())
     #     return False
 
+    def _report_perf(self):
+        processing_duration = self._perf_user_fn.average()
+        invocation_duration = self._perf_framework.average()
+        self.debug(f'Processing: {processing_duration * 1000:.5f}ms; Time between calls: {(invocation_duration - processing_duration) * 1000:.5f}ms; Time between invocations: {invocation_duration * 1000:.5f}ms')
+
     def _process(self, ctr):
         """
         called in location of self
@@ -728,8 +631,9 @@ class Node():
             # sender will never receive inputs and therefore will never have
             # TODO: IMPORTANT: every node it's own clock seems to have been a mistake: go back to the original idea of "senders and syncs implement clocks and everyone else just passes them along"
             self._ctr = ctr
-            self._call_user_fn(self.process, 'process', **_current_data, _ctr=ctr)
+            self._call_user_fn_process(self.process, 'process', **_current_data, _ctr=ctr)
             self.verbose('process fn finished')
+            self._report_perf()
             for queue in self._received_data.values():
                 queue.discard_before(ctr)
 
@@ -926,11 +830,3 @@ class Node():
         executed on stop, should return! (if you need always running -> blockingSender)
         """
         pass
-
-
-# class Transform(Node):
-#     """
-#     The default node.
-#     Takes input and produces output
-#     """
-#     pass
