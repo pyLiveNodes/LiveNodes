@@ -1,3 +1,4 @@
+from functools import partial
 from livenodes.core import viewer
 
 from PyQt5.QtWidgets import QGridLayout
@@ -16,22 +17,19 @@ class Run(Page):
         self.pipeline = pipeline
 
         # === Setup draw canvases =================================================
+        self.qt_grid = QGridLayout(self)
+
         self.nodes = [n for n in Node.discover_graph(pipeline) if isinstance(n, viewer.View)]
-        self.draw_widgets = list(map(node_view_mapper, self.nodes))
+        self.draw_widgets = list(map(partial(node_view_mapper, self), self.nodes))
 
         n_figs = len(self.draw_widgets)
         cols = min(3, n_figs)
 
-        self.qt_grid = QGridLayout(self)
-        widget_positions = {} # TODO: implement saving loading this to a file
         for i, (widget, node) in enumerate(zip(self.draw_widgets, self.nodes)):
             col = i % cols
             row = int((i - col) / cols)
-            widget_positions[str(node)] = (row, col)
-            self.qt_grid.addWidget(widget, row, col)
+            self.qt_grid.addWidget(widget.get_qt_widget(), row, col)
         
-        print(widget_positions)
-
         # === Start pipeline =================================================
         self.worker_term_lock = mp.Lock()
         self.worker_term_lock.acquire()

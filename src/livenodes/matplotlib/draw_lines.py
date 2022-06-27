@@ -17,6 +17,7 @@ from . import local_registry
 
 
 @local_registry.register
+# class Draw_lines_mpl(View_MPL):
 class Draw_lines(View_MPL):
     """
     Draw all received data channels as line plot over time.
