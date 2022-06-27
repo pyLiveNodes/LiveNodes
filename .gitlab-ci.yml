@@ -70,10 +70,8 @@ build-package:
   stage: deploy
   image: python:3.9
   script:
-    - cat $PYPIRC > /tmp/.pypirc
-    - echo $PYPIRC
     - pip install twine build
     - python3 -m build --wheel
-    - python3 -m twine upload --repository gitlab dist/livenodes-${CI_COMMIT_TAG}-py3-none-any.whl --config-file /tmp/.pypirc
+    - TWINE_PASSWORD=${TWINE_PASSWORD} TWINE_USERNAME=${TWINE_USERNAME} python -m twine upload --repository-url ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi dist/*
   only:
     - tags
