@@ -1,8 +1,39 @@
+[project]
+name = "Livenodes"
+dynamic = ['version']
+description = "LiveNodes: node based live streaming sensor/data and visualization suite."
+authors = [
+    { name = "Yale Hartmann", email = "yale.hartmann@uni-bremen.de" }
+]
+dependencies = [
+    "numpy>=1.22.1",
+    "matplotlib>=3.5.1",
+    "graphviz>=0.19.1",
+    "seaborn>=0.11.2",
+    "joblib>=1.1.0",
+    "scikit-learn>=1.0.2",
+    "scipy>=1.7.3",
+    "phx-class-registry",
+    "python-dotenv"
+]
+
+[project.optional-dependencies]
+dev = [
+    "tox",
+    "pytest>=7.0.1"
+]
+
 [build-system]
 requires = [
-    "setuptools>=30.3.0",
+    "setuptools>=48",
     "wheel",
+    "setuptools_scm >= 2.0.0, <3",
+    "setuptools-git-versioning"
 ]
+build-backend = 'setuptools.build_meta'
+
+[tool.setuptools-git-versioning]
+enabled = true
 
 [tool.black]
 line-length = 140
