@@ -108,6 +108,9 @@ class TestProcessing():
         assert out1.get_state() == list(range(10))
         assert out2.get_state() == list(map(lambda x: x**2, range(10)))
 
+        assert len(Node._clocks.state.keys()) == 0
+        assert Node._clocks.state == {}
+
         data.start()
         data.stop()
 
@@ -125,15 +128,17 @@ class TestProcessing():
         assert out2.get_state() == list(map(lambda x: x**2, range(10)))
 
 
-    def test_calc_twice_one_join(self, create_simple_graph):
+    def test_calc_join_twice(self, create_simple_graph):
         data, quadratic, out1, out2 = create_simple_graph
 
-        data.start()
-        time.sleep(1)
+        data.start(join=True)
         data.stop()
 
         assert out1.get_state() == list(range(10))
         assert out2.get_state() == list(map(lambda x: x**2, range(10)))
+
+        assert len(Node._clocks.state.keys()) == 0
+        assert Node._clocks.state == {}
 
         data.start(join=True)
         data.stop()

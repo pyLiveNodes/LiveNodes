@@ -56,9 +56,17 @@ def create_simple_graph():
 
     return data, quadratic, out1, out2
 
-    
+
 def test_calc_join(create_simple_graph):
     data, quadratic, out1, out2 = create_simple_graph
+
+    data.start(join=True)
+    data.stop()
+
+    assert out2.get_state() == list(map(lambda x: x**2, range(10)))
+
+    assert len(Node._clocks.state.keys()) == 0
+    assert Node._clocks.state == {}
 
     data.start(join=True)
     data.stop()
