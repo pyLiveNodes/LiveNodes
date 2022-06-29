@@ -508,7 +508,7 @@ class Node():
         # ie in the extreme case: self._ctr=0 and all others as well
         self_name = str(self)
         # the first part will be false until the first time _process() is being called, after that, the second part will be false until all clocks have catched up to our own
-        while (not self_name in self._clocks.read_state()[0]) or not (
+        while (not self_name in self._clocks.read_state()) or not (
                 self._clocks.all_at(max(self._clocks.state[self_name]))):
             time.sleep(0.01)
         self.info(
