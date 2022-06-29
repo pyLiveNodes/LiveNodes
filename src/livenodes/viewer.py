@@ -1,7 +1,6 @@
 import multiprocessing as mp
 import queue
 import time
-from PyQt5.QtWidgets import QLabel, QVBoxLayout
 
 from .node import Node, Location
 from .utils import noop
@@ -152,8 +151,7 @@ class View_MPL(View):
 
 class View_QT(View):
     def _init_draw(self, parent):
-        layout = QVBoxLayout(parent)
-        layout.addWidget(QLabel(str(self)))
+        pass
 
     def init_draw(self, parent):
         """
