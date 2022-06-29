@@ -64,6 +64,7 @@ class QueueHelperHack():
             # TODO: if itm_ctr already exists, should we not rather extend than overwrite it? (thinking of the mulitple emit_data per process call examples (ie window))
             # TODO: yes! this is what we should do :D
             self._read[itm_ctr] = item
+        
 
     def discard_before(self, ctr):
         self._read = {
@@ -407,7 +408,14 @@ class Node():
         print(start_nodes)
         for i, node in enumerate(start_nodes):
             print('Starting:', node, join, i + 1 == len(start_nodes), children)
-            node.start_node(children=children, join=join and i + 1 == len(start_nodes))
+            node.start_node(children=children)
+
+        if join:
+            print('---', str(self), 'join')
+            node._join()
+        else:
+            print('---', str(self), 'dont join')
+            node._clocks.set_passthrough(node)
 
     def stop(self, children=True):
         start_nodes = self._get_start_nodes()
@@ -437,7 +445,7 @@ class Node():
                         target=node._process_on_proc)
 
 
-    def start_node(self, children=True, join=False):
+    def start_node(self, children=True):
         if self._running == False:  # the node might be child to multiple parents, but we just want to start once
             # first start children, so they are ready to receive inputs
             # children cannot not have inputs, ie they are always relying on this node to send them data if they want to progress their clock
@@ -465,11 +473,6 @@ class Node():
             elif self.compute_on in [Location.SAME]:
                 self._call_user_fn(self._onstart, '_onstart')
                 self.info('Executed _onstart')
-
-        if join:
-            self._join()
-        else:
-            self._clocks.set_passthrough()
 
     def stop_node(self, children=True):
         # first stop self, so that non-running children don't receive inputs

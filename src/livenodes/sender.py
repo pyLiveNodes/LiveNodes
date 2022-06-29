@@ -85,8 +85,8 @@ class Sender(Node):
         self._on_runner()
         self.info('Finished subprocess', self._ctr)
 
-    def start_node(self, children=True, join=False):
-        super().start_node(children, join=False)
+    def start_node(self, children=True):
+        super().start_node(children)
 
         if self.compute_on in [Location.PROCESS, Location.THREAD
                                ] and self.block:
@@ -106,11 +106,6 @@ class Sender(Node):
             self.info('Reached end of run')
             # this still means we send data, before the return, just that after now no new data will be sent
             self._on_runner()
-
-        if join:
-            self._join()
-        else:
-            self._clocks.set_passthrough()
 
     def _join(self):
         if not self.block:
