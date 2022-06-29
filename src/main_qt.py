@@ -8,7 +8,7 @@ from livenodes.gui.config import Config
 from livenodes.gui.run import Run
 from livenodes.gui.components.page_parent import Parent
 from livenodes.node import Node
-from livenodes import global_registry
+from livenodes import get_registry
 
 from livenodes.logger import logger
 
@@ -131,7 +131,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         pipeline = Node.load(pipeline_path)
         widget_run = Parent(child=Config(pipeline=pipeline,
-                                          node_registry=global_registry,
+                                          node_registry=get_registry(),
                                           pipeline_path=pipeline_path),
                              name=f"Configuring: {pipeline_path}",
                              back_fn=self.return_home)
@@ -183,7 +183,7 @@ def main():
     # mp.set_start_method('fork')
 
     # === Load modules ========================================================================
-    global_registry.collect_modules(env_modules)
+    # get_registry().collect_modules(env_modules)
 
     # === Setup application ========================================================================
     app = QtWidgets.QApplication([])
