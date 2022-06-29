@@ -199,7 +199,7 @@ class Node():
 
     def get_settings(self):
         return { \
-            "class": self.__class__.__name__,
+            "class": self.__class__.__name__.lower(),
             "settings": self._node_settings(),
             "inputs": [con.to_dict() for con in self.input_connections],
             # Assumption: we do not actually need the outputs, as they just mirror the inputs and the outputs can always be reconstructed from those
@@ -231,7 +231,7 @@ class Node():
             # module = importlib.reload(sys.modules[module_name])
             # tmp = (getattr(module, itm['class'])(**itm['settings']))
 
-            items_instc[name] = reg.get(itm['class'], **itm['settings'])
+            items_instc[name] = reg.get(itm['class'].lower(), **itm['settings'])
 
             # assume that the first node without any inputs is the initial node...
             if initial_node is None and len(
