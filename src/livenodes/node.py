@@ -15,7 +15,7 @@ from .clock_register import Clock_Register
 from .connection import Connection
 from .perf import Time_Per_Call, Time_Between_Call
 
-from . import global_registry
+from . import get_registry
 
 
 class Location(IntEnum):
@@ -222,6 +222,8 @@ class Node():
         items_instc = {}
         initial = None
 
+        reg = get_registry()
+
         # first pass: create nodes
         for name, itm in items.items():
             # module_name = f"livenodes.nodes.{itm['class'].lower()}"
@@ -229,8 +231,7 @@ class Node():
             # module = importlib.reload(sys.modules[module_name])
             # tmp = (getattr(module, itm['class'])(**itm['settings']))
 
-            items_instc[name] = global_registry.get(itm['class'],
-                                                    **itm['settings'])
+            items_instc[name] = reg.get(itm['class'], **itm['settings'])
 
             # assume that the first node without any inputs is the initial node...
             if initial_node is None and len(

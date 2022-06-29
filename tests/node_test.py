@@ -2,16 +2,17 @@ import pytest
 import json
 
 from livenodes.node import Node
-from livenodes import global_registry
+from livenodes import get_registry
 
+registry = get_registry()
 
-@global_registry.packages.register
+@registry.packages.register
 class SimpleNode(Node):
     channels_in = ["Data"]
     channels_out = ["Data"]
 
 
-@global_registry.packages.register
+@registry.packages.register
 class ComplexNode(Node):
     channels_in = ["Data", "Meta"]
     channels_out = ["Data", "Meta", "Info"]
