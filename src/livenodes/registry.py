@@ -14,10 +14,10 @@ class Node_Register():
 
     def add_register(self, register):
         for key, val in register.items():
-            self.register(key=key, class_=val)
+            self.register(key=key.lower(), class_=val)
 
     def register(self, key, class_):
-        return self.packages._register(key=key, class_=class_)
+        return self.packages._register(key=key.lower(), class_=class_)
 
     def get(self, key, *args, **kwargs):
         return self.packages.get(key, *args, **kwargs)
