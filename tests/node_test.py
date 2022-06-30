@@ -6,13 +6,13 @@ from livenodes import get_registry
 
 registry = get_registry()
 
-@registry.packages.register
+@registry.decorator
 class SimpleNode(Node):
     channels_in = ["Data"]
     channels_out = ["Data"]
 
 
-@registry.packages.register
+@registry.decorator
 class ComplexNode(Node):
     channels_in = ["Data", "Meta"]
     channels_out = ["Data", "Meta", "Info"]

@@ -6,7 +6,7 @@ class Node_Register():
 
     def __init__(self):
         # create local registry
-        self.packages = ClassRegistry('__name__')
+        self.packages = ClassRegistry()
         
         # load all findable packages
         self.installed_packages = EntryPointClassRegistry('livenodes.nodes')
@@ -14,13 +14,17 @@ class Node_Register():
 
     def add_register(self, register):
         for key, val in register.items():
-            self.register(key=key, class_=val)
+            self.register(key=key.lower(), class_=val)
+
+    def decorator(self, cls):
+        self.register(key=cls.__name__.lower(), class_=cls)
+        return cls
 
     def register(self, key, class_):
-        return self.packages._register(key=key, class_=class_)
+        return self.packages._register(key=key.lower(), class_=class_)
 
     def get(self, key, *args, **kwargs):
-        return self.packages.get(key, *args, **kwargs)
+        return self.packages.get(key.lower(), *args, **kwargs)
 
     def package_enable(self, package_name):
         raise NotImplementedError()
