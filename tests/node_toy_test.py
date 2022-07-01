@@ -4,31 +4,49 @@ import multiprocessing as mp
 from livenodes.node import Node, Location
 from livenodes.sender import Sender
 
+import numpy as np
+from livenodes.port import Port, Port_Collection
+
+class Port_Data(Port):
+
+    example_values = [np.array([[[1]]])]
+
+    def __init__(self, name='Data', optional=False):
+        super().__init__(name, optional)
+
+    @staticmethod
+    def check_value(value):
+        if not isinstance(value, np.ndarray):
+            return False, "Should be numpy array;"
+        elif len(value.shape) != 3:
+            return False, "Shape should be of length three (Batch, Time, Channel)"
+        return True, None
+
 
 class Data(Sender):
-    channels_in = []
+    channels_in = Port_Collection()
     # yes, "Data" would have been fine, but wanted to quickly test the naming parts
     # TODO: consider
-    channels_out = ["Alternate Data"]
+    channels_out = Port_Collection(Port_Data("Alternate Data"))
 
     def _run(self):
         for ctr in range(10):
             self.info(ctr)
-            self._emit_data(ctr, channel="Alternate Data")
+            self._emit_data(ctr)
             yield ctr < 9
 
 
 class Quadratic(Node):
-    channels_in = ["Alternate Data"]
-    channels_out = ["Alternate Data"]
+    channels_in = Port_Collection(Port_Data("Alternate Data"))
+    channels_out = Port_Collection(Port_Data("Alternate Data"))
 
     def process(self, alternate_data, **kwargs):
-        self._emit_data(alternate_data**2, channel="Alternate Data")
+        self._emit_data(alternate_data**2)
 
 
 class Save(Node):
-    channels_in = ["Alternate Data"]
-    channels_out = []
+    channels_in = Port_Collection(Port_Data("Alternate Data"))
+    channels_out = Port_Collection()
 
     def __init__(self, name, **kwargs):
         super().__init__(name, **kwargs)

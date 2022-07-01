@@ -154,7 +154,7 @@ class Node(Connectionist, Logger, Serializer):
 
 
     # === Connection Stuff =================
-    def add_input(self, emitting_node, emitting_channel="Data", receiving_channel="Data"):
+    def add_input(self, emitting_node: 'Node', emitting_channel:Port, receiving_channel:Port):
         if not isinstance(emitting_node, Node):
             raise ValueError("Emitting Node must be of instance Node. Got:",
                              emitting_node)
@@ -303,20 +303,22 @@ class Node(Connectionist, Logger, Serializer):
         return res
 
     # === Data Stuff =================
-    def _emit_data(self, data, channel="Data", ctr=None):
+    def _emit_data(self, data, channel: Port = None, ctr: int = None):
         """
         Called in computation process, ie self.process
         Emits data to childs, ie child.receive_data
         """
+        self.error('test', str(channel))
+        if channel is None:
+            channel = self.channels_out.ports[0]
         clock = self._ctr if ctr is None else ctr
-        self.verbose(f'Emitting channel: "{channel}"', clock)
-        if channel == 'Data':
-            self.debug('Emitting Data of shape:', np.array(data).shape)
+        self.error(f'Emitting channel: "{channel}"', clock, list(map(str, self.channels_out)))
 
         for con in self.output_connections:
             if con._emitting_channel == channel:
+                self.error('rec channel', type(con._receiving_channel), str(con._receiving_channel))
                 con._receiving_node.receive_data(
-                    clock, payload={con._receiving_channel: data})
+                    clock, payload={str(con._receiving_channel): data})
 
     def _process_on_proc(self):
         self.info('Started subprocess')
@@ -355,10 +357,6 @@ class Node(Connectionist, Logger, Serializer):
 
         self.info('Finished subprocess')
 
-    @staticmethod
-    def _channel_to_key(port):
-        return port.name.replace(' ', '_').lower()
-
     def _retrieve_current_data(self, ctr):
         res = {}
         # update current state, based on own clock
@@ -369,7 +367,7 @@ class Node(Connectionist, Logger, Serializer):
                          queue._read.keys(), ctr)
             if found_value:
                 # TODO: instead of this key transformation/tolower consider actually using classes for data types... (allows for gui names alongside dev names and not converting between the two)
-                res[self._channel_to_key(key)] = cur_value
+                res[key] = cur_value
         return res
 
     # Most of the time when we already receive data from the next tick of some of the inputs AND the current tick would not be processed, we are likely to want to skip the tick where data was missing
@@ -440,7 +438,7 @@ class Node(Connectionist, Logger, Serializer):
         """
         # store all received data in their according mp.simplequeues
         for key, val in payload.items():
-            self.verbose(f'Received: "{key}" with clock {ctr}')
+            self.error(f'Received: "{key}" with clock {ctr}')
             self._received_data[key].put(ctr, val)
 
         # FIX ME! TODO: this is a pain in the butt
@@ -478,8 +476,8 @@ class Node(Connectionist, Logger, Serializer):
         params: **channels_in
         returns bool (if process should be called with these inputs)
         """
-        return set(list(map(self._channel_to_key,
-                            self.channels_in))) <= set(list(kwargs.keys()))
+        self.error('available:', list(map(str, self.channels_in)), list(kwargs.keys()))
+        return set(list(map(str, self.channels_in))) <= set(list(kwargs.keys()))
 
     def process_time_series(self, ts):
         return ts

@@ -5,9 +5,13 @@ class Port():
     def __init__(self, name, optional=False):
         self.name = name
         self.optional = optional
-
+    
     def __str__(self):
         return self.name.replace(' ', '_').lower()
+
+    def __eq__(self, other):
+        return type(self) == type(other) \
+            and self.name == other.name 
 
     def __init_subclass__(self):
         if len(self.example_values) <= 0:
@@ -23,7 +27,7 @@ class Port():
         raise NotImplementedError()
 
     @classmethod
-    def allowed_to_connect(cls, other_port_cls):
+    def can_connect_to(cls, other_port_cls):
         return cls == other_port_cls \
             or any(map(cls.check_value, other_port_cls.example_values))
             # we use any here in order to allow for dynamic converters, e.g. adding or removing axes from a package
@@ -31,6 +35,7 @@ class Port():
             # but let's keep an eye on this
 
 
+# TODO: reconsider just using a list instead, i don't feel there is much benefit to this...
 class Port_Collection():
     def __init__(self, *ports):
         for port in ports:
@@ -38,7 +43,7 @@ class Port_Collection():
                 raise ValueError(f'Duplicate ports: {port.name}')
             setattr(self, f"_{str(port)}", port)
         
-        self.names = [x.name for x in ports]
+        self.names = [str(x.name) for x in ports]
         self.ports = ports
 
     def __contains__(self, port: Port) -> bool:

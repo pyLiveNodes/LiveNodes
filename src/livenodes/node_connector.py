@@ -22,12 +22,13 @@ class Connectionist():
         Main function to connect two nodes together with add_input.
         """
 
-        channels_in_common = set(self.channels_in).intersection(
-            emitting_node.channels_out)
-        for channel in channels_in_common:
-            self.add_input(emitting_node=emitting_node,
-                           emitting_channel=channel,
-                           receiving_channel=channel)
+        lookup_recv = dict(zip(map(str, self.channels_in), self.channels_in))
+        lookup_emit = dict(zip(map(str, emitting_node.channels_out), emitting_node.channels_out))
+        for key in lookup_recv:
+            if key in lookup_emit:
+                self.add_input(emitting_node=emitting_node,
+                            emitting_channel=lookup_emit[key],
+                            receiving_channel=lookup_recv[key])
 
     def add_input(self,
                   emitting_node: 'Connectionist',

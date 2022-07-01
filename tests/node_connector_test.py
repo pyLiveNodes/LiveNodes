@@ -78,7 +78,9 @@ class TestGraphOperations():
         assert node_b.requires_input_of(node_a)
 
         # Remove the "Data" connection
-        node_b.remove_input(node_a)
+        node_b.remove_input(node_a, 
+                    emitting_channel=node_a.channels_out._data,
+                    receiving_channel=node_b.channels_in._data)
 
         # They are still children, as the "Meta" connection remains
         assert node_b.requires_input_of(node_a)

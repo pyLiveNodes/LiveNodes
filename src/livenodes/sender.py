@@ -43,7 +43,7 @@ class Sender(Node):
         """
         yield False
 
-    def _emit_data(self, data, channel="Data", ctr=None):
+    def _emit_data(self, data, channel=None, ctr=None):
         self._emit_ctr_fallback += 1
         return super()._emit_data(data, channel, ctr)
 
