@@ -23,8 +23,8 @@ class Sender(Node):
         # TODO: also consider if this is better suited as parameter to start?
         self.block = block
 
-        self._clock = Clock(node=self, should_time=False)
-        self._ctr = self._clock.ctr
+        self._clock = Clock(node_id=self)
+        self._ctr = self._clock.ctr # set as is used in Node! (yes, we should rework this)
         self._emit_ctr_fallback = 0
 
     def _node_settings(self):
@@ -53,7 +53,7 @@ class Sender(Node):
         # self.debug('Next(Runner) was called')
         if self._emit_ctr_fallback > 0:
             # self.debug('Putting on queue', str(self), self._ctr)
-            self._clocks.register(str(self), self._ctr)
+            self._clocks.register(*self._clock.state)
             # self.debug('Put on queue')
             self._ctr = self._clock.tick()
         else:
@@ -110,7 +110,7 @@ class Sender(Node):
         if join:
             self._join()
         else:
-            self._clocks.set_passthrough()
+            self._clocks.set_passthrough(self)
 
     def _join(self):
         if not self.block:
