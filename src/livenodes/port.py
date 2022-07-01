@@ -43,8 +43,9 @@ class Port_Collection():
                 raise ValueError(f'Duplicate ports: {port.name}')
             setattr(self, f"_{str(port)}", port)
         
-        self.names = [str(x.name) for x in ports]
+        self.names = [str(x) for x in ports]
         self.ports = ports
+        self.map = dict(zip(self.names, self.ports))
 
     def __contains__(self, port: Port) -> bool:
         return port in self.ports
@@ -54,6 +55,9 @@ class Port_Collection():
 
     def __len__(self):
         return len(self.ports)
+
+    def get_by_name(self, name):
+        return self.map[name]
 
 
 # import numpy as np

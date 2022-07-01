@@ -70,8 +70,9 @@ class Serializer():
             for con in itm['inputs']:
                 items_instc[name].add_input(
                     emitting_node=items_instc[con["emitting_node"]],
-                    emitting_channel=con['emitting_channel'],
-                    receiving_channel=con['receiving_channel'])
+                    emitting_channel=items_instc[name].channels_out.get_by_name(con['emitting_channel']),
+                    receiving_channel=items_instc[con["emitting_node"]].channels_out.get_by_name(con['receiving_channel'])
+                    )
 
         return initial
 
