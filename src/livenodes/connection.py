@@ -1,4 +1,3 @@
-
 class Connection():
     # TODO: consider creating a channel registry instead of using strings?
     def __init__(self,

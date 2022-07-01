@@ -3,7 +3,7 @@ from class_registry import ClassRegistry, EntryPointClassRegistry
 class Register():
     def __init__(self):
         self.nodes = Entrypoint_Register(entrypoints='livenodes.nodes')
-        self.channels = Entrypoint_Register(entrypoints='livenodes.channels')
+        self.ports = Entrypoint_Register(entrypoints='livenodes.ports')
 
     def package_enable(self, package_name):
         raise NotImplementedError()

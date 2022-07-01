@@ -6,32 +6,33 @@ from PIL import Image
 from io import BytesIO
 
 from .connection import Connection
+from .port import Port, Port_Collection
 
 class Connectionist():
-    channels_in = []
-    channels_out = []
+    channels_in = Port_Collection(Port('port 1'))
+    channels_out = Port_Collection(Port('port 1'))
 
     def __init__(self):
         self.input_connections = []
         self.output_connections = []
 
-    def connect_inputs_to(self, emitting_node):
+    def connect_inputs_to(self, emitting_node: 'Connectionist'):
         """
         Add all matching channels from the emitting nodes to self as input.
         Main function to connect two nodes together with add_input.
         """
 
-        channels_in_common = set(self.channels_in).intersection(
-            emitting_node.channels_out)
+        channels_in_common = set(self.channels_in.names).intersection(
+            emitting_node.channels_out.names)
         for channel in channels_in_common:
             self.add_input(emitting_node=emitting_node,
                            emitting_channel=channel,
                            receiving_channel=channel)
 
     def add_input(self,
-                  emitting_node,
-                  emitting_channel="Data",
-                  receiving_channel="Data"):
+                  emitting_node: 'Connectionist',
+                  emitting_channel: Port,
+                  receiving_channel: Port):
         """
         Add one input to self via attributes.
         Main function to connect two nodes together with connect_inputs_to
@@ -79,6 +80,7 @@ class Connectionist():
     def remove_input(self,
                      emitting_node,
                      emitting_channel="Data",
+                     TODO: figure out at which point we go from class to str in order for this whole thing to be easily serializable...
                      receiving_channel="Data",
                      connection_counter=0):
         """

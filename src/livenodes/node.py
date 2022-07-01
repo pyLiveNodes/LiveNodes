@@ -9,6 +9,7 @@ import traceback
 
 from .clock_register import Clock_Register
 from .perf import Time_Per_Call, Time_Between_Call
+from .port import Port
 
 from .node_connector import Connectionist
 from .node_logger import Logger
@@ -82,8 +83,8 @@ class QueueHelperHack():
 
 class Node(Connectionist, Logger, Serializer):
     # === Information Stuff =================
-    channels_in = ["Data"]
-    channels_out = ["Data"]
+    # channels_in = [Port('port 1')] this is inherited from the connecitonist and should be defined by every node!
+    # channels_out = [Port('port 1')]
 
     category = "Default"
     description = ""
@@ -113,9 +114,9 @@ class Node(Connectionist, Logger, Serializer):
         self.compute_on = compute_on
 
         self._received_data = {
-            key: QueueHelperHack(compute_on=compute_on)
+            port.name: QueueHelperHack(compute_on=compute_on)
             # key: QueueHelperHack(compute_on=Location.THREAD)
-            for key in self.channels_in
+            for port in self.channels_in
         }
 
         self._ctr = None
@@ -355,8 +356,8 @@ class Node(Connectionist, Logger, Serializer):
         self.info('Finished subprocess')
 
     @staticmethod
-    def _channel_name_to_key(name):
-        return name.replace(' ', '_').lower()
+    def _channel_to_key(port):
+        return port.name.replace(' ', '_').lower()
 
     def _retrieve_current_data(self, ctr):
         res = {}
@@ -368,7 +369,7 @@ class Node(Connectionist, Logger, Serializer):
                          queue._read.keys(), ctr)
             if found_value:
                 # TODO: instead of this key transformation/tolower consider actually using classes for data types... (allows for gui names alongside dev names and not converting between the two)
-                res[self._channel_name_to_key(key)] = cur_value
+                res[self._channel_to_key(key)] = cur_value
         return res
 
     # Most of the time when we already receive data from the next tick of some of the inputs AND the current tick would not be processed, we are likely to want to skip the tick where data was missing
@@ -477,7 +478,7 @@ class Node(Connectionist, Logger, Serializer):
         params: **channels_in
         returns bool (if process should be called with these inputs)
         """
-        return set(list(map(self._channel_name_to_key,
+        return set(list(map(self._channel_to_key,
                             self.channels_in))) <= set(list(kwargs.keys()))
 
     def process_time_series(self, ts):
