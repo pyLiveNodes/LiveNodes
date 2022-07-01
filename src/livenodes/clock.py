@@ -1,22 +1,17 @@
-import time 
-
 class Clock():
 
-    def __init__(self, node, should_time):
-        self.ctr = 0
-        self.times = []
-        self.node = node
+    def __init__(self, node_id):
+        self.__ctr = 0
+        self.__node_id = node_id
 
-        if should_time:
-            self.tick = self._tick_with_time
-        else:
-            self.tick = self._tick
+    @property
+    def state(self):
+        return self.__node_id, self.__ctr
 
-    def _tick_with_time(self):
-        self.ctr += 1
-        self.times.append(time.time())
-        return self.ctr
+    @property
+    def ctr(self):
+        return self.__ctr
 
-    def _tick(self):
-        self.ctr += 1
+    def tick(self):
+        self.__ctr += 1
         return self.ctr
