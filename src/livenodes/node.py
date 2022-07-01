@@ -1,21 +1,18 @@
 from enum import IntEnum
 from functools import partial
-import json
 import numpy as np
 import time
 import multiprocessing as mp
 import queue
 import threading
 import traceback
-from timeit import default_timer as timer
 
-from .logger import logger, LogLevel
-from .utils import NumpyEncoder
 from .clock_register import Clock_Register
-from .connection import Connection
 from .perf import Time_Per_Call, Time_Between_Call
 
-from . import get_registry
+from .node_connector import Connectionist
+from .node_logger import Logger
+from .node_serializer import Serializer
 
 
 class Location(IntEnum):
@@ -83,7 +80,7 @@ class QueueHelperHack():
 
 
 
-class Node():
+class Node(Connectionist, Logger, Serializer):
     # === Information Stuff =================
     channels_in = ["Data"]
     channels_out = ["Data"]
@@ -108,11 +105,10 @@ class Node():
                  name="Name",
                  compute_on=Location.SAME, 
                  should_time=False):
+        
+        super().__init__()
 
         self.name = name
-
-        self.input_connections = []
-        self.output_connections = []
 
         self.compute_on = compute_on
 
@@ -155,28 +151,13 @@ class Node():
     def __str__(self):
         return f"{self.name} [{self.__class__.__name__}]"
 
-    # === Logging Stuff =================
-    # TODO: move this into it's own module/file?
-    def error(self, *text):
-        logger.error(self._prep_log(*text))
 
-    def warn(self, *text):
-        logger.warn(self._prep_log(*text))
-
-    def info(self, *text):
-        logger.info(self._prep_log(*text))
-
-    def debug(self, *text):
-        logger.debug(self._prep_log(*text))
-
-    def verbose(self, *text):
-        logger.verbose(self._prep_log(*text))
-
-    def _prep_log(self, *text):
-        node = str(self)
-        txt = " ".join(str(t) for t in text)
-        msg = f"{node: <40} | {txt}"
-        return msg
+    # === Connection Stuff =================
+    def add_input(self, emitting_node, emitting_channel="Data", receiving_channel="Data"):
+        if not isinstance(emitting_node, Node):
+            raise ValueError("Emitting Node must be of instance Node. Got:",
+                             emitting_node)
+        return super().add_input(emitting_node, emitting_channel, receiving_channel)
 
     # # === Subclass Validation Stuff =================
     # def __init_subclass__(self):
@@ -184,215 +165,7 @@ class Node():
     #     Check if a new class instance is valid, ie if channels are correct, info is existing etc
     #     """
     #     pass
-
-    # === Seriallization Stuff =================
-    def copy(self, graph=False):
-        """
-        Copy the current node
-        if deep=True copy all childs as well
-        """
-        # not sure if this will work, as from_dict expects a cls not self...
-        return self.from_dict(self.to_dict(graph=graph))
-
-    def _node_settings(self):
-        return {"name": self.name, "compute_on": self.compute_on, **self._settings()}
-
-    def get_settings(self):
-        return { \
-            "class": self.__class__.__name__,
-            "settings": self._node_settings(),
-            "inputs": [con.to_dict() for con in self.input_connections],
-            # Assumption: we do not actually need the outputs, as they just mirror the inputs and the outputs can always be reconstructed from those
-            # "outputs": [con.to_dict() for con in self.output_connections]
-        }
-
-    def to_dict(self, graph=False):
-        # Assume no nodes in the graph have the same name+node_class -> should be checked in the add_inputs
-        res = {str(self): self.get_settings()}
-        if graph:
-            for node in self.sort_discovered_nodes(self.discover_graph(self)):
-                res[str(node)] = node.get_settings()
-        return res
-
-    @classmethod
-    def from_dict(cls, items, initial_node=None):
-        # TODO: implement children=True, parents=True
-        # format should be as in to_dict, ie a dictionary, where the name is unique and the values is a dictionary with three values (settings, ins, outs)
-
-        items_instc = {}
-        initial = None
-
-        reg = get_registry()
-
-        # first pass: create nodes
-        for name, itm in items.items():
-            # module_name = f"livenodes.nodes.{itm['class'].lower()}"
-            # if module_name in sys.modules:
-            # module = importlib.reload(sys.modules[module_name])
-            # tmp = (getattr(module, itm['class'])(**itm['settings']))
-
-            items_instc[name] = reg.get(itm['class'], **itm['settings'])
-
-            # assume that the first node without any inputs is the initial node...
-            if initial_node is None and len(
-                    items_instc[name].channels_in) <= 0:
-                initial_node = name
-
-        # not sure if we can remove this at some point...
-        if initial_node is not None:
-            initial = items_instc[initial_node]
-        else:
-            # just pick at random now, as there seems to be no initial node
-            initial = list(items_instc.values())[0]
-
-        # second pass: create connections
-        for name, itm in items.items():
-            # only add inputs, as, if we go through all nodes this automatically includes all outputs as well
-            for con in itm['inputs']:
-                items_instc[name].add_input(
-                    emitting_node=items_instc[con["emitting_node"]],
-                    emitting_channel=con['emitting_channel'],
-                    receiving_channel=con['receiving_channel'])
-
-        return initial
-
-    def save(self, path, graph=True):
-        json_str = self.to_dict(graph=graph)
-
-        # TODO: check if folder exists
-        with open(path, 'w') as f:
-            json.dump(json_str, f, cls=NumpyEncoder, indent=2)
-
-    @classmethod
-    def load(cls, path):
-        with open(path, 'r') as f:
-            json_str = json.load(f)
-        return cls.from_dict(json_str)
-
-    # === Connection Stuff =================
-    def connect_inputs_to(self, emitting_node):
-        """
-        Add all matching channels from the emitting nodes to self as input.
-        Main function to connect two nodes together with add_input.
-        """
-
-        channels_in_common = set(self.channels_in).intersection(
-            emitting_node.channels_out)
-        for channel in channels_in_common:
-            self.add_input(emitting_node=emitting_node,
-                           emitting_channel=channel,
-                           receiving_channel=channel)
-
-    def add_input(self,
-                  emitting_node,
-                  emitting_channel="Data",
-                  receiving_channel="Data"):
-        """
-        Add one input to self via attributes.
-        Main function to connect two nodes together with connect_inputs_to
-        """
-
-        if not isinstance(emitting_node, Node):
-            raise ValueError("Emitting Node must be of instance Node. Got:",
-                             emitting_node)
-
-        if emitting_channel not in emitting_node.channels_out:
-            raise ValueError(
-                f"Emitting Channel not present on given emitting node ({str(emitting_node)}). Got",
-                emitting_channel)
-
-        if receiving_channel not in self.channels_in:
-            raise ValueError(
-                f"Receiving Channel not present on node ({str(self)}). Got",
-                receiving_channel)
-
-        # This is too simple, as when connecting two nodes, we really are connecting two sub-graphs, which need to be checked
-        # TODO: implement this proper
-        # nodes_in_graph = emitting_node.discover_full(emitting_node)
-        # if list(map(str, nodes_in_graph)):
-        #     raise ValueError("Name already in parent sub-graph. Got:", str(self))
-
-        # Create connection instance
-        connection = Connection(emitting_node,
-                                self,
-                                emitting_channel=emitting_channel,
-                                receiving_channel=receiving_channel)
-
-        if len(list(filter(connection.__eq__, self.input_connections))) > 0:
-            raise ValueError("Connection already exists.")
-
-        # Find existing connections of these nodes and channels
-        counter = len(list(filter(connection._similar,
-                                  self.input_connections)))
-        # Update counter
-        connection._set_connection_counter(counter)
-
-        # Not sure if this'll actually work, otherwise we should name them _add_output
-        emitting_node._add_output(connection)
-        self.input_connections.append(connection)
-
-    def remove_all_inputs(self):
-        for con in self.input_connections:
-            self.remove_input_by_connection(con)
-
-    def remove_input(self,
-                     emitting_node,
-                     emitting_channel="Data",
-                     receiving_channel="Data",
-                     connection_counter=0):
-        """
-        Remove an input from self via attributes
-        """
-        return self.remove_input_by_connection(
-            Connection(emitting_node,
-                       self,
-                       emitting_channel=emitting_channel,
-                       receiving_channel=receiving_channel,
-                       connection_counter=connection_counter))
-
-    def remove_input_by_connection(self, connection):
-        """
-        Remove an input from self via a connection
-        """
-        if not isinstance(connection, Connection):
-            raise ValueError("Passed argument is not a connection. Got",
-                             connection)
-
-        cons = list(filter(connection.__eq__, self.input_connections))
-        if len(cons) == 0:
-            raise ValueError("Passed connection is not in inputs. Got",
-                             connection)
-
-        # Remove first
-        # -> in case something goes wrong on the parents side, the connection remains intact
-        cons[0]._emitting_node._remove_output(cons[0])
-        self.input_connections.remove(cons[0])
-
-    def _add_output(self, connection):
-        """
-        Add an output to self. 
-        Only ever called by another node, that wants this node as input
-        """
-        self.output_connections.append(connection)
-
-    def _remove_output(self, connection):
-        """
-        Remove an output from self. 
-        Only ever called by another node, that wants this node as input
-        """
-        cons = list(filter(connection.__eq__, self.output_connections))
-        if len(cons) == 0:
-            raise ValueError("Passed connection is not in outputs. Got",
-                             connection)
-        self.output_connections.remove(connection)
-
-    def _is_input_connected(self, receiving_channel='Data'):
-        return any([
-            x._receiving_channel == receiving_channel
-            for x in self.input_connections
-        ])
-
-
+    
     # TODO: actually start, ie design/test a sending node!
     # === Start/Stop Stuff =================
     def _get_start_nodes(self):
@@ -470,7 +243,7 @@ class Node():
         if join:
             self._join()
         else:
-            self._clocks.set_passthrough()
+            self._clocks.set_passthrough(self)
 
     def stop_node(self, children=True):
         # first stop self, so that non-running children don't receive inputs
@@ -680,100 +453,6 @@ class Node():
         # mainly this also means, that the QueueHelper hack reads from it's queues at different threads and therefore cannot combine the information
         # not sure how to fix this though :/ for now: we'll just not execute anything in Location.SAME and fix this later
         self.trigger_process(ctr)
-
-    # === Connection Discovery Stuff =================
-    @staticmethod
-    def remove_discovered_duplicates(nodes):
-        return list(set(nodes))
-
-    @staticmethod
-    def sort_discovered_nodes(nodes):
-        return list(sorted(nodes, key=lambda x: f"{len(x.discover_output_deps(x))}_{str(x)}"))
-
-    @staticmethod
-    def discover_output_deps(node):
-        # TODO: consider adding a channel parameter, ie only consider dependents of this channel
-        """
-        Find all nodes who depend on our output
-        """
-        if len(node.output_connections) > 0:
-            output_deps = [
-                con._receiving_node.discover_output_deps(con._receiving_node)
-                for con in node.output_connections
-            ]
-            return [node] + list(np.concatenate(output_deps))
-        return [node]
-
-    @staticmethod
-    def discover_input_deps(node):
-        if len(node.input_connections) > 0:
-            input_deps = [
-                con._emitting_node.discover_input_deps(con._emitting_node)
-                for con in node.input_connections
-            ]
-            return [node] + list(np.concatenate(input_deps))
-        return [node]
-
-    @staticmethod
-    def discover_neighbors(node):
-        childs = [con._receiving_node for con in node.output_connections]
-        parents = [con._emitting_node for con in node.input_connections]
-        return node.remove_discovered_duplicates([node] + childs + parents)
-
-    @staticmethod
-    def discover_graph(node):
-        discovered_nodes = node.discover_neighbors(node)
-        found_nodes = [node]
-        stack = queue.Queue()
-        for node in discovered_nodes:
-            if not node in found_nodes:
-                found_nodes.append(node)
-                for n in node.discover_neighbors(node):
-                    if not n in discovered_nodes:
-                        discovered_nodes.append(n)
-                        stack.put(n)
-
-        return node.sort_discovered_nodes(node.remove_discovered_duplicates(found_nodes))
-
-    def requires_input_of(self, node):
-        # self is always a child of itself
-        return node in self.discover_input_deps(self)
-
-    def provides_input_to(self, node):
-        # self is always a parent of itself
-        return node in self.discover_output_deps(self)
-
-    # === Drawing Graph Stuff =================
-    def dot_graph(self, nodes, name=False, transparent_bg=False):
-        # Imports are done here, as if you don't need the dotgraph it should not be required to start
-        from graphviz import Digraph
-        from PIL import Image
-        from io import BytesIO
-
-        graph_attr = {"size": "10,10!", "ratio": "fill"}
-        if transparent_bg: graph_attr["bgcolor"] = "#00000000"
-        dot = Digraph(format='png', strict=False, graph_attr=graph_attr)
-
-        for node in nodes:
-            shape = 'rect'
-            if len(node.channels_in) <= 0:
-                shape = 'invtrapezium'
-            if len(node.channels_out) <= 0:
-                shape = 'trapezium'
-            disp_name = node.name if name else str(node)
-            dot.node(str(node), disp_name, shape=shape, style='rounded')
-
-        # Second pass: add edges based on output links
-        for node in nodes:
-            for con in node.output_connections:
-                dot.edge(str(node),
-                         str(con._receiving_node),
-                         label=str(con._emitting_channel))
-
-        return Image.open(BytesIO(dot.pipe()))
-
-    def dot_graph_full(self, **kwargs):
-        return self.dot_graph(self.discover_graph(self), **kwargs)
 
     # === Performance Stuff =================
     # def timeit(self):
