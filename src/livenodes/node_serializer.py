@@ -50,7 +50,7 @@ class Serializer():
             # module = importlib.reload(sys.modules[module_name])
             # tmp = (getattr(module, itm['class'])(**itm['settings']))
 
-            items_instc[name] = reg.get(itm['class'], **itm['settings'])
+            items_instc[name] = reg.nodes.get(itm['class'], **itm['settings'])
 
             # assume that the first node without any inputs is the initial node...
             if initial_node is None and len(

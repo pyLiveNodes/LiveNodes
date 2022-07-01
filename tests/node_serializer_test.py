@@ -6,7 +6,7 @@ from livenodes import get_registry
 
 registry = get_registry()
 
-@registry.decorator
+@registry.nodes.decorator
 class SimpleNode(Node):
     channels_in = ["Data"]
     channels_out = ["Data"]

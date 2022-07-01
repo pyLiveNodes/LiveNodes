@@ -7,5 +7,5 @@ class TestNodeOperations():
         # hacky way of checking if registry works
         # hacky -> because we depend on livenodes_core_nodes for this test and i'd prefer if we wouldn't
         from livenodes_core_nodes.math_floor import Math_floor
-        assert isinstance(get_registry().get('math_floor'), Math_floor)
+        assert isinstance(get_registry().nodes.get('math_floor'), Math_floor)
         
