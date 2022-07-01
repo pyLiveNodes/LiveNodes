@@ -114,7 +114,7 @@ class Node(Connectionist, Logger, Serializer):
         self.compute_on = compute_on
 
         self._received_data = {
-            port.name: QueueHelperHack(compute_on=compute_on)
+            str(port): QueueHelperHack(compute_on=compute_on)
             # key: QueueHelperHack(compute_on=Location.THREAD)
             for port in self.channels_in
         }

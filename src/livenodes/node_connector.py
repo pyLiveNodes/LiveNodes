@@ -22,8 +22,8 @@ class Connectionist():
         Main function to connect two nodes together with add_input.
         """
 
-        channels_in_common = set(self.channels_in.names).intersection(
-            emitting_node.channels_out.names)
+        channels_in_common = set(self.channels_in).intersection(
+            emitting_node.channels_out)
         for channel in channels_in_common:
             self.add_input(emitting_node=emitting_node,
                            emitting_channel=channel,
@@ -79,9 +79,8 @@ class Connectionist():
 
     def remove_input(self,
                      emitting_node,
-                     emitting_channel="Data",
-                     TODO: figure out at which point we go from class to str in order for this whole thing to be easily serializable...
-                     receiving_channel="Data",
+                     emitting_channel: Port,
+                     receiving_channel: Port,
                      connection_counter=0):
         """
         Remove an input from self via attributes
@@ -130,7 +129,7 @@ class Connectionist():
                              connection)
         self.output_connections.remove(connection)
 
-    def _is_input_connected(self, receiving_channel='Data'):
+    def _is_input_connected(self, receiving_channel: Port):
         return any([
             x._receiving_channel == receiving_channel
             for x in self.input_connections

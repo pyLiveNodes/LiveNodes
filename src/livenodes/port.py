@@ -45,7 +45,7 @@ class Port_Collection():
         return port in self.ports
 
     def __iter__(self):
-        return self.ports
+        return iter(self.ports)
 
     def __len__(self):
         return len(self.ports)
