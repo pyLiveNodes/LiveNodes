@@ -8,8 +8,8 @@ from .utils import noop
 
 
 class View(Node):
-    def __init__(self, name, compute_on=Location.SAME):
-        super().__init__(name, compute_on)
+    def __init__(self, name, compute_on=Location.SAME, **kwargs):
+        super().__init__(name, compute_on, **kwargs)
 
         # TODO: consider if/how to disable the visualization of a node?
         # self.display = display

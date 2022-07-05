@@ -8,8 +8,9 @@ class BlockingSender(Sender):
     def __init__(self,
                  name,
                  block=False,
-                 compute_on=Location.PROCESS):
-        super().__init__(name, block, compute_on)
+                 compute_on=Location.PROCESS,
+                 **kwargs):
+        super().__init__(name, block, compute_on, **kwargs)
 
         if compute_on != Location.PROCESS:
             raise NotImplementedError('Other than process is not implemented at this point')

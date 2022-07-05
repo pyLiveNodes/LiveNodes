@@ -148,6 +148,8 @@ class Node(Connectionist, Logger, Serializer):
         else:
             self._call_user_fn_process = self._call_user_fn
 
+        self.reporters = []
+
     def __repr__(self):
         return str(self)
         # return f"{str(self)} Settings:{json.dumps(self._serialize())}"
@@ -380,10 +382,15 @@ class Node(Connectionist, Logger, Serializer):
     #         self.debug('next tick data:', self._retrieve_current_data(ctr=ctr + 1).keys())
     #     return False
 
+    def register_reporter(self, reporter_fn):
+        self.reporters.append(reporter_fn)
+
     def _report_perf(self):
         processing_duration = self._perf_user_fn.average()
         invocation_duration = self._perf_framework.average()
         self.debug(f'Processing: {processing_duration * 1000:.5f}ms; Time between calls: {(invocation_duration - processing_duration) * 1000:.5f}ms; Time between invocations: {invocation_duration * 1000:.5f}ms')
+        for reporter in self.reporters:
+            reporter(self)
 
     def _process(self, ctr):
         """
