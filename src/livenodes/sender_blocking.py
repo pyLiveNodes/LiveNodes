@@ -1,6 +1,5 @@
 from .node import Location
 from .sender import Sender
-from .clock import Clock
 
 
 class BlockingSender(Sender):

@@ -1,14 +1,17 @@
 from functools import partial
 from .node import Node, Location
 from .clock import Clock
-from .utils import noop
+
+from typing import NamedTuple
+class Ports_empty(NamedTuple):
+    pass
 
 class Sender(Node):
     """
     Loops the process function until it returns false, indicating that no more data is to be sent
     """
 
-    ports_in = []  # must be empty!
+    ports_in = Ports_empty() # must be empty!
 
     def __init__(self,
                  name,
