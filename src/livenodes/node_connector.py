@@ -40,6 +40,17 @@ class Connectionist():
         cls.__check_ports(cls.ports_in)
         cls.__check_ports(cls.ports_out)
 
+    def get_port_in_by_key(self, key):
+        possible_ins = [x for x in self.ports_in._asdict().values() if x.key == key]
+        if len(possible_ins) == 0: 
+            raise ValueError(f'No possible input ports for key: {key} in node: {str(self)}')
+        return possible_ins[0]
+
+    def get_port_out_by_key(self, key):
+        possible_outs = [x for x in self.ports_out._asdict().values() if x.key == key]
+        if len(possible_outs) == 0: 
+            raise ValueError(f'No possible output ports for key: {key} in node: {str(self)}')
+        return possible_outs[0]
 
     def connect_inputs_to(self, emit_node: 'Connectionist'):
         """

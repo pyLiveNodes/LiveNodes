@@ -68,19 +68,10 @@ class Serializer():
         for name, itm in items.items():
             # only add inputs, as, if we go through all nodes this automatically includes all outputs as well
             for con in itm['inputs']:
-                
-                possible_outs = [x for x in items_instc[con["emit_node"]].ports_out._asdict().values() if x.key == con['emit_port']]
-                if len(possible_outs) == 0: 
-                    raise ValueError('No possible output ports for:', con['emit_port'], 'on node', str(items_instc[con["emit_node"]]))
-                
-                possible_ins = [x for x in items_instc[name].ports_in._asdict().values() if x.key == con['recv_port']]
-                if len(possible_ins) == 0: 
-                    raise ValueError('No possible input ports for:', con['recv_port'], 'on node', str(items_instc[name]))
-                
                 items_instc[name].add_input(
                     emit_node = items_instc[con["emit_node"]],
-                    emit_port = possible_outs[0],
-                    recv_port = possible_ins[0]
+                    emit_port = items_instc[con["emit_node"]].get_port_out_by_key(con['emit_port']),
+                    recv_port = items_instc[name].get_port_in_by_key(con['recv_port'])
                     )
 
         return initial
