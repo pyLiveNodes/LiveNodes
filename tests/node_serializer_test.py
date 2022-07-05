@@ -1,32 +1,22 @@
 import pytest
 import json
-import numpy as np
 
 from livenodes.node import Node
-from livenodes.port import Port, Port_Collection
 from livenodes import get_registry
+
+from typing import NamedTuple
+from .utils import Port_Data
+
 
 registry = get_registry()
 
-class Port_Data(Port):
-
-    example_values = [np.array([[[1]]])]
-
-    def __init__(self, name='Data', optional=False):
-        super().__init__(name, optional)
-
-    @staticmethod
-    def check_value(value):
-        if not isinstance(value, np.ndarray):
-            return False, "Should be numpy array;"
-        elif len(value.shape) != 3:
-            return False, "Shape should be of length three (Batch, Time, Channel)"
-        return True, None
+class Ports_simple(NamedTuple):
+    data: Port_Data("Data")
 
 @registry.nodes.decorator
 class SimpleNode(Node):
-    channels_in = Port_Collection(Port_Data())
-    channels_out = Port_Collection(Port_Data())
+    channels_in = Ports_simple()
+    channels_out = Ports_simple()
 
 
 @pytest.fixture

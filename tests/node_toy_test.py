@@ -5,26 +5,18 @@ from livenodes.node import Node, Location
 from livenodes.sender import Sender
 
 import numpy as np
-from livenodes.port import Port, Port_Collection
 
-class Port_Data(Port):
+from typing import NamedTuple
+from .utils import Port_Data
 
-    example_values = [np.array([[[1]]])]
+class Ports_none(NamedTuple): 
+    pass
 
-    def __init__(self, name='Data', optional=False):
-        super().__init__(name, optional)
-
-    @staticmethod
-    def check_value(value):
-        if not isinstance(value, np.ndarray):
-            return False, "Should be numpy array;"
-        elif len(value.shape) != 3:
-            return False, "Shape should be of length three (Batch, Time, Channel)"
-        return True, None
-
+class Ports_simple(NamedTuple):
+    data: Port_Data("Data")
 
 class Data(Sender):
-    channels_in = Port_Collection()
+    channels_in = Ports_none()
     # yes, "Data" would have been fine, but wanted to quickly test the naming parts
     # TODO: consider
     channels_out = Port_Collection(Port_Data("Alternate Data"))

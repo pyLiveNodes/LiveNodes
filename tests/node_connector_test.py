@@ -1,33 +1,29 @@
 import pytest
 
-import numpy as np
-
 from livenodes.node_connector import Connectionist
-from livenodes.port import Port, Port_Collection
 
-class Port_Data(Port):
+from typing import NamedTuple
+from .utils import Port_Data
 
-    example_values = [np.array([[[1]]])]
-
-    def __init__(self, name='Data', optional=False):
-        super().__init__(name, optional)
-
-    @staticmethod
-    def check_value(value):
-        if not isinstance(value, np.ndarray):
-            return False, "Should be numpy array;"
-        elif len(value.shape) != 3:
-            return False, "Shape should be of length three (Batch, Time, Channel)"
-        return True, None
+class Ports_simple(NamedTuple):
+    data: Port_Data("Data")
 
 class SimpleNode(Connectionist):
-    channels_in = Port_Collection(Port_Data())
-    channels_out = Port_Collection(Port_Data())
+    channels_in = Ports_simple()
+    channels_out = Ports_simple()
+
+class Ports_complex_in(NamedTuple):
+    data: Port_Data("Data")
+    meta: Port_Data("Meta")
+
+class Ports_complex_out(NamedTuple):
+    data: Port_Data("Data")
+    meta: Port_Data("Meta")
+    info: Port_Data("Info")
 
 class ComplexNode(Connectionist):
-    channels_in = Port_Collection(Port_Data(), Port_Data("Meta"))
-    channels_out = Port_Collection(Port_Data(), Port_Data("Meta"), Port_Data("Info"))
-
+    channels_in = Ports_complex_in()
+    channels_out = Ports_complex_out()
 
 # Arrange
 @pytest.fixture
@@ -38,11 +34,11 @@ def create_simple_graph():
     node_d = SimpleNode()
     node_e = SimpleNode()
 
-    node_c.add_input(node_a, emitting_channel=node_a.channels_out._data, receiving_channel=node_c.channels_in._data)
-    node_c.add_input(node_b, emitting_channel=node_a.channels_out._data, receiving_channel=node_c.channels_in._data)
+    node_c.add_input(node_a, emit_port=SimpleNode.channels_out.data, recv_port=SimpleNode.channels_in.data)
+    node_c.add_input(node_b, emit_port=SimpleNode.channels_out.data, recv_port=SimpleNode.channels_in.data)
 
-    node_d.add_input(node_c, emitting_channel=node_a.channels_out._data, receiving_channel=node_c.channels_in._data)
-    node_e.add_input(node_c, emitting_channel=node_a.channels_out._data, receiving_channel=node_c.channels_in._data)
+    node_d.add_input(node_c, emit_port=SimpleNode.channels_out.data, recv_port=SimpleNode.channels_in.data)
+    node_e.add_input(node_c, emit_port=SimpleNode.channels_out.data, recv_port=SimpleNode.channels_in.data)
 
     return node_a, node_b, node_c, node_d, node_e
 
