@@ -1,4 +1,4 @@
-from .registry import Node_Register
+from .registry import Register
 
 # There is one one global registry of nodes
 # In order to not have circular dependencies, but allow for global modification (ie adding classes, enabling/disabling packages)
@@ -8,5 +8,5 @@ REGISTRY = None
 def get_registry():
     global REGISTRY
     if REGISTRY is None:
-        REGISTRY = Node_Register()
+        REGISTRY = Register()
     return REGISTRY

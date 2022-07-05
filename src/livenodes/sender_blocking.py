@@ -1,6 +1,5 @@
 from .node import Location
 from .sender import Sender
-from .clock import Clock
 
 
 class BlockingSender(Sender):
@@ -18,10 +17,10 @@ class BlockingSender(Sender):
             # ie, in the RIoT example from semi-online, with compute=thread claims to have stopped, but continues to send data and does not stop its children
             # which is mainly due to the fact, that it just calls _onstop, which is not implemented and just passed in node._onstop (line 887)
 
-    def _emit_data(self, data, channel="Data"):
+    def _emit_data(self, data, channel):
         super()._emit_data(data, channel)
         # as we are a blocking sender / a sensore everytime we emit a sample, we advance our clock
-        if channel == "Data":
+        if channel.name == "data": # TODO: not sure if we can remove this easily...
             self._clocks.register(*self._clock.state)
             self._ctr = self._clock.tick()
 
@@ -64,4 +63,4 @@ class BlockingSender(Sender):
             # now stop children
             if children:
                 for con in self.output_connections:
-                    con._receiving_node.stop_node()
+                    con._recv_node.stop_node()
