@@ -54,7 +54,7 @@ class Serializer():
 
             # assume that the first node without any inputs is the initial node...
             if initial_node is None and len(
-                    items_instc[name].channels_in) <= 0:
+                    items_instc[name].ports_in) <= 0:
                 initial_node = name
 
         # not sure if we can remove this at some point...
@@ -69,9 +69,9 @@ class Serializer():
             # only add inputs, as, if we go through all nodes this automatically includes all outputs as well
             for con in itm['inputs']:
                 items_instc[name].add_input(
-                    emitting_node=items_instc[con["emitting_node"]],
-                    emitting_channel=items_instc[name].channels_out.get_by_name(con['emitting_channel']),
-                    receiving_channel=items_instc[con["emitting_node"]].channels_out.get_by_name(con['receiving_channel'])
+                    emit_node=items_instc[con["emit_node"]],
+                    emit_port=items_instc[name].ports_out.get_by_name(con['emit_port']),
+                    recv_port=items_instc[con["emit_node"]].ports_out.get_by_name(con['recv_port'])
                     )
 
         return initial

@@ -5,25 +5,40 @@ from livenodes.node_connector import Connectionist
 from typing import NamedTuple
 from .utils import Port_Data
 
+# from livenodes.port import Port
+# import numpy as np
+# class Port_Data(Port):
+
+#     example_values = [np.array([[[1]]])]
+
+#     @staticmethod
+#     def check_value(value):
+#         if not isinstance(value, np.ndarray):
+#             return False, "Should be numpy array;"
+#         elif len(value.shape) != 3:
+#             return False, "Shape should be of length three (Batch, Time, Channel)"
+#         return True, None
+
+
 class Ports_simple(NamedTuple):
-    data: Port_Data("Data")
+    data: Port_Data = Port_Data("Data")
 
 class SimpleNode(Connectionist):
-    channels_in = Ports_simple()
-    channels_out = Ports_simple()
+    ports_in = Ports_simple()
+    ports_out = Ports_simple()
 
 class Ports_complex_in(NamedTuple):
-    data: Port_Data("Data")
-    meta: Port_Data("Meta")
+    data: Port_Data = Port_Data("Data")
+    meta: Port_Data = Port_Data("Meta")
 
 class Ports_complex_out(NamedTuple):
-    data: Port_Data("Data")
-    meta: Port_Data("Meta")
-    info: Port_Data("Info")
+    data: Port_Data = Port_Data("Data")
+    meta: Port_Data = Port_Data("Meta")
+    info: Port_Data = Port_Data("Info")
 
 class ComplexNode(Connectionist):
-    channels_in = Ports_complex_in()
-    channels_out = Ports_complex_out()
+    ports_in = Ports_complex_in()
+    ports_out = Ports_complex_out()
 
 # Arrange
 @pytest.fixture
@@ -34,11 +49,11 @@ def create_simple_graph():
     node_d = SimpleNode()
     node_e = SimpleNode()
 
-    node_c.add_input(node_a, emit_port=SimpleNode.channels_out.data, recv_port=SimpleNode.channels_in.data)
-    node_c.add_input(node_b, emit_port=SimpleNode.channels_out.data, recv_port=SimpleNode.channels_in.data)
+    node_c.add_input(node_a, emit_port=SimpleNode.ports_out.data, recv_port=SimpleNode.ports_in.data)
+    node_c.add_input(node_b, emit_port=SimpleNode.ports_out.data, recv_port=SimpleNode.ports_in.data)
 
-    node_d.add_input(node_c, emit_port=SimpleNode.channels_out.data, recv_port=SimpleNode.channels_in.data)
-    node_e.add_input(node_c, emit_port=SimpleNode.channels_out.data, recv_port=SimpleNode.channels_in.data)
+    node_d.add_input(node_c, emit_port=SimpleNode.ports_out.data, recv_port=SimpleNode.ports_in.data)
+    node_e.add_input(node_c, emit_port=SimpleNode.ports_out.data, recv_port=SimpleNode.ports_in.data)
 
     return node_a, node_b, node_c, node_d, node_e
 
@@ -75,16 +90,21 @@ class TestGraphOperations():
 
         # Remove the "Data" connection
         node_b.remove_input(node_a, 
-                    emitting_channel=node_a.channels_out._data,
-                    receiving_channel=node_b.channels_in._data)
+                    emit_port=ComplexNode.ports_out.data,
+                    recv_port=ComplexNode.ports_in.data)
 
         # They are still children, as the "Meta" connection remains
         assert node_b.requires_input_of(node_a)
 
         # Remove the "Meta" connection
         node_b.remove_input(node_a,
-                            emitting_channel=node_a.channels_out._meta,
-                            receiving_channel=node_b.channels_in._meta)
+                            emit_port=ComplexNode.ports_out.meta,
+                            recv_port=ComplexNode.ports_in.meta)
 
         # Now they shouldn't be related anymore
         assert not node_b.requires_input_of(node_a)
+
+
+# if __name__ == "__main__":
+#     # TestGraphOperations().test_relationships(create_simple_graph())
+#     TestGraphOperations().test_remove_connection(create_simple_graph_complex_nodes())

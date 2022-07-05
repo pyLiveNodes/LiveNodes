@@ -8,7 +8,7 @@ class Sender(Node):
     Loops the process function until it returns false, indicating that no more data is to be sent
     """
 
-    channels_in = []  # must be empty!
+    ports_in = []  # must be empty!
 
     def __init__(self,
                  name,
@@ -32,7 +32,7 @@ class Sender(Node):
 
     def __init_subclass__(cls):
         super().__init_subclass__()
-        if len(cls.channels_in) > 0:
+        if len(cls.ports_in) > 0:
             # This is a design choice. Technically this might even be possible, but at the time of writing i do not forsee a usefull case.
             raise ValueError('Sender nodes cannot have input')
 

@@ -4,8 +4,6 @@ import multiprocessing as mp
 from livenodes.node import Node, Location
 from livenodes.sender import Sender
 
-import numpy as np
-
 from typing import NamedTuple
 from .utils import Port_Data
 
@@ -13,13 +11,13 @@ class Ports_none(NamedTuple):
     pass
 
 class Ports_simple(NamedTuple):
-    data: Port_Data("Data")
+    alternate_data: Port_Data = Port_Data("Alternate Data")
 
 class Data(Sender):
-    channels_in = Ports_none()
+    ports_in = Ports_none()
     # yes, "Data" would have been fine, but wanted to quickly test the naming parts
     # TODO: consider
-    channels_out = Port_Collection(Port_Data("Alternate Data"))
+    ports_out = Ports_simple()
 
     def _run(self):
         for ctr in range(10):
@@ -29,16 +27,16 @@ class Data(Sender):
 
 
 class Quadratic(Node):
-    channels_in = Port_Collection(Port_Data("Alternate Data"))
-    channels_out = Port_Collection(Port_Data("Alternate Data"))
+    ports_in = Ports_simple()
+    ports_out = Ports_simple()
 
     def process(self, alternate_data, **kwargs):
         self._emit_data(alternate_data**2)
 
 
 class Save(Node):
-    channels_in = Port_Collection(Port_Data("Alternate Data"))
-    channels_out = Port_Collection()
+    ports_in = Ports_simple()
+    ports_out = Ports_none()
 
     def __init__(self, name, **kwargs):
         super().__init__(name, **kwargs)

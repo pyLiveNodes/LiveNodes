@@ -5,61 +5,69 @@ from graphviz import Digraph
 from PIL import Image
 from io import BytesIO
 
+from typing import NamedTuple
+
 from .connection import Connection
-from .port import Port, Port_Collection
+from .port import Port
+
+class Ports_simple(NamedTuple):
+    data: Port = Port("Data")
 
 class Connectionist():
-    channels_in = Port_Collection(Port('port 1'))
-    channels_out = Port_Collection(Port('port 1'))
+    ports_in = Ports_simple()
+    ports_out = Ports_simple()
 
     def __init__(self):
         self.input_connections = []
         self.output_connections = []
 
-    def connect_inputs_to(self, emitting_node: 'Connectionist'):
+    def __str__(self) -> str:
+        return f"<Connectionist: {self.__class__.__name__}>"
+
+    def connect_inputs_to(self, emit_node: 'Connectionist'):
         """
         Add all matching channels from the emitting nodes to self as input.
         Main function to connect two nodes together with add_input.
         """
 
-        lookup_recv = dict(zip(map(str, self.channels_in), self.channels_in))
-        lookup_emit = dict(zip(map(str, emitting_node.channels_out), emitting_node.channels_out))
+        lookup_recv = dict(zip(map(str, self.ports_in), self.ports_in))
+        lookup_emit = dict(zip(map(str, emit_node.ports_out), emit_node.ports_out))
         for key in lookup_recv:
             if key in lookup_emit:
-                self.add_input(emitting_node=emitting_node,
-                            emitting_channel=lookup_emit[key],
-                            receiving_channel=lookup_recv[key])
+                self.add_input(emit_node=emit_node,
+                            emit_port=lookup_emit[key],
+                            recv_port=lookup_recv[key])
 
     def add_input(self,
-                  emitting_node: 'Connectionist',
-                  emitting_channel: Port,
-                  receiving_channel: Port):
+                  emit_node: 'Connectionist',
+                  emit_port: Port,
+                  recv_port: Port):
         """
         Add one input to self via attributes.
         Main function to connect two nodes together with connect_inputs_to
         """
 
-        if emitting_channel not in emitting_node.channels_out:
+        if emit_port not in emit_node.ports_out:
             raise ValueError(
-                f"Emitting Channel not present on given emitting node ({str(emitting_node)}). Got",
-                emitting_channel)
+                f"Emitting Channel not present on given emitting node ({str(emit_node)}). Got",
+                str(emit_port), 'Available ports:', ', '.join(map(str, emit_node.ports_out)))
 
-        if receiving_channel not in self.channels_in:
+        if recv_port not in self.ports_in:
             raise ValueError(
                 f"Receiving Channel not present on node ({str(self)}). Got",
-                receiving_channel)
+                str(recv_port), 'Available ports:', ', '.join(map(str, self.ports_in)))
 
         # This is too simple, as when connecting two nodes, we really are connecting two sub-graphs, which need to be checked
         # TODO: implement this proper
-        # nodes_in_graph = emitting_node.discover_full(emitting_node)
+        # nodes_in_graph = emit_node.discover_full(emit_node)
         # if list(map(str, nodes_in_graph)):
         #     raise ValueError("Name already in parent sub-graph. Got:", str(self))
 
         # Create connection instance
-        connection = Connection(emitting_node,
+        connection = Connection(emit_node,
                                 self,
-                                emitting_channel=emitting_channel,
-                                receiving_channel=receiving_channel)
+                                emit_port=emit_port,
+                                recv_port=recv_port)
 
         if len(list(filter(connection.__eq__, self.input_connections))) > 0:
             raise ValueError("Connection already exists.")
@@ -71,7 +79,7 @@ class Connectionist():
         connection._set_connection_counter(counter)
 
         # Not sure if this'll actually work, otherwise we should name them _add_output
-        emitting_node._add_output(connection)
+        emit_node._add_output(connection)
         self.input_connections.append(connection)
 
     def remove_all_inputs(self):
@@ -79,18 +87,18 @@ class Connectionist():
             self.remove_input_by_connection(con)
 
     def remove_input(self,
-                     emitting_node,
-                     emitting_channel: Port,
-                     receiving_channel: Port,
+                     emit_node,
+                     emit_port: Port,
+                     recv_port: Port,
                      connection_counter=0):
         """
         Remove an input from self via attributes
         """
         return self.remove_input_by_connection(
-            Connection(emitting_node,
+            Connection(emit_node,
                        self,
-                       emitting_channel=emitting_channel,
-                       receiving_channel=receiving_channel,
+                       emit_port=emit_port,
+                       recv_port=recv_port,
                        connection_counter=connection_counter))
 
     def remove_input_by_connection(self, connection):
@@ -108,7 +116,7 @@ class Connectionist():
 
         # Remove first
         # -> in case something goes wrong on the parents side, the connection remains intact
-        cons[0]._emitting_node._remove_output(cons[0])
+        cons[0]._emit_node._remove_output(cons[0])
         self.input_connections.remove(cons[0])
 
 
@@ -130,9 +138,9 @@ class Connectionist():
                              connection)
         self.output_connections.remove(connection)
 
-    def _is_input_connected(self, receiving_channel: Port):
+    def _is_input_connected(self, recv_port: Port):
         return any([
-            x._receiving_channel == receiving_channel
+            x._recv_port == recv_port
             for x in self.input_connections
         ])
 
@@ -163,7 +171,7 @@ class Connectionist():
     def discover_input_deps(node):
         if len(node.input_connections) > 0:
             input_deps = [
-                con._emitting_node.discover_input_deps(con._emitting_node)
+                con._emit_node.discover_input_deps(con._emit_node)
                 for con in node.input_connections
             ]
             return [node] + list(np.concatenate(input_deps))
@@ -172,7 +180,7 @@ class Connectionist():
     @staticmethod
     def discover_neighbors(node):
         childs = [con._receiving_node for con in node.output_connections]
-        parents = [con._emitting_node for con in node.input_connections]
+        parents = [con._emit_node for con in node.input_connections]
         return node.remove_discovered_duplicates([node] + childs + parents)
 
     @staticmethod
@@ -206,9 +214,9 @@ class Connectionist():
 
         for node in nodes:
             shape = 'rect'
-            if len(node.channels_in) <= 0:
+            if len(node.ports_in) <= 0:
                 shape = 'invtrapezium'
-            if len(node.channels_out) <= 0:
+            if len(node.ports_out) <= 0:
                 shape = 'trapezium'
             disp_name = node.name if name else str(node)
             dot.node(str(node), disp_name, shape=shape, style='rounded')
@@ -218,7 +226,7 @@ class Connectionist():
             for con in node.output_connections:
                 dot.edge(str(node),
                          str(con._receiving_node),
-                         label=str(con._emitting_channel))
+                         label=str(con._emit_port))
 
         return Image.open(BytesIO(dot.pipe()))
 

@@ -83,8 +83,8 @@ class QueueHelperHack():
 
 class Node(Connectionist, Logger, Serializer):
     # === Information Stuff =================
-    # channels_in = [Port('port 1')] this is inherited from the connecitonist and should be defined by every node!
-    # channels_out = [Port('port 1')]
+    # ports_in = [Port('port 1')] this is inherited from the connecitonist and should be defined by every node!
+    # ports_out = [Port('port 1')]
 
     category = "Default"
     description = ""
@@ -116,7 +116,7 @@ class Node(Connectionist, Logger, Serializer):
         self._received_data = {
             str(port): QueueHelperHack(compute_on=compute_on)
             # key: QueueHelperHack(compute_on=Location.THREAD)
-            for port in self.channels_in
+            for port in self.ports_in
         }
 
         self._ctr = None
@@ -154,11 +154,11 @@ class Node(Connectionist, Logger, Serializer):
 
 
     # === Connection Stuff =================
-    def add_input(self, emitting_node: 'Node', emitting_channel:Port, receiving_channel:Port):
-        if not isinstance(emitting_node, Node):
+    def add_input(self, emit_node: 'Node', emit_port:Port, recv_port:Port):
+        if not isinstance(emit_node, Node):
             raise ValueError("Emitting Node must be of instance Node. Got:",
-                             emitting_node)
-        return super().add_input(emitting_node, emitting_channel, receiving_channel)
+                             emit_node)
+        return super().add_input(emit_node, emit_port, recv_port)
 
     # # === Subclass Validation Stuff =================
     # def __init_subclass__(self):
@@ -170,10 +170,10 @@ class Node(Connectionist, Logger, Serializer):
     # TODO: actually start, ie design/test a sending node!
     # === Start/Stop Stuff =================
     def _get_start_nodes(self):
-        # TODO: this should not be channels_in, but channels connected!
+        # TODO: this should not be ports_in, but channels connected!
         # self._is_input_connected
-        # return list(filter(lambda x: len(x.channels_in) == 0, self.discover_graph(self)))
-        return list(filter(lambda x: len(x.channels_in) == 0, self.discover_graph(self)))
+        # return list(filter(lambda x: len(x.ports_in) == 0, self.discover_graph(self)))
+        return list(filter(lambda x: len(x.ports_in) == 0, self.discover_graph(self)))
 
     def start(self, children=True, join=False):
         self.spawn_processes()
@@ -310,15 +310,16 @@ class Node(Connectionist, Logger, Serializer):
         """
         self.error('test', str(channel))
         if channel is None:
-            channel = self.channels_out.ports[0]
+            channel = list(self.ports_out._asdict().values())[0]
+        channel = channel.key
         clock = self._ctr if ctr is None else ctr
-        self.error(f'Emitting channel: "{channel}"', clock, list(map(str, self.channels_out)))
+        self.error(f'Emitting channel: "{channel}"', clock, list(map(str, self.ports_out)))
 
         for con in self.output_connections:
-            if con._emitting_channel == channel:
-                self.error('rec channel', type(con._receiving_channel), str(con._receiving_channel))
+            if con._emit_port == channel:
+                self.error('rec channel', type(con._recv_port), str(con._recv_port))
                 con._receiving_node.receive_data(
-                    clock, payload={str(con._receiving_channel): data})
+                    clock, payload={str(con._recv_port): data})
 
     def _process_on_proc(self):
         self.info('Started subprocess')
@@ -473,11 +474,11 @@ class Node(Connectionist, Logger, Serializer):
     def _should_process(self, **kwargs):
         """
         Given the inputs, this determines if process should be called on the new data or not
-        params: **channels_in
+        params: **ports_in
         returns bool (if process should be called with these inputs)
         """
-        self.error('available:', list(map(str, self.channels_in)), list(kwargs.keys()))
-        return set(list(map(str, self.channels_in))) <= set(list(kwargs.keys()))
+        self.error('available:', list(map(str, self.ports_in)), list(kwargs.keys()))
+        return set(list(map(str, self.ports_in))) <= set(list(kwargs.keys()))
 
     def process_time_series(self, ts):
         return ts
@@ -492,7 +493,7 @@ class Node(Connectionist, Logger, Serializer):
         -> pro: clearer process functions, more likely to actually be funcitonal; cannot have confusion when emitting twice in the same channel
         -> con: children need to wait until the full node is finished with processing (ie: no ability to do partial computations (not sure if we want those, tho))
 
-        params: **channels_in
+        params: **ports_in
         returns None
         """
         res = list(map(self.process_time_series, data))

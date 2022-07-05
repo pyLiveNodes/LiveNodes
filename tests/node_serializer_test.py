@@ -11,12 +11,12 @@ from .utils import Port_Data
 registry = get_registry()
 
 class Ports_simple(NamedTuple):
-    data: Port_Data("Data")
+    data: Port_Data = Port_Data("Data")
 
 @registry.nodes.decorator
 class SimpleNode(Node):
-    channels_in = Ports_simple()
-    channels_out = Ports_simple()
+    ports_in = Ports_simple()
+    ports_out = Ports_simple()
 
 
 @pytest.fixture
@@ -63,7 +63,7 @@ class TestNodeOperations():
         assert json.dumps(node_a.to_dict()) == json.dumps(node_a_des.to_dict())
 
     def test_graph_json(self, create_connection):
-        assert json.dumps(create_connection.to_dict(graph=True)) == '{"A [SimpleNode]": {"class": "SimpleNode", "settings": {"name": "A", "compute_on": 1}, "inputs": []}, "B [SimpleNode]": {"class": "SimpleNode", "settings": {"name": "B", "compute_on": 1}, "inputs": [{"emitting_node": "A [SimpleNode]", "receiving_node": "B [SimpleNode]", "emitting_channel": "data", "receiving_channel": "data", "connection_counter": 0}]}}'
+        assert json.dumps(create_connection.to_dict(graph=True)) == '{"A [SimpleNode]": {"class": "SimpleNode", "settings": {"name": "A", "compute_on": 1}, "inputs": []}, "B [SimpleNode]": {"class": "SimpleNode", "settings": {"name": "B", "compute_on": 1}, "inputs": [{"emit_node": "A [SimpleNode]", "receiving_node": "B [SimpleNode]", "emit_port": "data", "recv_port": "data", "connection_counter": 0}]}}'
         
         graph = Node.from_dict(create_connection.to_dict(graph=True))
         assert str(graph) == "A [SimpleNode]"
