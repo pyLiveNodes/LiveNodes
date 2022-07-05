@@ -385,12 +385,12 @@ class Node(Connectionist, Logger, Serializer):
     def register_reporter(self, reporter_fn):
         self.reporters.append(reporter_fn)
 
-    def _report_perf(self):
+    def _report_perf(self, current_data):
         processing_duration = self._perf_user_fn.average()
         invocation_duration = self._perf_framework.average()
         self.debug(f'Processing: {processing_duration * 1000:.5f}ms; Time between calls: {(invocation_duration - processing_duration) * 1000:.5f}ms; Time between invocations: {invocation_duration * 1000:.5f}ms')
         for reporter in self.reporters:
-            reporter(self)
+            reporter(self, current_data)
 
     def _process(self, ctr):
         """
@@ -414,7 +414,7 @@ class Node(Connectionist, Logger, Serializer):
             self._ctr = ctr
             self._call_user_fn_process(self.process, 'process', **_current_data, _ctr=ctr)
             self.verbose('process fn finished')
-            self._report_perf()
+            self._report_perf(_current_data)
             for queue in self._received_data.values():
                 queue.discard_before(ctr)
 
