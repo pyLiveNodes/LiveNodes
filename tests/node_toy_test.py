@@ -11,7 +11,7 @@ class Ports_none(NamedTuple):
     pass
 
 class Ports_simple(NamedTuple):
-    alternate_data: Port_Data = Port_Data("Alternate Data")
+    data: Port_Data = Port_Data("Alternate Data")
 
 class Data(Sender):
     ports_in = Ports_none()
@@ -43,6 +43,7 @@ class Save(Node):
         self.out = mp.SimpleQueue()
 
     def process(self, alternate_data, **kwargs):
+        self.error('re data', alternate_data)
         self.out.put(alternate_data)
 
     def get_state(self):

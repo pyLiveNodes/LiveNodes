@@ -70,8 +70,8 @@ class Serializer():
             for con in itm['inputs']:
                 items_instc[name].add_input(
                     emit_node=items_instc[con["emit_node"]],
-                    emit_port=items_instc[name].ports_out.get_by_name(con['emit_port']),
-                    recv_port=items_instc[con["emit_node"]].ports_out.get_by_name(con['recv_port'])
+                    emit_port = [x for x in items_instc[name].ports_out._asdict().values() if x.key == con['emit_port']][0],
+                    recv_port = [x for x in items_instc[con["emit_node"]].ports_out._asdict().values() if x.key == con['recv_port']][0]
                     )
 
         return initial

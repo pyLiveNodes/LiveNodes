@@ -19,8 +19,8 @@ class Connection():
         return {
             "emit_node": str(self._emit_node),
             "receiving_node": str(self._receiving_node),
-            "emit_port": str(self._emit_port),
-            "recv_port": str(self._recv_port),
+            "emit_port": self._emit_port.key,
+            "recv_port": self._recv_port.key,
             "connection_counter": self._connection_counter
         }
 

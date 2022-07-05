@@ -113,8 +113,11 @@ class Node(Connectionist, Logger, Serializer):
 
         self.compute_on = compute_on
 
+        for port in self.ports_in:
+            print(port, type(port))
+
         self._received_data = {
-            str(port): QueueHelperHack(compute_on=compute_on)
+            port.key: QueueHelperHack(compute_on=compute_on)
             # key: QueueHelperHack(compute_on=Location.THREAD)
             for port in self.ports_in
         }
@@ -308,18 +311,15 @@ class Node(Connectionist, Logger, Serializer):
         Called in computation process, ie self.process
         Emits data to childs, ie child.receive_data
         """
-        self.error('test', str(channel))
         if channel is None:
             channel = list(self.ports_out._asdict().values())[0]
         channel = channel.key
         clock = self._ctr if ctr is None else ctr
-        self.error(f'Emitting channel: "{channel}"', clock, list(map(str, self.ports_out)))
 
         for con in self.output_connections:
-            if con._emit_port == channel:
-                self.error('rec channel', type(con._recv_port), str(con._recv_port))
+            if con._emit_port.key == channel:
                 con._receiving_node.receive_data(
-                    clock, payload={str(con._recv_port): data})
+                    clock, payload={con._recv_port.key: data})
 
     def _process_on_proc(self):
         self.info('Started subprocess')
@@ -477,8 +477,7 @@ class Node(Connectionist, Logger, Serializer):
         params: **ports_in
         returns bool (if process should be called with these inputs)
         """
-        self.error('available:', list(map(str, self.ports_in)), list(kwargs.keys()))
-        return set(list(map(str, self.ports_in))) <= set(list(kwargs.keys()))
+        return set([x.key for x in self.ports_in]) <= set(list(kwargs.keys()))
 
     def process_time_series(self, ts):
         return ts

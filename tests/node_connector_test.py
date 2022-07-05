@@ -5,21 +5,6 @@ from livenodes.node_connector import Connectionist
 from typing import NamedTuple
 from .utils import Port_Data
 
-# from livenodes.port import Port
-# import numpy as np
-# class Port_Data(Port):
-
-#     example_values = [np.array([[[1]]])]
-
-#     @staticmethod
-#     def check_value(value):
-#         if not isinstance(value, np.ndarray):
-#             return False, "Should be numpy array;"
-#         elif len(value.shape) != 3:
-#             return False, "Shape should be of length three (Batch, Time, Channel)"
-#         return True, None
-
-
 class Ports_simple(NamedTuple):
     data: Port_Data = Port_Data("Data")
 
