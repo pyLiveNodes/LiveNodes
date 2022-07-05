@@ -89,6 +89,21 @@ class TestGraphOperations():
         # Now they shouldn't be related anymore
         assert not node_b.requires_input_of(node_a)
 
+    def test_error_duplicate_port_keys(self):
+
+        # there may not be two ports with the same label (which would result in also the same key and therefore serialzation and message passing problems)
+        class Ports_simple(NamedTuple):
+            data: Port_Data = Port_Data("Data")
+            alternate_data: Port_Data = Port_Data("Data")
+
+        try:
+            class SimpleNode(Connectionist):
+                ports_in = Ports_simple()
+                ports_out = Ports_simple()
+        except ValueError:
+            return
+        pytest.fail()
+
 
 # if __name__ == "__main__":
 #     # TestGraphOperations().test_relationships(create_simple_graph())

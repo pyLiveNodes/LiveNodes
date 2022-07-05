@@ -1,3 +1,4 @@
+import inspect
 import numpy as np
 import queue
 
@@ -23,6 +24,21 @@ class Connectionist():
 
     def __str__(self) -> str:
         return f"<Connectionist: {self.__class__.__name__}>"
+
+    @staticmethod
+    def __check_ports(ports):
+        for x in ports:
+            if not isinstance(x, Port):
+                raise ValueError('Ports must subclass Port. Got:', type(x))
+        
+        keys = [x.key for x in ports]
+        if len(set(keys)) != len(keys):
+            raise ValueError('May not have two ports with the same label')
+
+    def __init_subclass__(cls) -> None:
+        cls.__check_ports(cls.ports_in)
+        cls.__check_ports(cls.ports_out)
+
 
     def connect_inputs_to(self, emit_node: 'Connectionist'):
         """
