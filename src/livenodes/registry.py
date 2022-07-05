@@ -3,7 +3,8 @@ from class_registry import ClassRegistry, EntryPointClassRegistry
 class Register():
     def __init__(self):
         self.nodes = Entrypoint_Register(entrypoints='livenodes.nodes')
-        self.ports = Entrypoint_Register(entrypoints='livenodes.ports')
+        # I don't think we need the registry for ports, as these are imported via the nodes classes anyway
+        # self.ports = Entrypoint_Register(entrypoints='livenodes.ports')
 
     def package_enable(self, package_name):
         raise NotImplementedError()
