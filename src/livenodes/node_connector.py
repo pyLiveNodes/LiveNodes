@@ -32,6 +32,7 @@ class Connectionist():
                 raise ValueError('Ports must subclass Port. Got:', type(x))
         
         keys = [x.key for x in ports]
+        # there may not be two ports with the same label (which would result in also the same key and therefore serialzation and message passing problems)
         if len(set(keys)) != len(keys):
             raise ValueError('May not have two ports with the same label')
 
