@@ -4,37 +4,46 @@ import multiprocessing as mp
 from livenodes.node import Node, Location
 from livenodes.sender import Sender
 
+from typing import NamedTuple
+from .utils import Port_Data
+
+class Ports_none(NamedTuple): 
+    pass
+
+class Ports_simple(NamedTuple):
+    data: Port_Data = Port_Data("Alternate Data")
 
 class Data(Sender):
-    channels_in = []
+    ports_in = Ports_none()
     # yes, "Data" would have been fine, but wanted to quickly test the naming parts
     # TODO: consider
-    channels_out = ["Alternate Data"]
+    ports_out = Ports_simple()
 
     def _run(self):
         for ctr in range(10):
             self.info(ctr)
-            self._emit_data(ctr, channel="Alternate Data")
+            self._emit_data(ctr)
             yield ctr < 9
 
 
 class Quadratic(Node):
-    channels_in = ["Alternate Data"]
-    channels_out = ["Alternate Data"]
+    ports_in = Ports_simple()
+    ports_out = Ports_simple()
 
     def process(self, alternate_data, **kwargs):
-        self._emit_data(alternate_data**2, channel="Alternate Data")
+        self._emit_data(alternate_data**2)
 
 
 class Save(Node):
-    channels_in = ["Alternate Data"]
-    channels_out = []
+    ports_in = Ports_simple()
+    ports_out = Ports_none()
 
     def __init__(self, name, **kwargs):
         super().__init__(name, **kwargs)
         self.out = mp.SimpleQueue()
 
     def process(self, alternate_data, **kwargs):
+        self.error('re data', alternate_data)
         self.out.put(alternate_data)
 
     def get_state(self):

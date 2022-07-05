@@ -9,6 +9,7 @@ import traceback
 
 from .clock_register import Clock_Register
 from .perf import Time_Per_Call, Time_Between_Call
+from .port import Port
 
 from .node_connector import Connectionist
 from .node_logger import Logger
@@ -82,8 +83,8 @@ class QueueHelperHack():
 
 class Node(Connectionist, Logger, Serializer):
     # === Information Stuff =================
-    channels_in = ["Data"]
-    channels_out = ["Data"]
+    # ports_in = [Port('port 1')] this is inherited from the connecitonist and should be defined by every node!
+    # ports_out = [Port('port 1')]
 
     category = "Default"
     description = ""
@@ -112,10 +113,13 @@ class Node(Connectionist, Logger, Serializer):
 
         self.compute_on = compute_on
 
+        for port in self.ports_in:
+            print(port, type(port))
+
         self._received_data = {
-            key: QueueHelperHack(compute_on=compute_on)
+            port.key: QueueHelperHack(compute_on=compute_on)
             # key: QueueHelperHack(compute_on=Location.THREAD)
-            for key in self.channels_in
+            for port in self.ports_in
         }
 
         self._ctr = None
@@ -153,11 +157,11 @@ class Node(Connectionist, Logger, Serializer):
 
 
     # === Connection Stuff =================
-    def add_input(self, emitting_node, emitting_channel="Data", receiving_channel="Data"):
-        if not isinstance(emitting_node, Node):
+    def add_input(self, emit_node: 'Node', emit_port:Port, recv_port:Port):
+        if not isinstance(emit_node, Node):
             raise ValueError("Emitting Node must be of instance Node. Got:",
-                             emitting_node)
-        return super().add_input(emitting_node, emitting_channel, receiving_channel)
+                             emit_node)
+        return super().add_input(emit_node, emit_port, recv_port)
 
     # # === Subclass Validation Stuff =================
     # def __init_subclass__(self):
@@ -169,10 +173,10 @@ class Node(Connectionist, Logger, Serializer):
     # TODO: actually start, ie design/test a sending node!
     # === Start/Stop Stuff =================
     def _get_start_nodes(self):
-        # TODO: this should not be channels_in, but channels connected!
+        # TODO: this should not be ports_in, but channels connected!
         # self._is_input_connected
-        # return list(filter(lambda x: len(x.channels_in) == 0, self.discover_graph(self)))
-        return list(filter(lambda x: len(x.channels_in) == 0, self.discover_graph(self)))
+        # return list(filter(lambda x: len(x.ports_in) == 0, self.discover_graph(self)))
+        return list(filter(lambda x: len(x.ports_in) == 0, self.discover_graph(self)))
 
     def start(self, children=True, join=False):
         self.spawn_processes()
@@ -217,7 +221,7 @@ class Node(Connectionist, Logger, Serializer):
             # children cannot not have inputs, ie they are always relying on this node to send them data if they want to progress their clock
             if children:
                 for con in self.output_connections:
-                    con._receiving_node.start_node()
+                    con._recv_node.start_node()
 
             # now start self
             self._running = True
@@ -271,7 +275,7 @@ class Node(Connectionist, Logger, Serializer):
             # now stop children
             if children:
                 for con in self.output_connections:
-                    con._receiving_node.stop_node()
+                    con._recv_node.stop_node()
 
     def _join(self):
         # blocks until all nodes in the graph reached the same clock as the node we are calling this from
@@ -302,20 +306,20 @@ class Node(Connectionist, Logger, Serializer):
         return res
 
     # === Data Stuff =================
-    def _emit_data(self, data, channel="Data", ctr=None):
+    def _emit_data(self, data, channel: Port = None, ctr: int = None):
         """
         Called in computation process, ie self.process
         Emits data to childs, ie child.receive_data
         """
+        if channel is None:
+            channel = list(self.ports_out._asdict().values())[0]
+        channel = channel.key
         clock = self._ctr if ctr is None else ctr
-        self.verbose(f'Emitting channel: "{channel}"', clock)
-        if channel == 'Data':
-            self.debug('Emitting Data of shape:', np.array(data).shape)
 
         for con in self.output_connections:
-            if con._emitting_channel == channel:
-                con._receiving_node.receive_data(
-                    clock, payload={con._receiving_channel: data})
+            if con._emit_port.key == channel:
+                con._recv_node.receive_data(
+                    clock, payload={con._recv_port.key: data})
 
     def _process_on_proc(self):
         self.info('Started subprocess')
@@ -354,10 +358,6 @@ class Node(Connectionist, Logger, Serializer):
 
         self.info('Finished subprocess')
 
-    @staticmethod
-    def _channel_name_to_key(name):
-        return name.replace(' ', '_').lower()
-
     def _retrieve_current_data(self, ctr):
         res = {}
         # update current state, based on own clock
@@ -368,7 +368,7 @@ class Node(Connectionist, Logger, Serializer):
                          queue._read.keys(), ctr)
             if found_value:
                 # TODO: instead of this key transformation/tolower consider actually using classes for data types... (allows for gui names alongside dev names and not converting between the two)
-                res[self._channel_name_to_key(key)] = cur_value
+                res[key] = cur_value
         return res
 
     # Most of the time when we already receive data from the next tick of some of the inputs AND the current tick would not be processed, we are likely to want to skip the tick where data was missing
@@ -439,7 +439,7 @@ class Node(Connectionist, Logger, Serializer):
         """
         # store all received data in their according mp.simplequeues
         for key, val in payload.items():
-            self.verbose(f'Received: "{key}" with clock {ctr}')
+            self.error(f'Received: "{key}" with clock {ctr}')
             self._received_data[key].put(ctr, val)
 
         # FIX ME! TODO: this is a pain in the butt
@@ -474,11 +474,10 @@ class Node(Connectionist, Logger, Serializer):
     def _should_process(self, **kwargs):
         """
         Given the inputs, this determines if process should be called on the new data or not
-        params: **channels_in
+        params: **ports_in
         returns bool (if process should be called with these inputs)
         """
-        return set(list(map(self._channel_name_to_key,
-                            self.channels_in))) <= set(list(kwargs.keys()))
+        return set([x.key for x in self.ports_in]) <= set(list(kwargs.keys()))
 
     def process_time_series(self, ts):
         return ts
@@ -493,7 +492,7 @@ class Node(Connectionist, Logger, Serializer):
         -> pro: clearer process functions, more likely to actually be funcitonal; cannot have confusion when emitting twice in the same channel
         -> con: children need to wait until the full node is finished with processing (ie: no ability to do partial computations (not sure if we want those, tho))
 
-        params: **channels_in
+        params: **ports_in
         returns None
         """
         res = list(map(self.process_time_series, data))

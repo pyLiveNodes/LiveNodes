@@ -1,14 +1,17 @@
 from functools import partial
 from .node import Node, Location
 from .clock import Clock
-from .utils import noop
+
+from typing import NamedTuple
+class Ports_empty(NamedTuple):
+    pass
 
 class Sender(Node):
     """
     Loops the process function until it returns false, indicating that no more data is to be sent
     """
 
-    channels_in = []  # must be empty!
+    ports_in = Ports_empty() # must be empty!
 
     def __init__(self,
                  name,
@@ -32,7 +35,7 @@ class Sender(Node):
 
     def __init_subclass__(cls):
         super().__init_subclass__()
-        if len(cls.channels_in) > 0:
+        if len(cls.ports_in) > 0:
             # This is a design choice. Technically this might even be possible, but at the time of writing i do not forsee a usefull case.
             raise ValueError('Sender nodes cannot have input')
 
@@ -43,7 +46,7 @@ class Sender(Node):
         """
         yield False
 
-    def _emit_data(self, data, channel="Data", ctr=None):
+    def _emit_data(self, data, channel=None, ctr=None):
         self._emit_ctr_fallback += 1
         return super()._emit_data(data, channel, ctr)
 
