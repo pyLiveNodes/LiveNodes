@@ -63,8 +63,8 @@ class TestNodeOperations():
         assert json.dumps(node_a.to_dict()) == json.dumps(node_a_des.to_dict())
 
     def test_graph_json(self, create_connection):
-        assert json.dumps(create_connection.to_dict(graph=True)) == '{"A [SimpleNode]": {"class": "SimpleNode", "settings": {"name": "A", "compute_on": 1}, "inputs": []}, "B [SimpleNode]": {"class": "SimpleNode", "settings": {"name": "B", "compute_on": 1}, "inputs": [{"emit_node": "A [SimpleNode]", "receiving_node": "B [SimpleNode]", "emit_port": "data", "recv_port": "data", "connection_counter": 0}]}}'
+        assert json.dumps(create_connection.to_dict(graph=True)) == '{"A [SimpleNode]": {"class": "SimpleNode", "settings": {"name": "A", "compute_on": 1}, "inputs": []}, "B [SimpleNode]": {"class": "SimpleNode", "settings": {"name": "B", "compute_on": 1}, "inputs": [{"emit_node": "A [SimpleNode]", "recv_node": "B [SimpleNode]", "emit_port": "data", "recv_port": "data", "connection_counter": 0}]}}'
         
         graph = Node.from_dict(create_connection.to_dict(graph=True))
         assert str(graph) == "A [SimpleNode]"
-        assert str(graph.output_connections[0]._receiving_node) == "B [SimpleNode]"
+        assert str(graph.output_connections[0]._recv_node) == "B [SimpleNode]"

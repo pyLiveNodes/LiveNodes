@@ -63,4 +63,4 @@ class BlockingSender(Sender):
             # now stop children
             if children:
                 for con in self.output_connections:
-                    con._receiving_node.stop_node()
+                    con._recv_node.stop_node()

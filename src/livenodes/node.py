@@ -221,7 +221,7 @@ class Node(Connectionist, Logger, Serializer):
             # children cannot not have inputs, ie they are always relying on this node to send them data if they want to progress their clock
             if children:
                 for con in self.output_connections:
-                    con._receiving_node.start_node()
+                    con._recv_node.start_node()
 
             # now start self
             self._running = True
@@ -275,7 +275,7 @@ class Node(Connectionist, Logger, Serializer):
             # now stop children
             if children:
                 for con in self.output_connections:
-                    con._receiving_node.stop_node()
+                    con._recv_node.stop_node()
 
     def _join(self):
         # blocks until all nodes in the graph reached the same clock as the node we are calling this from
@@ -318,7 +318,7 @@ class Node(Connectionist, Logger, Serializer):
 
         for con in self.output_connections:
             if con._emit_port.key == channel:
-                con._receiving_node.receive_data(
+                con._recv_node.receive_data(
                     clock, payload={con._recv_port.key: data})
 
     def _process_on_proc(self):

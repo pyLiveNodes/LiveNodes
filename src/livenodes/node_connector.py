@@ -178,7 +178,7 @@ class Connectionist():
         """
         if len(node.output_connections) > 0:
             output_deps = [
-                con._receiving_node.discover_output_deps(con._receiving_node)
+                con._recv_node.discover_output_deps(con._recv_node)
                 for con in node.output_connections
             ]
             return [node] + list(np.concatenate(output_deps))
@@ -196,7 +196,7 @@ class Connectionist():
 
     @staticmethod
     def discover_neighbors(node):
-        childs = [con._receiving_node for con in node.output_connections]
+        childs = [con._recv_node for con in node.output_connections]
         parents = [con._emit_node for con in node.input_connections]
         return node.remove_discovered_duplicates([node] + childs + parents)
 
@@ -242,7 +242,7 @@ class Connectionist():
         for node in nodes:
             for con in node.output_connections:
                 dot.edge(str(node),
-                         str(con._receiving_node),
+                         str(con._recv_node),
                          label=str(con._emit_port))
 
         return Image.open(BytesIO(dot.pipe()))
