@@ -398,6 +398,7 @@ class Node(Connectionist, Serializer, Logger):
 
         # update current state, based on own clock
         _current_data = self._retrieve_current_data(ctr=ctr)
+        self._report(current_state = {"ctr": ctr, "data": _current_data})
 
         # check if all required data to proceed is available and then call process
         # then cleanup aggregated data and advance our own clock
@@ -411,7 +412,7 @@ class Node(Connectionist, Serializer, Logger):
             self._ctr = ctr
             self._call_user_fn_process(self.process, 'process', **_current_data, _ctr=ctr)
             self.verbose('process fn finished')
-            self._report(node = self, current_data = _current_data)
+            self._report(node = self) # for latency and calc reasons
             for queue in self._received_data.values():
                 queue.discard_before(ctr)
 
