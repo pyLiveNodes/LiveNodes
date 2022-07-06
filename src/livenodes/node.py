@@ -7,6 +7,8 @@ import queue
 import threading
 import traceback
 
+
+from .reportable import Reportable
 from .clock_register import Clock_Register
 from .perf import Time_Per_Call, Time_Between_Call
 from .port import Port
@@ -81,7 +83,7 @@ class QueueHelperHack():
 
 
 
-class Node(Connectionist, Logger, Serializer):
+class Node(Connectionist, Serializer, Logger):
     # === Information Stuff =================
     # ports_in = [Port('port 1')] this is inherited from the connecitonist and should be defined by every node!
     # ports_out = [Port('port 1')]
@@ -110,7 +112,7 @@ class Node(Connectionist, Logger, Serializer):
         super().__init__()
 
         self.name = name
-
+        self.should_time = should_time
         self.compute_on = compute_on
 
         for port in self.ports_in:
@@ -145,6 +147,14 @@ class Node(Connectionist, Logger, Serializer):
         self._perf_framework = Time_Between_Call()
         if should_time:
             self._call_user_fn_process = partial(self._perf_framework.call_fn, partial(self._perf_user_fn.call_fn, self._call_user_fn))
+
+            # def latency_reporter (self, **kwargs):
+            #     processing_duration = self._perf_user_fn.average()
+            #     invocation_duration = self._perf_framework.average()
+            #     self.debug(f'Processing: {processing_duration * 1000:.5f}ms; Time between calls: {(invocation_duration - processing_duration) * 1000:.5f}ms; Time between invocations: {invocation_duration * 1000:.5f}ms')
+
+            # TODO: find a good way how to enable this for logging latency in the log file
+            # self.register_reporter(latency_reporter)
         else:
             self._call_user_fn_process = self._call_user_fn
 
@@ -154,7 +164,6 @@ class Node(Connectionist, Logger, Serializer):
 
     def __str__(self):
         return f"{self.name} [{self.__class__.__name__}]"
-
 
     # === Connection Stuff =================
     def add_input(self, emit_node: 'Node', emit_port:Port, recv_port:Port):
@@ -380,11 +389,6 @@ class Node(Connectionist, Logger, Serializer):
     #         self.debug('next tick data:', self._retrieve_current_data(ctr=ctr + 1).keys())
     #     return False
 
-    def _report_perf(self):
-        processing_duration = self._perf_user_fn.average()
-        invocation_duration = self._perf_framework.average()
-        self.debug(f'Processing: {processing_duration * 1000:.5f}ms; Time between calls: {(invocation_duration - processing_duration) * 1000:.5f}ms; Time between invocations: {invocation_duration * 1000:.5f}ms')
-
     def _process(self, ctr):
         """
         called in location of self
@@ -394,6 +398,7 @@ class Node(Connectionist, Logger, Serializer):
 
         # update current state, based on own clock
         _current_data = self._retrieve_current_data(ctr=ctr)
+        self._report(current_state = {"ctr": ctr, "data": _current_data})
 
         # check if all required data to proceed is available and then call process
         # then cleanup aggregated data and advance our own clock
@@ -407,7 +412,7 @@ class Node(Connectionist, Logger, Serializer):
             self._ctr = ctr
             self._call_user_fn_process(self.process, 'process', **_current_data, _ctr=ctr)
             self.verbose('process fn finished')
-            self._report_perf()
+            self._report(node = self) # for latency and calc reasons
             for queue in self._received_data.values():
                 queue.discard_before(ctr)
 
@@ -439,7 +444,6 @@ class Node(Connectionist, Logger, Serializer):
         """
         # store all received data in their according mp.simplequeues
         for key, val in payload.items():
-            self.error(f'Received: "{key}" with clock {ctr}')
             self._received_data[key].put(ctr, val)
 
         # FIX ME! TODO: this is a pain in the butt

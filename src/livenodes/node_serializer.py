@@ -34,7 +34,7 @@ class Serializer():
         return res
 
     @classmethod
-    def from_dict(cls, items, initial_node=None):
+    def from_dict(cls, items, initial_node=None, **kwargs):
         # TODO: implement children=True, parents=True
         # format should be as in to_dict, ie a dictionary, where the name is unique and the values is a dictionary with three values (settings, ins, outs)
 
@@ -50,7 +50,7 @@ class Serializer():
             # module = importlib.reload(sys.modules[module_name])
             # tmp = (getattr(module, itm['class'])(**itm['settings']))
 
-            items_instc[name] = reg.nodes.get(itm['class'], **itm['settings'])
+            items_instc[name] = reg.nodes.get(itm['class'], **itm['settings'], **kwargs)
 
             # assume that the first node without any inputs is the initial node...
             if initial_node is None and len(
@@ -84,9 +84,9 @@ class Serializer():
             json.dump(json_str, f, cls=NumpyEncoder, indent=2)
 
     @classmethod
-    def load(cls, path):
+    def load(cls, path, **kwargs):
         with open(path, 'r') as f:
             json_str = json.load(f)
-        return cls.from_dict(json_str)
+        return cls.from_dict(json_str, **kwargs)
 
     

@@ -19,6 +19,7 @@ class Connectionist():
     ports_out = Ports_simple()
 
     def __init__(self):
+        super().__init__()
         self.input_connections = []
         self.output_connections = []
 

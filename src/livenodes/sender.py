@@ -16,8 +16,9 @@ class Sender(Node):
     def __init__(self,
                  name,
                  block=False,
-                 compute_on=Location.THREAD):
-        super().__init__(name, compute_on)
+                 compute_on=Location.THREAD,
+                 **kwargs):
+        super().__init__(name, compute_on, **kwargs)
 
         if not block and compute_on == Location.SAME:
             # TODO: consider how to not block this in Location.Same?
@@ -75,7 +76,7 @@ class Sender(Node):
             while not self._acquire_lock(
                     self._subprocess_info['termination_lock'],
                     block=False) and fn(runner):
-                self._report_perf()
+                self._report()
                 self._on_runner()
 
         except StopIteration:
