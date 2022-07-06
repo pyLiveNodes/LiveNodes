@@ -101,7 +101,7 @@ class Sender(Node):
                 runner = self._run()
                 fn = partial(self._call_user_fn_process, next, "runner")
                 while fn(runner):
-                    self._report_perf()
+                    self._report()
                     self._on_runner()
             except StopIteration:
                 self.warn(
