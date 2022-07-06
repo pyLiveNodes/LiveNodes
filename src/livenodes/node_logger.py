@@ -1,22 +1,32 @@
-from .logger import logger, LogLevel
+from .logger import logger
+from .reportable import Reportable
 
-class Logger():
-    # === Logging Stuff =================
-    # TODO: move this into it's own module/file?
+class Logger(Reportable):
+
     def error(self, *text):
-        logger.error(self._prep_log(*text))
+        msg = self._prep_log(*text)
+        self._report(log=msg)
+        logger.error(msg)
 
     def warn(self, *text):
-        logger.warn(self._prep_log(*text))
+        msg = self._prep_log(*text)
+        self._report(log=msg)
+        logger.warn(msg)
 
     def info(self, *text):
-        logger.info(self._prep_log(*text))
+        msg = self._prep_log(*text)
+        self._report(log=msg)
+        logger.info(msg)
 
     def debug(self, *text):
-        logger.debug(self._prep_log(*text))
+        msg = self._prep_log(*text)
+        self._report(log=msg)
+        logger.debug(msg)
 
     def verbose(self, *text):
-        logger.verbose(self._prep_log(*text))
+        msg = self._prep_log(*text)
+        self._report(log=msg)
+        logger.verbose(msg)
 
     def _prep_log(self, *text):
         node = str(self)

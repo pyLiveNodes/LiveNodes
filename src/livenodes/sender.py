@@ -76,7 +76,7 @@ class Sender(Node):
             while not self._acquire_lock(
                     self._subprocess_info['termination_lock'],
                     block=False) and fn(runner):
-                self._report_perf()
+                self._report()
                 self._on_runner()
 
         except StopIteration:

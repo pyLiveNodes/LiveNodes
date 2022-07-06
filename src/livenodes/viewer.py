@@ -2,6 +2,8 @@ import multiprocessing as mp
 import queue
 import time
 
+from .reportable import Reportable
+
 from .node import Node, Location
 from .utils import noop
 
@@ -18,6 +20,11 @@ class View(Node):
         # -> one: most up to date, but might just miss each other? probably only applicable if sensor sampling rate is vastly different from render fps?
         # -> two: always one frame behind, but might not jump then
         self._draw_state = mp.Queue(maxsize=2)
+
+    def register_reporter(self, reporter_fn):
+        if hasattr(self, 'fps'):
+            self.fps.register_reporter(reporter_fn)
+        return super().register_reporter(reporter_fn)
 
     def init_draw(self, *args, **kwargs):
         """
@@ -85,12 +92,14 @@ class View(Node):
             self._draw_state.put_nowait(kwargs)
             # self.verbose('Stored for draw')
 
-class FPS_Helper():
-    def __init__(self, name):
+class FPS_Helper(Reportable):
+    def __init__(self, name, report_every_x_seconds=5):
+        super().__init__()
+
         self.name = name
         self.n_frames = 0
         self.n_frames_total = 0
-        self.report_every_x_seconds = 10
+        self.report_every_x_seconds = report_every_x_seconds
         self.timer = time.time()
         
     def count(self):
@@ -98,9 +107,13 @@ class FPS_Helper():
         el_time = time.time() - self.timer
         if el_time > self.report_every_x_seconds:
             self.n_frames_total += self.n_frames
-            print(f"Current fps: {self.n_frames / el_time:.2f} (Total frames: {self.n_frames_total}) -- {self.name}")
+            self._report(fps={'fps': self.n_frames / el_time, 'total_frames': self.n_frames_total, 'name': self.name})
             self.timer = time.time()
             self.n_frames = 0
+
+def print_fps(fps, **kwargs):
+    print(f"Current fps: {fps['fps']:.2f} (Total frames: {fps['total_frames']}) -- {fps['name']}")
+
 
 class View_MPL(View):
     def _init_draw(self, subfig):
@@ -113,7 +126,7 @@ class View_MPL(View):
             raise NotImplementedError()
 
         return update
-        
+    
     def init_draw(self, subfig):
         """
         Heart of the nodes drawing, should be a functional function
@@ -124,13 +137,18 @@ class View_MPL(View):
         # ie create a variable outside of the update scope, that we can assign lists to
         artis_storage = {'returns': []}
 
-        fps = FPS_Helper(str(self))
+        if self.should_time:
+            self.fps = FPS_Helper(str(self), report_every_x_seconds=0.5)
+        else:
+            self.fps = FPS_Helper(str(self))
+            self.fps.register_reporter(print_fps)
+
 
         def update(n_frames, **kwargs):
-            nonlocal update_fn, artis_storage, self, fps
+            nonlocal update_fn, artis_storage, self
             cur_state = {}
 
-            fps.count()
+            self.fps.count()
 
             try:
                 cur_state = self._draw_state.get_nowait()
@@ -161,14 +179,18 @@ class View_QT(View):
 
         # if there is no update function only _init_draw will be needed / called
         if update_fn is not None:
-            fps = FPS_Helper(str(self))
+            if self.should_time:
+                self.fps = FPS_Helper(str(self), report_every_x_seconds=0.5)
+            else:
+                self.fps = FPS_Helper(str(self))
+                self.fps.register_reporter(print_fps)
 
             # TODO: figure out more elegant way to not have this blocking until new data is available...
             def update_blocking():
-                nonlocal update_fn, fps
+                nonlocal update_fn
                 cur_state = {}
                 
-                fps.count()
+                self.fps.count()
 
                 try:
                     cur_state = self._draw_state.get_nowait()
@@ -201,14 +223,18 @@ class View_Vispy(View):
         """
         update_fn = self._init_draw(fig)
 
-        fps = FPS_Helper(str(self))
+        if self.should_time:
+            self.fps = FPS_Helper(str(self), report_every_x_seconds=0.5)
+        else:
+            self.fps = FPS_Helper(str(self))
+            self.fps.register_reporter(print_fps)
 
         # TODO: figure out more elegant way to not have this blocking until new data is available...
         def update_blocking():
-            nonlocal update_fn, fps
+            nonlocal update_fn
             cur_state = {}
             
-            fps.count()
+            self.fps.count()
 
             try:
                 cur_state = self._draw_state.get_nowait()
