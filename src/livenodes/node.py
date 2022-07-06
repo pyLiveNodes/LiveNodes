@@ -444,7 +444,6 @@ class Node(Connectionist, Serializer, Logger):
         """
         # store all received data in their according mp.simplequeues
         for key, val in payload.items():
-            self.error(f'Received: "{key}" with clock {ctr}')
             self._received_data[key].put(ctr, val)
 
         # FIX ME! TODO: this is a pain in the butt
