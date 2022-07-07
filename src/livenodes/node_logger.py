@@ -4,29 +4,24 @@ from .reportable import Reportable
 class Logger(Reportable):
 
     def error(self, *text):
-        msg = self._prep_log(*text)
-        self._report(log=msg)
-        logger.error(msg)
+        self._report(log=" ".join(str(t) for t in text))
+        logger.error(self._prep_log(*text))
 
     def warn(self, *text):
-        msg = self._prep_log(*text)
-        self._report(log=msg)
-        logger.warn(msg)
+        self._report(log=" ".join(str(t) for t in text))
+        logger.warn(self._prep_log(*text))
 
     def info(self, *text):
-        msg = self._prep_log(*text)
-        self._report(log=msg)
-        logger.info(msg)
+        self._report(log=" ".join(str(t) for t in text))
+        logger.info(self._prep_log(*text))
 
     def debug(self, *text):
-        msg = self._prep_log(*text)
-        self._report(log=msg)
-        logger.debug(msg)
+        self._report(log=" ".join(str(t) for t in text))
+        logger.debug(self._prep_log(*text))
 
     def verbose(self, *text):
-        msg = self._prep_log(*text)
-        self._report(log=msg)
-        logger.verbose(msg)
+        self._report(log=" ".join(str(t) for t in text))
+        logger.verbose(self._prep_log(*text))
 
     def _prep_log(self, *text):
         node = str(self)
