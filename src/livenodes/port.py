@@ -1,5 +1,7 @@
 from typing import NamedTuple
 
+def escape_label(label):
+    return label.lower().replace(' ', '_')
 
 class Port():
 
@@ -10,7 +12,7 @@ class Port():
         self.optional = optional
 
         if key is None or type(key) is not str:
-            key = label.lower().replace(' ', '_')
+            key = escape_label(label)
         self.key = key
     
     def __str__(self):
@@ -30,16 +32,18 @@ class Port():
                 raise Exception(f'Example value does not pass check. Msg: {msg}. Value: {val}')
         return super().__init_subclass__()
 
+    @classmethod
+    def add_examples(cls, *args):
+        cls.example_values.extend(args)
 
     @staticmethod
     def check_value(value):
         raise NotImplementedError()
 
     @classmethod
-    def can_connect_to(cls, other_port_cls):
+    def can_input_to(cls, other_port_cls):
         # print(list(map(cls.check_value, other_port_cls.example_values)))
-        return cls == other_port_cls \
-            or any([compatible for compatible, _ in map(cls.check_value, other_port_cls.example_values)])
-            # we use any here in order to allow for dynamic converters, e.g. adding or removing axes from a package
+        return any([compatible for compatible, _ in map(other_port_cls.check_value, cls.example_values)])
+            # we use "any" here in order to allow for dynamic converters, e.g. adding or removing axes from a package
             # we could consider using all() instead of any(), but this would require specfic converter nodes, which i'm not sure i want to go for right now
-            # but let's keep an eye on this
+            # => let's keep an eye on this

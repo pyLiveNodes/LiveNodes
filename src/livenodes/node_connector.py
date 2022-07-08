@@ -9,7 +9,7 @@ from io import BytesIO
 from typing import NamedTuple
 
 from .connection import Connection
-from .port import Port
+from .port import Port, escape_label
 
 class Ports_simple(NamedTuple):
     data: Port = Port("Data")
@@ -42,15 +42,15 @@ class Connectionist():
         cls.__check_ports(cls.ports_out)
 
     def get_port_in_by_key(self, key):
-        possible_ins = [x for x in self.ports_in._asdict().values() if x.key == key]
+        possible_ins = [x for x in self.ports_in._asdict().values() if x.key == escape_label(key)]
         if len(possible_ins) == 0: 
-            raise ValueError(f'No possible input ports for key: {key} in node: {str(self)}')
+            raise ValueError(f'No possible input ports for key: "{key}" in node: {str(self)}')
         return possible_ins[0]
 
     def get_port_out_by_key(self, key):
-        possible_outs = [x for x in self.ports_out._asdict().values() if x.key == key]
+        possible_outs = [x for x in self.ports_out._asdict().values() if x.key == escape_label(key)]
         if len(possible_outs) == 0: 
-            raise ValueError(f'No possible output ports for key: {key} in node: {str(self)}')
+            raise ValueError(f'No possible output ports for key: "{key}" in node: {str(self)}')
         return possible_outs[0]
 
     def connect_inputs_to(self, emit_node: 'Connectionist'):
@@ -58,14 +58,17 @@ class Connectionist():
         Add all matching channels from the emitting nodes to self as input.
         Main function to connect two nodes together with add_input.
         """
-
-        lookup_recv = dict(zip(map(str, self.ports_in), self.ports_in))
+        # TODO: there must be a more elegant way to do this...
         lookup_emit = dict(zip(map(str, emit_node.ports_out), emit_node.ports_out))
-        for key in lookup_recv:
-            if key in lookup_emit:
-                self.add_input(emit_node=emit_node,
-                            emit_port=lookup_emit[key],
-                            recv_port=lookup_recv[key])
+        lookup_recv = dict(zip(map(str, self.ports_in), self.ports_in))
+        cons = set([str(port) for port in self.ports_in + emit_node.ports_out if str(port) in lookup_recv and str(port) in lookup_emit])
+        if len(cons) == 0:
+            print(lookup_emit, lookup_recv)
+            raise Exception("Nothing to connect")
+        for key in cons:
+            self.add_input(emit_node=emit_node,
+                        emit_port=lookup_emit[key],
+                        recv_port=lookup_recv[key])
 
     def add_input(self,
                   emit_node: 'Connectionist',
@@ -75,6 +78,13 @@ class Connectionist():
         Add one input to self via attributes.
         Main function to connect two nodes together with connect_inputs_to
         """
+        if type(emit_port) == str:
+            self.warn('Declaring channels via strings will be deprecated, pass the defined ports instead.')
+            emit_port = emit_node.get_port_out_by_key(emit_port)
+
+        if type(recv_port) == str:
+            self.warn('Declaring channels via strings will be deprecated, pass the defined ports instead.')
+            recv_port = self.get_port_out_by_key(recv_port)
 
         if emit_port not in emit_node.ports_out:
             raise ValueError(
@@ -236,10 +246,10 @@ class Connectionist():
         return node in self.discover_output_deps(self)
 
 
-    def dot_graph(self, nodes, name=False, transparent_bg=False):
+    def dot_graph(self, nodes, name=False, transparent_bg=False, edge_labels=True):
         graph_attr = {"size": "10,10!", "ratio": "fill"}
         if transparent_bg: graph_attr["bgcolor"] = "#00000000"
-        dot = Digraph(format='png', strict=False, graph_attr=graph_attr)
+        dot = Digraph(format='png', strict=not edge_labels, graph_attr=graph_attr)
 
         for node in nodes:
             shape = 'rect'
@@ -253,9 +263,12 @@ class Connectionist():
         # Second pass: add edges based on output links
         for node in nodes:
             for con in node.output_connections:
+                l = None
+                if edge_labels:
+                    l = f"{con._emit_port.label}\n->\n{con._recv_port.label}"
                 dot.edge(str(node),
                          str(con._recv_node),
-                         label=str(con._emit_port))
+                         label=l)
 
         return Image.open(BytesIO(dot.pipe()))
 

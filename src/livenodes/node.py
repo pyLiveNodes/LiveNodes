@@ -322,6 +322,9 @@ class Node(Connectionist, Serializer, Logger):
         """
         if channel is None:
             channel = list(self.ports_out._asdict().values())[0]
+        elif type(channel) is str:
+            self.warn('Declaring channels via strings will be deprecated, pass the defined ports instead.')
+            channel = self.get_port_out_by_key(channel)
         channel = channel.key
         clock = self._ctr if ctr is None else ctr
 
