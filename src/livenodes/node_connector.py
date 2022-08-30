@@ -10,11 +10,12 @@ from typing import NamedTuple
 
 from .connection import Connection
 from .port import Port
+from .node_logger import Logger
 
 class Ports_simple(NamedTuple):
     data: Port = Port("Data")
 
-class Connectionist():
+class Connectionist(Logger):
     ports_in = Ports_simple()
     ports_out = Ports_simple()
 
@@ -167,8 +168,10 @@ class Connectionist():
         self.output_connections.remove(connection)
 
     def _is_input_connected(self, recv_port: Port):
+        if type(recv_port) is str:
+            self.warn('Is connected check done via str. This will be deprecated soon, please use the according port instance.')
         return any([
-            x._recv_port == recv_port
+            (x._recv_port == recv_port or x._recv_port.label == recv_port)
             for x in self.input_connections
         ])
 
