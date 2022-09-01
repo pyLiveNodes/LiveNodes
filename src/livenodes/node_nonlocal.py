@@ -1,11 +1,11 @@
+from enum import IntEnum
 from functools import partial
 import numpy as np
 import time
+import multiprocessing as mp
 import queue
+import threading
 import traceback
-
-from livenodes.connection import Connection
-
 
 from .clock_register import Clock_Register
 from .perf import Time_Per_Call, Time_Between_Call
@@ -14,12 +14,18 @@ from .port import Port
 from .node_connector import Connectionist
 from .node_logger import Logger
 from .node_serializer import Serializer
-from .processor import Processor, Location # location is imported here, as we'll need to update all the from livenodes.nodes import location soon
+
+
+class Location(IntEnum):
+    SAME = 1
+    THREAD = 2
+    PROCESS = 3
+    # SOCKET = 4
 
 
 class QueueHelperHack():
 
-    def __init__(self):
+    def __init__(self, compute_on=Location.SAME):
         # self.queue = mp.Queue()
         # The assumption behind this compute_on check is not correct -> (as long as the processes are created inside the node.node_start() method)
         # if we are on thread or queue -> always use mp as we are in a suprocess to the *first* parent, that called start_node on us
@@ -28,7 +34,13 @@ class QueueHelperHack():
         #   -> but again: only if they are in the same thread/process, not if they have the same compute_on value!
 
         # TODO: figure out how to incorporate this tho, as queue.Queue() is probably more efficient
-        self.queue = queue.Queue()
+        if compute_on in [Location.PROCESS, Location.THREAD]:
+            self.queue = mp.Queue()
+        elif compute_on in [Location.SAME]:
+            self.queue = queue.Queue()
+
+        self.compute_on = compute_on
+
         self._read = {}
 
     def put(self, ctr, item):
@@ -58,10 +70,10 @@ class QueueHelperHack():
         }
 
     def get(self, ctr):
-        # if self.compute_on == Location.SAME:
-        #     # This is only needed in the location.same case, as in the process and thread case the queue should always be empty if we arrive here
-        #     # This should also never be executed in process or thread, as then the update function does not block and keys are skipped!
-        self.empty_queue()
+        if self.compute_on == Location.SAME:
+            # This is only needed in the location.same case, as in the process and thread case the queue should always be empty if we arrive here
+            # This should also never be executed in process or thread, as then the update function does not block and keys are skipped!
+            self.empty_queue()
 
         if ctr in self._read:
             return True, self._read[ctr]
@@ -69,7 +81,7 @@ class QueueHelperHack():
 
 
 
-class Node(Connectionist, Processor, Logger, Serializer):
+class Node(Connectionist, Logger, Serializer):
     # === Information Stuff =================
     # ports_in = [Port('port 1')] this is inherited from the connecitonist and should be defined by every node!
     # ports_out = [Port('port 1')]
@@ -92,25 +104,42 @@ class Node(Connectionist, Processor, Logger, Serializer):
     # === Basic Stuff =================
     def __init__(self,
                  name="Name",
-                 should_time=False,
-                 **kwargs):
+                 compute_on=Location.SAME, 
+                 should_time=False):
         
-        self.name = name
-        super().__init__(**kwargs)
+        super().__init__()
 
-        self.output_bridges = {}
+        self.name = name
+
+        self.compute_on = compute_on
 
         for port in self.ports_in:
             print(port, type(port))
 
         self._received_data = {
-            port.key: QueueHelperHack()
+            port.key: QueueHelperHack(compute_on=compute_on)
+            # key: QueueHelperHack(compute_on=Location.THREAD)
             for port in self.ports_in
         }
 
         self._ctr = None
 
-        self._running = False 
+        self._running = False
+
+        self._subprocess_info = {}
+        if self.compute_on in [Location.PROCESS]:
+            self._subprocess_info = {
+                "process": None,
+                "termination_lock": mp.Lock()
+            }
+        elif self.compute_on in [Location.THREAD]:
+            self._subprocess_info = {
+                "process": None,
+                "termination_lock":
+                threading.Lock()  # as this is called from the main process
+            }
+
+        self.info('Computing on: ', self.compute_on)        
 
         self._perf_user_fn = Time_Per_Call()
         self._perf_framework = Time_Between_Call()
@@ -173,6 +202,18 @@ class Node(Connectionist, Processor, Logger, Serializer):
             self.error(e) # TODO: add stack trace?
             self.error(traceback.format_exc())
     
+    # required if we do the same=main process thing, as we cannot create the processes on instantiation
+    def spawn_processes(self):
+        graph_nodes = self.discover_graph(self)
+        for node in graph_nodes:
+            if 'process' in node._subprocess_info and node._subprocess_info['process'] is None:
+                if node.compute_on == Location.PROCESS:
+                    node._subprocess_info['process'] = mp.Process(
+                        target=node._process_on_proc)
+                elif node.compute_on == Location.THREAD:
+                    node._subprocess_info['process'] = threading.Thread(
+                        target=node._process_on_proc)
+
 
     def start_node(self, children=True, join=False):
         if self._running == False:  # the node might be child to multiple parents, but we just want to start once
@@ -185,9 +226,24 @@ class Node(Connectionist, Processor, Logger, Serializer):
             # now start self
             self._running = True
 
-            super().start_node()
+            # TODO: consider moving this in the node constructor, so that we do not have this nested behaviour processeses due to parents calling their childs start()
+            # TODO: but maybe this is wanted, just buggy af atm
+            if self.compute_on in [Location.PROCESS, Location.THREAD]:
+                # if self.compute_on == Location.PROCESS:
+                #     self._subprocess_info['process'] = mp.Process(
+                #         target=self._process_on_proc)
+                # elif self.compute_on == Location.THREAD:
+                #     self._subprocess_info['process'] = threading.Thread(
+                #         target=self._process_on_proc)
 
-        # TODO: remove this? / consider in which cases we need the option to join and in which we dont...
+                self.info('create subprocess')
+                self._acquire_lock(self._subprocess_info['termination_lock'])
+                self.info('start subprocess')
+                self._subprocess_info['process'].start()
+            elif self.compute_on in [Location.SAME]:
+                self._call_user_fn(self._onstart, '_onstart')
+                self.info('Executed _onstart')
+
         if join:
             self._join()
         else:
@@ -199,8 +255,21 @@ class Node(Connectionist, Processor, Logger, Serializer):
             self.info('Stopping')
             self._running = False
 
-            super().stop_node()
-            
+            if self.compute_on in [Location.PROCESS, Location.THREAD]:
+                self.info(self._subprocess_info['process'].is_alive(),
+                          self._subprocess_info['process'].name)
+                self._subprocess_info['termination_lock'].release()
+                self._subprocess_info['process'].join(1)
+                self.info(self._subprocess_info['process'].is_alive(),
+                          self._subprocess_info['process'].name)
+
+                if self.compute_on in [Location.PROCESS]:
+                    self._subprocess_info['process'].terminate()
+                    self.info(self._subprocess_info['process'].is_alive(),
+                              self._subprocess_info['process'].name)
+            elif self.compute_on in [Location.SAME]:
+                self.info('Executing _onstop')
+                self._call_user_fn(self._onstop, '_onstop')
             self.info('Stopped')
 
             # now stop children
@@ -220,6 +289,22 @@ class Node(Connectionist, Processor, Logger, Serializer):
         self.info(
             f'Join returned at clock {max(self._clocks.state[self_name])}')
 
+    def _acquire_lock(self, lock, block=True, timeout=None):
+        if self.compute_on in [Location.PROCESS]:
+            res = lock.acquire(block=block, timeout=timeout)
+        elif self.compute_on in [Location.THREAD]:
+            if block:
+                res = lock.acquire(blocking=True,
+                                   timeout=-1 if timeout is None else timeout)
+            else:
+                res = lock.acquire(
+                    blocking=False)  # forbidden to specify timeout
+        else:
+            raise Exception(
+                'Cannot acquire lock in non multi process/threading environment'
+            )
+        return res
+
     # === Data Stuff =================
     def _emit_data(self, data, channel: Port = None, ctr: int = None):
         """
@@ -233,9 +318,45 @@ class Node(Connectionist, Processor, Logger, Serializer):
 
         for con in self.output_connections:
             if con._emit_port.key == channel:
-                # con._recv_node.receive_data(
-                #     clock, payload={con._recv_port.key: data})
-                con.send(clock, payload={con._recv_port.key: data})
+                con._recv_node.receive_data(
+                    clock, payload={con._recv_port.key: data})
+
+    def _process_on_proc(self):
+        self.info('Started subprocess')
+
+        self._call_user_fn(self._onstart, '_onstart')
+        self.info('Executed _onstart')
+
+        # as long as we do not receive a termination signal, we will wait for data to be processed
+        # the .empty() is not reliable (according to the python doc), but the best we have at the moment
+        was_queue_empty_last_iteration = 0
+        queue_empty = False
+        was_terminated = False
+
+        # one iteration takes roughly 0.00001 * channels -> 0.00001 * 10 * 100 = 0.01
+        while not was_terminated or was_queue_empty_last_iteration < 10:
+            could_acquire_term_lock = self._acquire_lock(
+                self._subprocess_info['termination_lock'], block=False)
+            was_terminated = was_terminated or could_acquire_term_lock
+            # block until signaled that we have new data
+            # as we might receive not data after having received a termination
+            #      -> we'll just poll, so that on termination we do terminate after no longer than 0.1seconds
+            # self.info(was_terminated, was_queue_empty_last_iteration)
+            queue_empty = True
+            for queue in self._received_data.values():
+                found_value, ctr = queue.update(timeout=0.00001)
+                if found_value:
+                    self._process(ctr)
+                    queue_empty = False
+            if queue_empty:
+                was_queue_empty_last_iteration += 1
+            else:
+                was_queue_empty_last_iteration = 0
+
+        self.info('Executing _onstop')
+        self._call_user_fn(self._onstop, '_onstop')
+
+        self.info('Finished subprocess')
 
     def _retrieve_current_data(self, ctr):
         res = {}
@@ -302,15 +423,15 @@ class Node(Connectionist, Processor, Logger, Serializer):
             self.verbose('Decided not to process', ctr, _current_data.keys())
         self.verbose('_Process finished')
 
-    # def trigger_process(self, ctr):
-    #     if self.compute_on in [Location.SAME]:
-    #         # same and threads both may be called directly and do not require a notification
-    #         self._process(ctr)
-    #     elif self.compute_on in [Location.PROCESS, Location.THREAD]:
-    #         # Process and thread both activley wait on the _received_data queues and therefore do not require an active trigger to process
-    #         pass
-    #     else:
-    #         raise Exception(f'Location {self.compute_on} not implemented yet.')
+    def trigger_process(self, ctr):
+        if self.compute_on in [Location.SAME]:
+            # same and threads both may be called directly and do not require a notification
+            self._process(ctr)
+        elif self.compute_on in [Location.PROCESS, Location.THREAD]:
+            # Process and thread both activley wait on the _received_data queues and therefore do not require an active trigger to process
+            pass
+        else:
+            raise Exception(f'Location {self.compute_on} not implemented yet.')
 
     def receive_data(self, ctr, payload):
         """

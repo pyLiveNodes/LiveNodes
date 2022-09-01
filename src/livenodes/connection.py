@@ -1,3 +1,6 @@
+from livenodes.processor import resolve_bridge
+
+
 class Connection():
     # TODO: consider creating a channel registry instead of using strings?
     def __init__(self,
@@ -11,6 +14,12 @@ class Connection():
         self._emit_port = emit_port
         self._recv_port = recv_port
         self._connection_counter = connection_counter
+
+        # TODO: this feels hacky and intertwines Connectionist and Processor, which probably just increases complexity with not much benefit...
+        self.bridge = resolve_bridge(emit_node, recv_node)
+
+    def send(self, *args, **kwargs):
+        self.bridge.send(*args, **kwargs)
 
     def __repr__(self):
         return f"{str(self._emit_node)}.{str(self._emit_port)} -> {str(self._recv_node)}.{str(self._recv_port)}"

@@ -1,11 +1,11 @@
+from enum import IntEnum
 from functools import partial
 import numpy as np
 import time
+import multiprocessing as mp
 import queue
+import threading
 import traceback
-
-from livenodes.connection import Connection
-
 
 from .clock_register import Clock_Register
 from .perf import Time_Per_Call, Time_Between_Call
@@ -14,7 +14,6 @@ from .port import Port
 from .node_connector import Connectionist
 from .node_logger import Logger
 from .node_serializer import Serializer
-from .processor import Processor, Location # location is imported here, as we'll need to update all the from livenodes.nodes import location soon
 
 
 class QueueHelperHack():
@@ -58,9 +57,6 @@ class QueueHelperHack():
         }
 
     def get(self, ctr):
-        # if self.compute_on == Location.SAME:
-        #     # This is only needed in the location.same case, as in the process and thread case the queue should always be empty if we arrive here
-        #     # This should also never be executed in process or thread, as then the update function does not block and keys are skipped!
         self.empty_queue()
 
         if ctr in self._read:
@@ -69,7 +65,7 @@ class QueueHelperHack():
 
 
 
-class Node(Connectionist, Processor, Logger, Serializer):
+class Node(Connectionist, Logger, Serializer):
     # === Information Stuff =================
     # ports_in = [Port('port 1')] this is inherited from the connecitonist and should be defined by every node!
     # ports_out = [Port('port 1')]
@@ -92,13 +88,11 @@ class Node(Connectionist, Processor, Logger, Serializer):
     # === Basic Stuff =================
     def __init__(self,
                  name="Name",
-                 should_time=False,
-                 **kwargs):
+                 should_time=False):
         
-        self.name = name
-        super().__init__(**kwargs)
+        super().__init__()
 
-        self.output_bridges = {}
+        self.name = name
 
         for port in self.ports_in:
             print(port, type(port))
@@ -110,7 +104,8 @@ class Node(Connectionist, Processor, Logger, Serializer):
 
         self._ctr = None
 
-        self._running = False 
+        self._running = False
+
 
         self._perf_user_fn = Time_Per_Call()
         self._perf_framework = Time_Between_Call()
@@ -150,8 +145,6 @@ class Node(Connectionist, Processor, Logger, Serializer):
         return list(filter(lambda x: len(x.ports_in) == 0, self.discover_graph(self)))
 
     def start(self, children=True, join=False):
-        self.spawn_processes()
-        
         start_nodes = self._get_start_nodes()
         print(start_nodes)
         for i, node in enumerate(start_nodes):
@@ -174,6 +167,7 @@ class Node(Connectionist, Processor, Logger, Serializer):
             self.error(traceback.format_exc())
     
 
+
     def start_node(self, children=True, join=False):
         if self._running == False:  # the node might be child to multiple parents, but we just want to start once
             # first start children, so they are ready to receive inputs
@@ -185,9 +179,9 @@ class Node(Connectionist, Processor, Logger, Serializer):
             # now start self
             self._running = True
 
-            super().start_node()
+            self._call_user_fn(self._onstart, '_onstart')
+            self.info('Executed _onstart')
 
-        # TODO: remove this? / consider in which cases we need the option to join and in which we dont...
         if join:
             self._join()
         else:
@@ -198,9 +192,8 @@ class Node(Connectionist, Processor, Logger, Serializer):
         if self._running == True:  # the node might be child to multiple parents, but we just want to stop once
             self.info('Stopping')
             self._running = False
-
-            super().stop_node()
-            
+            self.info('Executing _onstop')
+            self._call_user_fn(self._onstop, '_onstop')
             self.info('Stopped')
 
             # now stop children
@@ -220,6 +213,7 @@ class Node(Connectionist, Processor, Logger, Serializer):
         self.info(
             f'Join returned at clock {max(self._clocks.state[self_name])}')
 
+
     # === Data Stuff =================
     def _emit_data(self, data, channel: Port = None, ctr: int = None):
         """
@@ -233,9 +227,8 @@ class Node(Connectionist, Processor, Logger, Serializer):
 
         for con in self.output_connections:
             if con._emit_port.key == channel:
-                # con._recv_node.receive_data(
-                #     clock, payload={con._recv_port.key: data})
-                con.send(clock, payload={con._recv_port.key: data})
+                con._recv_node.receive_data(
+                    clock, payload={con._recv_port.key: data})
 
     def _retrieve_current_data(self, ctr):
         res = {}
@@ -302,15 +295,9 @@ class Node(Connectionist, Processor, Logger, Serializer):
             self.verbose('Decided not to process', ctr, _current_data.keys())
         self.verbose('_Process finished')
 
-    # def trigger_process(self, ctr):
-    #     if self.compute_on in [Location.SAME]:
-    #         # same and threads both may be called directly and do not require a notification
-    #         self._process(ctr)
-    #     elif self.compute_on in [Location.PROCESS, Location.THREAD]:
-    #         # Process and thread both activley wait on the _received_data queues and therefore do not require an active trigger to process
-    #         pass
-    #     else:
-    #         raise Exception(f'Location {self.compute_on} not implemented yet.')
+    def trigger_process(self, ctr):
+        self._process(ctr)
+
 
     def receive_data(self, ctr, payload):
         """
