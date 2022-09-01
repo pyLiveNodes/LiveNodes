@@ -72,9 +72,15 @@ class Sender(Node):
         fn = partial(self._call_user_fn_process, next, "runner")
         try:
             # as long as we do not receive a termination signal and there is data, we will send data
-            while not self._acquire_lock(
+            is_data_remaining = True
+            could_aqcuire_log = False
+            while not could_aqcuire_log:
+                could_aqcuire_log = self._acquire_lock(
                     self._subprocess_info['termination_lock'],
-                    block=False) and fn(runner):
+                    block=False)
+                is_data_remaining = fn(runner)
+                if not is_data_remaining:
+                    break
                 self._report_perf()
                 self._on_runner()
 
@@ -85,7 +91,9 @@ class Sender(Node):
 
         self.info('Reached end of run')
         # this still means we send data, before the return, just that after now no new data will be sent
-        self._on_runner()
+        if not is_data_remaining and not could_aqcuire_log:
+            self._on_runner()
+            self.info('I was not finished yet!')
         self.info('Finished subprocess', self._ctr)
 
     def start_node(self, children=True, join=False):
