@@ -17,8 +17,8 @@ class Connection():
 
     def to_dict(self):
         return {
-            "emit_node": str(self._emit_node),
-            "recv_node": str(self._recv_node),
+            "emit_node": hash(self._emit_node),
+            "recv_node": hash(self._recv_node),
             "emit_port": self._emit_port.key,
             "recv_port": self._recv_port.key,
             "connection_counter": self._connection_counter
