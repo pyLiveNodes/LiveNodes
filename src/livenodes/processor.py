@@ -1,7 +1,11 @@
 from enum import IntEnum
+from sqlite3 import connect
 import numpy as np
 import multiprocessing as mp
 import threading
+import queue
+
+from livenodes.connection import Connection
 
 from .node_logger import Logger
 
@@ -12,19 +16,99 @@ class Location(IntEnum):
     # SOCKET = 4
 
 
-class Bridge ():
 
-    def __init__(self, emit, recv) -> None:
-        self.emit = emit
-        self.recv = recv
+class Bridge_local():
 
-    def send(self, clock, payload):
-        self.recv.receive_data(clock, payload=payload)
+    def __init__(self):
+        self.queue = queue.Queue()
+        self._read = {}
+
+    def put(self, ctr, item):
+        self.queue.put((ctr, item))
+
+    def update(self, timeout=0.01):
+        try:
+            itm_ctr, item = self.queue.get(block=True, timeout=timeout)
+            self._read[itm_ctr] = item
+            return True, itm_ctr
+        except queue.Empty:
+            pass
+        return False, -1
+
+    def empty_queue(self):
+        while not self.queue.empty():
+            itm_ctr, item = self.queue.get()
+            # TODO: if itm_ctr already exists, should we not rather extend than overwrite it? (thinking of the mulitple emit_data per process call examples (ie window))
+            # TODO: yes! this is what we should do :D
+            self._read[itm_ctr] = item
+
+    def discard_before(self, ctr):
+        self._read = {
+            key: val
+            for key, val in self._read.items() if key >= ctr
+        }
+
+    def get(self, ctr):
+        self.empty_queue()
+
+        if ctr in self._read:
+            return True, self._read[ctr]
+        return False, None
 
 
-def resolve_bridge(emit_node, receive_node):
-    return Bridge(emit_node, receive_node)
+class Bridge_mp(Bridge_local):
+    def __init__(self):
+        super().__init__()
+        self.queue = mp.Queue()
+
+    def get(self, ctr):
+        # in the process and thread case the queue should always be empty if we arrive here
+        # This should also never be executed in process or thread, as then the update function does not block and keys are skipped!
+        if ctr in self._read:
+            return True, self._read[ctr]
+        return False, None
+
+
+class Multiprocessing_Data_Storage():
+    def __init__(self) -> None:
+        self.bridges = {}
+
+    @staticmethod
+    def resolve_bridge(connection: Connection):
+        emit_loc = connection._emit_node.compute_on
+        recv_loc = connection._recv_node.compute_on
+
+        if emit_loc in [Location.PROCESS] or recv_loc in [Location.PROCESS]:
+            return Bridge_mp()
+        else:
+            return Bridge_local()
+
+    def set_inputs(self, input_connections):
+        for con in input_connections:
+            self.bridges[con._recv_port.key] = self.resolve_bridge(con)
+
+    # can be called from any process
+    def put(self, connection, ctr, data):
+        self.bridges[connection._recv_port.key].put(ctr, data)
+
+    # will only be called within the processesing process
+    def get(self, ctr):
+        res = {}
+        # update current state, based on own clock
+        for key, queue in self.bridges.items():
+            # discard everything, that was before our own current clock
+            found_value, cur_value = queue.get(ctr)
+
+            if found_value:
+                # TODO: instead of this key transformation/tolower consider actually using classes for data types... (allows for gui names alongside dev names and not converting between the two)
+                res[key] = cur_value
+        return res 
     
+    # will only be called within the processesing process
+    def discard_before(self, ctr):
+        for bridge in self.bridges.values():
+            bridge.discard_before(ctr) 
+
 
 class Processor(Logger):
 
@@ -46,6 +130,9 @@ class Processor(Logger):
             }
 
         self.info('Computing on: ', self.compute_on)    
+
+        self.data_storage = Multiprocessing_Data_Storage()
+        # this will be instantiated once the whole thing starts, as before connections (and compute_ons) might change
 
     # required if we do the same=main process thing, as we cannot create the processes on instantiation
     def spawn_processes(self):
@@ -77,6 +164,10 @@ class Processor(Logger):
         return res
 
     def start_node(self):
+        # create bridges and storage based on the connections we have once we've started?
+        # as then compute_on and number of connections etc should not change anymore
+        self.data_storage.set_inputs(self.input_connections)
+
         # TODO: consider moving this in the node constructor, so that we do not have this nested behaviour processeses due to parents calling their childs start()
         # TODO: but maybe this is wanted, just buggy af atm
         if self.compute_on in [Location.PROCESS, Location.THREAD]:
@@ -123,27 +214,6 @@ class Processor(Logger):
         else:
             raise Exception(f'Location {self.compute_on} not implemented yet.')
 
-    # def receive_data(self, ctr, payload):
-    #     """
-    #     called in location of emitting node
-    #     """
-    #     # store all received data in their according mp.simplequeues
-    #     for key, val in payload.items():
-    #         self.error(f'Received: "{key}" with clock {ctr}')
-    #         self._received_data[key].put(ctr, val)
-
-    #     # FIX ME! TODO: this is a pain in the butt
-    #     # Basically:
-    #     # 1. node A runs in a thread
-    #     # 2. node B runs on another thread
-    #     # 3. A calls emit_data in its own process()
-    #     # 4. this triggers a call of B.receive_data, but in the context of As thread
-    #     # which means, that suddently B is not running in another thread, but this one.
-    #     # this clashes if b also waits for an input from yet another thread
-    #     # mainly this also means, that the QueueHelper hack reads from it's queues at different threads and therefore cannot combine the information
-    #     # not sure how to fix this though :/ for now: we'll just not execute anything in Location.SAME and fix this later
-    #     self.trigger_process(ctr)
-
     def _process_on_proc(self):
         self.info('Started subprocess')
 
@@ -166,7 +236,7 @@ class Processor(Logger):
             #      -> we'll just poll, so that on termination we do terminate after no longer than 0.1seconds
             # self.info(was_terminated, was_queue_empty_last_iteration)
             queue_empty = True
-            for queue in self._received_data.values():
+            for queue in self.data_storage.bridges.values():
                 found_value, ctr = queue.update(timeout=0.00001)
                 if found_value:
                     self._process(ctr)
