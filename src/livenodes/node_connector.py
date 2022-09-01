@@ -19,9 +19,11 @@ class Connectionist(Logger):
     ports_in = Ports_simple()
     ports_out = Ports_simple()
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.input_connections = []
         self.output_connections = []
+
+        super().__init__(**kwargs)
 
     def __str__(self) -> str:
         return f"<Connectionist: {self.__class__.__name__}>"

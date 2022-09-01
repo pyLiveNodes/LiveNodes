@@ -1,7 +1,10 @@
+from enum import IntEnum
 from functools import partial
 import numpy as np
 import time
+import multiprocessing as mp
 import queue
+import threading
 import traceback
 
 from .clock_register import Clock_Register
@@ -11,10 +14,58 @@ from .port import Port
 from .node_connector import Connectionist
 from .node_logger import Logger
 from .node_serializer import Serializer
-from .processor import Processor, Location # location is imported here, as we'll need to update all the from livenodes.nodes import location soon
 
 
-class Node(Connectionist, Processor, Logger, Serializer):
+class QueueHelperHack():
+
+    def __init__(self):
+        # self.queue = mp.Queue()
+        # The assumption behind this compute_on check is not correct -> (as long as the processes are created inside the node.node_start() method)
+        # if we are on thread or queue -> always use mp as we are in a suprocess to the *first* parent, that called start_node on us
+        # if we are on same, but any of our parents is in a different thread/process -> still use mp
+        # if we are on same and all our parents are in the same thread/process -> only now we can use the normal queue
+        #   -> but again: only if they are in the same thread/process, not if they have the same compute_on value!
+
+        # TODO: figure out how to incorporate this tho, as queue.Queue() is probably more efficient
+        self.queue = queue.Queue()
+        self._read = {}
+
+    def put(self, ctr, item):
+        self.queue.put((ctr, item))
+        # self.queue.put_nowait((ctr, item))
+
+    def update(self, timeout=0.01):
+        try:
+            itm_ctr, item = self.queue.get(block=True, timeout=timeout)
+            self._read[itm_ctr] = item
+            return True, itm_ctr
+        except queue.Empty:
+            pass
+        return False, -1
+
+    def empty_queue(self):
+        while not self.queue.empty():
+            itm_ctr, item = self.queue.get()
+            # TODO: if itm_ctr already exists, should we not rather extend than overwrite it? (thinking of the mulitple emit_data per process call examples (ie window))
+            # TODO: yes! this is what we should do :D
+            self._read[itm_ctr] = item
+
+    def discard_before(self, ctr):
+        self._read = {
+            key: val
+            for key, val in self._read.items() if key >= ctr
+        }
+
+    def get(self, ctr):
+        self.empty_queue()
+
+        if ctr in self._read:
+            return True, self._read[ctr]
+        return False, None
+
+
+
+class Node(Connectionist, Logger, Serializer):
     # === Information Stuff =================
     # ports_in = [Port('port 1')] this is inherited from the connecitonist and should be defined by every node!
     # ports_out = [Port('port 1')]
@@ -37,20 +88,24 @@ class Node(Connectionist, Processor, Logger, Serializer):
     # === Basic Stuff =================
     def __init__(self,
                  name="Name",
-                 should_time=False,
-                 **kwargs):
+                 should_time=False):
         
-        self.name = name
-        super().__init__(**kwargs)
+        super().__init__()
 
-        self.output_bridges = {}
+        self.name = name
 
         for port in self.ports_in:
             print(port, type(port))
 
+        self._received_data = {
+            port.key: QueueHelperHack()
+            for port in self.ports_in
+        }
+
         self._ctr = None
 
-        self._running = False 
+        self._running = False
+
 
         self._perf_user_fn = Time_Per_Call()
         self._perf_framework = Time_Between_Call()
@@ -90,8 +145,6 @@ class Node(Connectionist, Processor, Logger, Serializer):
         return list(filter(lambda x: len(x.ports_in) == 0, self.discover_graph(self)))
 
     def start(self, children=True, join=False):
-        super().spawn_processes()
-        
         start_nodes = self._get_start_nodes()
         print(start_nodes)
         for i, node in enumerate(start_nodes):
@@ -114,6 +167,7 @@ class Node(Connectionist, Processor, Logger, Serializer):
             self.error(traceback.format_exc())
     
 
+
     def start_node(self, children=True, join=False):
         if self._running == False:  # the node might be child to multiple parents, but we just want to start once
             # first start children, so they are ready to receive inputs
@@ -125,9 +179,9 @@ class Node(Connectionist, Processor, Logger, Serializer):
             # now start self
             self._running = True
 
-            super().start_node()
+            self._call_user_fn(self._onstart, '_onstart')
+            self.info('Executed _onstart')
 
-        # TODO: remove this? / consider in which cases we need the option to join and in which we dont...
         if join:
             self._join()
         else:
@@ -138,9 +192,8 @@ class Node(Connectionist, Processor, Logger, Serializer):
         if self._running == True:  # the node might be child to multiple parents, but we just want to stop once
             self.info('Stopping')
             self._running = False
-
-            super().stop_node()
-            
+            self.info('Executing _onstop')
+            self._call_user_fn(self._onstop, '_onstop')
             self.info('Stopped')
 
             # now stop children
@@ -160,6 +213,7 @@ class Node(Connectionist, Processor, Logger, Serializer):
         self.info(
             f'Join returned at clock {max(self._clocks.state[self_name])}')
 
+
     # === Data Stuff =================
     def _emit_data(self, data, channel: Port = None, ctr: int = None):
         """
@@ -174,18 +228,29 @@ class Node(Connectionist, Processor, Logger, Serializer):
         for con in self.output_connections:
             if con._emit_port.key == channel:
                 con._recv_node.receive_data(
-                    clock, con, data)
+                    clock, payload={con._recv_port.key: data})
 
-    def receive_data(self, ctr, connection, data):
-        """
-        called in location of emitting node
-        """
-        # store all received data in their according mp.simplequeues
-        self.error(f'Received: "{connection._recv_port.key}" with clock {ctr}')
-        # self._received_data[key].put(ctr, val)
-        # this is called in the context of the emitting node, the data storage is then in charge of using the right means of transport, such that the process triggered has the available data in the same context as the receiving node's process is called
-        self.data_storage.put(connection, ctr, data)
-        self.trigger_process(ctr)
+    def _retrieve_current_data(self, ctr):
+        res = {}
+        # update current state, based on own clock
+        for key, queue in self._received_data.items():
+            # discard everything, that was before our own current clock
+            found_value, cur_value = queue.get(ctr)
+            self.verbose('retreiving current data', key, found_value,
+                         queue._read.keys(), ctr)
+            if found_value:
+                # TODO: instead of this key transformation/tolower consider actually using classes for data types... (allows for gui names alongside dev names and not converting between the two)
+                res[key] = cur_value
+        return res
+
+    # Most of the time when we already receive data from the next tick of some of the inputs AND the current tick would not be processed, we are likely to want to skip the tick where data was missing
+    # basically: if a frame was dropped before this node, we will also drop it and not block
+    # def discard_previous_tick(self, ctr):
+    #     res = bool(self._retrieve_current_data(ctr=ctr + 1))
+    #     if res:
+    #         self.debug('cur tick data:', self._retrieve_current_data(ctr=ctr).keys())
+    #         self.debug('next tick data:', self._retrieve_current_data(ctr=ctr + 1).keys())
+    #     return False
 
     def _report_perf(self):
         processing_duration = self._perf_user_fn.average()
@@ -200,7 +265,7 @@ class Node(Connectionist, Processor, Logger, Serializer):
         self.verbose('_Process triggered')
 
         # update current state, based on own clock
-        _current_data = self.data_storage.get(ctr=ctr)
+        _current_data = self._retrieve_current_data(ctr=ctr)
 
         # check if all required data to proceed is available and then call process
         # then cleanup aggregated data and advance our own clock
@@ -215,14 +280,45 @@ class Node(Connectionist, Processor, Logger, Serializer):
             self._call_user_fn_process(self.process, 'process', **_current_data, _ctr=ctr)
             self.verbose('process fn finished')
             self._report_perf()
-            self.data_storage.discard_before(ctr)
+            for queue in self._received_data.values():
+                queue.discard_before(ctr)
 
             # self.verbose('discarded values, registering now', self._clocks._store.is_set())
 
             self._clocks.register(str(self), ctr)
+            # if not keep_current_data:
+            #     self.discard_before
+            # if not prevent_tick:
+            # else:
+            #     self.debug('Prevented tick')
         else:
             self.verbose('Decided not to process', ctr, _current_data.keys())
         self.verbose('_Process finished')
+
+    def trigger_process(self, ctr):
+        self._process(ctr)
+
+
+    def receive_data(self, ctr, payload):
+        """
+        called in location of emitting node
+        """
+        # store all received data in their according mp.simplequeues
+        for key, val in payload.items():
+            self.error(f'Received: "{key}" with clock {ctr}')
+            self._received_data[key].put(ctr, val)
+
+        # FIX ME! TODO: this is a pain in the butt
+        # Basically:
+        # 1. node A runs in a thread
+        # 2. node B runs on another thread
+        # 3. A calls emit_data in its own process()
+        # 4. this triggers a call of B.receive_data, but in the context of As thread
+        # which means, that suddently B is not running in another thread, but this one.
+        # this clashes if b also waits for an input from yet another thread
+        # mainly this also means, that the QueueHelper hack reads from it's queues at different threads and therefore cannot combine the information
+        # not sure how to fix this though :/ for now: we'll just not execute anything in Location.SAME and fix this later
+        self.trigger_process(ctr)
 
     # === Performance Stuff =================
     # def timeit(self):

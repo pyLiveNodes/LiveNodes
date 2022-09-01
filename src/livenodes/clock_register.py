@@ -1,6 +1,8 @@
 import multiprocessing as mp
 import threading
 
+# TODO: this is bs, remove pls!
+# more precise: the node system was never designed for a single instance runner, and thus will have unintended side effects...
 class Clock_Register():
     state = {}
 
