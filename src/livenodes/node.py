@@ -90,7 +90,7 @@ class Node(Connectionist, Processor, Logger, Serializer):
         return list(filter(lambda x: len(x.ports_in) == 0, self.discover_graph(self)))
 
     def start(self, children=True, join=False):
-        self.spawn_processes()
+        super().spawn_processes()
         
         start_nodes = self._get_start_nodes()
         print(start_nodes)
@@ -185,27 +185,7 @@ class Node(Connectionist, Processor, Logger, Serializer):
         # self._received_data[key].put(ctr, val)
         # this is called in the context of the emitting node, the data storage is then in charge of using the right means of transport, such that the process triggered has the available data in the same context as the receiving node's process is called
         self.data_storage.put(connection, ctr, data)
-
-        # FIX ME! TODO: this is a pain in the butt
-        # Basically:
-        # 1. node A runs in a thread
-        # 2. node B runs on another thread
-        # 3. A calls emit_data in its own process()
-        # 4. this triggers a call of B.receive_data, but in the context of As thread
-        # which means, that suddently B is not running in another thread, but this one.
-        # this clashes if b also waits for an input from yet another thread
-        # mainly this also means, that the QueueHelper hack reads from it's queues at different threads and therefore cannot combine the information
-        # not sure how to fix this though :/ for now: we'll just not execute anything in Location.SAME and fix this later
         self.trigger_process(ctr)
-
-    # Most of the time when we already receive data from the next tick of some of the inputs AND the current tick would not be processed, we are likely to want to skip the tick where data was missing
-    # basically: if a frame was dropped before this node, we will also drop it and not block
-    # def discard_previous_tick(self, ctr):
-    #     res = bool(self._retrieve_current_data(ctr=ctr + 1))
-    #     if res:
-    #         self.debug('cur tick data:', self._retrieve_current_data(ctr=ctr).keys())
-    #         self.debug('next tick data:', self._retrieve_current_data(ctr=ctr + 1).keys())
-    #     return False
 
     def _report_perf(self):
         processing_duration = self._perf_user_fn.average()
@@ -240,11 +220,6 @@ class Node(Connectionist, Processor, Logger, Serializer):
             # self.verbose('discarded values, registering now', self._clocks._store.is_set())
 
             self._clocks.register(str(self), ctr)
-            # if not keep_current_data:
-            #     self.discard_before
-            # if not prevent_tick:
-            # else:
-            #     self.debug('Prevented tick')
         else:
             self.verbose('Decided not to process', ctr, _current_data.keys())
         self.verbose('_Process finished')

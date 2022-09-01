@@ -18,9 +18,29 @@ class Location(IntEnum):
 
 
 class Bridge_local():
-
     def __init__(self):
-        self.queue = queue.Queue()
+        self._read = {}
+
+    def put(self, ctr, item):
+        self._read[ctr] = item
+
+    def discard_before(self, ctr):
+        self._read = {
+            key: val
+            for key, val in self._read.items() if key >= ctr
+        }
+        
+    def get(self, ctr):
+        # in the process and thread case the queue should always be empty if we arrive here
+        # This should also never be executed in process or thread, as then the update function does not block and keys are skipped!
+        if ctr in self._read:
+            return True, self._read[ctr]
+        return False, None
+
+
+class Bridge_mp():
+    def __init__(self):
+        self.queue = mp.Queue()
         self._read = {}
 
     def put(self, ctr, item):
@@ -35,31 +55,11 @@ class Bridge_local():
             pass
         return False, -1
 
-    def empty_queue(self):
-        while not self.queue.empty():
-            itm_ctr, item = self.queue.get()
-            # TODO: if itm_ctr already exists, should we not rather extend than overwrite it? (thinking of the mulitple emit_data per process call examples (ie window))
-            # TODO: yes! this is what we should do :D
-            self._read[itm_ctr] = item
-
     def discard_before(self, ctr):
         self._read = {
             key: val
             for key, val in self._read.items() if key >= ctr
         }
-
-    def get(self, ctr):
-        self.empty_queue()
-
-        if ctr in self._read:
-            return True, self._read[ctr]
-        return False, None
-
-
-class Bridge_mp(Bridge_local):
-    def __init__(self):
-        super().__init__()
-        self.queue = mp.Queue()
 
     def get(self, ctr):
         # in the process and thread case the queue should always be empty if we arrive here
@@ -78,7 +78,7 @@ class Multiprocessing_Data_Storage():
         emit_loc = connection._emit_node.compute_on
         recv_loc = connection._recv_node.compute_on
 
-        if emit_loc in [Location.PROCESS] or recv_loc in [Location.PROCESS]:
+        if emit_loc in [Location.PROCESS, Location.THREAD] or recv_loc in [Location.PROCESS, Location.THREAD]:
             return Bridge_mp()
         else:
             return Bridge_local()
