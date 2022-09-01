@@ -66,6 +66,8 @@ class Node(Connectionist, Processor, Logger, Serializer):
     def __str__(self):
         return f"{self.name} [{self.__class__.__name__}]"
 
+    def __hash__(self) -> int:
+        return id(self)
 
     # === Connection Stuff =================
     def add_input(self, emit_node: 'Node', emit_port:Port, recv_port:Port):

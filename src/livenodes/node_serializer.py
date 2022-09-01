@@ -27,10 +27,10 @@ class Serializer():
 
     def to_dict(self, graph=False):
         # Assume no nodes in the graph have the same name+node_class -> should be checked in the add_inputs
-        res = {str(self): self.get_settings()}
+        res = {hash(self): self.get_settings()}
         if graph:
             for node in self.sort_discovered_nodes(self.discover_graph(self)):
-                res[str(node)] = node.get_settings()
+                res[hash(node)] = node.get_settings()
         return res
 
     @classmethod
