@@ -16,8 +16,9 @@ class Sender(Node):
     def __init__(self,
                  name,
                  block=False,
-                 compute_on=Location.THREAD):
-        super().__init__(name, compute_on)
+                 compute_on=Location.THREAD, 
+                 **kwargs):
+        super().__init__(name, compute_on=compute_on, **kwargs)
 
         if not block and compute_on == Location.SAME:
             # TODO: consider how to not block this in Location.Same?

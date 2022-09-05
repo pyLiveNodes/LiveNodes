@@ -170,7 +170,8 @@ class Node(Connectionist, Processor, Logger, Serializer):
         """
         if channel is None:
             channel = list(self.ports_out._asdict().values())[0]
-        channel = channel.key
+        elif isinstance(channel, Port):
+            channel = channel.key
         clock = self._ctr if ctr is None else ctr
 
         for con in self.output_connections:
@@ -183,7 +184,7 @@ class Node(Connectionist, Processor, Logger, Serializer):
         called in location of emitting node
         """
         # store all received data in their according mp.simplequeues
-        self.error(f'Received: "{connection._recv_port.key}" with clock {ctr}')
+        # self.error(f'Received: "{connection._recv_port.key}" with clock {ctr}')
         # self._received_data[key].put(ctr, val)
         # this is called in the context of the emitting node, the data storage is then in charge of using the right means of transport, such that the process triggered has the available data in the same context as the receiving node's process is called
         self.data_storage.put(connection, ctr, data)

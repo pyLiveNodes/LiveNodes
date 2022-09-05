@@ -240,7 +240,7 @@ class Connectionist(Logger):
         return node in self.discover_output_deps(self)
 
 
-    def dot_graph(self, nodes, name=False, transparent_bg=False):
+    def dot_graph(self, nodes, name=False, transparent_bg=False, **kwargs):
         graph_attr = {"size": "10,10!", "ratio": "fill"}
         if transparent_bg: graph_attr["bgcolor"] = "#00000000"
         dot = Digraph(format='png', strict=False, graph_attr=graph_attr)
