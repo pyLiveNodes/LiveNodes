@@ -18,11 +18,11 @@ class BlockingSender(Sender):
             # ie, in the RIoT example from semi-online, with compute=thread claims to have stopped, but continues to send data and does not stop its children
             # which is mainly due to the fact, that it just calls _onstop, which is not implemented and just passed in node._onstop (line 887)
 
-    def _emit_data(self, data, channel="Data"):
+    def _emit_data(self, data, channel):
         super()._emit_data(data, channel)
         # as we are a blocking sender / a sensore everytime we emit a sample, we advance our clock
-        if channel == "Data":
-            self._clocks.register(str(self), self._ctr)
+        if channel.name == "data":
+            self._clocks.register(*self._clock.state)
             self._ctr = self._clock.tick()
 
     def _process_on_proc(self):
