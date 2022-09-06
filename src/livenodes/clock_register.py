@@ -1,9 +1,10 @@
 import multiprocessing as mp
 import threading
 
+# TODO: this is bs, remove pls!
+# more precise: the node system was never designed for a single instance runner, and thus will have unintended side effects...
 class Clock_Register():
     state = {}
-    times = {}
 
     queue = mp.SimpleQueue()
 
@@ -14,9 +15,9 @@ class Clock_Register():
         self._owner_thread = threading.current_thread()
 
     # called in sub-processes
-    def register(self, name, ctr):
+    def register(self, node_id, ctr):
         if not self._store.is_set():
-            self.queue.put((name, ctr))
+            self.queue.put(node_id, ctr)
 
     def set_passthrough(self, node):
         print(f"Clock_Register set to passthrough by {str(node)}")
@@ -44,8 +45,9 @@ class Clock_Register():
     def all_at(self, ctr):
         states = self.read_state()
 
-        for name, ctrs in states.items():
+        for ctrs in states.values():
             if max(ctrs) < ctr:
                 return False
 
+<<<<<<< HEAD
         return True

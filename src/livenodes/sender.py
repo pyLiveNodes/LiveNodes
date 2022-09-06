@@ -1,14 +1,17 @@
 from functools import partial
 from .node import Node, Location
 from .clock import Clock
-from .utils import noop
+
+from typing import NamedTuple
+class Ports_empty(NamedTuple):
+    pass
 
 class Sender(Node):
     """
     Loops the process function until it returns false, indicating that no more data is to be sent
     """
 
-    channels_in = []  # must be empty!
+    ports_in = Ports_empty() # must be empty!
 
     def __init__(self,
                  name,
@@ -23,8 +26,8 @@ class Sender(Node):
         # TODO: also consider if this is better suited as parameter to start?
         self.block = block
 
-        self._clock = Clock(node=self, should_time=False)
-        self._ctr = self._clock.ctr
+        self._clock = Clock(node_id=self)
+        self._ctr = self._clock.ctr # set as is used in Node! (yes, we should rework this)
         self._emit_ctr_fallback = 0
 
     def _node_settings(self):
@@ -32,7 +35,7 @@ class Sender(Node):
 
     def __init_subclass__(cls):
         super().__init_subclass__()
-        if len(cls.channels_in) > 0:
+        if len(cls.ports_in) > 0:
             # This is a design choice. Technically this might even be possible, but at the time of writing i do not forsee a usefull case.
             raise ValueError('Sender nodes cannot have input')
 
@@ -43,7 +46,7 @@ class Sender(Node):
         """
         yield False
 
-    def _emit_data(self, data, channel="Data", ctr=None):
+    def _emit_data(self, data, channel=None, ctr=None):
         self._emit_ctr_fallback += 1
         return super()._emit_data(data, channel, ctr)
 
@@ -53,7 +56,7 @@ class Sender(Node):
         # self.debug('Next(Runner) was called')
         if self._emit_ctr_fallback > 0:
             # self.debug('Putting on queue', str(self), self._ctr)
-            self._clocks.register(str(self), self._ctr)
+            self._clocks.register(*self._clock.state)
             # self.debug('Put on queue')
             self._ctr = self._clock.tick()
         else:
@@ -69,9 +72,15 @@ class Sender(Node):
         fn = partial(self._call_user_fn_process, next, "runner")
         try:
             # as long as we do not receive a termination signal and there is data, we will send data
-            while not self._acquire_lock(
+            is_data_remaining = True
+            could_aqcuire_log = False
+            while not could_aqcuire_log:
+                could_aqcuire_log = self._acquire_lock(
                     self._subprocess_info['termination_lock'],
-                    block=False) and fn(runner):
+                    block=False)
+                is_data_remaining = fn(runner)
+                if not is_data_remaining:
+                    break
                 self._report_perf()
                 self._on_runner()
 
@@ -82,7 +91,9 @@ class Sender(Node):
 
         self.info('Reached end of run')
         # this still means we send data, before the return, just that after now no new data will be sent
-        self._on_runner()
+        if not is_data_remaining and not could_aqcuire_log:
+            self._on_runner()
+            self.info('I was not finished yet!')
         self.info('Finished subprocess', self._ctr)
 
     def start_node(self, children=True):
@@ -107,6 +118,14 @@ class Sender(Node):
             # this still means we send data, before the return, just that after now no new data will be sent
             self._on_runner()
 
+<<<<<<< HEAD
+=======
+        if join:
+            self._join()
+        else:
+            self._clocks.set_passthrough(self)
+
+>>>>>>> origin/master
     def _join(self):
         if not self.block:
             raise Exception(

@@ -6,7 +6,7 @@ stages:
 
 format:
   stage: clean
-  image: python:3.9-slim
+  image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/python:3.9-slim
   before_script:
     - python -m pip install yapf toml
   script:
@@ -16,7 +16,7 @@ format:
 test:
   stage: test
   # TODO: build a custom image for this, needs to include biokit stuff in the future as well...
-  image: python:3.8
+  image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/python:3.8
   cache:
     key: tox-test
     paths:
@@ -37,7 +37,7 @@ test:
 
 pages:
   stage: deploy
-  image: python:3.9-slim
+  image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/python:3.9-slim
   cache:
     key: tox-docs
     paths:
@@ -57,7 +57,7 @@ pages:
 
 build-package:
   stage: deploy
-  image: python:3.8
+  image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/python:3.8
   script:
     - pip install twine build
     - python3 -m build --wheel

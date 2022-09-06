@@ -1,6 +1,6 @@
+from livenodes.port import Port
 from .node import Location
 from .sender import Sender
-from .clock import Clock
 
 
 class BlockingSender(Sender):
@@ -17,8 +17,6 @@ class BlockingSender(Sender):
             # TODO: not exactly true, but there defenitely is a bug in the other implementations!
             # ie, in the RIoT example from semi-online, with compute=thread claims to have stopped, but continues to send data and does not stop its children
             # which is mainly due to the fact, that it just calls _onstop, which is not implemented and just passed in node._onstop (line 887)
-        self._clock = Clock(node=self, should_time=False)
-        self._ctr = self._clock.ctr
 
     def _emit_data(self, data, channel="Data"):
         super()._emit_data(data, channel)
@@ -37,14 +35,19 @@ class BlockingSender(Sender):
             self._onstop()
         self.info('Finished subprocess')
 
-    def start_node(self, children=True):
-        super().start_node(children)
+    def start_node(self, children=True, join=False):
+        super().start_node(children, join=False)
 
         if self.compute_on in [Location.PROCESS, Location.THREAD]:
             if self.block:
                 self._subprocess_info['process'].join()
         elif self.compute_on in [Location.SAME]:
             self._onstart()
+
+        if join:
+            self._join()
+        else:
+            self._clocks.set_passthrough(self)
 
     def stop_node(self, children=True):
         # first stop self, so that non-existing children don't receive inputs
@@ -61,4 +64,4 @@ class BlockingSender(Sender):
             # now stop children
             if children:
                 for con in self.output_connections:
-                    con._receiving_node.stop_node()
+                    con._recv_node.stop_node()

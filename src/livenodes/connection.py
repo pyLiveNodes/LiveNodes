@@ -1,27 +1,26 @@
-
 class Connection():
     # TODO: consider creating a channel registry instead of using strings?
     def __init__(self,
-                 emitting_node,
-                 receiving_node,
-                 emitting_channel="Data",
-                 receiving_channel="Data",
+                 emit_node: 'Connectionist',
+                 recv_node: 'Connectionist',
+                 emit_port: 'Port',
+                 recv_port: 'Port',
                  connection_counter=0):
-        self._emitting_node = emitting_node
-        self._receiving_node = receiving_node
-        self._emitting_channel = emitting_channel
-        self._receiving_channel = receiving_channel
+        self._emit_node = emit_node
+        self._recv_node = recv_node
+        self._emit_port = emit_port
+        self._recv_port = recv_port
         self._connection_counter = connection_counter
 
     def __repr__(self):
-        return f"{str(self._emitting_node)}.{self._emitting_channel} -> {str(self._receiving_node)}.{self._receiving_channel}"
+        return f"{str(self._emit_node)}.{str(self._emit_port)} -> {str(self._recv_node)}.{str(self._recv_port)}"
 
     def to_dict(self):
         return {
-            "emitting_node": str(self._emitting_node),
-            "receiving_node": str(self._receiving_node),
-            "emitting_channel": self._emitting_channel,
-            "receiving_channel": self._receiving_channel,
+            "emit_node": hash(self._emit_node),
+            "recv_node": hash(self._recv_node),
+            "emit_port": self._emit_port.key,
+            "recv_port": self._recv_port.key,
             "connection_counter": self._connection_counter
         }
 
@@ -29,11 +28,11 @@ class Connection():
         self._connection_counter = counter
 
     def _similar(self, other):
-        return self._emitting_node == other._emitting_node and \
-            self._receiving_node == other._receiving_node and \
-            self._emitting_channel == other._emitting_channel and \
-            self._receiving_channel == other._receiving_channel
+        return self._emit_node == other._emit_node \
+            and self._recv_node == other._recv_node \
+            and self._emit_port == other._emit_port \
+            and self._recv_port == other._recv_port
 
     def __eq__(self, other):
-        return self._similar(
-            other) and self._connection_counter == other._connection_counter
+        return self._similar(other) \
+            and self._connection_counter == other._connection_counter
