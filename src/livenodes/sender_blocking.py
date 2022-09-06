@@ -35,8 +35,8 @@ class BlockingSender(Sender):
             self._onstop()
         self.info('Finished subprocess')
 
-    def start_node(self, children=True, join=False):
-        super().start_node(children, join=False)
+    def start_node(self, children=True):
+        super().start_node(children)
 
         if self.compute_on in [Location.PROCESS, Location.THREAD]:
             if self.block:
@@ -44,10 +44,6 @@ class BlockingSender(Sender):
         elif self.compute_on in [Location.SAME]:
             self._onstart()
 
-        if join:
-            self._join()
-        else:
-            self._clocks.set_passthrough(self)
 
     def stop_node(self, children=True):
         # first stop self, so that non-existing children don't receive inputs

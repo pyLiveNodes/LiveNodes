@@ -118,14 +118,6 @@ class Sender(Node):
             # this still means we send data, before the return, just that after now no new data will be sent
             self._on_runner()
 
-<<<<<<< HEAD
-=======
-        if join:
-            self._join()
-        else:
-            self._clocks.set_passthrough(self)
-
->>>>>>> origin/master
     def _join(self):
         if not self.block:
             raise Exception(

@@ -134,21 +134,8 @@ class Node(Connectionist, Processor, Logger, Serializer):
             # now start self
             self._running = True
 
-            # TODO: consider moving this in the node constructor, so that we do not have this nested behaviour processeses due to parents calling their childs start()
-            # TODO: but maybe this is wanted, just buggy af atm
-            if self.compute_on in [Location.PROCESS, Location.THREAD]:
-                # if self.compute_on == Location.PROCESS:
-                #     self._subprocess_info['process'] = mp.Process(
-                #         target=self._process_on_proc)
-                # elif self.compute_on == Location.THREAD:
-                #     self._subprocess_info['process'] = threading.Thread(
-                #         target=self._process_on_proc)
+            super().start_node()
 
-        # TODO: remove this? / consider in which cases we need the option to join and in which we dont...
-        if join:
-            self._join()
-        else:
-            self._clocks.set_passthrough(self)
 
     def stop_node(self, children=True):
         # first stop self, so that non-running children don't receive inputs
@@ -189,46 +176,9 @@ class Node(Connectionist, Processor, Logger, Serializer):
         clock = self._ctr if ctr is None else ctr
 
         for con in self.output_connections:
-            if con._emitting_channel == channel:
-                con._receiving_node.receive_data(
-                    clock, payload={con._receiving_channel: data})
-
-    def _process_on_proc(self):
-        self.info('Started subprocess')
-
-        self._call_user_fn(self._onstart, '_onstart')
-        self.info('Executed _onstart')
-
-        # as long as we do not receive a termination signal, we will wait for data to be processed
-        # the .empty() is not reliable (according to the python doc), but the best we have at the moment
-        was_queue_empty_last_iteration = 0
-        queue_empty = False
-        was_terminated = False
-
-        # one iteration takes roughly 0.00001 * channels -> 0.00001 * 10 * 100 = 0.01
-        while not was_terminated or was_queue_empty_last_iteration < 10:
-            could_acquire_term_lock = self._acquire_lock(
-                self._subprocess_info['termination_lock'], block=False)
-            was_terminated = was_terminated or could_acquire_term_lock
-            # block until signaled that we have new data
-            # as we might receive not data after having received a termination
-            #      -> we'll just poll, so that on termination we do terminate after no longer than 0.1seconds
-            # self.info(was_terminated, was_queue_empty_last_iteration)
-            queue_empty = True
-            for queue in self._received_data.values():
-                found_value, ctr = queue.update(timeout=0.00001)
-                if found_value:
-                    self._process(ctr)
-                    queue_empty = False
-            if queue_empty:
-                was_queue_empty_last_iteration += 1
-            else:
-                was_queue_empty_last_iteration = 0
-
-        self.info('Executing _onstop')
-        self._call_user_fn(self._onstop, '_onstop')
-
-        self.info('Finished subprocess')
+            if con._emit_port == channel:
+                con._recv_node.receive_data(
+                    clock, payload={con._recv_port: data})
 
     def receive_data(self, ctr, connection, data):
         """
