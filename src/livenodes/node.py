@@ -176,9 +176,8 @@ class Node(Connectionist, Processor, Logger, Serializer):
         clock = self._ctr if ctr is None else ctr
 
         for con in self.output_connections:
-            if con._emit_port == channel:
-                con._recv_node.receive_data(
-                    clock, payload={con._recv_port: data})
+            if con._emit_port.key == channel:
+                con._recv_node.receive_data(clock, con, data)
 
     def receive_data(self, ctr, connection, data):
         """
