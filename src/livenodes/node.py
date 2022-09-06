@@ -169,11 +169,12 @@ class Node(Connectionist, Processor, Logger, Serializer):
         Emits data to childs, ie child.receive_data
         """
         if channel is None:
-            channel = list(self.ports_out._asdict().values())[0]
+            channel = list(self.ports_out._asdict().values())[0].key
         elif isinstance(channel, Port):
             channel = channel.key
         clock = self._ctr if ctr is None else ctr
 
+        self.verbose('Emitting', channel, np.array(data).shape)
         for con in self.output_connections:
             if con._emit_port.key == channel:
                 con._recv_node.receive_data(

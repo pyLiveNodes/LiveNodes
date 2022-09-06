@@ -27,17 +27,17 @@ class Serializer():
 
     def to_dict(self, graph=False):
         # Assume no nodes in the graph have the same name+node_class -> should be checked in the add_inputs
-        res = {hash(self): self.get_settings()}
+        res = {str(hash(self)): self.get_settings()}
         if graph:
             for node in self.sort_discovered_nodes(self.discover_graph(self)):
-                res[hash(node)] = node.get_settings()
+                res[str(hash(node))] = node.get_settings()
         return res
 
     @classmethod
     def from_dict(cls, items, initial_node=None):
         # TODO: implement children=True, parents=True
         # format should be as in to_dict, ie a dictionary, where the name is unique and the values is a dictionary with three values (settings, ins, outs)
-
+        
         items_instc = {}
         initial = None
 

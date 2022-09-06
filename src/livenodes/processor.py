@@ -1,5 +1,4 @@
 from enum import IntEnum
-from sqlite3 import connect
 import numpy as np
 import multiprocessing as mp
 import threading
@@ -18,7 +17,7 @@ class Location(IntEnum):
 
 
 class Bridge_local():
-    def __init__(self):
+    def __init__(self, _from=None, _to=None):
         self._read = {}
 
     def put(self, ctr, item):
@@ -39,9 +38,10 @@ class Bridge_local():
 
 
 class Bridge_mp():
-    def __init__(self):
+    def __init__(self, _from=None, _to=None):
         self.queue = mp.Queue()
         self._read = {}
+        self._to = _to
 
     def put(self, ctr, item):
         self.queue.put((ctr, item))
@@ -55,6 +55,13 @@ class Bridge_mp():
             pass
         return False, -1
 
+    def empty_queue(self):
+        while not self.queue.empty():
+            itm_ctr, item = self.queue.get()
+            # TODO: if itm_ctr already exists, should we not rather extend than overwrite it? (thinking of the mulitple emit_data per process call examples (ie window))
+            # TODO: yes! this is what we should do :D
+            self._read[itm_ctr] = item
+
     def discard_before(self, ctr):
         self._read = {
             key: val
@@ -62,6 +69,11 @@ class Bridge_mp():
         }
 
     def get(self, ctr):
+        if self._to == Location.SAME:
+            # This is only needed in the location.same case, as in the process and thread case the queue should always be empty if we arrive here
+            # This should also never be executed in process or thread, as then the update function does not block and keys are skipped!
+            self.empty_queue()
+
         # in the process and thread case the queue should always be empty if we arrive here
         # This should also never be executed in process or thread, as then the update function does not block and keys are skipped!
         if ctr in self._read:
@@ -79,9 +91,9 @@ class Multiprocessing_Data_Storage():
         recv_loc = connection._recv_node.compute_on
 
         if emit_loc in [Location.PROCESS, Location.THREAD] or recv_loc in [Location.PROCESS, Location.THREAD]:
-            return Bridge_mp()
+            return Bridge_mp(_from=emit_loc, _to=recv_loc)
         else:
-            return Bridge_local()
+            return Bridge_local(_from=emit_loc, _to=recv_loc)
 
     def set_inputs(self, input_connections):
         for con in input_connections:
