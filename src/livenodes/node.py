@@ -98,7 +98,14 @@ class Node(Connectionist, Processor, Logger, Serializer):
         print(start_nodes)
         for i, node in enumerate(start_nodes):
             print('Starting:', node, join, i + 1 == len(start_nodes), children)
-            node.start_node(children=children, join=join and i + 1 == len(start_nodes))
+            node.start_node(children=children)
+
+        if join:
+            print('---', str(self), 'join')
+            node._join()
+        else:
+            print('---', str(self), 'dont join')
+            node._clocks.set_passthrough(node)
 
     def stop(self, children=True):
         start_nodes = self._get_start_nodes()
@@ -116,7 +123,7 @@ class Node(Connectionist, Processor, Logger, Serializer):
             self.error(traceback.format_exc())
     
 
-    def start_node(self, children=True, join=False):
+    def start_node(self, children=True):
         if self._running == False:  # the node might be child to multiple parents, but we just want to start once
             # first start children, so they are ready to receive inputs
             # children cannot not have inputs, ie they are always relying on this node to send them data if they want to progress their clock
@@ -129,11 +136,6 @@ class Node(Connectionist, Processor, Logger, Serializer):
 
             super().start_node()
 
-        # TODO: remove this? / consider in which cases we need the option to join and in which we dont...
-        if join:
-            self._join()
-        else:
-            self._clocks.set_passthrough(self)
 
     def stop_node(self, children=True):
         # first stop self, so that non-running children don't receive inputs
@@ -156,7 +158,7 @@ class Node(Connectionist, Processor, Logger, Serializer):
         # ie in the extreme case: self._ctr=0 and all others as well
         self_name = str(self)
         # the first part will be false until the first time _process() is being called, after that, the second part will be false until all clocks have catched up to our own
-        while (not self_name in self._clocks.read_state()[0]) or not (
+        while (not self_name in self._clocks.read_state()) or not (
                 self._clocks.all_at(max(self._clocks.state[self_name]))):
             time.sleep(0.01)
         self.info(
@@ -177,8 +179,7 @@ class Node(Connectionist, Processor, Logger, Serializer):
         self.verbose('Emitting', channel, np.array(data).shape)
         for con in self.output_connections:
             if con._emit_port.key == channel:
-                con._recv_node.receive_data(
-                    clock, con, data)
+                con._recv_node.receive_data(clock, con, data)
 
     def receive_data(self, ctr, connection, data):
         """

@@ -57,7 +57,7 @@ class Sender(Node):
         # self.debug('Next(Runner) was called')
         if self._emit_ctr_fallback > 0:
             # self.debug('Putting on queue', str(self), self._ctr)
-            self._clocks.register(*self._clock.state)
+            self._clocks.register(str(self), self._clock.ctr)
             # self.debug('Put on queue')
             self._ctr = self._clock.tick()
         else:
@@ -97,8 +97,8 @@ class Sender(Node):
             self.info('I was not finished yet!')
         self.info('Finished subprocess', self._ctr)
 
-    def start_node(self, children=True, join=False):
-        super().start_node(children, join=False)
+    def start_node(self, children=True):
+        super().start_node(children)
 
         if self.compute_on in [Location.PROCESS, Location.THREAD
                                ] and self.block:
@@ -118,11 +118,6 @@ class Sender(Node):
             self.info('Reached end of run')
             # this still means we send data, before the return, just that after now no new data will be sent
             self._on_runner()
-
-        if join:
-            self._join()
-        else:
-            self._clocks.set_passthrough(self)
 
     def _join(self):
         if not self.block:
