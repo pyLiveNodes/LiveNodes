@@ -126,7 +126,7 @@ class TestProcessing():
         assert out1.get_state() == list(range(10))
         assert out2.get_state() == list(map(lambda x: x**2, range(10)))
 
-
+    @pytest.mark.skip(reason="Will be implemented in separate branch")
     def test_calc_join(self, create_simple_graph):
         data, quadratic, out1, out2 = create_simple_graph
 
@@ -136,7 +136,7 @@ class TestProcessing():
         assert out1.get_state() == list(range(10))
         assert out2.get_state() == list(map(lambda x: x**2, range(10)))
 
-
+    @pytest.mark.skip(reason="Will be implemented in separate branch")
     def test_calc_join_twice(self, create_simple_graph):
         data, quadratic, out1, out2 = create_simple_graph
 
