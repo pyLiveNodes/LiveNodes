@@ -17,7 +17,7 @@ class Clock_Register():
     # called in sub-processes
     def register(self, node_id, ctr):
         if not self._store.is_set():
-            self.queue.put(node_id, ctr)
+            self.queue.put((node_id, ctr))
 
     def set_passthrough(self, node):
         print(f"Clock_Register set to passthrough by {str(node)}")

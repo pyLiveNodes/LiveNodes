@@ -1,3 +1,4 @@
+import time
 import pytest
 import multiprocessing as mp
 
@@ -85,8 +86,8 @@ def create_simple_graph_mp():
 @pytest.fixture
 def create_simple_graph_mixed():
     data = Data(name="A", compute_on=Location.THREAD, block=True)
-    quadratic = Quadratic(name="B", compute_on=Location.THREAD)
-    out1 = Save(name="C", compute_on=Location.THREAD)
+    quadratic = Quadratic(name="B", compute_on=Location.SAME)
+    out1 = Save(name="C", compute_on=Location.PROCESS)
     out2 = Save(name="D", compute_on=Location.THREAD)
 
     out1.connect_inputs_to(data)
@@ -106,6 +107,54 @@ class TestProcessing():
 
         assert out1.get_state() == list(range(10))
         assert out2.get_state() == list(map(lambda x: x**2, range(10)))
+
+    def test_calc_twice(self, create_simple_graph):
+        data, quadratic, out1, out2 = create_simple_graph
+
+        data.start()
+        data.stop()
+
+        assert out1.get_state() == list(range(10))
+        assert out2.get_state() == list(map(lambda x: x**2, range(10)))
+
+        assert len(Node._clocks.state.keys()) == 0
+        assert Node._clocks.state == {}
+
+        data.start()
+        data.stop()
+
+        assert out1.get_state() == list(range(10))
+        assert out2.get_state() == list(map(lambda x: x**2, range(10)))
+
+    @pytest.mark.skip(reason="Will be implemented in separate branch")
+    def test_calc_join(self, create_simple_graph):
+        data, quadratic, out1, out2 = create_simple_graph
+
+        data.start(join=True)
+        data.stop()
+
+        assert out1.get_state() == list(range(10))
+        assert out2.get_state() == list(map(lambda x: x**2, range(10)))
+
+    @pytest.mark.skip(reason="Will be implemented in separate branch")
+    def test_calc_join_twice(self, create_simple_graph):
+        data, quadratic, out1, out2 = create_simple_graph
+
+        data.start(join=True)
+        data.stop()
+
+        assert out1.get_state() == list(range(10))
+        assert out2.get_state() == list(map(lambda x: x**2, range(10)))
+
+        assert len(Node._clocks.state.keys()) == 0
+        assert Node._clocks.state == {}
+
+        data.start(join=True)
+        data.stop()
+
+        assert out1.get_state() == list(range(10))
+        assert out2.get_state() == list(map(lambda x: x**2, range(10)))
+
 
     def test_calc_mp(self, create_simple_graph_mp):
         data, quadratic, out1, out2 = create_simple_graph_mp
