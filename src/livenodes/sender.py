@@ -56,7 +56,7 @@ class Sender(Node):
         # self.debug('Next(Runner) was called')
         if self._emit_ctr_fallback > 0:
             # self.debug('Putting on queue', str(self), self._ctr)
-            self._clocks.register(*self._clock.state)
+            self._clocks.register(str(self), self._clock.ctr)
             # self.debug('Put on queue')
             self._ctr = self._clock.tick()
         else:

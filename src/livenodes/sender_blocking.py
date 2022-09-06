@@ -22,7 +22,7 @@ class BlockingSender(Sender):
         super()._emit_data(data, channel)
         # as we are a blocking sender / a sensore everytime we emit a sample, we advance our clock
         if channel.name == "data":
-            self._clocks.register(*self._clock.state)
+            self._clocks.register(str(self), self._clock.ctr)
             self._ctr = self._clock.tick()
 
     def _process_on_proc(self):
