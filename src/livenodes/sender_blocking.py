@@ -1,3 +1,4 @@
+from livenodes.port import Port
 from .node import Location
 from .sender import Sender
 
@@ -20,8 +21,8 @@ class BlockingSender(Sender):
     def _emit_data(self, data, channel):
         super()._emit_data(data, channel)
         # as we are a blocking sender / a sensore everytime we emit a sample, we advance our clock
-        if channel.name == "data": # TODO: not sure if we can remove this easily...
-            self._clocks.register(*self._clock.state)
+        if channel.name == "data":
+            self._clocks.register(str(self), self._clock.ctr)
             self._ctr = self._clock.tick()
 
     def _process_on_proc(self):
@@ -34,8 +35,8 @@ class BlockingSender(Sender):
             self._onstop()
         self.info('Finished subprocess')
 
-    def start_node(self, children=True, join=False):
-        super().start_node(children, join=False)
+    def start_node(self, children=True):
+        super().start_node(children)
 
         if self.compute_on in [Location.PROCESS, Location.THREAD]:
             if self.block:
@@ -43,10 +44,6 @@ class BlockingSender(Sender):
         elif self.compute_on in [Location.SAME]:
             self._onstart()
 
-        if join:
-            self._join()
-        else:
-            self._clocks.set_passthrough(self)
 
     def stop_node(self, children=True):
         # first stop self, so that non-existing children don't receive inputs
