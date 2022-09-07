@@ -1,6 +1,6 @@
 import pytest
 
-from livenodes.node_connector import Connectionist
+from livenodes.components.node_connector import Connectionist
 
 from typing import NamedTuple
 from .utils import Port_Data

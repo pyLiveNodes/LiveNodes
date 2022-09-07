@@ -1,10 +1,10 @@
 import multiprocessing as mp
 
 from livenodes.node import Node, Location
-from livenodes.sender import Sender
+from livenodes.producer import Producer
 
 
-class Data(Sender):
+class Data(Producer):
     channels_in = []
     # yes, "Data" would have been fine, but wanted to quickly test the naming parts
     # TODO: consider
@@ -64,9 +64,6 @@ def test_calc_join(create_simple_graph):
     data.stop()
 
     assert out2.get_state() == list(map(lambda x: x**2, range(10)))
-
-    assert len(Node._clocks.state.keys()) == 0
-    assert Node._clocks.state == {}
 
     data.start(join=True)
     data.stop()

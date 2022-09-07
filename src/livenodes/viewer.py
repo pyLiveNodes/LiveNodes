@@ -3,7 +3,6 @@ import queue
 import time
 
 from .node import Node, Location
-from .utils import noop
 
 
 

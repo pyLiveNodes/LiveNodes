@@ -1,6 +1,3 @@
-from typing import NamedTuple
-
-
 class Port():
 
     example_values = []

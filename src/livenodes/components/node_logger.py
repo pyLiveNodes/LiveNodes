@@ -1,6 +1,9 @@
-from .logger import logger, LogLevel
+from .utils.logger import logger, LogLevel
 
 class Logger():
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
+
     # === Logging Stuff =================
     # TODO: move this into it's own module/file?
     def error(self, *text):

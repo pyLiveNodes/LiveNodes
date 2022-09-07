@@ -4,7 +4,7 @@ import multiprocessing as mp
 import threading
 import queue
 
-from livenodes.connection import Connection
+from .connection import Connection
 
 from .node_logger import Logger
 
@@ -262,3 +262,10 @@ class Processor(Logger):
         self._call_user_fn(self._onstop, '_onstop')
 
         self.info('Finished subprocess')
+
+
+    def _join(self):
+        # if local = blocks automatically (see node.py)
+        # if non-local = block until subprocess returns
+        if self.compute_on in [Location.THREAD, Location.PROCESS]:
+            self._subprocess_info['process'].join()

@@ -1,17 +1,15 @@
 from functools import partial
 import numpy as np
 import time
-import queue
 import traceback
 
-from .clock_register import Clock_Register
-from .perf import Time_Per_Call, Time_Between_Call
-from .port import Port
+from .components.utils.perf import Time_Per_Call, Time_Between_Call
+from .components.port import Port
 
-from .node_connector import Connectionist
-from .node_logger import Logger
-from .node_serializer import Serializer
-from .processor import Processor, Location # location is imported here, as we'll need to update all the from livenodes.nodes import location soon
+from .components.node_connector import Connectionist
+from .components.node_logger import Logger
+from .components.node_serializer import Serializer
+from .components.processor import Processor, Location # location is imported here, as we'll need to update all the from livenodes.nodes import location soon
 
 
 class Node(Connectionist, Processor, Logger, Serializer):
@@ -23,16 +21,6 @@ class Node(Connectionist, Processor, Logger, Serializer):
     description = ""
 
     example_init = {}
-
-    # not super awesome, but will do the trick for now:
-    # have a register of clock ticks in the graph on the node class (should never be overwritten)
-    # everytime a child node processes something it registers this here
-    # then we can join the whole graph by waiting until in this register all ctrs are as high as the highest senders (if all senders have stopped sending)
-    # ---
-    # TODO: figure out how this behaves when loading the module only once, but executing the piplines twice!
-    # Worst case: the state is kept and all the ctrs are wrong :/
-    # I think this should be fine tho, as the logger seems to work and is the same (?!?)
-    _clocks = Clock_Register()
 
     # === Basic Stuff =================
     def __init__(self,
@@ -91,28 +79,32 @@ class Node(Connectionist, Processor, Logger, Serializer):
         # return list(filter(lambda x: len(x.ports_in) == 0, self.discover_graph(self)))
         return list(filter(lambda x: len(x.ports_in) == 0, self.discover_graph(self)))
 
-    def start(self, children=True, join=False):
+    def start(self, children=True):
         super().spawn_processes()
         
         start_nodes = self._get_start_nodes()
         print(start_nodes)
         for i, node in enumerate(start_nodes):
-            print('Starting:', node, join, i + 1 == len(start_nodes), children)
             node.start_node(children=children)
 
-        if join:
-            print('---', str(self), 'join')
-            node._join()
-        else:
-            print('---', str(self), 'dont join')
-            node._clocks.set_passthrough(node)
+        # if join:
+        #     for i, node in enumerate(start_nodes):
+        #         node._join()
+       
+    def _join(self):
+        # The default (transformer) node cannot be joined, as it only processes on input and has no notion of "finished"
+        # it should only block as long as there is still data to be processed, which execution on the same process does automatically.
+        # ie, if a local node receives data it directly triggers exectution which blocks until the data is processed and then waits for the next chunk, which may or may not come
+        # -> producers know if everything is finished, same goes for mp nodes 
+        super()._join()
 
-    def stop(self, children=True):
+
+    def stop(self, children=True, force=False):
         start_nodes = self._get_start_nodes()
         print(start_nodes)
         for node in start_nodes:
             print("Stopping:", node, children)
-            node.stop_node(children=children)
+            node.stop_node(children=children, force=False)
 
     def _call_user_fn(self, _fn, _fn_name, *args, **kwargs):
         try:
@@ -137,7 +129,7 @@ class Node(Connectionist, Processor, Logger, Serializer):
             super().start_node()
 
 
-    def stop_node(self, children=True):
+    def stop_node(self, children=True, force=False):
         # first stop self, so that non-running children don't receive inputs
         if self._running == True:  # the node might be child to multiple parents, but we just want to stop once
             self.info('Stopping')
@@ -150,19 +142,7 @@ class Node(Connectionist, Processor, Logger, Serializer):
             # now stop children
             if children:
                 for con in self.output_connections:
-                    con._recv_node.stop_node()
-
-    def _join(self):
-        # blocks until all nodes in the graph reached the same clock as the node we are calling this from
-        # for senders: this only makes sense for senders with block=True as otherwise race conditions might make this return before the final data was send
-        # ie in the extreme case: self._ctr=0 and all others as well
-        self_name = str(self)
-        # the first part will be false until the first time _process() is being called, after that, the second part will be false until all clocks have catched up to our own
-        while (not self_name in self._clocks.read_state()) or not (
-                self._clocks.all_at(max(self._clocks.state[self_name]))):
-            time.sleep(0.01)
-        self.info(
-            f'Join returned at clock {max(self._clocks.state[self_name])}')
+                    con._recv_node.stop_node(force=force)
 
     # === Data Stuff =================
     def _emit_data(self, data, channel: Port = None, ctr: int = None):
@@ -221,10 +201,6 @@ class Node(Connectionist, Processor, Logger, Serializer):
             self.verbose('process fn finished')
             self._report_perf()
             self.data_storage.discard_before(ctr)
-
-            # self.verbose('discarded values, registering now', self._clocks._store.is_set())
-
-            self._clocks.register(str(self), ctr)
         else:
             self.verbose('Decided not to process', ctr, _current_data.keys())
         self.verbose('_Process finished')
@@ -275,12 +251,12 @@ class Node(Connectionist, Processor, Logger, Serializer):
 
     def _onstart(self):
         """
-        executed on start, should return! (if you need always running -> blockingSender)
+        executed on start
         """
         pass
 
     def _onstop(self):
         """
-        executed on stop, should return! (if you need always running -> blockingSender)
+        executed on stop
         """
         pass

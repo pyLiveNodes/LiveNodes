@@ -3,7 +3,7 @@ import pytest
 import multiprocessing as mp
 
 from livenodes.node import Node, Location
-from livenodes.sender import Sender
+from livenodes.producer import Producer
 
 from typing import NamedTuple
 from .utils import Port_Data
@@ -14,7 +14,7 @@ class Ports_none(NamedTuple):
 class Ports_simple(NamedTuple):
     data: Port_Data = Port_Data("Alternate Data")
 
-class Data(Sender):
+class Data(Producer):
     ports_in = Ports_none()
     # yes, "Data" would have been fine, but wanted to quickly test the naming parts
     # TODO: consider
@@ -57,7 +57,7 @@ class Save(Node):
 # Arrange
 @pytest.fixture
 def create_simple_graph():
-    data = Data(name="A", compute_on=Location.SAME, block=True)
+    data = Data(name="A", compute_on=Location.SAME)
     quadratic = Quadratic(name="B", compute_on=Location.SAME)
     out1 = Save(name="C", compute_on=Location.SAME)
     out2 = Save(name="D", compute_on=Location.SAME)
@@ -71,7 +71,7 @@ def create_simple_graph():
 
 @pytest.fixture
 def create_simple_graph_mp():
-    data = Data(name="A", compute_on=Location.PROCESS, block=True)
+    data = Data(name="A", compute_on=Location.PROCESS)
     quadratic = Quadratic(name="B", compute_on=Location.PROCESS)
     out1 = Save(name="C", compute_on=Location.PROCESS)
     out2 = Save(name="D", compute_on=Location.PROCESS)
@@ -85,7 +85,7 @@ def create_simple_graph_mp():
 
 @pytest.fixture
 def create_simple_graph_mixed():
-    data = Data(name="A", compute_on=Location.THREAD, block=True)
+    data = Data(name="A", compute_on=Location.THREAD)
     quadratic = Quadratic(name="B", compute_on=Location.SAME)
     out1 = Save(name="C", compute_on=Location.PROCESS)
     out2 = Save(name="D", compute_on=Location.THREAD)
@@ -117,9 +117,6 @@ class TestProcessing():
         assert out1.get_state() == list(range(10))
         assert out2.get_state() == list(map(lambda x: x**2, range(10)))
 
-        assert len(Node._clocks.state.keys()) == 0
-        assert Node._clocks.state == {}
-
         data.start()
         data.stop()
 
@@ -146,9 +143,6 @@ class TestProcessing():
         assert out1.get_state() == list(range(10))
         assert out2.get_state() == list(map(lambda x: x**2, range(10)))
 
-        assert len(Node._clocks.state.keys()) == 0
-        assert Node._clocks.state == {}
-
         data.start(join=True)
         data.stop()
 
@@ -168,7 +162,7 @@ class TestProcessing():
     def test_calc_mixed(self, create_simple_graph_mixed):
         data, quadratic, out1, out2 = create_simple_graph_mixed
 
-        data.start()
+        data.start(join=True)
         data.stop()
 
         assert out1.get_state() == list(range(10))

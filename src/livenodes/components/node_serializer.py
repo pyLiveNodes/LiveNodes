@@ -1,10 +1,13 @@
 import json
 
-from .utils import NumpyEncoder
+from .utils.utils import NumpyEncoder
 
-from . import get_registry
+from livenodes import get_registry
 
 class Serializer():
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
+        
     def copy(self, graph=False):
         """
         Copy the current node

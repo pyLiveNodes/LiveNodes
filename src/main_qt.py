@@ -10,7 +10,7 @@ from livenodes.gui.components.page_parent import Parent
 from livenodes.node import Node
 from livenodes import get_registry
 
-from livenodes.logger import logger
+from livenodes.components.utils.logger import logger
 
 import datetime
 import time
