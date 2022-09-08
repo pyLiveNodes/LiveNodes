@@ -1,5 +1,6 @@
 import asyncio
 from enum import IntEnum
+import time
 import numpy as np
 import multiprocessing as mp
 import threading
@@ -43,9 +44,14 @@ class Bridge_local():
         self._read = {}
 
     def put(self, ctr, item, last_package):
+        print('putting value')
         self.queue.put_nowait((ctr, item, last_package))
 
+    def empty(self):
+        return self.queue.qsize() <= 0
+        
     async def update(self):
+        print('waiting for asyncio to receive a value')
         itm_ctr, item, last_package = await self.queue.get()
         self._read[itm_ctr] = (item, last_package)
         return itm_ctr, last_package
@@ -61,7 +67,7 @@ class Bridge_local():
         # This should also never be executed in process or thread, as then the update function does not block and keys are skipped!
         if ctr in self._read:
             return True, *self._read[ctr]
-        return False, None
+        return False, None, None
 
 
 class Bridge_mp():
@@ -81,6 +87,9 @@ class Bridge_mp():
         except queue.Empty:
             pass
         return False, -1
+
+    def empty(self):
+        return self.queue.empty()
 
     def empty_queue(self):
         while not self.queue.empty():
@@ -105,7 +114,7 @@ class Bridge_mp():
         # This should also never be executed in process or thread, as then the update function does not block and keys are skipped!
         if ctr in self._read:
             return True, *self._read[ctr]
-        return False, None
+        return False, None, None
 
 
 class Multiprocessing_Data_Storage():
@@ -126,8 +135,12 @@ class Multiprocessing_Data_Storage():
         for con in input_connections:
             self.bridges[con._recv_port.key] = self.resolve_bridge(con)
 
+    def empty(self):
+        return all([q.empty() for q in self.bridges.values()])
+
     # can be called from any process
     def put(self, connection, ctr, data, last_package=False):
+        print('data storage putting value', connection._recv_port.key, type(self.bridges[connection._recv_port.key]))
         self.bridges[connection._recv_port.key].put(ctr, data, last_package)
 
     # will only be called within the processesing process
@@ -136,7 +149,7 @@ class Multiprocessing_Data_Storage():
         # update current state, based on own clock
         for key, queue in self.bridges.items():
             # discard everything, that was before our own current clock
-            found_value, cur_value = queue.get(ctr)
+            found_value, cur_value, last_value = queue.get(ctr)
 
             if found_value:
                 # TODO: instead of this key transformation/tolower consider actually using classes for data types... (allows for gui names alongside dev names and not converting between the two)
@@ -202,7 +215,7 @@ class Processor(Logger):
             )
         return res
 
-    async def start_node(self):
+    def start_node(self):
         # create bridges and storage based on the connections we have once we've started?
         # as then compute_on and number of connections etc should not change anymore
         self.data_storage.set_inputs(self.input_connections)
@@ -226,22 +239,52 @@ class Processor(Logger):
             self.info('Executed _onstart')
             
             self.info('Waiting on inputs')
-            await self._setup_process()
+            # await self._setup_process()
 
-    async def _setup_process(self):
+            # just to make sure a loop exists, which it likely already does 
+            self._loop = asyncio.get_event_loop()
+            self._finished = self._loop.create_future()
+            self._setup_process()
+
+    def _setup_process_cb(self, task):
+        finished, unfinished = task.result()
+
+        for t in unfinished:
+            # these will be setup in the recursion again
+            t.cancel()
+
+        for t in finished:
+            ctr, last_package = t.result()
+            print('task finished', ctr, last_package)
+            self._process(ctr)
+            if not self.data_storage.empty():
+                print('recursing')
+                # recurse and wait for next queue item to become available
+                self._setup_process()
+            else:
+                self._finished.set_result(True)
+                self._current_task = None
+
+    def _setup_process(self):
         # start infinite coroutine, until closed
         # will use asyncio await to wait for new tasks which then will be processed
-        loop = asyncio.get_event_loop()
-        while self._running:
+        if self._running:
+            print('Setting awaits')
+            # collect all asyncio queues from our bridges
             async_bridges = [queue.update() for queue in self.data_storage.bridges.values()]
-            finished, _ = loop.run_until_complete(asyncio.wait(async_bridges, return_when=asyncio.FIRST_COMPLETED))
-            ctr, last_package = await self.data_storage.update()
-            for task in finished:
-                ctr, last_package = task.result()
-                self._process(ctr)
-                if last_package:
-                    return
+            # wait until one of them returns
+            self._current_task = self._loop.create_task(asyncio.wait(async_bridges, return_when=asyncio.FIRST_COMPLETED))
+            # if one returns get the current ctr and pass it to _process inside of setup_cb
+            # which will then recurse to wait for the next queue to spit up a value
+            self._current_task.add_done_callback(self._setup_process_cb)
+            print('finished setting await callbacks')
 
+
+    async def _join_local(self):
+        # while self._current_task is not None:
+        #     await asyncio.gather(self._current_task)
+        # await self._finished
+        await asyncio.sleep(2)
 
     def stop_node(self, force=False):
         if self.compute_on in [Location.PROCESS, Location.THREAD]:
@@ -260,8 +303,14 @@ class Processor(Logger):
                     self.info(self._subprocess_info['process'].is_alive(),
                                 self._subprocess_info['process'].name)
 
-        elif self.compute_on in [Location.SAME]:
-            # self._running = False # should already be set before this function is called
+        elif self.compute_on in [Location.SAME]:            
+            if force:
+                self._loop.close()
+            else:
+                self._loop.run_until_complete(self._join_local())
+                # self._loop.run_until_complete(asyncio.wait([self._finished]))
+                self._loop.stop()
+
             self.info('Executing _onstop')
             self._call_user_fn(self._onstop, '_onstop')
 

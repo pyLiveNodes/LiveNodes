@@ -86,15 +86,16 @@ class Node(Connectionist, Processor, Logger, Serializer):
         
         start_nodes = self._get_start_nodes()
         print(start_nodes)
-        futures = []
+        # futures = []
         for i, node in enumerate(start_nodes):
-            futures.extend(node.start_node(children=children))
+            # futures.extend(node.start_node(children=children))
+            node.start_node(children=children)
             
         # TODO: i don't like how this prevents us from calling stop if any node is in location.same and not finished processing yet...
         # we could consider putting this into it's own thread?
-        loop = asyncio.get_event_loop()
-        print(futures)
-        loop.run_until_complete(self._run_futures(futures=futures))
+        # loop = asyncio.get_event_loop()
+        # print(futures)
+        # loop.run_until_complete(self._run_futures(futures=futures))
     
     async def _run_futures(self, futures):
         await asyncio.wait(futures)
@@ -115,20 +116,22 @@ class Node(Connectionist, Processor, Logger, Serializer):
             self.error(traceback.format_exc())
     
     def start_node(self, children=True):
-        futures = []
+        # futures = []
         if self._running == False:  # the node might be child to multiple parents, but we just want to start once
             # first start children, so they are ready to receive inputs
             # children cannot not have inputs, ie they are always relying on this node to send them data if they want to progress their clock
             if children:
                 for con in self.output_connections:
-                    futures.extend(con._recv_node.start_node())
+                    # futures.extend(con._recv_node.start_node())
+                    con._recv_node.start_node()
 
             # now start self
             self._running = True
             self._n_stop_calls = 0
 
-            futures.extend([super().start_node()])
-        return futures
+            # futures.extend([super().start_node()])
+            super().start_node()
+        # return futures
 
 
     def stop_node(self, children=True, force=False):
@@ -149,7 +152,7 @@ class Node(Connectionist, Processor, Logger, Serializer):
                     con._recv_node.stop_node(children=children, force=force)
 
     # === Data Stuff =================
-    def _emit_data(self, data, channel: Port = None, ctr: int = None):
+    def _emit_data(self, data, channel: Port = None, ctr: int = None, last_package=False):
         """
         Called in computation process, ie self.process
         Emits data to childs, ie child.receive_data
@@ -163,7 +166,7 @@ class Node(Connectionist, Processor, Logger, Serializer):
         self.verbose('Emitting', channel, np.array(data).shape)
         for con in self.output_connections:
             if con._emit_port.key == channel:
-                con._recv_node.receive_data(clock, con, data)
+                con._recv_node.receive_data(clock, con, data, last_package)
 
     def receive_data(self, ctr, connection, data, last_package=False):
         """

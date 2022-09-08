@@ -44,11 +44,11 @@ class Producer(Node):
         # Note to future self: the clock.tick() requirement might have been removed if _emit_data was dropped in favor of returns
         """ 
 
-        will_send_data = True
+        self.will_send_data = True
         runner = self._run()
         fn = partial(self._call_user_fn_process, next, "runner")
-        while will_send_data:
-            will_send_data = fn(runner)
+        while self.will_send_data:
+            self.will_send_data = fn(runner)
 
             if self._emit_ctr_fallback > 0:
                 # self.debug('Putting on queue', str(self), self._ctr)
@@ -63,7 +63,7 @@ class Producer(Node):
 
     def _emit_data(self, data, channel=None, ctr=None):
         self._emit_ctr_fallback += 1
-        return super()._emit_data(data, channel, ctr)
+        return super()._emit_data(data, channel, ctr, self.will_send_data)
 
      
     # def start_node(self, children=True):
