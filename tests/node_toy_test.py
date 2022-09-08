@@ -123,27 +123,16 @@ class TestProcessing():
         assert out1.get_state() == list(range(10))
         assert out2.get_state() == list(map(lambda x: x**2, range(10)))
 
-    @pytest.mark.skip(reason="Will be implemented in separate branch")
-    def test_calc_join(self, create_simple_graph):
+    def test_calc_twice(self, create_simple_graph):
         data, quadratic, out1, out2 = create_simple_graph
 
-        data.start(join=True)
+        data.start()
         data.stop()
 
         assert out1.get_state() == list(range(10))
         assert out2.get_state() == list(map(lambda x: x**2, range(10)))
 
-    @pytest.mark.skip(reason="Will be implemented in separate branch")
-    def test_calc_join_twice(self, create_simple_graph):
-        data, quadratic, out1, out2 = create_simple_graph
-
-        data.start(join=True)
-        data.stop()
-
-        assert out1.get_state() == list(range(10))
-        assert out2.get_state() == list(map(lambda x: x**2, range(10)))
-
-        data.start(join=True)
+        data.start()
         data.stop()
 
         assert out1.get_state() == list(range(10))
@@ -162,7 +151,7 @@ class TestProcessing():
     def test_calc_mixed(self, create_simple_graph_mixed):
         data, quadratic, out1, out2 = create_simple_graph_mixed
 
-        data.start(join=True)
+        data.start()
         data.stop()
 
         assert out1.get_state() == list(range(10))

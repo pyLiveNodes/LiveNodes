@@ -1,3 +1,4 @@
+import asyncio
 from enum import IntEnum
 import numpy as np
 import multiprocessing as mp
@@ -16,24 +17,50 @@ class Location(IntEnum):
 
 
 
+# class Bridge_local():
+#     def __init__(self, _from=None, _to=None):
+#         self._read = {}
+
+#     def put(self, ctr, item, last_package):
+#         self._read[ctr] = (item, last_package)
+
+#     def discard_before(self, ctr):
+#         self._read = {
+#             key: val
+#             for key, val in self._read.items() if key >= ctr
+#         }
+        
+#     def get(self, ctr):
+#         # in the process and thread case the queue should always be empty if we arrive here
+#         # This should also never be executed in process or thread, as then the update function does not block and keys are skipped!
+#         if ctr in self._read:
+#             return True, *self._read[ctr]
+#         return False, None
+
 class Bridge_local():
     def __init__(self, _from=None, _to=None):
+        self.queue = asyncio.Queue()
         self._read = {}
 
-    def put(self, ctr, item):
-        self._read[ctr] = item
+    def put(self, ctr, item, last_package):
+        self.queue.put_nowait((ctr, item, last_package))
+
+    async def update(self):
+        itm_ctr, item, last_package = await self.queue.get()
+        self._read[itm_ctr] = (item, last_package)
+        return itm_ctr, last_package
 
     def discard_before(self, ctr):
         self._read = {
             key: val
             for key, val in self._read.items() if key >= ctr
         }
-        
+
     def get(self, ctr):
         # in the process and thread case the queue should always be empty if we arrive here
         # This should also never be executed in process or thread, as then the update function does not block and keys are skipped!
         if ctr in self._read:
-            return True, self._read[ctr]
+            return True, *self._read[ctr]
         return False, None
 
 
@@ -43,13 +70,13 @@ class Bridge_mp():
         self._read = {}
         self._to = _to
 
-    def put(self, ctr, item):
-        self.queue.put((ctr, item))
+    def put(self, ctr, item, last_package):
+        self.queue.put((ctr, item, last_package))
 
     def update(self, timeout=0.01):
         try:
-            itm_ctr, item = self.queue.get(block=True, timeout=timeout)
-            self._read[itm_ctr] = item
+            itm_ctr, item, last_package = self.queue.get(block=True, timeout=timeout)
+            self._read[itm_ctr] = (item, last_package)
             return True, itm_ctr
         except queue.Empty:
             pass
@@ -57,10 +84,10 @@ class Bridge_mp():
 
     def empty_queue(self):
         while not self.queue.empty():
-            itm_ctr, item = self.queue.get()
+            itm_ctr, item, last_package = self.queue.get()
             # TODO: if itm_ctr already exists, should we not rather extend than overwrite it? (thinking of the mulitple emit_data per process call examples (ie window))
             # TODO: yes! this is what we should do :D
-            self._read[itm_ctr] = item
+            self._read[itm_ctr] = (item, last_package)
 
     def discard_before(self, ctr):
         self._read = {
@@ -77,7 +104,7 @@ class Bridge_mp():
         # in the process and thread case the queue should always be empty if we arrive here
         # This should also never be executed in process or thread, as then the update function does not block and keys are skipped!
         if ctr in self._read:
-            return True, self._read[ctr]
+            return True, *self._read[ctr]
         return False, None
 
 
@@ -100,8 +127,8 @@ class Multiprocessing_Data_Storage():
             self.bridges[con._recv_port.key] = self.resolve_bridge(con)
 
     # can be called from any process
-    def put(self, connection, ctr, data):
-        self.bridges[connection._recv_port.key].put(ctr, data)
+    def put(self, connection, ctr, data, last_package=False):
+        self.bridges[connection._recv_port.key].put(ctr, data, last_package)
 
     # will only be called within the processesing process
     def get(self, ctr):
@@ -175,7 +202,7 @@ class Processor(Logger):
             )
         return res
 
-    def start_node(self):
+    async def start_node(self):
         # create bridges and storage based on the connections we have once we've started?
         # as then compute_on and number of connections etc should not change anymore
         self.data_storage.set_inputs(self.input_connections)
@@ -197,34 +224,46 @@ class Processor(Logger):
         elif self.compute_on in [Location.SAME]:
             self._call_user_fn(self._onstart, '_onstart')
             self.info('Executed _onstart')
+            
+            self.info('Waiting on inputs')
+            await self._setup_process()
 
-    def stop_node(self):
+    async def _setup_process(self):
+        # start infinite coroutine, until closed
+        # will use asyncio await to wait for new tasks which then will be processed
+        loop = asyncio.get_event_loop()
+        while self._running:
+            async_bridges = [queue.update() for queue in self.data_storage.bridges.values()]
+            finished, _ = loop.run_until_complete(asyncio.wait(async_bridges, return_when=asyncio.FIRST_COMPLETED))
+            ctr, last_package = await self.data_storage.update()
+            for task in finished:
+                ctr, last_package = task.result()
+                self._process(ctr)
+                if last_package:
+                    return
+
+
+    def stop_node(self, force=False):
         if self.compute_on in [Location.PROCESS, Location.THREAD]:
             self.info(self._subprocess_info['process'].is_alive(),
                         self._subprocess_info['process'].name)
             self._subprocess_info['termination_lock'].release()
-            self._subprocess_info['process'].join(1)
-            self.info(self._subprocess_info['process'].is_alive(),
-                        self._subprocess_info['process'].name)
-
-            if self.compute_on in [Location.PROCESS]:
-                self._subprocess_info['process'].terminate()
+            if not force:
+                self._subprocess_info['process'].join()
+            else:
+                self._subprocess_info['process'].join(1)
                 self.info(self._subprocess_info['process'].is_alive(),
                             self._subprocess_info['process'].name)
+
+                if self.compute_on in [Location.PROCESS]:
+                    self._subprocess_info['process'].terminate()
+                    self.info(self._subprocess_info['process'].is_alive(),
+                                self._subprocess_info['process'].name)
+
         elif self.compute_on in [Location.SAME]:
+            # self._running = False # should already be set before this function is called
             self.info('Executing _onstop')
             self._call_user_fn(self._onstop, '_onstop')
-
-
-    def trigger_process(self, ctr):
-        if self.compute_on in [Location.SAME]:
-            # same and threads both may be called directly and do not require a notification
-            self._process(ctr)
-        elif self.compute_on in [Location.PROCESS, Location.THREAD]:
-            # Process and thread both activley wait on the _received_data queues and therefore do not require an active trigger to process
-            pass
-        else:
-            raise Exception(f'Location {self.compute_on} not implemented yet.')
 
     def _process_on_proc(self):
         self.info('Started subprocess')
@@ -262,10 +301,3 @@ class Processor(Logger):
         self._call_user_fn(self._onstop, '_onstop')
 
         self.info('Finished subprocess')
-
-
-    def _join(self):
-        # if local = blocks automatically (see node.py)
-        # if non-local = block until subprocess returns
-        if self.compute_on in [Location.THREAD, Location.PROCESS]:
-            self._subprocess_info['process'].join()

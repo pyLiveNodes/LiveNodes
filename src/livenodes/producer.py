@@ -14,15 +14,12 @@ class Producer(Node):
 
     ports_in = Ports_empty() # must be empty!
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
         self._clock = Clock(node_id=self)
         self._ctr = self._clock.ctr # set as is used in Node! (yes, we should rework this)
         self._emit_ctr_fallback = 0
-
-    def _node_settings(self):
-        return dict({"block": self.block}, **super()._node_settings())
 
     def __init_subclass__(cls):
         super().__init_subclass__()
@@ -82,8 +79,3 @@ class Producer(Node):
             self.info('Received Termination Signal')
         self._onstop()
         self.info('Finished subprocess')
-
-    def _join(self):
-        # in the above producer implementation local producers only return (="block until") once _ontstart() is finished sending all data
-        # the only exception is with non-local/mp producers which cases is handled in the processor.py class -> thus we hand this further down the line
-        super()._join()

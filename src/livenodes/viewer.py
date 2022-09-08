@@ -46,9 +46,9 @@ class View(Node):
 
         return update
 
-    def stop(self, children=True):
-        if self._running == True:  # -> seems important as the processes otherwise not always return (especially on fast machines, seems to be a race condition somewhere, not sure i've fully understood whats happening here, but seems to work so far)
-            # we need to clear the draw state, as otherwise the feederqueue never returns and the whole script never returns
+    def stop_node(self, **kwargs):
+        # we need to clear the draw state, as otherwise the feederqueue never returns and the whole script never returns
+        if self._draw_state is not None:
             while not self._draw_state.empty():
                 self._draw_state.get()
 
@@ -56,9 +56,10 @@ class View(Node):
             # also should allow the queue to be garbage collected
             # seems not be important though...
             self._draw_state.close()
+            self._draw_state = None
 
-            # sets _running to false
-            super().stop(children)
+        # sets _running to false
+        super().stop(**kwargs)
 
     def _init_draw(self):
         """

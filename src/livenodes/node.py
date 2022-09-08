@@ -1,3 +1,4 @@
+import asyncio
 from functools import partial
 import numpy as np
 import time
@@ -39,6 +40,7 @@ class Node(Connectionist, Processor, Logger, Serializer):
         self._ctr = None
 
         self._running = False 
+        self._n_stop_calls = 0
 
         self._perf_user_fn = Time_Per_Call()
         self._perf_framework = Time_Between_Call()
@@ -84,27 +86,25 @@ class Node(Connectionist, Processor, Logger, Serializer):
         
         start_nodes = self._get_start_nodes()
         print(start_nodes)
+        futures = []
         for i, node in enumerate(start_nodes):
-            node.start_node(children=children)
-
-        # if join:
-        #     for i, node in enumerate(start_nodes):
-        #         node._join()
-       
-    def _join(self):
-        # The default (transformer) node cannot be joined, as it only processes on input and has no notion of "finished"
-        # it should only block as long as there is still data to be processed, which execution on the same process does automatically.
-        # ie, if a local node receives data it directly triggers exectution which blocks until the data is processed and then waits for the next chunk, which may or may not come
-        # -> producers know if everything is finished, same goes for mp nodes 
-        super()._join()
-
+            futures.extend(node.start_node(children=children))
+            
+        # TODO: i don't like how this prevents us from calling stop if any node is in location.same and not finished processing yet...
+        # we could consider putting this into it's own thread?
+        loop = asyncio.get_event_loop()
+        print(futures)
+        loop.run_until_complete(self._run_futures(futures=futures))
+    
+    async def _run_futures(self, futures):
+        await asyncio.wait(futures)
 
     def stop(self, children=True, force=False):
         start_nodes = self._get_start_nodes()
         print(start_nodes)
         for node in start_nodes:
             print("Stopping:", node, children)
-            node.stop_node(children=children, force=False)
+            node.stop_node(children=children, force=force)
 
     def _call_user_fn(self, _fn, _fn_name, *args, **kwargs):
         try:
@@ -114,35 +114,39 @@ class Node(Connectionist, Processor, Logger, Serializer):
             self.error(e) # TODO: add stack trace?
             self.error(traceback.format_exc())
     
-
     def start_node(self, children=True):
+        futures = []
         if self._running == False:  # the node might be child to multiple parents, but we just want to start once
             # first start children, so they are ready to receive inputs
             # children cannot not have inputs, ie they are always relying on this node to send them data if they want to progress their clock
             if children:
                 for con in self.output_connections:
-                    con._recv_node.start_node()
+                    futures.extend(con._recv_node.start_node())
 
             # now start self
             self._running = True
+            self._n_stop_calls = 0
 
-            super().start_node()
+            futures.extend([super().start_node()])
+        return futures
 
 
     def stop_node(self, children=True, force=False):
         # first stop self, so that non-running children don't receive inputs
-        if self._running == True:  # the node might be child to multiple parents, but we just want to stop once
+        # only stop if all our inputs have been stopped (in case no inputs are present we will still stopp due to >=)
+        self._n_stop_calls += 1
+        if self._n_stop_calls >= len(self.input_connections) and self._running:  # the node might be child to multiple parents, but we just want to stop once
             self.info('Stopping')
             self._running = False
 
-            super().stop_node()
+            super().stop_node(force=force)
             
             self.info('Stopped')
 
             # now stop children
             if children:
                 for con in self.output_connections:
-                    con._recv_node.stop_node(force=force)
+                    con._recv_node.stop_node(children=children, force=force)
 
     # === Data Stuff =================
     def _emit_data(self, data, channel: Port = None, ctr: int = None):
@@ -161,7 +165,7 @@ class Node(Connectionist, Processor, Logger, Serializer):
             if con._emit_port.key == channel:
                 con._recv_node.receive_data(clock, con, data)
 
-    def receive_data(self, ctr, connection, data):
+    def receive_data(self, ctr, connection, data, last_package=False):
         """
         called in location of emitting node
         """
@@ -169,8 +173,7 @@ class Node(Connectionist, Processor, Logger, Serializer):
         # self.error(f'Received: "{connection._recv_port.key}" with clock {ctr}')
         # self._received_data[key].put(ctr, val)
         # this is called in the context of the emitting node, the data storage is then in charge of using the right means of transport, such that the process triggered has the available data in the same context as the receiving node's process is called
-        self.data_storage.put(connection, ctr, data)
-        self.trigger_process(ctr)
+        self.data_storage.put(connection, ctr, data, last_package)
 
     def _report_perf(self):
         processing_duration = self._perf_user_fn.average()
