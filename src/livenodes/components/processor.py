@@ -247,33 +247,43 @@ class Processor(Logger):
             self._setup_process()
 
     def _setup_process_cb(self, task):
-        finished, unfinished = task.result()
+        ctr, last_package = task.result()
+        # finished, unfinished = task.result()
 
-        for t in unfinished:
-            # these will be setup in the recursion again
+        # for t in unfinished:
+        #     # these will be setup in the recursion again
+        #     t.cancel()
+
+        # for t in finished:
+        #     ctr, last_package = t.result()
+        print('task finished', ctr, last_package)
+        self._process(ctr)
+        if not self.data_storage.empty():
+            print('recursing')
+            # recurse and wait for next queue item to become available
+            self._setup_process()
+        else:
+            self._finished.set_result(True)
+            self._current_task = None
+    
+    async def _setup_process_race(self):
+        async_bridges = [queue.update() for queue in self.data_storage.bridges.values()]
+        # wait until one of them returns
+        done, pending = await asyncio.wait(async_bridges, return_when=asyncio.FIRST_COMPLETED)
+        for t in pending:
             t.cancel()
-
-        for t in finished:
-            ctr, last_package = t.result()
-            print('task finished', ctr, last_package)
-            self._process(ctr)
-            if not self.data_storage.empty():
-                print('recursing')
-                # recurse and wait for next queue item to become available
-                self._setup_process()
-            else:
-                self._finished.set_result(True)
-                self._current_task = None
+        
+        return list(done)[0].result()
 
     def _setup_process(self):
         # start infinite coroutine, until closed
         # will use asyncio await to wait for new tasks which then will be processed
         if self._running:
-            print('Setting awaits')
+            print('Setting awaits', str(self))
             # collect all asyncio queues from our bridges
-            async_bridges = [queue.update() for queue in self.data_storage.bridges.values()]
+            # async_bridges = [queue.update() for queue in self.data_storage.bridges.values()]
             # wait until one of them returns
-            self._current_task = self._loop.create_task(asyncio.wait(async_bridges, return_when=asyncio.FIRST_COMPLETED))
+            self._current_task = self._loop.create_task(self._setup_process_race())
             # if one returns get the current ctr and pass it to _process inside of setup_cb
             # which will then recurse to wait for the next queue to spit up a value
             self._current_task.add_done_callback(self._setup_process_cb)
@@ -283,8 +293,8 @@ class Processor(Logger):
     async def _join_local(self):
         # while self._current_task is not None:
         #     await asyncio.gather(self._current_task)
-        # await self._finished
-        await asyncio.sleep(2)
+        await self._finished
+        # await asyncio.sleep(2)
 
     def stop_node(self, force=False):
         if self.compute_on in [Location.PROCESS, Location.THREAD]:
@@ -293,7 +303,7 @@ class Processor(Logger):
             self._subprocess_info['termination_lock'].release()
             if not force:
                 self._subprocess_info['process'].join()
-            else:
+            else:da 
                 self._subprocess_info['process'].join(1)
                 self.info(self._subprocess_info['process'].is_alive(),
                             self._subprocess_info['process'].name)
@@ -311,7 +321,7 @@ class Processor(Logger):
                 # self._loop.run_until_complete(asyncio.wait([self._finished]))
                 self._loop.stop()
 
-            self.info('Executing _onstop')
+            self.error('Executing _onstop')
             self._call_user_fn(self._onstop, '_onstop')
 
     def _process_on_proc(self):

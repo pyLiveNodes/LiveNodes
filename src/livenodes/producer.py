@@ -59,6 +59,7 @@ class Producer(Node):
                     f'Runner did not emit data, yet said it would do so in the previous run. Please check your implementation of {self}.'
                 )
             self._emit_ctr_fallback = 0
+        self._finished.set_result(True)
 
 
     def _emit_data(self, data, channel=None, ctr=None):
