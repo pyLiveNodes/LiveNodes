@@ -303,7 +303,7 @@ class Processor(Logger):
             self._subprocess_info['termination_lock'].release()
             if not force:
                 self._subprocess_info['process'].join()
-            else:da 
+            else:
                 self._subprocess_info['process'].join(1)
                 self.info(self._subprocess_info['process'].is_alive(),
                             self._subprocess_info['process'].name)
