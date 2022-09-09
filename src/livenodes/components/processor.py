@@ -235,16 +235,17 @@ class Processor(Logger):
             self.info('start subprocess')
             self._subprocess_info['process'].start()
         elif self.compute_on in [Location.SAME]:
+            # just to make sure a loop exists, which it likely already does 
+            self._loop = asyncio.get_event_loop()
+            self._finished = self._loop.create_future()
+            self._setup_process()
+
             self._call_user_fn(self._onstart, '_onstart')
             self.info('Executed _onstart')
             
             self.info('Waiting on inputs')
             # await self._setup_process()
 
-            # just to make sure a loop exists, which it likely already does 
-            self._loop = asyncio.get_event_loop()
-            self._finished = self._loop.create_future()
-            self._setup_process()
 
     def _setup_process_cb(self, task):
         ctr, last_package = task.result()
@@ -293,8 +294,12 @@ class Processor(Logger):
     async def _join_local(self):
         # while self._current_task is not None:
         #     await asyncio.gather(self._current_task)
-        await self._finished
+        # await self._finished
         # await asyncio.sleep(2)
+        await asyncio.wait([self._finished, asyncio.sleep(1)], return_when=asyncio.FIRST_COMPLETED)
+        # await asyncio.wait([self._finished], return_when=asyncio.FIRST_COMPLETED)
+        if not self._finished.done():
+            self._finished.cancel()
 
     def stop_node(self, force=False):
         if self.compute_on in [Location.PROCESS, Location.THREAD]:
@@ -314,12 +319,12 @@ class Processor(Logger):
                                 self._subprocess_info['process'].name)
 
         elif self.compute_on in [Location.SAME]:            
-            if force:
-                self._loop.close()
-            else:
-                self._loop.run_until_complete(self._join_local())
+            # if force:
+            #     self._loop.close()
+            # else:
+            self._loop.run_until_complete(self._join_local())
                 # self._loop.run_until_complete(asyncio.wait([self._finished]))
-                self._loop.stop()
+                # self._loop.stop()
 
             self.error('Executing _onstop')
             self._call_user_fn(self._onstop, '_onstop')
