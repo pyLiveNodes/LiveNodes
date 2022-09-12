@@ -33,7 +33,7 @@ class Bridge_local():
 
     # _from thread
     def put(self, ctr, item):
-        print('putting value')
+        # print('putting value')
         self.queue.put_nowait((ctr, item))
 
     # _to thread
@@ -52,7 +52,7 @@ class Bridge_local():
         
     # _to thread
     async def update(self):
-        print('waiting for asyncio to receive a value')
+        # print('waiting for asyncio to receive a value')
         itm_ctr, item = await self.queue.get()
         self._read[itm_ctr] = item
         return itm_ctr
@@ -152,7 +152,7 @@ class Multiprocessing_Data_Storage():
 
     # can be called from any process
     def put(self, connection, ctr, data):
-        print('data storage putting value', connection._recv_port.key, type(self.bridges[connection._recv_port.key]))
+        # print('data storage putting value', connection._recv_port.key, type(self.bridges[connection._recv_port.key]))
         self.bridges[connection._recv_port.key].put(ctr, data)
 
     # will only be called within the processesing process

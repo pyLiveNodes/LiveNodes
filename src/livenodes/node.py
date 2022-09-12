@@ -105,7 +105,10 @@ class Node(Connectionist, Logger, Serializer):
         # return self._finished
 
     def start(self):
-        # TODO: not sure about this yet: seems uneccessary if we have the ready anyway..
+        # TODO: not sure about this yet: seems uneccessary if we have the ready anyway.. 
+        # -> then again this pattern might prove quite helpful in the future, ie try to connect to some sensor and disply "waiting" until all nodes are online and we can start 
+        #   -> prob. rather within the nodes.. 
+        #   -> but when thinking about multiple network pcs this might make a lot of sense...
         self._onstart()
 
 

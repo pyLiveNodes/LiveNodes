@@ -22,7 +22,7 @@ class Graph():
         for cmp in self.computers:
             cmp.start()
 
-    def stop_all(self, force=False):
+    def stop_all(self, timeout=0):
         for cmp in self.computers:
-            cmp.stop(force=force)
+            cmp.stop(timeout=timeout)
         self.computers = []
