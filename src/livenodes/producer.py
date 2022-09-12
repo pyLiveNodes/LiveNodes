@@ -44,6 +44,8 @@ class Producer(Node):
         # Note to future self: the clock.tick() requirement might have been removed if _emit_data was dropped in favor of returns
         """ 
 
+        # Todo: change this to just register a recursive sender task as well
+
         self.will_send_data = True
         runner = self._run()
         fn = partial(self._call_user_fn_process, next, "runner")
@@ -60,7 +62,7 @@ class Producer(Node):
                 )
             self._emit_ctr_fallback = 0
         self._finished.set_result(True)
-
+        self.close_out_bridges()
 
     def _emit_data(self, data, channel=None, ctr=None):
         self._emit_ctr_fallback += 1

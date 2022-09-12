@@ -4,6 +4,7 @@ import multiprocessing as mp
 
 from livenodes.node import Node, Location
 from livenodes.producer import Producer
+from livenodes.graph import Graph
 
 from typing import NamedTuple
 from .utils import Port_Data
@@ -102,8 +103,9 @@ class TestProcessing():
     def test_calc(self, create_simple_graph):
         data, quadratic, out1, out2 = create_simple_graph
 
-        data.start()
-        data.stop()
+        g = Graph(start_node=data)
+        g.start_all()
+        g.stop_all()
 
         assert out1.get_state() == list(range(10))
         assert out2.get_state() == list(map(lambda x: x**2, range(10)))
@@ -111,14 +113,16 @@ class TestProcessing():
     def test_calc_twice(self, create_simple_graph):
         data, quadratic, out1, out2 = create_simple_graph
 
-        data.start()
-        data.stop()
+        g = Graph(start_node=data)
+        g.start_all()
+        g.stop_all()
 
         assert out1.get_state() == list(range(10))
         assert out2.get_state() == list(map(lambda x: x**2, range(10)))
 
-        data.start()
-        data.stop()
+        g = Graph(start_node=data)
+        g.start_all()
+        g.stop_all()
 
         assert out1.get_state() == list(range(10))
         assert out2.get_state() == list(map(lambda x: x**2, range(10)))
@@ -126,14 +130,16 @@ class TestProcessing():
     def test_calc_twice(self, create_simple_graph):
         data, quadratic, out1, out2 = create_simple_graph
 
-        data.start()
-        data.stop()
+        g = Graph(start_node=data)
+        g.start_all()
+        g.stop_all()
 
         assert out1.get_state() == list(range(10))
         assert out2.get_state() == list(map(lambda x: x**2, range(10)))
 
-        data.start()
-        data.stop()
+        g = Graph(start_node=data)
+        g.start_all()
+        g.stop_all()
 
         assert out1.get_state() == list(range(10))
         assert out2.get_state() == list(map(lambda x: x**2, range(10)))
@@ -142,8 +148,9 @@ class TestProcessing():
     def test_calc_mp(self, create_simple_graph_mp):
         data, quadratic, out1, out2 = create_simple_graph_mp
 
-        data.start()
-        data.stop()
+        g = Graph(start_node=data)
+        g.start_all()
+        g.stop_all()
 
         assert out1.get_state() == list(range(10))
         assert out2.get_state() == list(map(lambda x: x**2, range(10)))
@@ -151,8 +158,9 @@ class TestProcessing():
     def test_calc_mixed(self, create_simple_graph_mixed):
         data, quadratic, out1, out2 = create_simple_graph_mixed
 
-        data.start()
-        data.stop()
+        g = Graph(start_node=data)
+        g.start_all()
+        g.stop_all()
 
         assert out1.get_state() == list(range(10))
         assert out2.get_state() == list(map(lambda x: x**2, range(10)))

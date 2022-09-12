@@ -40,28 +40,45 @@ class Location(IntEnum):
 
 class Bridge_local():
     def __init__(self, _from=None, _to=None):
+        # both threads
         self.queue = asyncio.Queue()
+        self.closed_event = threading.Event()
+        
+        # _to thread
         self._read = {}
 
+    # _from thread
+    def close(self):
+        self.closed_event.set()
+
+    # _from thread
     def put(self, ctr, item, last_package):
         print('putting value')
         self.queue.put_nowait((ctr, item, last_package))
 
+    # _to thread
+    def closed(self):
+        self.closed_event.is_set()
+
+    # _to thread
     def empty(self):
         return self.queue.qsize() <= 0
         
+    # _to thread
     async def update(self):
         print('waiting for asyncio to receive a value')
         itm_ctr, item, last_package = await self.queue.get()
         self._read[itm_ctr] = (item, last_package)
         return itm_ctr, last_package
 
+    # _to thread
     def discard_before(self, ctr):
         self._read = {
             key: val
             for key, val in self._read.items() if key >= ctr
         }
 
+    # _to thread
     def get(self, ctr):
         # in the process and thread case the queue should always be empty if we arrive here
         # This should also never be executed in process or thread, as then the update function does not block and keys are skipped!
@@ -130,6 +147,9 @@ class Multiprocessing_Data_Storage():
             return Bridge_mp(_from=emit_loc, _to=recv_loc)
         else:
             return Bridge_local(_from=emit_loc, _to=recv_loc)
+
+    def all_closed(self):
+        return all([b.closed() for b in self.bridges])
 
     def set_inputs(self, input_connections):
         for con in input_connections:

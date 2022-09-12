@@ -4,6 +4,7 @@ import multiprocessing as mp
 
 from livenodes.node import Node, Location
 from livenodes.producer import Producer
+from livenodes.graph import Graph
 
 from typing import NamedTuple
 from livenodes.components.port import Port
@@ -82,5 +83,9 @@ if __name__ == "__main__":
     quadratic.connect_inputs_to(data)
     out2.connect_inputs_to(quadratic)
 
-    data.start()
-    data.stop()
+    g = Graph(start_node=data)
+    g.start_all()
+    g.stop_all()
+
+    print(out1.get_state())
+    print(out2.get_state())
