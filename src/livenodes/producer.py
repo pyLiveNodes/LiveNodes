@@ -1,4 +1,6 @@
+import asyncio
 from functools import partial
+from this import d
 from .node import Node, Location
 from .components.utils.clock import Clock
 
@@ -33,7 +35,7 @@ class Producer(Node):
         """
         yield False
 
-    def _onstart(self):
+    async def _async_onstart(self):
         """
         Main function producing data and calling _emit_data.
         Once it returns the node system assumes no furhter data will be send and communicates this to all following nodes
@@ -46,8 +48,11 @@ class Producer(Node):
 
         # Todo: change this to just register a recursive sender task as well
 
+        # create generator
         runner = self._run()
+        # wrap in call user fn
         fn = partial(self._call_user_fn_process, next, "runner")
+
         while fn(runner):
             if self._emit_ctr_fallback > 0:
                 # self.debug('Putting on queue', str(self), self._ctr)
@@ -58,7 +63,15 @@ class Producer(Node):
                     f'Runner did not emit data, yet said it would do so in the previous run. Please check your implementation of {self}.'
                 )
             self._emit_ctr_fallback = 0
+            
+            # allow others to chime in
+            await asyncio.sleep(0)
+
         self._finish()
+
+    def _onstart(self):
+        loop = asyncio.get_event_loop()
+        loop.create_task(self._async_onstart())
 
     def _emit_data(self, data, channel=None, ctr=None):
         self._emit_ctr_fallback += 1

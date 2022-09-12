@@ -13,7 +13,9 @@ class Graph():
     def start_all(self):
         locations = groupby(self.nodes, key=lambda n: n.compute_on)
         for loc, loc_nodes in locations:
-            cmp = resolve_computer(loc)(list(loc_nodes))
+            loc_nodes = list(loc_nodes)
+            print(f'Resolving computer group. Location: {loc}; Nodes: {len(loc_nodes)}')
+            cmp = resolve_computer(loc)(loc_nodes)
             cmp.setup()
             self.computers.append(cmp)
         
