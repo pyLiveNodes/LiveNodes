@@ -46,12 +46,9 @@ class Producer(Node):
 
         # Todo: change this to just register a recursive sender task as well
 
-        self.will_send_data = True
         runner = self._run()
         fn = partial(self._call_user_fn_process, next, "runner")
-        while self.will_send_data:
-            self.will_send_data = fn(runner)
-
+        while fn(runner):
             if self._emit_ctr_fallback > 0:
                 # self.debug('Putting on queue', str(self), self._ctr)
                 # self.debug('Put on queue')

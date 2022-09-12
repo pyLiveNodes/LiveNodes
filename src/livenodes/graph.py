@@ -1,6 +1,6 @@
 from itertools import groupby
 from .node import Node
-from .components.runner import resolve_computer
+from .components.computer import resolve_computer
 
 class Graph():
 

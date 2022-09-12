@@ -10,7 +10,7 @@ from .components.port import Port
 from .components.node_connector import Connectionist
 from .components.node_logger import Logger
 from .components.node_serializer import Serializer
-from .components.processor import Multiprocessing_Data_Storage, Bridge_local, Processor, Location # location is imported here, as we'll need to update all the from livenodes.nodes import location soon
+from .components.bridges import Multiprocessing_Data_Storage, Bridge_local, Location # location is imported here, as we'll need to update all the from livenodes.nodes import location soon
 
 
 class Node(Connectionist, Logger, Serializer):
@@ -77,39 +77,6 @@ class Node(Connectionist, Logger, Serializer):
     #     """
     #     pass
     
-    # TODO: actually start, ie design/test a sending node!
-    # === Start/Stop Stuff =================
-    # def _get_start_nodes(self):
-    #     # TODO: this should not be ports_in, but channels connected!
-    #     # self._is_input_connected
-    #     # return list(filter(lambda x: len(x.ports_in) == 0, self.discover_graph(self)))
-    #     return list(filter(lambda x: len(x.ports_in) == 0, self.discover_graph(self)))
-
-    # def start(self, children=True):
-    #     super().spawn_processes()
-        
-    #     start_nodes = self._get_start_nodes()
-    #     print(start_nodes)
-    #     # futures = []
-    #     for i, node in enumerate(start_nodes):
-    #         # futures.extend(node.start_node(children=children))
-    #         node.start_node(children=children)
-            
-    #     # TODO: i don't like how this prevents us from calling stop if any node is in location.same and not finished processing yet...
-    #     # we could consider putting this into it's own thread?
-    #     # loop = asyncio.get_event_loop()
-    #     # print(futures)
-    #     # loop.run_until_complete(self._run_futures(futures=futures))
-    
-    # async def _run_futures(self, futures):
-    #     await asyncio.wait(futures)
-
-    # def stop(self, children=True, force=False):
-    #     start_nodes = self._get_start_nodes()
-    #     print(start_nodes)
-    #     for node in start_nodes:
-    #         print("Stopping:", node, children)
-    #         node.stop_node(children=children, force=force)
 
     def _call_user_fn(self, _fn, _fn_name, *args, **kwargs):
         try:
@@ -119,41 +86,6 @@ class Node(Connectionist, Logger, Serializer):
             self.error(e) # TODO: add stack trace?
             self.error(traceback.format_exc())
     
-    # def start_node(self, children=True):
-    #     # futures = []
-    #     if self._running == False:  # the node might be child to multiple parents, but we just want to start once
-    #         # first start children, so they are ready to receive inputs
-    #         # children cannot not have inputs, ie they are always relying on this node to send them data if they want to progress their clock
-    #         if children:
-    #             for con in self.output_connections:
-    #                 # futures.extend(con._recv_node.start_node())
-    #                 con._recv_node.start_node()
-
-    #         # now start self
-    #         self._running = True
-    #         self._n_stop_calls = 0
-
-    #         # futures.extend([super().start_node()])
-    #         super().start_node()
-    #     # return futures
-
-
-    # def stop_node(self, children=True, force=False):
-    #     # first stop self, so that non-running children don't receive inputs
-    #     # only stop if all our inputs have been stopped (in case no inputs are present we will still stopp due to >=)
-    #     self._n_stop_calls += 1
-    #     if self._n_stop_calls >= len(self.input_connections) and self._running:  # the node might be child to multiple parents, but we just want to stop once
-    #         self.info('Stopping')
-    #         self._running = False
-
-    #         super().stop_node(force=force)
-            
-    #         self.info('Stopped')
-
-    #         # now stop children
-    #         if children:
-    #             for con in self.output_connections:
-    #                 con._recv_node.stop_node(children=children, force=force)
 
     def ready(self):
         self.data_storage.set_inputs(self.input_connections)
@@ -176,42 +108,6 @@ class Node(Connectionist, Logger, Serializer):
         # TODO: not sure about this yet: seems uneccessary if we have the ready anyway..
         self._onstart()
 
-    # def _setup_process_cb(self, task):
-    #     ctr, last_package = task.result()
-
-    #     print('task finished', ctr, last_package)
-    #     self._process(ctr)
-    #     if not self.data_storage.empty():
-    #         print('recursing')
-    #         # recurse and wait for next queue item to become available
-    #         self._setup_process()
-    #     else:
-    #         self._finished.set_result(True)
-    #         self._current_task = None
-    
-    # async def _setup_process_race(self):
-    #     async_bridges = [queue.update() for queue in self.data_storage.bridges.values()]
-    #     # wait until one of them returns
-    #     done, pending = await asyncio.wait(async_bridges, return_when=asyncio.FIRST_COMPLETED)
-    #     for t in pending:
-    #         t.cancel()
-        
-    #     return list(done)[0].result()
-
-    # def _setup_process(self):
-    #     # start infinite coroutine, until closed
-    #     # will use asyncio await to wait for new tasks which then will be processed
-    #     # if self._running:
-    #     print('Setting awaits', str(self))
-    #     # collect all asyncio queues from our bridges
-    #     # async_bridges = [queue.update() for queue in self.data_storage.bridges.values()]
-    #     # wait until one of them returns
-    #     if len(self.data_storage.bridges) > 0:
-    #         self._current_task = self._loop.create_task(self._setup_process_race())
-    #         # if one returns get the current ctr and pass it to _process inside of setup_cb
-    #         # which will then recurse to wait for the next queue to spit up a value
-    #         self._current_task.add_done_callback(self._setup_process_cb)
-    #     print('finished setting await callbacks')
 
     def _finish(self, task=None):
         # close bridges telling the following nodes they will not receive input from us anymore
@@ -227,15 +123,8 @@ class Node(Connectionist, Logger, Serializer):
 
     async def _process_recurse(self, queue):
         while True:
-            ctr, _ = await queue.update()
+            ctr = await queue.update()
             self._process(ctr)
-            # if not queue.closed():
-        #     print('recursing')
-        # # recurse and wait for next queue item to become available
-        # self._loop.create_task(self._process_recurse(queue))
-        # elif self.data_storage.all_closed():
-        #     self._finish()
-        #     self._finished.set_result(True)
 
     def _setup_process(self):
         self.bridge_listeners = []
@@ -254,11 +143,8 @@ class Node(Connectionist, Logger, Serializer):
         if not self._finished.done():
             self._finished.cancel()
 
-    # async def stop(self, force=False):
-    #     pass
-
     # === Data Stuff =================
-    def _emit_data(self, data, channel: Port = None, ctr: int = None, last_package=False):
+    def _emit_data(self, data, channel: Port = None, ctr: int = None):
         """
         Called in computation process, ie self.process
         Emits data to childs, ie child.receive_data
@@ -272,9 +158,9 @@ class Node(Connectionist, Logger, Serializer):
         self.verbose('Emitting', channel, np.array(data).shape)
         for con in self.output_connections:
             if con._emit_port.key == channel:
-                con._recv_node.receive_data(clock, con, data, last_package)
+                con._recv_node.receive_data(clock, con, data)
 
-    def receive_data(self, ctr, connection, data, last_package=False):
+    def receive_data(self, ctr, connection, data):
         """
         called in location of emitting node
         """
@@ -282,7 +168,7 @@ class Node(Connectionist, Logger, Serializer):
         # self.error(f'Received: "{connection._recv_port.key}" with clock {ctr}')
         # self._received_data[key].put(ctr, val)
         # this is called in the context of the emitting node, the data storage is then in charge of using the right means of transport, such that the process triggered has the available data in the same context as the receiving node's process is called
-        self.data_storage.put(connection, ctr, data, last_package)
+        self.data_storage.put(connection, ctr, data)
 
     def _report_perf(self):
         processing_duration = self._perf_user_fn.average()

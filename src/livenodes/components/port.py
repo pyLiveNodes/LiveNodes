@@ -33,7 +33,7 @@ class Port():
         raise NotImplementedError()
 
     @classmethod
-    def can_connect_to(cls, other_port_cls):
+    def can_input_to(cls, other_port_cls):
         # print(list(map(cls.check_value, other_port_cls.example_values)))
         return cls == other_port_cls \
             or any([compatible for compatible, _ in map(cls.check_value, other_port_cls.example_values)])
