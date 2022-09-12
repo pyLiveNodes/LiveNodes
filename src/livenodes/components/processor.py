@@ -58,7 +58,13 @@ class Bridge_local():
 
     # _to thread
     def closed(self):
-        self.closed_event.is_set()
+        return self.closed_event.is_set()
+
+    async def onclose(self):
+        while True:
+            await asyncio.sleep(0.1)
+            if self.closed() and self.empty():
+                return
 
     # _to thread
     def empty(self):
@@ -148,8 +154,14 @@ class Multiprocessing_Data_Storage():
         else:
             return Bridge_local(_from=emit_loc, _to=recv_loc)
 
+    # _to thread
     def all_closed(self):
         return all([b.closed() for b in self.bridges])
+
+    # _to thread
+    async def on_all_closed(self):
+        await asyncio.gather(*[b.onclose() for b in self.bridges.values()])
+        print('All bridges empty and closed')
 
     def set_inputs(self, input_connections):
         for con in input_connections:

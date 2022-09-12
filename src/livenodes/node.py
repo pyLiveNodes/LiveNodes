@@ -1,9 +1,8 @@
 import asyncio
 from functools import partial
-from re import L
 import numpy as np
-import time
 import traceback
+
 
 from .components.utils.perf import Time_Per_Call, Time_Between_Call
 from .components.port import Port
@@ -37,6 +36,7 @@ class Node(Connectionist, Logger, Serializer):
         self.compute_on = compute_on
         self.data_storage = Multiprocessing_Data_Storage()
         self.output_bridges = {}
+        self.bridge_listeners = []
 
         for port in self.ports_in:
             print(port, type(port))
@@ -157,9 +157,16 @@ class Node(Connectionist, Logger, Serializer):
 
     def ready(self):
         self.data_storage.set_inputs(self.input_connections)
+        # TODO: does this hold up in mp setting?
+        self.output_bridges = [con._recv_node.data_storage.bridges[con._recv_port.key] for con in self.output_connections]
 
         self._loop = asyncio.get_event_loop()
         self._finished = self._loop.create_future()
+        if len(self.input_connections) > 0:
+            self._bridges_closed = self._loop.create_task(self.data_storage.on_all_closed())
+            self._bridges_closed.add_done_callback(self._finish)
+        else:
+            self.info("Node has no input connections, please make sure it calls self._finish once it's done")
         self._setup_process()
 
         return self._wait_for_finish()
@@ -206,24 +213,36 @@ class Node(Connectionist, Logger, Serializer):
     #         self._current_task.add_done_callback(self._setup_process_cb)
     #     print('finished setting await callbacks')
 
-    def close_out_bridges(self):
+    def _finish(self, task=None):
+        # close bridges telling the following nodes they will not receive input from us anymore
         for bridge in self.output_bridges:
             bridge.close()
 
+        # cancel all remaining bridge listeners (we'll not receive any further data now anymore)
+        for future in self.bridge_listeners:
+            future.cancel()
+        
+        # also indicate to parent, that we're finished
+        self._finished.set_result(True)
+
     async def _process_recurse(self, queue):
-        ctr, _ = await queue.update()
-        self._process(ctr)
-        if not queue.closed():
-            print('recursing')
-            # recurse and wait for next queue item to become available
-            self._loop.create_task(self._process_recurse(queue))
-        elif self.data_storage.all_closed():
-            self.close_out_bridges()
-            self._finished.set_result(True)
+        while True:
+            ctr, _ = await queue.update()
+            self._process(ctr)
+            # if not queue.closed():
+        #     print('recursing')
+        # # recurse and wait for next queue item to become available
+        # self._loop.create_task(self._process_recurse(queue))
+        # elif self.data_storage.all_closed():
+        #     self._finish()
+        #     self._finished.set_result(True)
 
     def _setup_process(self):
+        self.bridge_listeners = []
         for queue in self.data_storage.bridges.values():
-            self._loop.create_task(self._process_recurse(queue))
+            self.bridge_listeners.append(self._loop.create_task(self._process_recurse(queue)))
+
+        # TODO: should we add a "on fail wrap up and tell parent" task here? ie task(wait(self.bridge_listeners, return=first_exception))
 
     async def _wait_for_finish(self):
         # while self._current_task is not None:

@@ -61,14 +61,12 @@ class Producer(Node):
                     f'Runner did not emit data, yet said it would do so in the previous run. Please check your implementation of {self}.'
                 )
             self._emit_ctr_fallback = 0
-        self._finished.set_result(True)
-        self.close_out_bridges()
+        self._finish()
 
     def _emit_data(self, data, channel=None, ctr=None):
         self._emit_ctr_fallback += 1
-        return super()._emit_data(data, channel, ctr, self.will_send_data)
+        return super()._emit_data(data, channel, ctr)
 
-     
     # def start_node(self, children=True):
     #     super().start_node(children)
     #     self._onstop()
