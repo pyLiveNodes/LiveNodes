@@ -36,7 +36,6 @@ class Node(Connectionist, Logger, Serializer):
 
         self.compute_on = compute_on
         self.data_storage = Multiprocessing_Data_Storage()
-        self.output_bridges = {}
         self.bridge_listeners = []
 
         for port in self.ports_in:
@@ -89,8 +88,6 @@ class Node(Connectionist, Logger, Serializer):
 
     def ready(self):
         self.data_storage.set_inputs(self.input_connections)
-        # TODO: does this hold up in mp setting?
-        self.output_bridges = [con._recv_node.data_storage.bridges[con._recv_port.key] for con in self.output_connections]
 
         self._loop = asyncio.get_event_loop()
         self._finished = self._loop.create_future()
@@ -117,8 +114,8 @@ class Node(Connectionist, Logger, Serializer):
         # task=none is needed for the done_callback but not used
 
         # close bridges telling the following nodes they will not receive input from us anymore
-        for bridge in self.output_bridges:
-            bridge.close()
+        for con in self.output_connections:
+            con._recv_node.data_storage.close_bridges(self)
 
         # cancel all remaining bridge listeners (we'll not receive any further data now anymore)
         for future in self.bridge_listeners:

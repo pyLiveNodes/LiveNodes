@@ -42,7 +42,7 @@ class Bridge_local():
 
     async def onclose(self):
         while True:
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.01)
             if self.closed() and self.empty():
                 return
 
@@ -123,6 +123,7 @@ class Bridge_local():
 class Multiprocessing_Data_Storage():
     def __init__(self) -> None:
         self.bridges = {}
+        self.input_connections = []
 
     @staticmethod
     def resolve_bridge(connection: Connection):
@@ -144,6 +145,7 @@ class Multiprocessing_Data_Storage():
         print('All bridges empty and closed')
 
     def set_inputs(self, input_connections):
+        self.input_connections = input_connections
         for con in input_connections:
             self.bridges[con._recv_port.key] = self.resolve_bridge(con)
 
@@ -173,3 +175,8 @@ class Multiprocessing_Data_Storage():
         for bridge in self.bridges.values():
             bridge.discard_before(ctr) 
 
+    # _from thread
+    def close_bridges(self, node):
+        for con in self.input_connections:
+            if con._emit_node == node:
+                self.bridges[con._recv_port.key].close()

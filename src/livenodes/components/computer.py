@@ -10,6 +10,20 @@ def resolve_computer(location):
     # TODO: :D
     return Processor_threading
 
+def parse_location(location):
+    host, port, process, thread = None, None, None, None
+    
+    splits = location.split(':')
+
+    if len(splits) == 3:
+        host, process, thread = splits
+    elif (len(splits) == 4):
+        host, port, process, thread = splits
+    else:
+        raise ValueError('Could not parse location', location)
+
+    return host, port, process, thread
+
 class Processor_threading():
     def __init__(self, nodes) -> None:
         # -- both threads
