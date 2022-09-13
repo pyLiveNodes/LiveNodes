@@ -22,7 +22,15 @@ class Graph():
         for cmp in self.computers:
             cmp.start()
 
-    def stop_all(self, timeout=0):
+    def join_all(self):
         for cmp in self.computers:
-            cmp.stop(timeout=timeout)
+            cmp.join()
+
+    def stop_all(self, stop_timeout=0.1, close_timeout=0.1):
+        for cmp in self.computers:
+            cmp.stop(timeout=stop_timeout)
+
+        for cmp in self.computers:
+            cmp.close(timeout=close_timeout)
+
         self.computers = []

@@ -1,5 +1,6 @@
 import asyncio
 from functools import partial
+from re import S
 import numpy as np
 import traceback
 
@@ -43,7 +44,6 @@ class Node(Connectionist, Logger, Serializer):
 
         self._ctr = None
 
-        self._running = False 
         self._n_stop_calls = 0
 
         self._perf_user_fn = Time_Per_Call()
@@ -101,8 +101,7 @@ class Node(Connectionist, Logger, Serializer):
             self.info("Node has no input connections, please make sure it calls self._finish once it's done")
         self._setup_process()
 
-        return self._wait_for_finish()
-        # return self._finished
+        return self._finished
 
     def start(self):
         # TODO: not sure about this yet: seems uneccessary if we have the ready anyway.. 
@@ -111,8 +110,12 @@ class Node(Connectionist, Logger, Serializer):
         #   -> but when thinking about multiple network pcs this might make a lot of sense...
         self._onstart()
 
+    def stop(self):
+        self._onstop()
 
     def _finish(self, task=None):
+        # task=none is needed for the done_callback but not used
+
         # close bridges telling the following nodes they will not receive input from us anymore
         for bridge in self.output_bridges:
             bridge.close()
@@ -120,9 +123,16 @@ class Node(Connectionist, Logger, Serializer):
         # cancel all remaining bridge listeners (we'll not receive any further data now anymore)
         for future in self.bridge_listeners:
             future.cancel()
-        
+
+        # indicate to the node, that it now should finish wrapping up
+        self.stop()
+
         # also indicate to parent, that we're finished
-        self._finished.set_result(True)
+        # the note may have been finished before thus, we need to check the future before setting a result
+        # -> if it finished and now stop() is called
+        if not self._finished.done():
+            self._finished.set_result(True)
+
 
     async def _process_recurse(self, queue):
         while True:
@@ -136,15 +146,6 @@ class Node(Connectionist, Logger, Serializer):
 
         # TODO: should we add a "on fail wrap up and tell parent" task here? ie task(wait(self.bridge_listeners, return=first_exception))
 
-    async def _wait_for_finish(self):
-        # while self._current_task is not None:
-        #     await asyncio.gather(self._current_task)
-        # await self._finished
-        # await asyncio.sleep(2)
-        # await asyncio.wait([self._finished, asyncio.sleep(1)], return_when=asyncio.FIRST_COMPLETED)
-        await asyncio.wait([self._finished])
-        if not self._finished.done():
-            self._finished.cancel()
 
     # === Data Stuff =================
     def _emit_data(self, data, channel: Port = None, ctr: int = None):

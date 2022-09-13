@@ -23,6 +23,8 @@ class Producer(Node):
         self._ctr = self._clock.ctr # set as is used in Node! (yes, we should rework this)
         self._emit_ctr_fallback = 0
 
+        self._running = False
+
     def __init_subclass__(cls):
         super().__init_subclass__()
         if len(cls.ports_in) > 0:
@@ -53,7 +55,8 @@ class Producer(Node):
         # wrap in call user fn
         fn = partial(self._call_user_fn_process, next, "runner")
 
-        while fn(runner):
+        # finish either if no data is present anymore or parent told us to stop (via stop() -> _onstop())
+        while fn(runner) and self._running:
             if self._emit_ctr_fallback > 0:
                 # self.debug('Putting on queue', str(self), self._ctr)
                 # self.debug('Put on queue')
@@ -69,7 +72,13 @@ class Producer(Node):
 
         self._finish()
 
+    def _onstop(self):
+        self._running = False
+
     def _onstart(self):
+        self._running = True
+
+        # mmh, wouldn't this fit more into a on_ready() call?
         loop = asyncio.get_event_loop()
         loop.create_task(self._async_onstart())
 
@@ -77,16 +86,3 @@ class Producer(Node):
         self._emit_ctr_fallback += 1
         return super()._emit_data(data, channel, ctr)
 
-    # def start_node(self, children=True):
-    #     super().start_node(children)
-    #     self._onstop()
-
-    def _process_on_proc(self):
-        self.info('Started subprocess')
-        try:
-            self._onstart()
-        except KeyboardInterrupt:
-            # TODO: this seems to be never called
-            self.info('Received Termination Signal')
-        self._onstop()
-        self.info('Finished subprocess')

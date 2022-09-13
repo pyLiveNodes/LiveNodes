@@ -105,7 +105,7 @@ class TestProcessing():
 
         g = Graph(start_node=data)
         g.start_all()
-        g.stop_all()
+        g.join_all()
 
         assert out1.get_state() == list(range(10))
         assert out2.get_state() == list(map(lambda x: x**2, range(10)))
@@ -115,14 +115,14 @@ class TestProcessing():
 
         g = Graph(start_node=data)
         g.start_all()
-        g.stop_all()
+        g.join_all()
 
         assert out1.get_state() == list(range(10))
         assert out2.get_state() == list(map(lambda x: x**2, range(10)))
 
         g = Graph(start_node=data)
         g.start_all()
-        g.stop_all()
+        g.join_all()
 
         assert out1.get_state() == list(range(10))
         assert out2.get_state() == list(map(lambda x: x**2, range(10)))
@@ -132,14 +132,14 @@ class TestProcessing():
 
         g = Graph(start_node=data)
         g.start_all()
-        g.stop_all()
+        g.join_all()
 
         assert out1.get_state() == list(range(10))
         assert out2.get_state() == list(map(lambda x: x**2, range(10)))
 
         g = Graph(start_node=data)
         g.start_all()
-        g.stop_all()
+        g.join_all()
 
         assert out1.get_state() == list(range(10))
         assert out2.get_state() == list(map(lambda x: x**2, range(10)))
@@ -150,7 +150,7 @@ class TestProcessing():
 
         g = Graph(start_node=data)
         g.start_all()
-        g.stop_all()
+        g.join_all()
 
         assert out1.get_state() == list(range(10))
         assert out2.get_state() == list(map(lambda x: x**2, range(10)))
@@ -160,7 +160,7 @@ class TestProcessing():
 
         g = Graph(start_node=data)
         g.start_all()
-        g.stop_all()
+        g.join_all()
 
         assert out1.get_state() == list(range(10))
         assert out2.get_state() == list(map(lambda x: x**2, range(10)))
