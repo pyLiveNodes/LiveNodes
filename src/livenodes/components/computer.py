@@ -82,7 +82,11 @@ class Processor_threading():
         # with the return_exceptions, we don't care how the processe
         self.loop.run_until_complete(asyncio.gather(self.onprocess_task, self.onstop_task, self.onclose_task, return_exceptions=True))
         print('finished and should return now')
-    
+        
+        # wrap up the asyncio event loop
+        self.loop.stop()
+        self.loop.close()
+
     # worker thread
     def handle_finished(self, *args):
         self.onstop_task.cancel()
