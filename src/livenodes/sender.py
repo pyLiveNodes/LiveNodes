@@ -28,7 +28,7 @@ class Sender(Node):
         self.block = block
 
         self._clock = Clock(node_id=self)
-        self._ctr = self._clock.ctr # set as is used in Node! (yes, we should rework this)
+        self._ctr = self._clock.ctr # set as is used in Node.py! (yes, we should rework this)
         self._emit_ctr_fallback = 0
 
     def _node_settings(self):

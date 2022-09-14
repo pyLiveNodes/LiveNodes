@@ -23,7 +23,7 @@ class Logger():
 
     cbs = {}
 
-    def __init__(self, stdout=True, default_level=LogLevel.VERBOSE):
+    def __init__(self, stdout=True, default_level=LogLevel.DEBUG):
         self._log_level = default_level
         self._max_log_level = default_level
         if stdout:
