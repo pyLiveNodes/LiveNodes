@@ -82,7 +82,7 @@ class Node(Connectionist, Logger, Serializer):
             return _fn(*args, **kwargs)
         except Exception as e:
             self.error(f'failed to execute {_fn_name}')
-            self.error(e) # TODO: add stack trace?
+            self.error(e)
             self.error(traceback.format_exc())
     
 
@@ -154,6 +154,11 @@ class Node(Connectionist, Logger, Serializer):
             channel = list(self.ports_out._asdict().values())[0].key
         elif isinstance(channel, Port):
             channel = channel.key
+        elif type(channel) == str:
+            self.info(f'Call by str will be deprecated, got: {channel}')
+            if channel not in self.ports_out._fields:
+                raise ValueError('Unknown Port', channel)
+                
         clock = self._ctr if ctr is None else ctr
 
         self.verbose('Emitting', channel, np.array(data).shape)
@@ -169,6 +174,7 @@ class Node(Connectionist, Logger, Serializer):
         # self.error(f'Received: "{connection._recv_port.key}" with clock {ctr}')
         # self._received_data[key].put(ctr, val)
         # this is called in the context of the emitting node, the data storage is then in charge of using the right means of transport, such that the process triggered has the available data in the same context as the receiving node's process is called
+        self.verbose('Received', connection, ctr)
         self.data_storage.put(connection, ctr, data)
 
     def _report_perf(self):

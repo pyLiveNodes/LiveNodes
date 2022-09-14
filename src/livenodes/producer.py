@@ -1,6 +1,5 @@
 import asyncio
 from functools import partial
-from this import d
 from .node import Node, Location
 from .components.utils.clock import Clock
 
