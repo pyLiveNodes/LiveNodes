@@ -3,6 +3,8 @@ import asyncio
 import threading as th
 import multiprocessing as mp
 
+from livenodes.components.node_logger import Logger
+
 # TODO: is this also possibly without creating a new thread, ie inside of main thread? 
 # i'm guessing no, as then the start likely does not return and then cannot be stopped by hand, but only if it returns by itself
 
@@ -24,8 +26,8 @@ def parse_location(location):
 
     return host, port, process, thread
 
-class Processor_threading():
-    def __init__(self, nodes) -> None:
+class Processor_threading(Logger):
+    def __init__(self, nodes, location) -> None:
         # -- both threads
         # indicates that the readied nodes should start sending data
         self.start_lock = th.Lock() 
@@ -33,6 +35,8 @@ class Processor_threading():
         self.stop_lock = th.Lock() 
         # indicates that the thread should be closed without waiting on the nodes to finish
         self.close_lock = th.Lock() 
+        # used for logging identification
+        self.location = location
 
         # -- main thread
         self.nodes = nodes
@@ -41,40 +45,48 @@ class Processor_threading():
         self.stop_lock.acquire()
         self.close_lock.acquire()
 
+    def __str__(self) -> str:
+        return f"Computer:{self.location}"
 
     # main thread
     def setup(self):
+        self.info('Readying')
         self.subprocess = th.Thread(
                         target=self.start_subprocess)
         self.subprocess.start()
 
     # main thread
     def start(self):
+        self.info('Starting')
         self.start_lock.release()
 
     # main thread
     def join(self):
         """ used if the processing is nown to end"""
+        self.info('Joining')
         self.subprocess.join()
 
     # main thread
     def stop(self, timeout=0.1):
         """ used if the processing is nown to be endless"""
 
+        self.info('Stopping')
         self.stop_lock.release()
         self.subprocess.join(timeout)
-        print('Finished stopping')
+        self.info('Returning; subprocess finished: ', not self.subprocess.isAlive())
 
     # main thread
     def close(self, timeout=0.1):
-        print('Start stopping')
+        self.info('Closing')
         self.close_lock.release()
         self.subprocess.join(timeout)
         if self.subprocess.is_alive():
-            print('Timout triggerd, terminating thread')
+            self.info('Timout reached, but still alive')
         
     # worker thread
     def start_subprocess(self):
+        self.info('Starting Subprocess')
+
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
 
@@ -95,24 +107,28 @@ class Processor_threading():
 
         # with the return_exceptions, we don't care how the processe
         self.loop.run_until_complete(asyncio.gather(self.onprocess_task, self.onstop_task, self.onclose_task, return_exceptions=True))
-        print('finished and should return now')
         
         # wrap up the asyncio event loop
         self.loop.stop()
         self.loop.close()
 
+        self.info('Finished subprocess and returning')
+
     # worker thread
     def handle_finished(self, *args):
+        self.info('All Tasks finished, aborting stop and close listeners')
+
         self.onstop_task.cancel()
         self.onclose_task.cancel()
 
     # worker thread
     async def handle_stop(self):
+
         # loop non-blockingly until we can acquire the stop lock
         while not self.stop_lock.acquire(timeout=0):
-            await asyncio.sleep(0.01)
+            await asyncio.sleep(0.001)
         
-        print('Stopping running nodes')
+        self.info('Stopped called, stopping nodes')
         for node in self.nodes:
             node.stop()
 
@@ -120,7 +136,7 @@ class Processor_threading():
     async def handle_close(self):
         # loop non-blockingly until we can acquire the close/termination lock
         while not self.close_lock.acquire(timeout=0):
-            await asyncio.sleep(0.01)
+            await asyncio.sleep(0.001)
         
         # print('Closing running nodes')
         # for node in self.nodes:
@@ -129,5 +145,5 @@ class Processor_threading():
         # give one last chance to all to finish
         # await asyncio.sleep(0)
 
-        print('Canceling everything that remains')
+        self.info('Closed called, stopping all remaining tasks')
         self.onprocess_task.cancel()

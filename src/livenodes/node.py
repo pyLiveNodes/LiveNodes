@@ -87,6 +87,7 @@ class Node(Connectionist, Logger, Serializer):
     
 
     def ready(self):
+        self.info('Readying')
         self.data_storage.set_inputs(self.input_connections)
 
         self._loop = asyncio.get_event_loop()
@@ -101,25 +102,31 @@ class Node(Connectionist, Logger, Serializer):
         return self._finished
 
     def start(self):
+        self.info('Starting')
         # TODO: not sure about this yet: seems uneccessary if we have the ready anyway.. 
         # -> then again this pattern might prove quite helpful in the future, ie try to connect to some sensor and disply "waiting" until all nodes are online and we can start 
         #   -> prob. rather within the nodes.. 
         #   -> but when thinking about multiple network pcs this might make a lot of sense...
         self._onstart()
 
+    # TODO: currently this may be called multiple times: should we change that to ensure a single call?
     def stop(self):
+        self.info('Stopping')
+
+        # TODO: not sure about this here, check the documentation!
+        # cancel all remaining bridge listeners (we'll not receive any further data now anymore)
+        for future in self.bridge_listeners:
+            future.cancel()
+
         self._onstop()
 
     def _finish(self, task=None):
+        self.info('Finishing')
         # task=none is needed for the done_callback but not used
 
         # close bridges telling the following nodes they will not receive input from us anymore
         for con in self.output_connections:
             con._recv_node.data_storage.close_bridges(self)
-
-        # cancel all remaining bridge listeners (we'll not receive any further data now anymore)
-        for future in self.bridge_listeners:
-            future.cancel()
 
         # indicate to the node, that it now should finish wrapping up
         self.stop()
@@ -161,7 +168,7 @@ class Node(Connectionist, Logger, Serializer):
                 
         clock = self._ctr if ctr is None else ctr
 
-        self.verbose('Emitting', channel, np.array(data).shape)
+        self.verbose('Emitting', channel, clock, ctr, self._ctr, np.array(data).shape)
         for con in self.output_connections:
             if con._emit_port.key == channel:
                 con._recv_node.receive_data(clock, con, data)

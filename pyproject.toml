@@ -15,6 +15,7 @@ dependencies = [
     "scipy>=1.7.3",
     "phx-class-registry",
     "python-dotenv",
+    "aioprocessing>=2.0.1"
 ]
 
 [project.optional-dependencies]

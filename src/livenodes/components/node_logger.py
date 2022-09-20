@@ -1,8 +1,17 @@
 from .utils.logger import logger, LogLevel
+import functools
 
 class Logger():
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
+
+    # this may be called in another thread/computer, than the init method -> cache the call and use it in prep_str
+    @functools.lru_cache(maxsize=1)
+    def _construct_str(self):
+        limit = 30
+        name = str(self)
+        name = name if len(name) < limit else name[:limit - 3] + '...' 
+        return f"{name: <30}"
 
     # === Logging Stuff =================
     # TODO: move this into it's own module/file?
@@ -22,7 +31,6 @@ class Logger():
         logger.verbose(self._prep_log(*text))
 
     def _prep_log(self, *text):
-        node = str(self)
         txt = " ".join(str(t) for t in text)
-        msg = f"{node: <40} | {txt}"
+        msg = f"{self._construct_str()} | {txt}"
         return msg

@@ -5,6 +5,7 @@ import numpy as np
 import multiprocessing as mp
 import threading
 import queue
+from .node_logger import Logger
 
 from .connection import Connection
 
@@ -15,8 +16,20 @@ class Location(IntEnum):
     # SOCKET = 4
 
 
-class Bridge():
-    pass
+class Bridge(Logger):
+    
+    def __init__(self, _from=None, _to=None, _data_type=None):
+        self._from = _from
+        self._to = _to
+        self._data_type = _data_type
+
+    def close(self):
+        raise NotImplementedError()
+
+    def put(self):
+        raise NotImplementedError()
+
+    def 
 
 class Bridge_local():
     def __init__(self, _from=None, _to=None):
@@ -33,7 +46,7 @@ class Bridge_local():
 
     # _from thread
     def put(self, ctr, item):
-        # print('putting value')
+        # print('putting value', ctr)
         self.queue.put_nowait((ctr, item))
 
     # _to thread

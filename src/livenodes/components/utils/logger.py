@@ -84,4 +84,4 @@ class Logger():
         self._log_level = level
 
 
-logger = Logger(stdout=True, default_level=LogLevel.DEBUG)
+logger = Logger(stdout=True, default_level=LogLevel.VERBOSE)

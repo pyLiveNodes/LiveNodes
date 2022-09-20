@@ -4,7 +4,7 @@ import traceback
 from .producer import Producer
 import threading as th
 # import multiprocessing as mp
-
+import aioprocessing
 
 class Producer_Blocking(Producer):
     """
@@ -20,7 +20,7 @@ class Producer_Blocking(Producer):
 
         # both threads
         self.stop_event = th.Event()
-        self.msgs = queue.Queue()
+        self.msgs = aioprocessing.AioQueue()
 
         # self.stop_event = mp.Event()
         # self.msgs = mp.Queue()
@@ -51,16 +51,13 @@ class Producer_Blocking(Producer):
         print(port_lookup)
         while not self.stop_event.is_set():
             try:
-                item, port_name, tick = self.msgs.get_nowait()
+                item, port_name, tick = await self.msgs.coro_get()
                 self._emit_data(item, channel=port_lookup[port_name])
                 if tick:
-                    self._clock.tick()
-            except queue.Empty:
-                pass
+                    self._ctr = self._clock.tick()
             except Exception as e:
                 self.error(e)
                 self.error(traceback.format_exc())
-            await asyncio.sleep(0.00001)
 
         self._finish()  
     
