@@ -1,7 +1,8 @@
 from .utils.logger import logger, LogLevel
 import functools
+from .utils.reportable import Reportable
 
-class Logger():
+class Logger(Reportable):
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
 
@@ -16,19 +17,24 @@ class Logger():
     # === Logging Stuff =================
     # TODO: move this into it's own module/file?
     def error(self, *text):
-        logger.error(self._prep_log(*text))
+        if logger.error(self._prep_log(*text)):
+            self._report(log=" ".join(str(t) for t in text))
 
     def warn(self, *text):
-        logger.warn(self._prep_log(*text))
+        if logger.warn(self._prep_log(*text)):
+            self._report(log=" ".join(str(t) for t in text))
 
     def info(self, *text):
-        logger.info(self._prep_log(*text))
+        if logger.info(self._prep_log(*text)):
+            self._report(log=" ".join(str(t) for t in text))
 
     def debug(self, *text):
-        logger.debug(self._prep_log(*text))
+        if logger.debug(self._prep_log(*text)):
+            self._report(log=" ".join(str(t) for t in text))
 
     def verbose(self, *text):
-        logger.verbose(self._prep_log(*text))
+        if logger.verbose(self._prep_log(*text)):
+            self._report(log=" ".join(str(t) for t in text))
 
     def _prep_log(self, *text):
         txt = " ".join(str(t) for t in text)

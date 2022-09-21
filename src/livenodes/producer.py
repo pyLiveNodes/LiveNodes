@@ -66,6 +66,8 @@ class Producer(Node):
                 )
             self._emit_ctr_fallback = 0
             
+            self._report(node=self)
+            
             # allow others to chime in
             await asyncio.sleep(0)
 

@@ -9,7 +9,7 @@ class Abstract_Perf():
         pass
     
     def average(self):
-        return np.mean(self.calls[:1000])
+        return np.mean(self.calls[-1000:])
 
     def average_total(self):
         return np.mean(self.calls)

@@ -18,11 +18,11 @@ class Connectionist(Logger):
     ports_in = Ports_simple()
     ports_out = Ports_simple()
 
-    def __init__(self, **kwargs):
+    def __init__(self):
+        super().__init__()
+
         self.input_connections = []
         self.output_connections = []
-
-        super().__init__(**kwargs)
 
     def __str__(self) -> str:
         return f"<Connectionist: {self.__class__.__name__}>"
@@ -239,10 +239,10 @@ class Connectionist(Logger):
         return node in self.discover_output_deps(self)
 
 
-    def dot_graph(self, nodes, name=False, transparent_bg=False, **kwargs):
+    def dot_graph(self, nodes, name=False, transparent_bg=False, edge_labels=True, **kwargs):
         graph_attr = {"size": "10,10!", "ratio": "fill"}
         if transparent_bg: graph_attr["bgcolor"] = "#00000000"
-        dot = Digraph(format='png', strict=False, graph_attr=graph_attr)
+        dot = Digraph(format='png', strict=not edge_labels, graph_attr=graph_attr)
 
         for node in nodes:
             shape = 'rect'
@@ -256,9 +256,12 @@ class Connectionist(Logger):
         # Second pass: add edges based on output links
         for node in nodes:
             for con in node.output_connections:
+                l = None
+                if edge_labels:
+                    l = f"{con._emit_port.label}\n->\n{con._recv_port.label}"
                 dot.edge(str(node),
                          str(con._recv_node),
-                         label=str(con._emit_port))
+                         label=l)
 
         return Image.open(BytesIO(dot.pipe()))
 

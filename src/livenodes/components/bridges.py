@@ -5,6 +5,7 @@ import numpy as np
 import multiprocessing as mp
 import threading
 import queue
+import aioprocessing
 from .node_logger import Logger
 
 from .connection import Connection
@@ -19,21 +20,42 @@ class Location(IntEnum):
 class Bridge(Logger):
     
     def __init__(self, _from=None, _to=None, _data_type=None):
+        super().__init__()
         self._from = _from
         self._to = _to
         self._data_type = _data_type
 
+    # _from thread
     def close(self):
         raise NotImplementedError()
 
+    # _from thread
     def put(self):
         raise NotImplementedError()
 
-    def 
+    # _to thread
+    async def onclose(self):
+        raise NotImplementedError()
 
-class Bridge_local():
-    def __init__(self, _from=None, _to=None):
-        # both threads
+    # _to thread
+    async def update(self):
+        raise NotImplementedError()
+
+    # _to thread
+    def discard_before(self, ctr):
+        raise NotImplementedError()
+
+    # _to thread
+    def get(self, ctr):
+        raise NotImplementedError()
+
+
+
+class Bridge_local(Bridge):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        # both threads (?)
         self.queue = asyncio.Queue()
         self.closed_event = threading.Event()
         
@@ -53,6 +75,7 @@ class Bridge_local():
     def closed(self):
         return self.closed_event.is_set()
 
+    # _to thread
     async def onclose(self):
         while True:
             await asyncio.sleep(0.01)
@@ -86,51 +109,52 @@ class Bridge_local():
         return False, None
 
 
-# class Bridge_mp():
-#     def __init__(self, _from=None, _to=None):
-#         self.queue = mp.Queue()
-#         self._read = {}
-#         self._to = _to
+class Bridge_threads(Bridge):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # both threads
+        self.queue = aioprocessing.AioQueue()
+        self.closed_event = aioprocessing.AioEvent()
+        
+        # _to thread
+        self._read = {}
 
-#     def put(self, ctr, item, last_package):
-#         self.queue.put((ctr, item, last_package))
+    # _from thread
+    def close(self):
+        self.closed_event.set()
 
-#     def update(self, timeout=0.01):
-#         try:
-#             itm_ctr, item, last_package = self.queue.get(block=True, timeout=timeout)
-#             self._read[itm_ctr] = (item, last_package)
-#             return True, itm_ctr
-#         except queue.Empty:
-#             pass
-#         return False, -1
+    # _from thread
+    def put(self, ctr, item):
+        # print('putting value', ctr)
+        self.queue.put_nowait((ctr, item))
 
-#     def empty(self):
-#         return self.queue.empty()
+    # _to thread
+    async def onclose(self):
+        await self.closed_event.coro_wait()
+        await self.queue.coro_join()
+        
+    # _to thread
+    async def update(self):
+        # print('waiting for asyncio to receive a value')
+        itm_ctr, item = await self.queue.get()
+        self._read[itm_ctr] = item
+        return itm_ctr
 
-#     def empty_queue(self):
-#         while not self.queue.empty():
-#             itm_ctr, item, last_package = self.queue.get()
-#             # TODO: if itm_ctr already exists, should we not rather extend than overwrite it? (thinking of the mulitple emit_data per process call examples (ie window))
-#             # TODO: yes! this is what we should do :D
-#             self._read[itm_ctr] = (item, last_package)
+    # _to thread
+    def discard_before(self, ctr):
+        self._read = {
+            key: val
+            for key, val in self._read.items() if key >= ctr
+        }
 
-#     def discard_before(self, ctr):
-#         self._read = {
-#             key: val
-#             for key, val in self._read.items() if key >= ctr
-#         }
+    # _to thread
+    def get(self, ctr):
+        # in the process and thread case the queue should always be empty if we arrive here
+        # This should also never be executed in process or thread, as then the update function does not block and keys are skipped!
+        if ctr in self._read:
+            return True, self._read[ctr]
+        return False, None
 
-#     def get(self, ctr):
-#         if self._to == Location.SAME:
-#             # This is only needed in the location.same case, as in the process and thread case the queue should always be empty if we arrive here
-#             # This should also never be executed in process or thread, as then the update function does not block and keys are skipped!
-#             self.empty_queue()
-
-#         # in the process and thread case the queue should always be empty if we arrive here
-#         # This should also never be executed in process or thread, as then the update function does not block and keys are skipped!
-#         if ctr in self._read:
-#             return True, *self._read[ctr]
-#         return False, None, None
 
 
 class Multiprocessing_Data_Storage():

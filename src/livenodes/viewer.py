@@ -3,12 +3,12 @@ import queue
 import time
 
 from .node import Node, Location
-
+from .components.utils.reportable import Reportable
 
 
 class View(Node):
-    def __init__(self, name, compute_on=Location.SAME):
-        super().__init__(name, compute_on)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
         # TODO: consider if/how to disable the visualization of a node?
         # self.display = display
@@ -16,7 +16,12 @@ class View(Node):
         # TODO: evaluate if one or two is better as maxsize (the difference should be barely noticable, but not entirely sure)
         # -> one: most up to date, but might just miss each other? probably only applicable if sensor sampling rate is vastly different from render fps?
         # -> two: always one frame behind, but might not jump then
-        self._draw_state = mp.Queue(maxsize=2)
+        self._draw_state = mp.Queue()
+
+    def register_reporter(self, reporter_fn):
+        if hasattr(self, 'fps'):
+            self.fps.register_reporter(reporter_fn)
+        return super().register_reporter(reporter_fn)
 
     def init_draw(self, *args, **kwargs):
         """
@@ -30,18 +35,13 @@ class View(Node):
             cur_state = {}
             res = None
 
-            try:
-                cur_state = self._draw_state.get_nowait()
-            except queue.Empty:
-                pass
-            # always execute the update, even if no new data is added, as a view might want to update not based on the self emited data
-            # this happens for instance if the view wants to update based on user interaction (and not data)
-            if self._should_draw(**cur_state):
-                self.verbose('Decided to draw', cur_state.keys())
-                res = update_fn(**cur_state)
-            else:
-                self.debug('Decided not to draw', cur_state.keys())
-
+            while not self._draw_state.empty():
+                cur_state = self._draw_state.get()
+                if self._should_draw(**cur_state):
+                    self.verbose('Decided to draw', cur_state.keys())
+                    res = update_fn(**cur_state)
+                # else:
+                #     self.verbose('Decided not to draw', cur_state.keys())
             return res
 
         return update
@@ -80,17 +80,18 @@ class View(Node):
         Called in computation process, ie self.process
         Emits data to draw process, ie draw_inits update fn
         """
-        if not self._draw_state.full():
-            self.verbose('Storing for draw:', kwargs.keys())
-            self._draw_state.put_nowait(kwargs)
-            # self.verbose('Stored for draw')
+        self.verbose('Storing for draw:', kwargs.keys())
+        self._draw_state.put_nowait(kwargs)
 
-class FPS_Helper():
-    def __init__(self, name):
+
+class FPS_Helper(Reportable):
+    def __init__(self, name, report_every_x_seconds=5, **kwargs):
+        super().__init__(**kwargs)
+
         self.name = name
         self.n_frames = 0
         self.n_frames_total = 0
-        self.report_every_x_seconds = 10
+        self.report_every_x_seconds = report_every_x_seconds
         self.timer = time.time()
         
     def count(self):
@@ -98,9 +99,13 @@ class FPS_Helper():
         el_time = time.time() - self.timer
         if el_time > self.report_every_x_seconds:
             self.n_frames_total += self.n_frames
-            print(f"Current fps: {self.n_frames / el_time:.2f} (Total frames: {self.n_frames_total}) -- {self.name}")
+            self._report(fps={'fps': self.n_frames / el_time, 'total_frames': self.n_frames_total, 'name': self.name})
             self.timer = time.time()
             self.n_frames = 0
+
+def print_fps(fps, **kwargs):
+    print(f"Current fps: {fps['fps']:.2f} (Total frames: {fps['total_frames']}) -- {fps['name']}")
+
 
 class View_MPL(View):
     def _init_draw(self, subfig):
@@ -124,25 +129,27 @@ class View_MPL(View):
         # ie create a variable outside of the update scope, that we can assign lists to
         artis_storage = {'returns': []}
 
-        fps = FPS_Helper(str(self))
+        if self.should_time:
+            self.fps = FPS_Helper(str(self), report_every_x_seconds=0.5)
+        else:
+            self.fps = FPS_Helper(str(self))
+            self.fps.register_reporter(print_fps)
 
         def update(n_frames, **kwargs):
-            nonlocal update_fn, artis_storage, self, fps
+            nonlocal update_fn, artis_storage, self
             cur_state = {}
 
-            fps.count()
+            self.fps.count()
 
-            try:
-                cur_state = self._draw_state.get_nowait()
-            except queue.Empty:
-                pass
-            # always execute the update, even if no new data is added, as a view might want to update not based on the self emited data
-            # this happens for instance if the view wants to update based on user interaction (and not data)
-            if self._should_draw(**cur_state):
-                artis_storage['returns'] = update_fn(**cur_state)
-                self.verbose('Decided to draw', cur_state.keys())
-            else:
-                self.debug('Decided not to draw', cur_state.keys())
+            while not self._draw_state.empty():
+                cur_state = self._draw_state.get()
+                # always execute the update, even if no new data is added, as a view might want to update not based on the self emited data
+                # this happens for instance if the view wants to update based on user interaction (and not data)
+                if self._should_draw(**cur_state):
+                    artis_storage['returns'] = update_fn(**cur_state)
+                    self.verbose('Decided to draw', cur_state.keys())
+                # else:
+                #     self.verbose('Decided not to draw', cur_state.keys())
                     
             return artis_storage['returns']
 
@@ -161,27 +168,28 @@ class View_QT(View):
 
         # if there is no update function only _init_draw will be needed / called
         if update_fn is not None:
-            fps = FPS_Helper(str(self))
+            if self.should_time:
+                self.fps = FPS_Helper(str(self), report_every_x_seconds=0.5)
+            else:
+                self.fps = FPS_Helper(str(self))
+                self.fps.register_reporter(print_fps)
 
             # TODO: figure out more elegant way to not have this blocking until new data is available...
             def update_blocking():
-                nonlocal update_fn, fps
+                nonlocal update_fn, self
                 cur_state = {}
                 
-                fps.count()
+                self.fps.count()
 
-                try:
-                    cur_state = self._draw_state.get_nowait()
-                    # cur_state = self._draw_state.get(block=True, timeout=0.05)
-                except queue.Empty:
-                    pass
+                while not self._draw_state.empty():
+                    cur_state = self._draw_state.get()
 
-                if self._should_draw(**cur_state):
-                    self.verbose('Decided to draw', cur_state.keys())
-                    update_fn(**cur_state)
-                    return True
-                else:
-                    self.debug('Decided not to draw', cur_state.keys())
+                    if self._should_draw(**cur_state):
+                        self.verbose('Decided to draw', cur_state.keys())
+                        update_fn(**cur_state)
+                        return True
+                    # else:
+                    #     self.verbose('Decided not to draw', cur_state.keys())
 
                 return False
 
@@ -201,27 +209,28 @@ class View_Vispy(View):
         """
         update_fn = self._init_draw(fig)
 
-        fps = FPS_Helper(str(self))
+        if self.should_time:
+            self.fps = FPS_Helper(str(self), report_every_x_seconds=0.5)
+        else:
+            self.fps = FPS_Helper(str(self))
+            self.fps.register_reporter(print_fps)
 
         # TODO: figure out more elegant way to not have this blocking until new data is available...
         def update_blocking():
-            nonlocal update_fn, fps
+            nonlocal update_fn, self
             cur_state = {}
             
-            fps.count()
+            self.fps.count()
 
-            try:
-                cur_state = self._draw_state.get_nowait()
-                # cur_state = self._draw_state.get(block=True, timeout=0.05)
-            except queue.Empty:
-                pass
+            while not self._draw_state.empty():
+                cur_state = self._draw_state.get()
 
-            if self._should_draw(**cur_state):
-                self.verbose('Decided to draw', cur_state.keys())
-                update_fn(**cur_state)
-                return True
-            else:
-                self.debug('Decided not to draw', cur_state.keys())
+                if self._should_draw(**cur_state):
+                    self.verbose('Decided to draw', cur_state.keys())
+                    update_fn(**cur_state)
+                    return True
+                # else:
+                #     self.verbose('Decided not to draw', cur_state.keys())
 
             return False
 

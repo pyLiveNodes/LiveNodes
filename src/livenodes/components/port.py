@@ -27,6 +27,9 @@ class Port():
                 raise Exception(f'Example value does not pass check. Msg: {msg}. Value: {val}')
         return super().__init_subclass__()
 
+    @classmethod
+    def add_examples(cls, *args):
+        cls.example_values.extend(args)
 
     @staticmethod
     def check_value(value):

@@ -28,6 +28,7 @@ def parse_location(location):
 
 class Processor_threading(Logger):
     def __init__(self, nodes, location) -> None:
+        super().__init__()
         # -- both threads
         # indicates that the readied nodes should start sending data
         self.start_lock = th.Lock() 

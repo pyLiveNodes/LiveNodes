@@ -7,6 +7,7 @@ import traceback
 
 from .components.utils.perf import Time_Per_Call, Time_Between_Call
 from .components.port import Port
+from .components.utils.reportable import Reportable
 
 from .components.node_connector import Connectionist
 from .components.node_logger import Logger
@@ -34,6 +35,7 @@ class Node(Connectionist, Logger, Serializer):
         self.name = name
         super().__init__(**kwargs)
 
+        self.should_time = should_time
         self.compute_on = compute_on
         self.data_storage = Multiprocessing_Data_Storage()
         self.bridge_listeners = []
@@ -47,6 +49,7 @@ class Node(Connectionist, Logger, Serializer):
 
         self._perf_user_fn = Time_Per_Call()
         self._perf_framework = Time_Between_Call()
+
         if should_time:
             self._call_user_fn_process = partial(self._perf_framework.call_fn, partial(self._perf_user_fn.call_fn, self._call_user_fn))
         else:
@@ -184,11 +187,6 @@ class Node(Connectionist, Logger, Serializer):
         self.verbose('Received', connection, ctr)
         self.data_storage.put(connection, ctr, data)
 
-    def _report_perf(self):
-        processing_duration = self._perf_user_fn.average()
-        invocation_duration = self._perf_framework.average()
-        self.debug(f'Processing: {processing_duration * 1000:.5f}ms; Time between calls: {(invocation_duration - processing_duration) * 1000:.5f}ms; Time between invocations: {invocation_duration * 1000:.5f}ms')
-
     def _process(self, ctr):
         """
         called in location of self
@@ -198,6 +196,8 @@ class Node(Connectionist, Logger, Serializer):
 
         # update current state, based on own clock
         _current_data = self.data_storage.get(ctr=ctr)
+        # sure?
+        self._report(current_state = {"ctr": ctr, "data": _current_data})
 
         # check if all required data to proceed is available and then call process
         # then cleanup aggregated data and advance our own clock
@@ -211,7 +211,7 @@ class Node(Connectionist, Logger, Serializer):
             self._ctr = ctr
             self._call_user_fn_process(self.process, 'process', **_current_data, _ctr=ctr)
             self.verbose('process fn finished')
-            self._report_perf()
+            self._report(node = self) # for latency and calc reasons
             self.data_storage.discard_before(ctr)
         else:
             self.verbose('Decided not to process', ctr, _current_data.keys())

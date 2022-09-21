@@ -1,5 +1,4 @@
 # Print iterations progress
-from distutils.log import ERROR
 from enum import IntEnum
 import multiprocessing as mp
 import threading
@@ -45,19 +44,19 @@ class Logger():
         del self.cbs[cb]
 
     def error(self, *args):
-        self._log(LogLevel.ERROR, *args)
+        return self._log(LogLevel.ERROR, *args)
 
     def warn(self, *args):
-        self._log(LogLevel.WARN, *args)
+        return self._log(LogLevel.WARN, *args)
 
     def info(self, *args):
-        self._log(LogLevel.INFO, *args)
+        return self._log(LogLevel.INFO, *args)
 
     def debug(self, *args):
-        self._log(LogLevel.DEBUG, *args)
+        return self._log(LogLevel.DEBUG, *args)
 
     def verbose(self, *args):
-        self._log(LogLevel.VERBOSE, *args)
+        return self._log(LogLevel.VERBOSE, *args)
 
     def _log(self, level, *text):
         if level <= self._max_log_level:
@@ -79,6 +78,8 @@ class Logger():
 
             # release log
             self._lock.release()
+            return True
+        return False
 
     def set_log_level(self, level):
         self._log_level = level

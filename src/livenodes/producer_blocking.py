@@ -55,6 +55,7 @@ class Producer_Blocking(Producer):
                 self._emit_data(item, channel=port_lookup[port_name])
                 if tick:
                     self._ctr = self._clock.tick()
+                self._report()
             except Exception as e:
                 self.error(e)
                 self.error(traceback.format_exc())
