@@ -1,6 +1,6 @@
 import asyncio
 from functools import partial
-from .node import Node, Location
+from .node import Node
 from .components.utils.clock import Clock
 
 from typing import NamedTuple

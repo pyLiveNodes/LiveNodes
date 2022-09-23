@@ -2,31 +2,30 @@
 import asyncio
 import threading as th
 import multiprocessing as mp
+from itertools import groupby
 
 from livenodes.components.node_logger import Logger
 
 # TODO: is this also possibly without creating a new thread, ie inside of main thread? 
 # i'm guessing no, as then the start likely does not return and then cannot be stopped by hand, but only if it returns by itself
 
-def resolve_computer(location):
+def resolve_computer(thread, process=None, host=None):
     # TODO: :D
-    return Processor_threading
+    return Processor_threads
 
 def parse_location(location):
-    host, port, process, thread = None, None, None, None
+    comps = ['', '', '', '']
     
     splits = location.split(':')
+    for i, split in enumerate(reversed(splits)):
+        comps[i] = split
 
-    if len(splits) == 3:
-        host, process, thread = splits
-    elif (len(splits) == 4):
-        host, port, process, thread = splits
-    else:
-        raise ValueError('Could not parse location', location)
+    thread, process, port, host = comps        
+    host = f"{host}:{port}"
 
-    return host, port, process, thread
+    return host, process, thread
 
-class Processor_threading(Logger):
+class Processor_threads(Logger):
     def __init__(self, nodes, location) -> None:
         super().__init__()
         # -- both threads
@@ -39,54 +38,57 @@ class Processor_threading(Logger):
         # used for logging identification
         self.location = location
 
-        # -- main thread
+        # -- parent thread
         self.nodes = nodes
         self.subprocess = None
         self.start_lock.acquire()
         self.stop_lock.acquire()
         self.close_lock.acquire()
 
+        self.info(f'Creating Threading Computer with {len(self.nodes)} nodes.')
+
     def __str__(self) -> str:
         return f"Computer:{self.location}"
 
-    # main thread
+    # parent thread
     def setup(self):
         self.info('Readying')
         self.subprocess = th.Thread(
                         target=self.start_subprocess)
         self.subprocess.start()
 
-    # main thread
+    # parent thread
     def start(self):
         self.info('Starting')
         self.start_lock.release()
 
-    # main thread
+    # parent thread
     def join(self):
         """ used if the processing is nown to end"""
         self.info('Joining')
         self.subprocess.join()
 
-    # main thread
+    # parent thread
     def stop(self, timeout=0.1):
         """ used if the processing is nown to be endless"""
 
         self.info('Stopping')
         self.stop_lock.release()
         self.subprocess.join(timeout)
-        self.info('Returning; subprocess finished: ', not self.subprocess.isAlive())
+        self.info('Returning; thread finished: ', not self.subprocess.isAlive())
 
-    # main thread
+    # parent thread
     def close(self, timeout=0.1):
         self.info('Closing')
         self.close_lock.release()
         self.subprocess.join(timeout)
         if self.subprocess.is_alive():
             self.info('Timout reached, but still alive')
+        self.subprocess = None
         
     # worker thread
     def start_subprocess(self):
-        self.info('Starting Subprocess')
+        self.info('Starting Thread')
 
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
@@ -148,3 +150,118 @@ class Processor_threading(Logger):
 
         self.info('Closed called, stopping all remaining tasks')
         self.onprocess_task.cancel()
+
+
+
+
+
+
+
+
+
+
+class Processor_process(Logger):
+    def __init__(self, nodes, location, stop_timeout_threads=0.1, close_timeout_threads=0.1) -> None:
+        super().__init__()
+        # -- both processes
+        # indicates that the readied nodes should start sending data
+        self.start_lock = mp.Lock() 
+        # indicates that the started nodes should stop sending data
+        self.stop_lock = mp.Lock() 
+        # indicates that the thread should be closed without waiting on the nodes to finish
+        self.close_lock = mp.Lock() 
+        # used for logging identification
+        self.location = location
+
+        # -- main process
+        self.nodes = nodes
+        self.subprocess = None
+        self.start_lock.acquire()
+        self.stop_lock.acquire()
+        self.close_lock.acquire()
+
+        # -- worker process
+        self.stop_timeout_threads = stop_timeout_threads
+        self.close_timeout_threads = close_timeout_threads
+
+        self.info(f'Creating Process Computer with {len(self.nodes)} nodes.')
+
+
+    def __str__(self) -> str:
+        return f"Computer:{self.location}"
+
+    # parent process
+    def setup(self):
+        self.info('Readying')
+        self.subprocess = mp.Process(
+                        target=self.start_subprocess)
+        self.subprocess.start()
+
+    # parent process
+    def start(self):
+        self.info('Starting')
+        self.start_lock.release()
+
+    # TODO: this will not work
+    # as: the start() of the thread processor used inside of this processors supbrocess are non-blockign
+    # therefore: we are waiting on the stop-lock which will be released once someone calls stop -> thus joining the subprocess will never return!
+    # in the join case we would want to be able to join each thread cmp instead of waiting on stop or close...
+    # parent process
+    def join(self):
+        """ used if the processing is nown to end"""
+        self.info('Joining')
+        self.subprocess.join()
+
+    # parent process
+    def stop(self, timeout=0.3):
+        """ used if the processing is nown to be endless"""
+
+        self.info('Stopping')
+        self.stop_lock.release()
+        self.subprocess.join(timeout)
+        self.info('Returning; Process finished: ', not self.subprocess.is_alive())
+
+    # parent process
+    def close(self, timeout=0.5):
+        self.info('Closing')
+        self.close_lock.release()
+        self.subprocess.join(timeout)
+        if self.subprocess.is_alive():
+            self.subprocess.terminate()
+            self.info('Timout reached: killed process')
+        self.subprocess = None
+        
+    # worker process
+    def start_subprocess(self):
+        self.info('Starting Process')
+
+        computers = []
+
+        locations = groupby(sorted(self.nodes, key=lambda n: n.compute_on), key=lambda n: n.compute_on)
+        for loc, loc_nodes in locations:
+            loc_nodes = list(loc_nodes)
+            print(f'Resolving computer group. Location: {loc}; Nodes: {len(loc_nodes)}')
+            cmp = Processor_threads(nodes=loc_nodes, location=loc)
+            cmp.setup()
+            computers.append(cmp)
+
+        self.start_lock.acquire()
+        self.info('Starting Computers')
+        for cmp in computers:
+            # this is non-blocking -> this process will lock until the stop_lock can be aquired
+            # inside of this process all sub-threads will run until stop is called
+            cmp.start()
+
+        self.stop_lock.acquire()
+        self.info('Stopping Computers')
+        for cmp in computers:
+            # the cmps are all returning after the timeout, as they all are Processor_Threads
+            # -> therefore, this cannot block indefinetly and we can soon wait on the close_lock
+            cmp.stop(timeout=self.stop_timeout_threads)
+
+        self.close_lock.acquire()
+        self.info('Closing Computers')
+        for cmp in computers:
+            cmp.close(timeout=self.close_timeout_threads)
+
+        self.info('Finished Process and returning')

@@ -61,15 +61,15 @@ if __name__ == '__main__':
         #     "targets": ['cspin-ll', 'run', 'jump-2', 'shuffle-l', 'sit', 'cstep-r', 'vcut-rr', 'stair-down', 'stand-sit', 'jump-1', 'sit-stand', 'stand', 'cspin-lr', 'cspin-rr', 'cstep-l', 'vcut-ll', 'vcut-rl', 'shuffle-r', 'stair-up', 'walk', 'cspin-rl', 'vcut-lr']
         # }
 
-        # # pipeline = In_playback(compute_on=Location.THREAD, block=False, files="./projects/test_ask/data/KneeBandageCSL2018/**/*.h5", meta=meta)
-        # pipeline = In_playback(compute_on=Location.PROCESS, block=False, files="./projects/test_ask/data/KneeBandageCSL2018/**/*.h5", meta=meta)
+        # # pipeline = In_playback(compute_on="1", block=False, files="./projects/test_ask/data/KneeBandageCSL2018/**/*.h5", meta=meta)
+        # pipeline = In_playback(compute_on="1:1", block=False, files="./projects/test_ask/data/KneeBandageCSL2018/**/*.h5", meta=meta)
 
         # channel_names = ['Gonio2', 'GyroLow1', 'GyroLow2', 'GyroLow3']
         # idx = np.isin(recorded_channels, channel_names).nonzero()[0]
 
-        # # draw = Draw_lines(name='Raw Data', compute_on=Location.THREAD)
-        # draw = Draw_lines(name='Raw Data', compute_on=Location.PROCESS)
-        # # draw = Draw_lines(name='Raw Data', compute_on=Location.SAME)
+        # # draw = Draw_lines(name='Raw Data', compute_on="1")
+        # draw = Draw_lines(name='Raw Data', compute_on="1:1")
+        # # draw = Draw_lines(name='Raw Data', compute_on="")
         # draw.connect_inputs_to(pipeline)
 
         print('=== Load Pipeline ====')

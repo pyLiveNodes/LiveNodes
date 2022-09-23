@@ -2,7 +2,7 @@ import time
 import pytest
 import multiprocessing as mp
 
-from livenodes.node import Node, Location
+from livenodes.node import Node
 from livenodes.producer import Producer
 from livenodes.graph import Graph
 
@@ -74,10 +74,10 @@ class Save(Node):
 
 
 if __name__ == "__main__":
-    data = Data(name="A", compute_on=Location.SAME)
-    quadratic = Quadratic(name="B", compute_on=Location.SAME)
-    out1 = Save(name="C", compute_on=Location.SAME)
-    out2 = Save(name="D", compute_on=Location.SAME)
+    data = Data(name="A", compute_on="")
+    quadratic = Quadratic(name="B", compute_on="")
+    out1 = Save(name="C", compute_on="")
+    out2 = Save(name="D", compute_on="")
 
     out1.connect_inputs_to(data)
     quadratic.connect_inputs_to(data)

@@ -12,7 +12,7 @@ from .components.utils.reportable import Reportable
 from .components.node_connector import Connectionist
 from .components.node_logger import Logger
 from .components.node_serializer import Serializer
-from .components.bridges import Multiprocessing_Data_Storage, Bridge_local, Location # location is imported here, as we'll need to update all the from livenodes.nodes import location soon
+from .components.bridges import Multiprocessing_Data_Storage
 
 
 class Node(Connectionist, Logger, Serializer):
@@ -29,7 +29,7 @@ class Node(Connectionist, Logger, Serializer):
     def __init__(self,
                  name="Name",
                  should_time=False,
-                 compute_on=Location.SAME,
+                 compute_on="",
                  **kwargs):
         
         self.name = name
@@ -40,8 +40,8 @@ class Node(Connectionist, Logger, Serializer):
         self.data_storage = Multiprocessing_Data_Storage()
         self.bridge_listeners = []
 
-        for port in self.ports_in:
-            print(port, type(port))
+        # for port in self.ports_in:
+        #     print(port, type(port))
 
         self._ctr = None
 
@@ -174,6 +174,7 @@ class Node(Connectionist, Logger, Serializer):
         self.verbose('Emitting', channel, clock, ctr, self._ctr, np.array(data).shape)
         for con in self.output_connections:
             if con._emit_port.key == channel:
+                # self.data_storage
                 con._recv_node.receive_data(clock, con, data)
 
     def receive_data(self, ctr, connection, data):

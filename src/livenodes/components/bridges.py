@@ -1,21 +1,12 @@
 import asyncio
-from enum import IntEnum
-import time
-import numpy as np
-import multiprocessing as mp
 import threading
-import queue
 import aioprocessing
 from .node_logger import Logger
 
 from .connection import Connection
+from .computer import parse_location
 
-class Location(IntEnum):
-    SAME = 1
-    THREAD = 2
-    PROCESS = 3
-    # SOCKET = 4
-
+from livenodes import REGISTRY, get_registry
 
 class Bridge(Logger):
     
@@ -24,6 +15,17 @@ class Bridge(Logger):
         self._from = _from
         self._to = _to
         self._data_type = _data_type
+
+        # _to thread
+        self._read = {}
+
+
+    @staticmethod
+    def can_handle(_from, _to, _data_type=None):
+        # Returns 
+        #   - True if it can handle this connection
+        #   - 0-10 how high the handle cost (indicates which implementation to use if multiple can handle this)
+        raise NotImplementedError()
 
     # _from thread
     def close(self):
@@ -43,14 +45,21 @@ class Bridge(Logger):
 
     # _to thread
     def discard_before(self, ctr):
-        raise NotImplementedError()
+        self._read = {
+            key: val
+            for key, val in self._read.items() if key >= ctr
+        }
 
     # _to thread
     def get(self, ctr):
-        raise NotImplementedError()
+        # in the process and thread case the queue should always be empty if we arrive here
+        # This should also never be executed in process or thread, as then the update function does not block and keys are skipped!
+        if ctr in self._read:
+            return True, self._read[ctr]
+        return False, None
 
 
-
+@REGISTRY.bridges.decorator
 class Bridge_local(Bridge):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -59,8 +68,12 @@ class Bridge_local(Bridge):
         self.queue = asyncio.Queue()
         self.closed_event = threading.Event()
         
-        # _to thread
-        self._read = {}
+    # _build thread
+    @staticmethod
+    def can_handle(_from, _to, _data_type=None):
+        # can handle same process, and same thread, with cost 1 (shared mem would be faster, but otherwise this is quite good)
+        return _from == _to, 1
+        # return True, 1
 
     # _from thread
     def close(self):
@@ -93,22 +106,8 @@ class Bridge_local(Bridge):
         self._read[itm_ctr] = item
         return itm_ctr
 
-    # _to thread
-    def discard_before(self, ctr):
-        self._read = {
-            key: val
-            for key, val in self._read.items() if key >= ctr
-        }
 
-    # _to thread
-    def get(self, ctr):
-        # in the process and thread case the queue should always be empty if we arrive here
-        # This should also never be executed in process or thread, as then the update function does not block and keys are skipped!
-        if ctr in self._read:
-            return True, self._read[ctr]
-        return False, None
-
-
+@REGISTRY.bridges.decorator
 class Bridge_threads(Bridge):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -116,8 +115,13 @@ class Bridge_threads(Bridge):
         self.queue = aioprocessing.AioQueue()
         self.closed_event = aioprocessing.AioEvent()
         
-        # _to thread
-        self._read = {}
+    # _build thread
+    @staticmethod
+    def can_handle(_from, _to, _data_type=None):
+        # can handle same process, and same thread, with cost 1 (shared mem would be faster, but otherwise this is quite good)
+        from_host, from_process, from_thread = parse_location(_from)
+        to_host, to_process, to_thread = parse_location(_to)
+        return from_host == to_host and from_process == to_process, 2
 
     # _from thread
     def close(self):
@@ -140,37 +144,50 @@ class Bridge_threads(Bridge):
         self._read[itm_ctr] = item
         return itm_ctr
 
-    # _to thread
-    def discard_before(self, ctr):
-        self._read = {
-            key: val
-            for key, val in self._read.items() if key >= ctr
-        }
+@REGISTRY.bridges.decorator
+class Bridge_processes(Bridge_threads):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
-    # _to thread
-    def get(self, ctr):
-        # in the process and thread case the queue should always be empty if we arrive here
-        # This should also never be executed in process or thread, as then the update function does not block and keys are skipped!
-        if ctr in self._read:
-            return True, self._read[ctr]
-        return False, None
+    @staticmethod
+    def can_handle(_from, _to, _data_type=None):
+        # can handle same process, and same thread, with cost 1 (shared mem would be faster, but otherwise this is quite good)
+        from_host, from_process, from_thread = parse_location(_from)
+        to_host, to_process, to_thread = parse_location(_to)
+        return from_host == to_host, 3
 
-
+        
 
 class Multiprocessing_Data_Storage():
     def __init__(self) -> None:
         self.bridges = {}
         self.input_connections = []
 
+        # will be filled by the nodes we input to, so that we know where to put this...
+        # TODO: not sure if this is the best paradigm still...
+        self.bridges_out = {}
+
     @staticmethod
     def resolve_bridge(connection: Connection):
         emit_loc = connection._emit_node.compute_on
         recv_loc = connection._recv_node.compute_on
 
-        # if emit_loc in [Location.PROCESS, Location.THREAD] or recv_loc in [Location.PROCESS, Location.THREAD]:
-        #     return Bridge_mp(_from=emit_loc, _to=recv_loc)
-        # else:
-        return Bridge_local(_from=emit_loc, _to=recv_loc)
+        print('----')
+        print('Bridging', emit_loc, recv_loc)
+        print('Bridging', parse_location(emit_loc), parse_location(recv_loc))
+
+        possible_bridges_pair = []
+        for bridge in get_registry().bridges.values():
+            can_handle, cost = bridge.can_handle(_from=emit_loc, _to=recv_loc)
+            if can_handle:
+                possible_bridges_pair.append((cost, bridge))
+
+        if len(possible_bridges_pair) == 0:
+            raise ValueError('No known bridge for connection', connection)
+
+        possible_bridges = list(zip(*list(sorted(possible_bridges_pair, key=lambda t:t[0]))))[1]
+        print('Using Bridge: ', possible_bridges[0])
+        return possible_bridges[0](_from=emit_loc, _to=recv_loc)
 
     # _to thread
     def all_closed(self):
@@ -181,20 +198,22 @@ class Multiprocessing_Data_Storage():
         await asyncio.gather(*[b.onclose() for b in self.bridges.values()])
         print('All bridges empty and closed')
 
+    # _to thread
     def set_inputs(self, input_connections):
         self.input_connections = input_connections
         for con in input_connections:
             self.bridges[con._recv_port.key] = self.resolve_bridge(con)
+            # con._emit_node.data_storage.
 
+    # def receive_output_object(self, output_connection, bridge):
+    #     self.bridges_out[output_connection._emit_port.key] = bridge
+
+    # TODO: may be removed?
     def empty(self):
         return all([q.empty() for q in self.bridges.values()])
 
-    # can be called from any process
-    def put(self, connection, ctr, data):
-        # print('data storage putting value', connection._recv_port.key, type(self.bridges[connection._recv_port.key]))
-        self.bridges[connection._recv_port.key].put(ctr, data)
 
-    # will only be called within the processesing process
+    # _to thread
     def get(self, ctr):
         res = {}
         # update current state, based on own clock
@@ -207,10 +226,15 @@ class Multiprocessing_Data_Storage():
                 res[key] = cur_value
         return res 
     
-    # will only be called within the processesing process
+    # _to thread
     def discard_before(self, ctr):
         for bridge in self.bridges.values():
             bridge.discard_before(ctr) 
+
+    # _from thread
+    def put(self, connection, ctr, data):
+        # print('data storage putting value', connection._recv_port.key, type(self.bridges[connection._recv_port.key]))
+        self.bridges[connection._recv_port.key].put(ctr, data)
 
     # _from thread
     def close_bridges(self, node):

@@ -1,6 +1,6 @@
 from itertools import groupby
 from .node import Node
-from .components.computer import resolve_computer
+from .components.computer import parse_location, Processor_threads, Processor_process
 
 class Graph():
 
@@ -11,16 +11,31 @@ class Graph():
         self.computers = []
 
     def start_all(self):
-        locations = groupby(sorted(self.nodes, key=lambda n: n.compute_on), key=lambda n: n.compute_on)
-        for loc, loc_nodes in locations:
-            loc_nodes = list(loc_nodes)
-            print(f'Resolving computer group. Location: {loc}; Nodes: {len(loc_nodes)}')
-            cmp = resolve_computer(loc)(nodes=loc_nodes, location=loc)
-            cmp.setup()
-            self.computers.append(cmp)
+        hosts, processes, threads = list(zip(*[parse_location(n.compute_on) for n in self.nodes]))
         
+        # ignore hosts for now, as we do not have an implementation for them atm
+        # host_group = groupby(sorted(zip(hosts, self.nodes), key=lambda t: t[0]))
+        # for host in hosts:
+
+        process_groups = groupby(sorted(zip(processes, threads, self.nodes), key=lambda t: t[0]), key=lambda t: t[0])
+        for process, process_group in process_groups:
+            _, process_threads, process_nodes = list(zip(*list(process_group)))
+
+            if not process == '':
+                cmp = Processor_process(nodes=process_nodes, location=process)
+                cmp.setup()
+                self.computers.append(cmp)
+            else:
+                thread_groups = groupby(sorted(zip(process_threads, process_nodes), key=lambda t: t[0]), key=lambda t: t[0])
+                for thread, thread_group in thread_groups:
+                    _, thread_nodes = list(zip(*list(thread_group)))
+                    cmp = Processor_threads(nodes=thread_nodes, location=thread)
+                    cmp.setup()
+                    self.computers.append(cmp)
+
         for cmp in self.computers:
             cmp.start()
+                
 
     def join_all(self):
         for cmp in self.computers:

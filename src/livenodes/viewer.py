@@ -2,7 +2,7 @@ import multiprocessing as mp
 import queue
 import time
 
-from .node import Node, Location
+from .node import Node
 from .components.utils.reportable import Reportable
 
 

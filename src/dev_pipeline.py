@@ -5,7 +5,7 @@ from livenodes.nodes.in_data import In_data
 from livenodes.nodes.in_playback import In_playback
 from livenodes.nodes.out_data import Out_data
 # from livenodes.nodes.draw_lines import Draw_lines
-from livenodes.node import Node, Location
+from livenodes.node import Node
 from livenodes.components.utils.logger import logger, LogLevel
 
 
@@ -45,7 +45,7 @@ if __name__ == '__main__':
         "targets": ["None", "Left Right"]
     }
 
-    # # pipeline = In_playback(compute_on=Location.THREAD, block=False, files="./data/KneeBandageCSL2018/**/*.h5", meta=meta)
+    # # pipeline = In_playback(compute_on="1", block=False, files="./data/KneeBandageCSL2018/**/*.h5", meta=meta)
     # pipeline = In_playback(block=False, files="./data/bub/*.h5", meta=meta, annotation_holes="None")
     pipeline = In_data(files="./data/bub/*.h5", meta=meta, emit_at_once=1, compute_on=3)
 
@@ -55,9 +55,9 @@ if __name__ == '__main__':
     # channel_names = ['Gonio2', 'GyroLow1', 'GyroLow2', 'GyroLow3']
     # idx = np.isin(recorded_channels, channel_names).nonzero()[0]
 
-    # # draw = Draw_lines(name='Raw Data', compute_on=Location.THREAD)
-    # draw = Draw_lines(name='Raw Data', compute_on=Location.PROCESS)
-    # # draw = Draw_lines(name='Raw Data', compute_on=Location.SAME)
+    # # draw = Draw_lines(name='Raw Data', compute_on="1")
+    # draw = Draw_lines(name='Raw Data', compute_on="1:1")
+    # # draw = Draw_lines(name='Raw Data', compute_on="")
     # draw.connect_inputs_to(pipeline)
 
     print('=== Load Pipeline ====')

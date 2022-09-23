@@ -2,7 +2,7 @@ import time
 import pytest
 import multiprocessing as mp
 
-from livenodes.node import Node, Location
+from livenodes.node import Node
 from livenodes.producer import Producer
 from livenodes.graph import Graph
 
@@ -58,10 +58,10 @@ class Save(Node):
 # Arrange
 @pytest.fixture
 def create_simple_graph():
-    data = Data(name="A", compute_on=Location.SAME)
-    quadratic = Quadratic(name="B", compute_on=Location.SAME)
-    out1 = Save(name="C", compute_on=Location.SAME)
-    out2 = Save(name="D", compute_on=Location.SAME)
+    data = Data(name="A", compute_on="")
+    quadratic = Quadratic(name="B", compute_on="")
+    out1 = Save(name="C", compute_on="")
+    out2 = Save(name="D", compute_on="")
 
     out1.connect_inputs_to(data)
     quadratic.connect_inputs_to(data)
@@ -72,10 +72,10 @@ def create_simple_graph():
 
 @pytest.fixture
 def create_simple_graph_mp():
-    data = Data(name="A", compute_on=Location.PROCESS)
-    quadratic = Quadratic(name="B", compute_on=Location.PROCESS)
-    out1 = Save(name="C", compute_on=Location.PROCESS)
-    out2 = Save(name="D", compute_on=Location.PROCESS)
+    data = Data(name="A", compute_on="1:1")
+    quadratic = Quadratic(name="B", compute_on="1:1")
+    out1 = Save(name="C", compute_on="1:1")
+    out2 = Save(name="D", compute_on="1:1")
 
     out1.connect_inputs_to(data)
     quadratic.connect_inputs_to(data)
@@ -86,10 +86,10 @@ def create_simple_graph_mp():
 
 @pytest.fixture
 def create_simple_graph_mixed():
-    data = Data(name="A", compute_on=Location.THREAD)
-    quadratic = Quadratic(name="B", compute_on=Location.SAME)
-    out1 = Save(name="C", compute_on=Location.PROCESS)
-    out2 = Save(name="D", compute_on=Location.THREAD)
+    data = Data(name="A", compute_on="1")
+    quadratic = Quadratic(name="B", compute_on="")
+    out1 = Save(name="C", compute_on="1:1")
+    out2 = Save(name="D", compute_on="1")
 
     out1.connect_inputs_to(data)
     quadratic.connect_inputs_to(data)
