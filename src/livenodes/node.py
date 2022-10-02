@@ -1,6 +1,6 @@
 import asyncio
 from functools import partial
-from re import S
+import multiprocessing as mp
 import numpy as np
 import traceback
 
@@ -37,11 +37,9 @@ class Node(Connectionist, Logger, Serializer):
 
         self.should_time = should_time
         self.compute_on = compute_on
-        self.data_storage = Multiprocessing_Data_Storage()
         self.bridge_listeners = []
 
-        # for port in self.ports_in:
-        #     print(port, type(port))
+        self.locked = mp.Event()
 
         self._ctr = None
 
@@ -55,6 +53,9 @@ class Node(Connectionist, Logger, Serializer):
         else:
             self._call_user_fn_process = self._call_user_fn
 
+        # Fix this on creation such that we can still identify a node if it was pickled into another (spawned) process
+        self._id_ = id(self)
+
     def __repr__(self):
         return str(self)
         # return f"{str(self)} Settings:{json.dumps(self._serialize())}"
@@ -64,6 +65,9 @@ class Node(Connectionist, Logger, Serializer):
 
     def __hash__(self) -> int:
         return id(self)
+
+    def identify(self) -> int:
+        return self._id_
 
     # === Connection Stuff =================
     def add_input(self, emit_node: 'Node', emit_port:Port, recv_port:Port):
@@ -79,7 +83,6 @@ class Node(Connectionist, Logger, Serializer):
     #     """
     #     pass
     
-
     def _call_user_fn(self, _fn, _fn_name, *args, **kwargs):
         try:
             return _fn(*args, **kwargs)
@@ -87,11 +90,39 @@ class Node(Connectionist, Logger, Serializer):
             self.error(f'failed to execute {_fn_name}')
             self.error(e)
             self.error(traceback.format_exc())
-    
 
-    def ready(self):
+
+    # === API for Computers =================
+    
+    # no further inputs, outputs or settings changes are allowed and we will resolve connections
+    # TODO: actually lock those ressources
+    # _main thread
+    def lock(self):
+        self.info('Locking')
+        self.locked.set()
+
+        self.info('Resolving Bridges')
+        emit_endpoint_pairs = []
+        recv_endpoint_pairs = []
+
+        for con in self.input_connections:
+            emit_endpoint, recv_endpoint= Multiprocessing_Data_Storage.resolve_bridge(con)
+            emit_endpoint_pairs.append((con, emit_endpoint))
+            recv_endpoint_pairs.append((con, recv_endpoint))
+        
+        self.info('Ready to proceed with run calls')
+        
+        return emit_endpoint_pairs, recv_endpoint_pairs
+
+    # _computer thread
+    # here inputs are the endpoints we receive data from and outputs are the endpoints we send data through
+    def ready(self, input_endpoints=None, output_endpoints=None):
         self.info('Readying')
-        self.data_storage.set_inputs(self.input_connections)
+        self.data_storage = Multiprocessing_Data_Storage(input_endpoints, output_endpoints)
+
+        if not self.locked.is_set():
+            self.error('Forgot to lock node')
+            raise Exception('Node was not locked and no inputs where set')
 
         self._loop = asyncio.get_event_loop()
         self._finished = self._loop.create_future()
@@ -104,6 +135,7 @@ class Node(Connectionist, Logger, Serializer):
 
         return self._finished
 
+    # _computer thread
     def start(self):
         self.info('Starting')
         # TODO: not sure about this yet: seems uneccessary if we have the ready anyway.. 
@@ -113,6 +145,7 @@ class Node(Connectionist, Logger, Serializer):
         self._onstart()
 
     # TODO: currently this may be called multiple times: should we change that to ensure a single call?
+    # _computer thread
     def stop(self):
         self.info('Stopping')
 
@@ -123,6 +156,7 @@ class Node(Connectionist, Logger, Serializer):
 
         self._onstop()
 
+    # _computer thread
     def _finish(self, task=None):
         self.info('Finishing')
         # task=none is needed for the done_callback but not used
@@ -141,15 +175,20 @@ class Node(Connectionist, Logger, Serializer):
             self._finished.set_result(True)
 
 
-    async def _process_recurse(self, queue):
+    # _computer thread
+    async def _await_input(self, queue):
         while True:
             ctr = await queue.update()
             self._process(ctr)
 
+    # _computer thread
     def _setup_process(self):
         self.bridge_listeners = []
-        for queue in self.data_storage.bridges.values():
-            self.bridge_listeners.append(self._loop.create_task(self._process_recurse(queue)))
+        # TODO: this should not be here. Node should not now about internals of data storage (albeit, that should actually be a mixin...)
+        for queue in self.data_storage.in_bridges.values():
+            # self.verbose(str(queue))
+            self.bridge_listeners.append(self._loop.create_task(self._await_input(queue)))
+        self.debug(f'Found {len(self.bridge_listeners)} input bridges')
 
         # TODO: should we add a "on fail wrap up and tell parent" task here? ie task(wait(self.bridge_listeners, return=first_exception))
 
@@ -175,18 +214,19 @@ class Node(Connectionist, Logger, Serializer):
         for con in self.output_connections:
             if con._emit_port.key == channel:
                 # self.data_storage
-                con._recv_node.receive_data(clock, con, data)
+                # con._recv_node.receive_data(clock, con, data)
+                self.data_storage.put(con, clock, data)
 
-    def receive_data(self, ctr, connection, data):
-        """
-        called in location of emitting node
-        """
-        # store all received data in their according mp.simplequeues
-        # self.error(f'Received: "{connection._recv_port.key}" with clock {ctr}')
-        # self._received_data[key].put(ctr, val)
-        # this is called in the context of the emitting node, the data storage is then in charge of using the right means of transport, such that the process triggered has the available data in the same context as the receiving node's process is called
-        self.verbose('Received', connection, ctr)
-        self.data_storage.put(connection, ctr, data)
+    # def receive_data(self, ctr, connection, data):
+    #     """
+    #     called in location of emitting node
+    #     """
+    #     # store all received data in their according mp.simplequeues
+    #     # self.error(f'Received: "{connection._recv_port.key}" with clock {ctr}')
+    #     # self._received_data[key].put(ctr, val)
+    #     # this is called in the context of the emitting node, the data storage is then in charge of using the right means of transport, such that the process triggered has the available data in the same context as the receiving node's process is called
+    #     self.verbose('Received', connection, ctr)
+    #     self.data_storage.put(connection, ctr, data)
 
     def _process(self, ctr):
         """

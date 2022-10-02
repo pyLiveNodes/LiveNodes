@@ -26,7 +26,7 @@ def parse_location(location):
     return host, process, thread
 
 class Processor_threads(Logger):
-    def __init__(self, nodes, location) -> None:
+    def __init__(self, nodes, location, bridges) -> None:
         super().__init__()
         # -- both threads
         # indicates that the readied nodes should start sending data
@@ -40,6 +40,7 @@ class Processor_threads(Logger):
 
         # -- parent thread
         self.nodes = nodes
+        self.bridges = bridges
         self.subprocess = None
         self.start_lock.acquire()
         self.stop_lock.acquire()
@@ -54,7 +55,8 @@ class Processor_threads(Logger):
     def setup(self):
         self.info('Readying')
         self.subprocess = th.Thread(
-                        target=self.start_subprocess)
+                        target=self.start_subprocess,
+                        args=(self.bridges,))
         self.subprocess.start()
 
     # parent thread
@@ -87,7 +89,7 @@ class Processor_threads(Logger):
         self.subprocess = None
         
     # worker thread
-    def start_subprocess(self):
+    def start_subprocess(self, bridges):
         self.info('Starting Thread')
 
         self.loop = asyncio.new_event_loop()
@@ -95,8 +97,9 @@ class Processor_threads(Logger):
 
         futures = []
 
-        for node in self.nodes:
-            futures.append(node.ready())
+        for node, bridges in zip(self.nodes, bridges):
+            input_bridges, output_bridges = bridges
+            futures.append(node.ready(input_bridges, output_bridges))
 
         self.start_lock.acquire()
 
@@ -161,7 +164,7 @@ class Processor_threads(Logger):
 
 
 class Processor_process(Logger):
-    def __init__(self, nodes, location, stop_timeout_threads=0.1, close_timeout_threads=0.1) -> None:
+    def __init__(self, nodes, location, bridges, stop_timeout_threads=0.1, close_timeout_threads=0.1) -> None:
         super().__init__()
         # -- both processes
         # indicates that the readied nodes should start sending data
@@ -175,6 +178,7 @@ class Processor_process(Logger):
 
         # -- main process
         self.nodes = nodes
+        self.bridges = bridges
         self.subprocess = None
         self.start_lock.acquire()
         self.stop_lock.acquire()
@@ -194,7 +198,8 @@ class Processor_process(Logger):
     def setup(self):
         self.info('Readying')
         self.subprocess = mp.Process(
-                        target=self.start_subprocess)
+                        target=self.start_subprocess,
+                        args=(self.bridges,))
         self.subprocess.start()
 
     # parent process
@@ -232,16 +237,20 @@ class Processor_process(Logger):
         self.subprocess = None
         
     # worker process
-    def start_subprocess(self):
+    def start_subprocess(self, bridges):
         self.info('Starting Process')
 
         computers = []
+        # TODO: it's a little weird, that bridges are specifically passed, but nodes are not, we should investigate that
+        # ie, probably this is fine, as we specifcially need the bridge endpoints, but the nodes may just be pickled, but looking into this never hurts....
+        bridge_lookup = {node.identify(): bridge for node, bridge in zip(self.nodes, bridges)}
 
         locations = groupby(sorted(self.nodes, key=lambda n: n.compute_on), key=lambda n: n.compute_on)
         for loc, loc_nodes in locations:
             loc_nodes = list(loc_nodes)
             print(f'Resolving computer group. Location: {loc}; Nodes: {len(loc_nodes)}')
-            cmp = Processor_threads(nodes=loc_nodes, location=loc)
+            node_specific_bridges = [bridge_lookup[n.identify()] for n in loc_nodes]
+            cmp = Processor_threads(nodes=loc_nodes, location=loc, bridges=node_specific_bridges)
             cmp.setup()
             computers.append(cmp)
 
