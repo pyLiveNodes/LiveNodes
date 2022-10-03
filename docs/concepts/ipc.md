@@ -20,6 +20,7 @@
 
 # Alternative IPC setup
 
+## Pipes
 Might be worth to think some more about pipes...
 
 Note on design pattern where nodes connect by themselfes and send the endpoints to their specific counterparts via the parent process. 
@@ -33,3 +34,9 @@ This not possible with queues, as they cannot be passed between process other th
 From the docs: https://docs.python.org/3/library/multiprocessing.html#multiprocessing.connection.Connection.recv_bytes_into
 
 Changed in version 3.3: Connection objects themselves can now be transferred between processes using Connection.send() and Connection.recv().
+
+
+## Shared Memory
+- Might be awesome, but requires knowlegde about the data to be send as well as the required size (?)
+- Might lend itself more to bridges than to node-view coms 
+(on that note: it might be worth considering the same coms process for node-view as node-node -> allows for visualization of nodes on a different pc -> not sure if that is a good idea tho... pro: vis from another pc, same performance improvements as in bridges; con: no way to drop vis requests if overflowing, lag in interaction from vis to actual node-running code; confusion if at somepoint two uis on different pcs)
