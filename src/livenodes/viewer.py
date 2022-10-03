@@ -16,7 +16,8 @@ class View(Node):
         # TODO: evaluate if one or two is better as maxsize (the difference should be barely noticable, but not entirely sure)
         # -> one: most up to date, but might just miss each other? probably only applicable if sensor sampling rate is vastly different from render fps?
         # -> two: always one frame behind, but might not jump then
-        self._draw_state = mp.Queue()
+        # self._draw_state = mp.Queue()
+        self._draw_state = mp.Queue(maxsize=2)
 
     def register_reporter(self, reporter_fn):
         if hasattr(self, 'fps'):
@@ -81,7 +82,10 @@ class View(Node):
         Emits data to draw process, ie draw_inits update fn
         """
         self.verbose('Storing for draw:', kwargs.keys())
-        self._draw_state.put_nowait(kwargs)
+        try:
+            self._draw_state.put_nowait(kwargs)
+        except queue.Full:
+            self.debug('Could not render data, view not ready.')
 
 
 class FPS_Helper(Reportable):
@@ -141,15 +145,18 @@ class View_MPL(View):
 
             self.fps.count()
 
-            while not self._draw_state.empty():
-                cur_state = self._draw_state.get()
-                # always execute the update, even if no new data is added, as a view might want to update not based on the self emited data
-                # this happens for instance if the view wants to update based on user interaction (and not data)
-                if self._should_draw(**cur_state):
-                    artis_storage['returns'] = update_fn(**cur_state)
-                    self.verbose('Decided to draw', cur_state.keys())
-                # else:
-                #     self.verbose('Decided not to draw', cur_state.keys())
+            try:
+                cur_state = self._draw_state.get_nowait()
+            except queue.Empty:
+                pass
+
+            # always execute the update, even if no new data is added, as a view might want to update not based on the self emited data
+            # this happens for instance if the view wants to update based on user interaction (and not data)
+            if self._should_draw(**cur_state):
+                artis_storage['returns'] = update_fn(**cur_state)
+                self.verbose('Decided to draw', cur_state.keys())
+            # else:
+            #     self.verbose('Decided not to draw', cur_state.keys())
                     
             return artis_storage['returns']
 
@@ -181,15 +188,17 @@ class View_QT(View):
                 
                 self.fps.count()
 
-                while not self._draw_state.empty():
-                    cur_state = self._draw_state.get()
+                try:
+                    cur_state = self._draw_state.get_nowait()
+                except queue.Empty:
+                    pass
 
-                    if self._should_draw(**cur_state):
-                        self.verbose('Decided to draw', cur_state.keys())
-                        update_fn(**cur_state)
-                        return True
-                    # else:
-                    #     self.verbose('Decided not to draw', cur_state.keys())
+                if self._should_draw(**cur_state):
+                    self.verbose('Decided to draw', cur_state.keys())
+                    update_fn(**cur_state)
+                    return True
+                # else:
+                #     self.verbose('Decided not to draw', cur_state.keys())
 
                 return False
 
@@ -222,15 +231,17 @@ class View_Vispy(View):
             
             self.fps.count()
 
-            while not self._draw_state.empty():
-                cur_state = self._draw_state.get()
+            try:
+                cur_state = self._draw_state.get_nowait()
+            except queue.Empty:
+                pass
 
-                if self._should_draw(**cur_state):
-                    self.verbose('Decided to draw', cur_state.keys())
-                    update_fn(**cur_state)
-                    return True
-                # else:
-                #     self.verbose('Decided not to draw', cur_state.keys())
+            if self._should_draw(**cur_state):
+                self.verbose('Decided to draw', cur_state.keys())
+                update_fn(**cur_state)
+                return True
+            # else:
+            #     self.verbose('Decided not to draw', cur_state.keys())
 
             return False
 
