@@ -3,6 +3,7 @@ import asyncio
 import threading as th
 import multiprocessing as mp
 from itertools import groupby
+import traceback
 
 from livenodes.components.node_logger import Logger
 
@@ -111,8 +112,16 @@ class Processor_threads(Logger):
         self.onstop_task = asyncio.gather(self.handle_stop())
         self.onclose_task = asyncio.gather(self.handle_close())
 
+        # async def combined_tasks():
+        #     try:
+        #         await asyncio.gather(self.onprocess_task, self.onstop_task, self.onclose_task)
+        #     except Exception as e:
+        #         self.error(f'failed on one of the combined tasks in: {str(self)}')
+        #         self.error(e)
+        #         self.error(traceback.format_exc())
+
         # with the return_exceptions, we don't care how the processe
-        self.loop.run_until_complete(asyncio.gather(self.onprocess_task, self.onstop_task, self.onclose_task, return_exceptions=True))
+        self.loop.run_until_complete(asyncio.gather(self.onprocess_task, self.onstop_task, self.onclose_task))
         
         # wrap up the asyncio event loop
         self.loop.stop()
