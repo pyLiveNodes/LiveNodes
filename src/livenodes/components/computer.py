@@ -121,8 +121,8 @@ class Processor_threads(Logger):
         #         self.error(traceback.format_exc())
 
         # with the return_exceptions, we don't care how the processe
-        self.loop.run_until_complete(asyncio.gather(self.onprocess_task, self.onstop_task, self.onclose_task))
-        
+        self.loop.run_until_complete(asyncio.gather(self.onprocess_task, self.onstop_task, self.onclose_task, return_exceptions=True))
+
         # wrap up the asyncio event loop
         self.loop.stop()
         self.loop.close()
