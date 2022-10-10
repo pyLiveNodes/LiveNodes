@@ -102,22 +102,27 @@ class Node(Connectionist, Logger, Serializer):
         self.locked.set()
 
         self.info('Resolving Bridges')
-        emit_endpoint_pairs = []
+        send_endpoint_pairs = []
         recv_endpoint_pairs = []
 
         for con in self.input_connections:
-            emit_endpoint, recv_endpoint= Multiprocessing_Data_Storage.resolve_bridge(con)
-            emit_endpoint_pairs.append((con, emit_endpoint))
+            send_endpoint, recv_endpoint = Multiprocessing_Data_Storage.resolve_bridge(con)
+            send_endpoint_pairs.append((con, send_endpoint))
             recv_endpoint_pairs.append((con, recv_endpoint))
         
         self.info('Ready to proceed with run calls')
+        # self.error('unique send bridges', np.unique([str(b[1]) for b in send_endpoint_pairs], return_counts=True))
+        # self.error('unique recv bridges', np.unique([str(b[1]) for b in recv_endpoint_pairs], return_counts=True))
         
-        return emit_endpoint_pairs, recv_endpoint_pairs
+        return send_endpoint_pairs, recv_endpoint_pairs
 
     # _computer thread
     # here inputs are the endpoints we receive data from and outputs are the endpoints we send data through
     def ready(self, input_endpoints=None, output_endpoints=None):
         self.info('Readying')
+        self.debug('unique send endpoints', [[str(b) for b in bl] for bl in output_endpoints.values()])
+        self.debug('unique recv endpoints', [str(b) for b in input_endpoints.values()])
+        
         self.data_storage = Multiprocessing_Data_Storage(input_endpoints, output_endpoints)
 
         if not self.locked.is_set():
@@ -212,11 +217,12 @@ class Node(Connectionist, Logger, Serializer):
         clock = self._ctr if ctr is None else ctr
 
         self.verbose('Emitting', channel, clock, ctr, self._ctr, np.array(data).shape)
-        for con in self.output_connections:
-            if con._emit_port.key == channel:
+        # for con in self.output_connections:
+        #     if con._emit_port.key == channel:
                 # self.data_storage
                 # con._recv_node.receive_data(clock, con, data)
-                self.data_storage.put(con, clock, data)
+        self.data_storage.put(channel, clock, data)
+
 
     # def receive_data(self, ctr, connection, data):
     #     """

@@ -225,37 +225,22 @@ class Bridge_processes(Bridge_threads):
         to_host, to_process, to_thread = parse_location(_to)
         return from_host == to_host, 3
 
-        
-
-# def resolve_bridge(conneciton):
-#     pass
-
-# class Stream_Receiver():
-    
-#     def __init__(self, input_endpoints) -> None:
-#         pass
-
-# class Stream_Sender():
-
-#     def __init__(self, output_endpoints) -> None:
-#         pass
 
 
-# TODO: this should be part of Node class or at least a mixin!
+
+# TODO: this should be part of Node class or at least a mixin?
 class Multiprocessing_Data_Storage():
     # enpoints should be dicts with con.key: bridge
     def __init__(self, input_endpoints, output_endpoints) -> None:
-        # self.bridges = {}
-        # self.input_connections = []
-
         self.in_bridges = input_endpoints
         self.out_bridges = output_endpoints
 
-        for b in self.out_bridges.values():
-            b.ready_recv()
+        for bl in self.out_bridges.values():
+            for b in bl:
+                b.ready_send()
 
         for b in self.in_bridges.values():
-            b.ready_send()
+            b.ready_recv()
         
     @staticmethod
     def resolve_bridge(connection: Connection):
@@ -335,14 +320,18 @@ class Multiprocessing_Data_Storage():
             bridge.discard_before(ctr) 
 
     # _from thread
-    def put(self, connection, ctr, data):
+    def put(self, output_channel, ctr, data):
         # print('data storage putting value', connection._recv_port.key, type(self.bridges[connection._recv_port.key]))
-        self.out_bridges[connection._recv_port.key].put(ctr, data)
+        # we are the emitting part :D
+        # for b in self.out_bridges[connection._emit_port.key]:
+        for b in self.out_bridges[output_channel]:
+            b.put(ctr, data)
 
     # _from thread
     def close_bridges(self, node):
         # for con in self.input_connections:
         #     if con._emit_node == node:
         #         self.out_bridges[con._recv_port.key].close()
-        for bridge in self.out_bridges.values():
-            bridge.close()
+        for bridge_list in self.out_bridges.values():
+            for bridge in bridge_list:
+                bridge.close()

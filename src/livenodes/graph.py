@@ -1,3 +1,4 @@
+from collections import defaultdict
 from itertools import groupby
 from .node import Node
 from .components.computer import parse_location, Processor_threads, Processor_process
@@ -13,16 +14,20 @@ class Graph():
     def lock_all(self):
         # Lock all nodes for processing (ie no input/output or setting changes allowed from here on)
         # also resolves bridges between nodes soon to be bridges across computers
-        bridges = {n.identify(): ({}, {}) for n in self.nodes}
+        bridges = {n.identify(): {'emit': defaultdict(list), 'recv': {}} for n in self.nodes}
 
         for node in self.nodes:
-            emit_bridges, recv_bridges = node.lock()
+            send_bridges, recv_bridges = node.lock()
 
-            for con, bridge in emit_bridges:
-                bridges[con._emit_node.identify()][1][con._emit_port.key] = bridge
+            # one node can output/emit to multiple other nodes!
+            # these connections may be unique, but at this point we don't really care about where they go, just that the output differs
+            for con, bridge in send_bridges:
+                bridges[con._emit_node.identify()]['emit'][con._emit_port.key].append(bridge)
 
+            # currently we only have one input connection per channel on each node
+            # TODO: change this if we at some point allow multiple inputs per channel per node
             for con, bridge in recv_bridges:
-                bridges[con._recv_node.identify()][0][con._recv_port.key] = bridge
+                bridges[con._recv_node.identify()]['recv'][con._recv_port.key] = bridge
 
         return bridges
 
