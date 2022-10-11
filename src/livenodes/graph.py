@@ -62,6 +62,9 @@ class Graph():
         for cmp in self.computers:
             cmp.start()
                 
+    def is_finished(self):
+        # print([(str(cmp), cmp.is_finished()) for cmp in self.computers])
+        return all([cmp.is_finished() for cmp in self.computers])
 
     def join_all(self):
         for cmp in self.computers:

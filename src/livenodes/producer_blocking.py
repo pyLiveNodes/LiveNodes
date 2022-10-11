@@ -71,7 +71,7 @@ class Producer_Blocking(Producer):
 
     # main thread (interfaced by node system)
     def _onstart(self):
-        self.subprocess = th.Thread(target=self._blocking_onstart, daemon=True)
+        self.subprocess = th.Thread(target=self._blocking_onstart, daemon=True, args=(self.stop_event,))
         # self.subprocess = mp.Process(target=self._blocking_onstart, daemon=True)
         self.subprocess.start()
 

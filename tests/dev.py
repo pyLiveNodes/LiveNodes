@@ -74,10 +74,10 @@ class Save(Node):
 
 
 if __name__ == "__main__":
-    data = Data(name="A", compute_on="")
-    quadratic = Quadratic(name="B", compute_on="")
-    out1 = Save(name="C", compute_on="")
-    out2 = Save(name="D", compute_on="")
+    data = Data(name="A", compute_on="1:0")
+    quadratic = Quadratic(name="B", compute_on="1:1")
+    out1 = Save(name="C", compute_on="2")
+    out2 = Save(name="D", compute_on="1")
 
     out1.connect_inputs_to(data)
     quadratic.connect_inputs_to(data)
@@ -85,7 +85,10 @@ if __name__ == "__main__":
 
     g = Graph(start_node=data)
     g.start_all()
-    g.stop_all()
+    g.join_all()
 
     print(out1.get_state())
     print(out2.get_state())
+    data, quadratic, out1, out2, g = None, None, None, None, None
+    time.sleep(1)
+    print('Finished Test')

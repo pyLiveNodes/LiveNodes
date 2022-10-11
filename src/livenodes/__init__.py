@@ -16,4 +16,4 @@ def get_registry():
 from .node import Node
 from .graph import Graph
 from .viewer import View
-from .components.utils.logger import logger
+from .components.utils.logger import logger, LogLevel

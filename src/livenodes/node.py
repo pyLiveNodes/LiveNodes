@@ -169,7 +169,7 @@ class Node(Connectionist, Logger, Serializer):
         # close bridges telling the following nodes they will not receive input from us anymore
         for con in self.output_connections:
             self.debug('Closing', str(con))
-            self.data_storage.close_bridges(self)
+            self.data_storage.close_bridges()
 
         # indicate to the node, that it now should finish wrapping up
         self.stop()
