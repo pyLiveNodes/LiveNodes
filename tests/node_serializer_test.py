@@ -66,3 +66,16 @@ class TestNodeOperations():
         graph = Node.from_dict(create_connection.to_dict(graph=True))
         assert str(graph) == "A [SimpleNode]"
         assert str(graph.output_connections[0]._recv_node) == "B [SimpleNode]"
+
+    
+    def test_graph_json_same_name(self):
+        node_a = SimpleNode(name="A")
+        node_b = SimpleNode(name="B")
+        node_c = SimpleNode(name="B")
+
+        node_b.connect_inputs_to(node_a)
+        node_c.connect_inputs_to(node_a)
+    
+        graph = Node.from_dict(node_a.to_dict(graph=True))
+        assert str(graph) == "A [SimpleNode]"
+        assert str(graph.output_connections[0]._recv_node) == "B [SimpleNode]"

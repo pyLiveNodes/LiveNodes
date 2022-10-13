@@ -8,8 +8,36 @@ from livenodes.graph import Graph
 
 from typing import NamedTuple
 from livenodes.components.port import Port
+from livenodes import get_registry
 
 import numpy as np
+
+registry = get_registry()
+
+class Port_Data(Port):
+
+    example_values = [np.array([[[1]]])]
+
+    def __init__(self, name='Data', optional=False):
+        super().__init__(name, optional)
+
+    @staticmethod
+    def check_value(value):
+        if not isinstance(value, np.ndarray):
+            return False, "Should be numpy array;"
+        elif len(value.shape) != 3:
+            return False, "Shape should be of length three (Batch, Time, Channel)"
+        return True, None
+
+
+class Ports_simple(NamedTuple):
+    data: Port_Data = Port_Data("Data")
+
+@registry.nodes.decorator
+class SimpleNode(Node):
+    ports_in = Ports_simple()
+    ports_out = Ports_simple()
+
 
 class Port_Data(Port):
 
@@ -74,21 +102,31 @@ class Save(Node):
 
 
 if __name__ == "__main__":
-    data = Data(name="A", compute_on="1:0")
-    quadratic = Quadratic(name="B", compute_on="1:1")
-    out1 = Save(name="C", compute_on="2")
-    out2 = Save(name="D", compute_on="1")
+    # data = Data(name="A", compute_on="1:0")
+    # quadratic = Quadratic(name="B", compute_on="1:1")
+    # out1 = Save(name="C", compute_on="2")
+    # out2 = Save(name="D", compute_on="1")
 
-    out1.connect_inputs_to(data)
-    quadratic.connect_inputs_to(data)
-    out2.connect_inputs_to(quadratic)
+    # out1.connect_inputs_to(data)
+    # quadratic.connect_inputs_to(data)
+    # out2.connect_inputs_to(quadratic)
 
-    g = Graph(start_node=data)
-    g.start_all()
-    g.join_all()
+    # g = Graph(start_node=data)
+    # g.start_all()
+    # g.join_all()
 
-    print(out1.get_state())
-    print(out2.get_state())
-    data, quadratic, out1, out2, g = None, None, None, None, None
-    time.sleep(1)
+    # print(out1.get_state())
+    # print(out2.get_state())
+    # data, quadratic, out1, out2, g = None, None, None, None, None
+    # time.sleep(1)
+    # print('Finished Test')
+
+    node_a = SimpleNode(name="A")
+    node_b = SimpleNode(name="B")
+    node_c = SimpleNode(name="B")
+
+    node_b.connect_inputs_to(node_a)
+    node_c.connect_inputs_to(node_a)
     print('Finished Test')
+
+    

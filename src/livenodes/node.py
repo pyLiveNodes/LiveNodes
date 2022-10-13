@@ -293,6 +293,7 @@ class Node(Connectionist, Logger, Serializer):
     def process_time_series(self, ts):
         return ts
 
+    # TODO: does this hold up for anything except the "standard" Data stream?
     def process(self, data, **kwargs):
         """
         Heart of the nodes processing, should be a stateless(/functional) processing function, 
