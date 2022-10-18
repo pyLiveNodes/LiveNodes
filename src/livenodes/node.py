@@ -2,6 +2,7 @@ import asyncio
 from functools import partial
 import inspect
 import multiprocessing as mp
+import pathlib
 import numpy as np
 import traceback
 
@@ -15,6 +16,7 @@ from .components.node_logger import Logger
 from .components.node_serializer import Serializer
 from .components.bridges import Multiprocessing_Data_Storage
 
+INSTALL_LOC = str(pathlib.Path(__file__).parent.resolve())
 
 class Node(Connectionist, Logger, Serializer):
     # === Information Stuff =================
