@@ -6,6 +6,11 @@ from livenodes.node import Node
 from livenodes.producer import Producer
 from livenodes.graph import Graph
 
+from livenodes import logger, LogLevel, Node
+logger.set_log_level(LogLevel.VERBOSE)
+logger.remove_cb(logger._print)
+logger.register_cb(logger._print, LogLevel.VERBOSE)
+
 from typing import NamedTuple
 from livenodes.components.port import Port
 from livenodes import get_registry
@@ -70,8 +75,8 @@ class Data(Producer):
     def _run(self):
         for ctr in range(10):
             self.info(ctr)
-            self._emit_data(ctr)
-            yield ctr < 9
+            yield self.ret(alternate_data=ctr)
+
 
 
 class Quadratic(Node):
@@ -79,7 +84,8 @@ class Quadratic(Node):
     ports_out = Ports_simple()
 
     def process(self, alternate_data, **kwargs):
-        self._emit_data(alternate_data**2)
+        return self.ret(alternate_data=alternate_data**2)
+
 
 
 class Save(Node):
@@ -102,31 +108,41 @@ class Save(Node):
 
 
 if __name__ == "__main__":
-    # data = Data(name="A", compute_on="1:0")
-    # quadratic = Quadratic(name="B", compute_on="1:1")
-    # out1 = Save(name="C", compute_on="2")
-    # out2 = Save(name="D", compute_on="1")
+    # Processing test
+    mixed = True
+    if not mixed:
+        data = Data(name="A", compute_on="1")
+        quadratic = Quadratic(name="B", compute_on="1")
+        out1 = Save(name="C", compute_on="1")
+        out2 = Save(name="D", compute_on="1")
+    else:
+        data = Data(name="A", compute_on="1:2")
+        quadratic = Quadratic(name="B", compute_on="2:1")
+        out1 = Save(name="C", compute_on="1:1")
+        out2 = Save(name="D", compute_on="1")
 
-    # out1.connect_inputs_to(data)
-    # quadratic.connect_inputs_to(data)
-    # out2.connect_inputs_to(quadratic)
+    out1.connect_inputs_to(data)
+    quadratic.connect_inputs_to(data)
+    out2.connect_inputs_to(quadratic)
 
-    # g = Graph(start_node=data)
-    # g.start_all()
-    # g.join_all()
+    g = Graph(start_node=data)
+    g.start_all()
+    g.join_all()
 
-    # print(out1.get_state())
-    # print(out2.get_state())
+    print(out1.get_state())
+    print(out2.get_state())
     # data, quadratic, out1, out2, g = None, None, None, None, None
     # time.sleep(1)
     # print('Finished Test')
 
-    node_a = SimpleNode(name="A")
-    node_b = SimpleNode(name="B")
-    node_c = SimpleNode(name="B")
 
-    node_b.connect_inputs_to(node_a)
-    node_c.connect_inputs_to(node_a)
-    print('Finished Test')
+    # Same name test
+    # node_a = SimpleNode(name="A")
+    # node_b = SimpleNode(name="B")
+    # node_c = SimpleNode(name="B")
+
+    # node_b.connect_inputs_to(node_a)
+    # node_c.connect_inputs_to(node_a)
+    # print('Finished Test')
 
     
