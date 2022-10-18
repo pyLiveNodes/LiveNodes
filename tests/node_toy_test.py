@@ -28,8 +28,7 @@ class Data(Producer):
     def _run(self):
         for ctr in range(10):
             self.info(ctr)
-            self._emit_data(ctr)
-            yield ctr < 9
+            yield self.ret(alternate_data=ctr)
 
 
 class Quadratic(Node):
@@ -37,7 +36,7 @@ class Quadratic(Node):
     ports_out = Ports_simple()
 
     def process(self, alternate_data, **kwargs):
-        self._emit_data(alternate_data**2)
+        return self.ret(alternate_data=alternate_data**2)
 
 
 class Save(Node):

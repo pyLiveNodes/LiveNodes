@@ -1,5 +1,6 @@
 import asyncio
 from functools import partial
+import inspect
 import multiprocessing as mp
 import numpy as np
 import traceback
@@ -55,6 +56,11 @@ class Node(Connectionist, Logger, Serializer):
 
         # Fix this on creation such that we can still identify a node if it was pickled into another (spawned) process
         self._id_ = id(self)
+
+        # self.ret = namedtuple('ret', [p.key for p in self.ports_out], defaults=[UNSET for _ in self.ports_out])
+
+    def ret(self, **kwargs):
+        return kwargs
 
     def __repr__(self):
         return str(self)
@@ -205,13 +211,19 @@ class Node(Connectionist, Logger, Serializer):
         Called in computation process, ie self.process
         Emits data to childs, ie child.receive_data
         """
+        parent_caller = inspect.getouterframes( inspect.currentframe() )[1]
+        if not parent_caller.filename.startswith(INSTALL_LOC):
+            print('parent', parent_caller.filename)
+            raise Exception('_emit_data should not be called anymore, please return your data. Offending file:', parent_caller.filename)
+
         if channel is None:
             channel = list(self.ports_out._asdict().values())[0].key
         elif isinstance(channel, Port):
             channel = channel.key
         elif type(channel) == str:
             self.info(f'Call by str will be deprecated, got: {channel}')
-            if channel not in self.ports_out._fields:
+            if channel not in [p.key for p in self.ports_out]: 
+                #._fields:
                 raise ValueError('Unknown Port', channel)
                 
         clock = self._ctr if ctr is None else ctr
@@ -257,7 +269,13 @@ class Node(Connectionist, Logger, Serializer):
             # sender will never receive inputs and therefore will never have
             # TODO: IMPORTANT: every node it's own clock seems to have been a mistake: go back to the original idea of "senders and syncs implement clocks and everyone else just passes them along"
             self._ctr = ctr
-            self._call_user_fn_process(self.process, 'process', **_current_data, _ctr=ctr)
+            emit_data = self._call_user_fn_process(self.process, 'process', **_current_data, _ctr=ctr)
+            if emit_data is not None:
+                emit_ctr = None
+                if type(emit_data) == tuple:
+                    emit_data, emit_ctr = emit_data
+                for key, val in emit_data.items():
+                    self._emit_data(data=val, channel=key, ctr=emit_ctr)
             self.verbose('process fn finished')
             self._report(node = self) # for latency and calc reasons
             self.data_storage.discard_before(ctr)

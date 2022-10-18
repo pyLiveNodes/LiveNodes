@@ -55,19 +55,22 @@ class Producer(Node):
         fn = partial(self._call_user_fn_process, next, "runner")
 
         # finish either if no data is present anymore or parent told us to stop (via stop() -> _onstop())
-        while fn(runner) and self._running:
-            if self._emit_ctr_fallback > 0:
-                # self.debug('Putting on queue', str(self), self._ctr)
-                # self.debug('Put on queue')
+        while self._running:
+            emit_data = fn(runner)
+            # if len(emit_ctr) > 0:
+            #     emit_ctr = emit_ctr[0]
+            # else:
+            #     emit_ctr = None
+            
+            if emit_data is not None:
+                for key, val in emit_data.items():
+                    self._emit_data(data=val, channel=key)
                 self._ctr = self._clock.tick()
             else:
-                raise Exception(
-                    f'Runner did not emit data, yet said it would do so in the previous run. Please check your implementation of {self}.'
-                )
-            self._emit_ctr_fallback = 0
-            
-            self._report(node=self)
-            
+                # Received no data from the generator, thus stopping the production :-) 
+                self._onstop()
+
+            self._report(node=self)            
             # allow others to chime in
             await asyncio.sleep(0)
 
@@ -82,8 +85,3 @@ class Producer(Node):
         # mmh, wouldn't this fit more into a on_ready() call?
         loop = asyncio.get_event_loop()
         loop.create_task(self._async_onstart())
-
-    def _emit_data(self, data, channel=None, ctr=None):
-        self._emit_ctr_fallback += 1
-        return super()._emit_data(data, channel, ctr)
-
