@@ -265,5 +265,11 @@ class Connectionist(Logger):
 
         return Image.open(BytesIO(dot.pipe()))
 
-    def dot_graph_full(self, **kwargs):
-        return self.dot_graph(self.discover_graph(self), **kwargs)
+    def dot_graph_full(self, filename=None, file_type='PNG', **kwargs):
+        if filename is None:
+            print('filename will be required in future versions')
+            return self.dot_graph(self.discover_graph(self), **kwargs)
+        else:
+            img = self.dot_graph(self.discover_graph(self), **kwargs)
+            img.save(filename, file_type)
+            img.close()
