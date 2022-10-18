@@ -57,10 +57,6 @@ class Producer(Node):
         # finish either if no data is present anymore or parent told us to stop (via stop() -> _onstop())
         while self._running:
             emit_data = fn(runner)
-            # if len(emit_ctr) > 0:
-            #     emit_ctr = emit_ctr[0]
-            # else:
-            #     emit_ctr = None
             
             if emit_data is not None:
                 for key, val in emit_data.items():

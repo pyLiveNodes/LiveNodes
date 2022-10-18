@@ -109,7 +109,7 @@ class Save(Node):
 
 if __name__ == "__main__":
     # Processing test
-    mixed = True
+    mixed = False
     if not mixed:
         data = Data(name="A", compute_on="1")
         quadratic = Quadratic(name="B", compute_on="1")

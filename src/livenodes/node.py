@@ -59,10 +59,8 @@ class Node(Connectionist, Logger, Serializer):
         # Fix this on creation such that we can still identify a node if it was pickled into another (spawned) process
         self._id_ = id(self)
 
-        # self.ret = namedtuple('ret', [p.key for p in self.ports_out], defaults=[UNSET for _ in self.ports_out])
+        self.ret_accumulated = None
 
-    def ret(self, **kwargs):
-        return kwargs
 
     def __repr__(self):
         return str(self)
@@ -207,16 +205,35 @@ class Node(Connectionist, Logger, Serializer):
         # TODO: should we add a "on fail wrap up and tell parent" task here? ie task(wait(self.bridge_listeners, return=first_exception))
 
 
+    def ret(self, **kwargs):
+        return kwargs
+
+    # optional way to accumulate returns over multiple calls
+    # will reset once ret_accumulated is called in the end
+    def ret_accu(self, value, port):
+        if self.ret_accumulated is None:
+            def h(**kwargs):
+                nonlocal self
+                self.ret_accumulated = None
+                return self.ret(**kwargs)
+            self.ret_accumulated = h
+        self.ret_accumulated = partial(self.ret_accumulated, **{port.key: value})
+
+
     # === Data Stuff =================
     def _emit_data(self, data, channel: Port = None, ctr: int = None):
         """
         Called in computation process, ie self.process
         Emits data to childs, ie child.receive_data
         """
-        parent_caller = inspect.getouterframes( inspect.currentframe() )[1]
-        if not parent_caller.filename.startswith(INSTALL_LOC):
-            print('parent', parent_caller.filename)
-            raise Exception('_emit_data should not be called anymore, please return your data. Offending file:', parent_caller.filename)
+        # TODO: consider how to handle this:
+        # basically: i would like every node to pass data via returns
+        # however, in some producer cases (also biokit train status cases), returns are not feasible but emit must be called directly
+        # not sure how to handle that...
+        # parent_caller = inspect.getouterframes( inspect.currentframe() )[1]
+        # if not parent_caller.filename.startswith(INSTALL_LOC):
+        #     print('parent', parent_caller.filename)
+        #     self.warn('_emit_data should only be called by nodes directly if they know what they ')
 
         if channel is None:
             channel = list(self.ports_out._asdict().values())[0].key
@@ -231,23 +248,8 @@ class Node(Connectionist, Logger, Serializer):
         clock = self._ctr if ctr is None else ctr
 
         self.verbose('Emitting', channel, clock, ctr, self._ctr, np.array(data).shape)
-        # for con in self.output_connections:
-        #     if con._emit_port.key == channel:
-                # self.data_storage
-                # con._recv_node.receive_data(clock, con, data)
         self.data_storage.put(channel, clock, data)
 
-
-    # def receive_data(self, ctr, connection, data):
-    #     """
-    #     called in location of emitting node
-    #     """
-    #     # store all received data in their according mp.simplequeues
-    #     # self.error(f'Received: "{connection._recv_port.key}" with clock {ctr}')
-    #     # self._received_data[key].put(ctr, val)
-    #     # this is called in the context of the emitting node, the data storage is then in charge of using the right means of transport, such that the process triggered has the available data in the same context as the receiving node's process is called
-    #     self.verbose('Received', connection, ctr)
-    #     self.data_storage.put(connection, ctr, data)
 
     def _process(self, ctr):
         """
@@ -265,11 +267,6 @@ class Node(Connectionist, Logger, Serializer):
         # then cleanup aggregated data and advance our own clock
         if self._should_process(**_current_data):
             self.debug('Decided to process', ctr, _current_data.keys())
-            # yes, ```if self.process``` is shorter, but as long as the documentation isn't there this is also very clear on the api
-            # prevent_tick = self.process(**_current_data)
-            # IMPORTANT: this is possible, due to the fact that only sender and syncs have their own clock
-            # sender will never receive inputs and therefore will never have
-            # TODO: IMPORTANT: every node it's own clock seems to have been a mistake: go back to the original idea of "senders and syncs implement clocks and everyone else just passes them along"
             self._ctr = ctr
             emit_data = self._call_user_fn_process(self.process, 'process', **_current_data, _ctr=ctr)
             if emit_data is not None:
