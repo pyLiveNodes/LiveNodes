@@ -97,8 +97,15 @@ class Processor_threads(Logger):
     def start_subprocess(self, bridges):
         self.info('Starting Thread')
 
+        def custom_exception_handler(loop, context):
+            nonlocal self
+            self.error(context)
+            return loop.default_exception_handler(context)
+
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
+        # TODO: this doesn't seem to do much?
+        self.loop.set_exception_handler(custom_exception_handler)
 
         futures = []
 

@@ -7,7 +7,7 @@ from typing import NamedTuple
 class Ports_empty(NamedTuple):
     pass
 
-class Producer(Node):
+class Producer(Node, abstract_class=True):
     """
     Executes onstart and waits for it to return / indicate no more data is remaining.
     Then onstop is executed and 
@@ -24,8 +24,8 @@ class Producer(Node):
 
         self._running = False
 
-    def __init_subclass__(cls):
-        super().__init_subclass__()
+    def __init_subclass__(cls, abstract_class=False):
+        super().__init_subclass__(abstract_class)
         if len(cls.ports_in) > 0:
             # This is a design choice. Technically this might even be possible, but at the time of writing i do not forsee a usefull case.
             raise ValueError('Sender nodes cannot have input')

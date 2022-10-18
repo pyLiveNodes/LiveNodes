@@ -6,7 +6,7 @@ from .node import Node
 from .components.utils.reportable import Reportable
 
 
-class View(Node):
+class View(Node, abstract_class=True):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -107,7 +107,7 @@ def print_fps(fps, **kwargs):
     print(f"Current fps: {fps['fps']:.2f} (Total frames: {fps['total_frames']}) -- {fps['name']}")
 
 
-class View_MPL(View):
+class View_MPL(View, abstract_class=True):
     def _init_draw(self, subfig):
         """
         Similar to init_draw, but specific to matplotlib animations
@@ -156,7 +156,7 @@ class View_MPL(View):
         return update
 
 
-class View_QT(View):
+class View_QT(View, abstract_class=True):
     def _init_draw(self, parent):
         pass
 
@@ -197,7 +197,7 @@ class View_QT(View):
         self.debug('No update function was returned, as none exists.')
         return None
 
-class View_Vispy(View):
+class View_Vispy(View, abstract_class=True):
     def _init_draw(self, fig):
         def update(**kwargs):
             raise NotImplementedError()

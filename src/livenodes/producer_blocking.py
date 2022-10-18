@@ -6,7 +6,7 @@ import threading as th
 # import multiprocessing as mp
 import aioprocessing
 
-class Producer_Blocking(Producer):
+class Producer_Blocking(Producer, abstract_class=True):
     """
     Executes onstart and waits for it to return / indicate no more data is remaining.
     Then onstop is executed and 

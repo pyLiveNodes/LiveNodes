@@ -83,11 +83,33 @@ class Node(Connectionist, Logger, Serializer):
         return super().add_input(emit_node, emit_port, recv_port)
 
     # # === Subclass Validation Stuff =================
-    # def __init_subclass__(self):
-    #     """
-    #     Check if a new class instance is valid, ie if channels are correct, info is existing etc
-    #     """
-    #     pass
+    def __init_subclass__(self, abstract_class=False):
+        """
+        Check if a new class instance is valid, ie if channels are correct, info is existing etc
+        """
+        if not abstract_class:
+            ### check if ports where set correctly
+            if self.ports_in is None:
+                raise Exception('Class is required to define input ports.')
+            else:
+                for p in self.ports_in:
+                    if (not isinstance(p, Port)) or (p.__class__ == Port):
+                        raise Exception('Input ports must be subclasses of port. Got: ', p.__class__, p)
+
+            if self.ports_out is None:
+                raise Exception('Class is required to define output ports.')
+            else:
+                for p in self.ports_out:
+                    if (not isinstance(p, Port)) or (p.__class__ == Port):
+                        raise Exception('Output ports must be subclasses of port. Got: ', p.__class__, p)
+        # if len(self.ports_in.example_values) <= 0:
+        #     raise Exception('Ports likely still set to default')
+        # else:
+        #     # check if check_value is implemented -> also a good way to know if Port instead of a subclass is used
+        #     for val in self.ports_in.example_values:
+        #         self.ports_in.check_value(val)
+            
+
     
     def _call_user_fn(self, _fn, _fn_name, *args, **kwargs):
         try:
@@ -190,13 +212,18 @@ class Node(Connectionist, Logger, Serializer):
     # _computer thread
     async def _await_input(self, queue):
         while True:
-            ctr = await queue.update()
-            self._process(ctr)
+            try:
+                ctr = await queue.update()
+                self._process(ctr)
+            except Exception as e:
+                self.error(f'failed to execute queue update')
+                self.error(e)
+                self.error(traceback.format_exc())
 
     # _computer thread
     def _setup_process(self):
         self.bridge_listeners = []
-        # TODO: this should not be here. Node should not now about internals of data storage (albeit, that should actually be a mixin...)
+        # TODO: this should not be here. Node should not now about internals of data storage (albeit, data_storage could actually be a mixin...)
         for queue in self.data_storage.in_bridges.values():
             # self.verbose(str(queue))
             self.bridge_listeners.append(self._loop.create_task(self._await_input(queue)))
@@ -240,7 +267,7 @@ class Node(Connectionist, Logger, Serializer):
         elif isinstance(channel, Port):
             channel = channel.key
         elif type(channel) == str:
-            self.info(f'Call by str will be deprecated, got: {channel}')
+            self.info(f'Call by str will be deprecated, got: {channel}', [p.key for p in self.ports_out])
             if channel not in [p.key for p in self.ports_out]: 
                 #._fields:
                 raise ValueError('Unknown Port', channel)
