@@ -251,7 +251,7 @@ class Connectionist(Logger):
             if len(node.ports_out) <= 0:
                 shape = 'trapezium'
             disp_name = node.name if name else str(node)
-            dot.node(str(node), disp_name, shape=shape, style='rounded')
+            dot.node(str(node.identify()), disp_name, shape=shape, style='rounded')
 
         # Second pass: add edges based on output links
         for node in nodes:
@@ -259,8 +259,8 @@ class Connectionist(Logger):
                 l = None
                 if edge_labels:
                     l = f"{con._emit_port.label}\n->\n{con._recv_port.label}"
-                dot.edge(str(node),
-                         str(con._recv_node),
+                dot.edge(str(node.identify()),
+                         str(con._recv_node.identify()),
                          label=l)
 
         return Image.open(BytesIO(dot.pipe()))

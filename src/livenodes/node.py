@@ -1,6 +1,6 @@
 import asyncio
 from functools import partial
-import inspect
+import json
 import multiprocessing as mp
 import pathlib
 import numpy as np
@@ -17,6 +17,7 @@ from .components.node_serializer import Serializer
 from .components.bridges import Multiprocessing_Data_Storage
 
 INSTALL_LOC = str(pathlib.Path(__file__).parent.resolve())
+    
 
 class Node(Connectionist, Logger, Serializer):
     # === Information Stuff =================
@@ -72,8 +73,46 @@ class Node(Connectionist, Logger, Serializer):
     def __hash__(self) -> int:
         return id(self)
 
+    # identify a node by it's memory adress, only consistent within one instantiation of a graph
+    # def identify(self) -> int:
+    #     return self._id_
+    
+    # identify a node by it's position/order inside of the full graph
+    # only useful if the graph doesn't change between identifications otherwise the index is unstable and thus the identification is void!
     def identify(self) -> int:
-        return self._id_
+        # idea: use discover_graph and some deterministic sorting, then return the index within that list
+        # -> this could maybe also replace the original identify function, as it's independent of the instantiation
+        nodes = self.discover_graph(self)
+
+        nodes_sorted_str = list(sorted(nodes, key=str))
+        
+        def calc_detailed_comp(node):
+            node_str = str(node)
+            in_idx = json.dumps([nodes_sorted_str.index(x._emit_node) for x in node.input_connections])
+            out_idx = json.dumps([nodes_sorted_str.index(x._recv_node) for x in node.output_connections])
+            settings = json.dumps(node._node_settings())
+            mem_addr = id(node)
+            # last order resort is the mem address, which should at least be a distinguishing factor within a processes'lifetime
+            # if the mem_addr is the only distinguishing factor the nodes are virtually identical except for instantiation -> it doesn't really matter if we confuse them, as long as the confusion is consistent within a living process
+            return f"{node_str}__{in_idx}__{out_idx}__{settings}__{mem_addr}"
+        nodes_sorted_connections = list(sorted(nodes, key=calc_detailed_comp))
+        
+        # nodes_sorted_final = []
+        # for _, group_iter in groupby(nodes_sorted_connections, key=calc_detailed_comp):
+        #     g = list(group_iter)
+        # #     print(name, g)
+        #     if len(g) == 1:
+        #         nodes_sorted_final.append(g)
+        #     else:
+        #         nodes_sorted_final.extend([f"{n}_{i}" for i, n in enumerate(g)])
+
+        #         input_index = [nodes_sorted_str.index(x._emit_node) for x in g[0].input_connections]
+        #         if len(input_index) > 0:
+        #             for 
+        #         output_index = [nodes_sorted_str.index(x._recv_node) for x in g[0].output_connections]
+        #         nodes_sorted_connections.extend()
+
+        return list(nodes_sorted_connections).index(self)
 
     # === Connection Stuff =================
     def add_input(self, emit_node: 'Node', emit_port:Port, recv_port:Port):
