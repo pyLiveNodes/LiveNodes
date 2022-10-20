@@ -81,7 +81,7 @@ class Serializer():
 
     def save(self, path, graph=True):
         json_str = self.to_dict(graph=graph)
-        print(json_str)
+        # print(json_str)
 
         # TODO: check if folder exists
         with open(path, 'w') as f:
