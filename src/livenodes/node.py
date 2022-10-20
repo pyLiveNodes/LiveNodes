@@ -79,7 +79,7 @@ class Node(Connectionist, Logger, Serializer):
     
     # identify a node by it's position/order inside of the full graph
     # only useful if the graph doesn't change between identifications otherwise the index is unstable and thus the identification is void!
-    def identify(self) -> int:
+    def identify(self) -> str:
         # idea: use discover_graph and some deterministic sorting, then return the index within that list
         # -> this could maybe also replace the original identify function, as it's independent of the instantiation
         nodes = self.discover_graph(self)
@@ -112,7 +112,7 @@ class Node(Connectionist, Logger, Serializer):
         #         output_index = [nodes_sorted_str.index(x._recv_node) for x in g[0].output_connections]
         #         nodes_sorted_connections.extend()
 
-        return list(nodes_sorted_connections).index(self)
+        return f"{str(self)}_{list(nodes_sorted_connections).index(self)}"
 
     # === Connection Stuff =================
     def add_input(self, emit_node: 'Node', emit_port:Port, recv_port:Port):
