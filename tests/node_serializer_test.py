@@ -56,7 +56,7 @@ class TestNodeOperations():
     def test_node_json(self, node_a):
         # check json format
         assert json.dumps(node_a.to_dict()) == json.dumps(
-            {node_a.identify(): node_a.get_settings()})
+            {str(node_a): node_a.get_settings()})
 
         node_a_des = SimpleNode.from_dict(node_a.to_dict())
         assert node_a_des is not None

@@ -14,7 +14,7 @@ class Graph():
     def lock_all(self):
         # Lock all nodes for processing (ie no input/output or setting changes allowed from here on)
         # also resolves bridges between nodes soon to be bridges across computers
-        bridges = {n.identify(): {'emit': defaultdict(list), 'recv': {}} for n in self.nodes}
+        bridges = {str(n): {'emit': defaultdict(list), 'recv': {}} for n in self.nodes}
 
         for node in self.nodes:
             send_bridges, recv_bridges = node.lock()
@@ -22,12 +22,12 @@ class Graph():
             # one node can output/emit to multiple other nodes!
             # these connections may be unique, but at this point we don't really care about where they go, just that the output differs
             for con, bridge in send_bridges:
-                bridges[con._emit_node.identify()]['emit'][con._emit_port.key].append(bridge)
+                bridges[str(con._emit_node)]['emit'][con._emit_port.key].append(bridge)
 
             # currently we only have one input connection per channel on each node
             # TODO: change this if we at some point allow multiple inputs per channel per node
             for con, bridge in recv_bridges:
-                bridges[con._recv_node.identify()]['recv'][con._recv_port.key] = bridge
+                bridges[str(con._recv_node)]['recv'][con._recv_port.key] = bridge
 
         return bridges
 
@@ -46,7 +46,7 @@ class Graph():
             _, process_threads, process_nodes = list(zip(*list(process_group)))
 
             if not process == '':
-                node_specific_bridges = [bridges[n.identify()] for n in process_nodes]
+                node_specific_bridges = [bridges[str(n)] for n in process_nodes]
                 cmp = Processor_process(nodes=process_nodes, location=process, bridges=node_specific_bridges)
                 cmp.setup()
                 self.computers.append(cmp)
@@ -54,7 +54,7 @@ class Graph():
                 thread_groups = groupby(sorted(zip(process_threads, process_nodes), key=lambda t: t[0]), key=lambda t: t[0])
                 for thread, thread_group in thread_groups:
                     _, thread_nodes = list(zip(*list(thread_group)))
-                    node_specific_bridges = [bridges[n.identify()] for n in thread_nodes]
+                    node_specific_bridges = [bridges[str(n)] for n in thread_nodes]
                     cmp = Processor_threads(nodes=thread_nodes, location=thread, bridges=node_specific_bridges)
                     cmp.setup()
                     self.computers.append(cmp)

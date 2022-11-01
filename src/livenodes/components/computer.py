@@ -271,13 +271,13 @@ class Processor_process(Logger):
         computers = []
         # TODO: it's a little weird, that bridges are specifically passed, but nodes are not, we should investigate that
         # ie, probably this is fine, as we specifcially need the bridge endpoints, but the nodes may just be pickled, but looking into this never hurts....
-        bridge_lookup = {node.identify(): bridge for node, bridge in zip(self.nodes, bridges)}
+        bridge_lookup = {str(node): bridge for node, bridge in zip(self.nodes, bridges)}
 
         locations = groupby(sorted(self.nodes, key=lambda n: n.compute_on), key=lambda n: n.compute_on)
         for loc, loc_nodes in locations:
             loc_nodes = list(loc_nodes)
             print(f'Resolving computer group. Location: {loc}; Nodes: {len(loc_nodes)}')
-            node_specific_bridges = [bridge_lookup[n.identify()] for n in loc_nodes]
+            node_specific_bridges = [bridge_lookup[str(n)] for n in loc_nodes]
             cmp = Processor_threads(nodes=loc_nodes, location=loc, bridges=node_specific_bridges)
             cmp.setup()
             computers.append(cmp)

@@ -18,15 +18,20 @@ class Connectionist(Logger):
     ports_in = Ports_simple()
     ports_out = Ports_simple()
 
-    def __init__(self):
+    def __init__(self, name="Name"):
         super().__init__()
 
         self.input_connections = []
         self.output_connections = []
 
-    def __str__(self) -> str:
-        return f"<Connectionist: {self.__class__.__name__}>"
+        self.name = name
 
+    def string(self, name):
+        return f"{name} [{self.__class__.__name__}]"
+
+    def __str__(self):
+        return self.string(self.name)
+        
     @staticmethod
     def __check_ports(ports):
         for x in ports:
@@ -77,6 +82,7 @@ class Connectionist(Logger):
         Main function to connect two nodes together with connect_inputs_to
         """
 
+        # === Check if ports are available
         if emit_port not in emit_node.ports_out:
             raise ValueError(
                 f"Emitting Channel not present on given emitting node ({str(emit_node)}). Got",
@@ -87,13 +93,20 @@ class Connectionist(Logger):
                 f"Receiving Channel not present on node ({str(self)}). Got",
                 str(recv_port), 'Available ports:', ', '.join(map(str, self.ports_in)))
 
-        # This is too simple, as when connecting two nodes, we really are connecting two sub-graphs, which need to be checked
-        # TODO: implement this proper
-        # nodes_in_graph = emit_node.discover_full(emit_node)
-        # if list(map(str, nodes_in_graph)):
-        #     raise ValueError("Name already in parent sub-graph. Got:", str(self))
+        # === Check if class + name are unique across connected graph
+        nodes_in_emit_graph = list(self.discover_graph(emit_node))
+        nodes_in_recv_graph = list(self.discover_graph(self))
 
-        # Create connection instance
+        # the subgraphs may already be connected -> thus remove duplicate nodes based on instance pointers (not names!)
+        combined_node_list = self.remove_discovered_duplicates(nodes_in_emit_graph + nodes_in_recv_graph)
+        # if we connect two subraphs, we can always expect no duplicates in each sub-graph and thus it suffices to update the recv (ie "newly added") subgraph
+        for node in nodes_in_recv_graph:
+            if not node.is_unique_name(node.name, node_list=combined_node_list):
+                new_name = node.create_unique_name(node.name, node_list=combined_node_list)
+                self.warn(f"{str(node)} not unique in new graph. Renaming Node to: {new_name}")
+                node._set_attr(name=new_name)
+         
+        # === Create connection instance
         connection = Connection(emit_node,
                                 self,
                                 emit_port=emit_port,
@@ -111,6 +124,29 @@ class Connectionist(Logger):
         # Not sure if this'll actually work, otherwise we should name them _add_output
         emit_node._add_output(connection)
         self.input_connections.append(connection)
+
+    def is_unique_name(self, name, node_list=None):
+        if node_list is None:
+            node_list = self.discover_graph(self)
+        
+        nodes_names = list(map(str, set(node_list) - set([self])))
+
+        return not self.string(name) in nodes_names
+
+    def create_unique_name(self, base, node_list=None):
+        if self.is_unique_name(base, node_list=node_list):
+            return base
+
+        if node_list is None:
+            node_list = self.discover_graph(self)
+
+        # basically adjust base by counting then recurse until we find a good name and return that
+        return self.create_unique_name(f"{base}_1", node_list=node_list)
+        
+        
+        
+
+        
 
     def remove_all_inputs(self):
         for con in self.input_connections:
@@ -251,7 +287,7 @@ class Connectionist(Logger):
             if len(node.ports_out) <= 0:
                 shape = 'trapezium'
             disp_name = node.name if name else str(node)
-            dot.node(str(node.identify()), disp_name, shape=shape, style='rounded')
+            dot.node(str(node), disp_name, shape=shape, style='rounded')
 
         # Second pass: add edges based on output links
         for node in nodes:
@@ -259,8 +295,8 @@ class Connectionist(Logger):
                 l = None
                 if edge_labels:
                     l = f"{con._emit_port.label}\n->\n{con._recv_port.label}"
-                dot.edge(str(node.identify()),
-                         str(con._recv_node.identify()),
+                dot.edge(str(node),
+                         str(con._recv_node),
                          label=l)
 
         return Image.open(BytesIO(dot.pipe()))
