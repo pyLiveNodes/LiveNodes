@@ -26,6 +26,15 @@ class Connectionist(Logger):
 
         self.name = name
 
+        self._set_port_keys()
+
+    def _set_port_keys(self):
+        for key in self.ports_in._fields:
+            getattr(self.ports_in, key).set_key(key)
+
+        for key in self.ports_out._fields:
+            getattr(self.ports_out, key).set_key(key)
+
     def string(self, name):
         return f"{name} [{self.__class__.__name__}]"
 
@@ -48,16 +57,20 @@ class Connectionist(Logger):
         cls.__check_ports(cls.ports_out)
 
     def get_port_in_by_key(self, key):
-        possible_ins = [x for x in self.ports_in._asdict().values() if x.key == key]
-        if len(possible_ins) == 0: 
-            raise ValueError(f'No possible input ports for key: {key} in node: {str(self)}')
-        return possible_ins[0]
+        # possible_ins = [x for x in self.ports_in._asdict().values() if x.key == key]
+        # if len(possible_ins) == 0: 
+        #     print(self.ports_in._asdict(), [x.key for x in self.ports_in._asdict().values()])
+        #     raise ValueError(f'No possible input ports for key: {key} in node: {str(self)}')
+        # return possible_ins[0]
+        return getattr(self.ports_in, key)
 
     def get_port_out_by_key(self, key):
-        possible_outs = [x for x in self.ports_out._asdict().values() if x.key == key]
-        if len(possible_outs) == 0: 
-            raise ValueError(f'No possible output ports for key: {key} in node: {str(self)}')
-        return possible_outs[0]
+        # possible_outs = [x for x in self.ports_out._asdict().values() if x.key == key]
+        # if len(possible_outs) == 0: 
+        #     print(self.ports_out._asdict(), [x.key for x in self.ports_out._asdict().values()])
+        #     raise ValueError(f'No possible output ports for key: {key} in node: {str(self)}')
+        # return possible_outs[0]
+        return getattr(self.ports_out, key)
 
     def connect_inputs_to(self, emit_node: 'Connectionist'):
         """
