@@ -3,9 +3,8 @@ import pytest
 import multiprocessing as mp
 
 from livenodes.producer import Producer
-from livenodes.graph import Graph
 
-from livenodes import logger, LogLevel, Node
+from livenodes import logger, LogLevel, Node, Graph
 logger.set_log_level(LogLevel.VERBOSE)
 logger.remove_cb(logger._print)
 logger.register_cb(logger._print, LogLevel.VERBOSE)
