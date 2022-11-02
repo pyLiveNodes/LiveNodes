@@ -10,9 +10,6 @@ class Port():
         # Just as a fallback, the key should still be set by the connectionist / node_connector
         self.key = label.lower().replace(' ', '_')
 
-    # unfortunately a stable named tuple implementation with subclassing is not possible with python 3.6
-    # this is precisely the scenario we would have liked to use: https://github.com/python/typing/issues/526
-    
     def set_key(self, key):
         if key == None:
             raise ValueError('Key may not be none')
@@ -21,6 +18,7 @@ class Port():
     def __str__(self):
         return f"<{self.__class__.__name__}: {self.key}>"
 
+    # TODO: figure out if we really need to check the key as well...
     def __eq__(self, other):
         return type(self) == type(other) \
             and self.key == other.key 
@@ -55,16 +53,3 @@ class Port():
 
 # unfortunately a stable named tuple implementation with subclassing is not possible with python 3.6
 # this is precisely the scenario we would have liked to use: https://github.com/python/typing/issues/526
-
-# class PortList(collections.namedtuple('PortList', [])):
-#     def __new__(_cls, *args, **kwargs):
-#         print(_cls)
-#         return super().__new__(_cls, *args, **kwargs)
-
-#     # def __init__(self, *args, **kwargs):
-#     #     super().__init__(*args, **kwargs)
-#     #     print(self)
-
-
-#     # def __init_subclass__(self):
-#     #     print(self)

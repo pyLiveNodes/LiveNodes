@@ -17,7 +17,7 @@ class Ports_none(NamedTuple):
     pass
 
 class Ports_simple(NamedTuple):
-    data: Port_Data = Port_Data("Alternate Data")
+    alternate_data: Port_Data = Port_Data("Alternate Data")
 
 class Data(Producer):
     ports_in = Ports_none()
