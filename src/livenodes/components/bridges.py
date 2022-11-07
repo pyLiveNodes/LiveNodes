@@ -2,6 +2,7 @@ import asyncio
 import queue
 import threading as th
 import multiprocessing as mp
+import traceback
 import aioprocessing
 from .node_logger import Logger
 
@@ -138,9 +139,15 @@ class Bridge_local(Bridge):
     # _to thread
     async def update(self):
         # print('waiting for asyncio to receive a value')
-        itm_ctr, item = await self.queue.get()
-        self._read[itm_ctr] = item
-        return itm_ctr
+        try:
+            itm_ctr, item = await self.queue.get()
+            self._read[itm_ctr] = item
+            return itm_ctr
+        except Exception as err:
+            print(f'Could not get value')
+            print(err)
+            print(traceback.format_exc())
+            self.error(err)
 
 
 @REGISTRY.bridges.decorator
