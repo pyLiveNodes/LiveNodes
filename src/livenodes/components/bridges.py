@@ -284,8 +284,8 @@ class Bridge_threads_aio(Bridge):
     # _from thread
     def close(self):
         self.closed_event.set()
-        self.queue = None
-        self.closed_event = None
+        # self.queue = None
+        # self.closed_event = None
 
     # _from thread
     def put(self, ctr, item):
@@ -297,8 +297,8 @@ class Bridge_threads_aio(Bridge):
         await self.closed_event.coro_wait()
         await self.queue.coro_join()
         self.debug('Closed Event set and queue empty -- telling multiprocessing data storage')
-        self.queue = None
-        self.closed_event = None
+        # self.queue = None
+        # self.closed_event = None
 
     # _to thread
     async def update(self):

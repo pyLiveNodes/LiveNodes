@@ -354,8 +354,8 @@ class Node(Connectionist, Logger, Serializer):
         params: **ports_in
         returns None
         """
-        res = list(map(self.process_time_series, data))
-        self._emit_data(res)
+        self.ret_accu(list(map(self.process_time_series, data)), port=self.ports_out[0])
+        return self.ret_accumulated()
 
     def _onstart(self):
         """

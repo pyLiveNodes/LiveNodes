@@ -62,7 +62,11 @@ class Connectionist(Logger):
         #     print(self.ports_in._asdict(), [x.key for x in self.ports_in._asdict().values()])
         #     raise ValueError(f'No possible input ports for key: {key} in node: {str(self)}')
         # return possible_ins[0]
-        return getattr(self.ports_in, key)
+        try:
+            return getattr(self.ports_in, key)
+        except Exception as err:
+            print(self, key)
+            raise err
 
     def get_port_out_by_key(self, key):
         # possible_outs = [x for x in self.ports_out._asdict().values() if x.key == key]
@@ -70,7 +74,11 @@ class Connectionist(Logger):
         #     print(self.ports_out._asdict(), [x.key for x in self.ports_out._asdict().values()])
         #     raise ValueError(f'No possible output ports for key: {key} in node: {str(self)}')
         # return possible_outs[0]
-        return getattr(self.ports_out, key)
+        try:
+            return getattr(self.ports_out, key)
+        except Exception as err:
+            print(self, key)
+            raise err
 
     def connect_inputs_to(self, emit_node: 'Connectionist'):
         """
@@ -288,10 +296,10 @@ class Connectionist(Logger):
         return node in self.discover_output_deps(self)
 
 
-    def dot_graph(self, nodes, name=False, transparent_bg=False, edge_labels=True, **kwargs):
+    def dot_graph(self, nodes, name=False, transparent_bg=False, edge_labels=True, format='png', **kwargs):
         graph_attr = {"size": "10,10!", "ratio": "fill"}
         if transparent_bg: graph_attr["bgcolor"] = "#00000000"
-        dot = Digraph(format='png', strict=not edge_labels, graph_attr=graph_attr)
+        dot = Digraph(format=format, strict=not edge_labels, graph_attr=graph_attr)
 
         for node in nodes:
             shape = 'rect'
@@ -311,14 +319,11 @@ class Connectionist(Logger):
                 dot.edge(str(node),
                          str(con._recv_node),
                          label=l)
+        return dot
 
-        return Image.open(BytesIO(dot.pipe()))
-
-    def dot_graph_full(self, filename=None, file_type='PNG', **kwargs):
+    def dot_graph_full(self, filename=None, file_type='png', **kwargs):
         if filename is None:
             print('filename will be required in future versions')
-            return self.dot_graph(self.discover_graph(self), **kwargs)
+            return Image.open(BytesIO(self.dot_graph(self.discover_graph(self), format=file_type, **kwargs).pipe()))
         else:
-            img = self.dot_graph(self.discover_graph(self), **kwargs)
-            img.save(filename, file_type)
-            img.close()
+            self.dot_graph(self.discover_graph(self), **kwargs).render(filename=filename, format=file_type)
