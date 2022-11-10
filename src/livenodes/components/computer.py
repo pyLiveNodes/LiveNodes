@@ -1,18 +1,18 @@
 
 import asyncio
+import logging
+from logging.handlers import QueueHandler
 import threading as th
 import multiprocessing as mp
 from itertools import groupby
 import traceback
+from livenodes.components.utils.log import drain_log_queue
+
 
 from livenodes.components.node_logger import Logger
 
 # TODO: is this also possibly without creating a new thread, ie inside of main thread? 
 # i'm guessing no, as then the start likely does not return and then cannot be stopped by hand, but only if it returns by itself
-
-def resolve_computer(thread, process=None, host=None):
-    # TODO: :D
-    return Processor_threads
 
 def parse_location(location):
     comps = ['', '', '', '']
@@ -55,6 +55,7 @@ class Processor_threads(Logger):
     # parent thread
     def setup(self):
         self.info('Readying')
+
         self.subprocess = th.Thread(
                         target=self.start_subprocess,
                         args=(self.bridges,))
@@ -216,9 +217,19 @@ class Processor_process(Logger):
     # parent process
     def setup(self):
         self.info('Readying')
+
+        parent_log_queue = mp.Queue()
+        logger_name = 'livenodes'
+        
+        self.worker_log_handler_termi_sig = th.Event()
+
+        self.worker_log_handler = th.Thread(target=drain_log_queue, args=(parent_log_queue, logger_name, self.worker_log_handler_termi_sig))
+        self.worker_log_handler.deamon = True
+        self.worker_log_handler.start()
+
         self.subprocess = mp.Process(
                         target=self.start_subprocess,
-                        args=(self.bridges,))
+                        args=(self.bridges, parent_log_queue, logger_name,))
         self.subprocess.start()
 
     # parent process
@@ -255,6 +266,7 @@ class Processor_process(Logger):
             self.subprocess.terminate()
             self.info('Timout reached: killed process')
         # self.subprocess = None
+        self.worker_log_handler_termi_sig.set()
 
     # parent thread
     def is_finished(self):
@@ -265,7 +277,10 @@ class Processor_process(Logger):
         return all([cmp.is_finished() for cmp in computers])
 
     # worker process
-    def start_subprocess(self, bridges):
+    def start_subprocess(self, bridges, subprocess_log_queue, logger_name):
+        logger = logging.getLogger(logger_name)
+        logger.addHandler(QueueHandler(subprocess_log_queue))
+
         self.info('Starting Process')
 
         computers = []

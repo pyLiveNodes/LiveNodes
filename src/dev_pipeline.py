@@ -1,22 +1,16 @@
 import os
 import time
-from livenodes.nodes.in_data import In_data
 
-from livenodes.nodes.in_playback import In_playback
-from livenodes.nodes.out_data import Out_data
-# from livenodes.nodes.draw_lines import Draw_lines
-from livenodes.node import Node
-from livenodes.components.utils.logger import logger, LogLevel
+import logging
+logging.basicConfig(level=logging.DEBUG)
 
-
-def _log_helper(msg):
-    print(msg, flush=True)
+# from livenodes import Node, Producer, Graph, get_registry
+from livenodes_core_nodes.in_data import In_data
+# from livenodes_core_nodes.in_playback import In_playback
+from livenodes_core_nodes.out_data import Out_data
 
 
 if __name__ == '__main__':
-    logger.register_cb(_log_helper)
-    logger.set_log_level(LogLevel.VERBOSE)
-
     os.chdir('./sl')
 
     print('=== Construct Pipeline ====')

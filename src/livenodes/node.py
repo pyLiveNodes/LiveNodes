@@ -219,7 +219,7 @@ class Node(Connectionist, Logger, Serializer):
         self.bridge_listeners = []
         # TODO: this should not be here. Node should not now about internals of data storage (albeit, data_storage could actually be a mixin...)
         for queue in self.data_storage.in_bridges.values():
-            # self.verbose(str(queue))
+            # self.debug(str(queue))
             self.bridge_listeners.append(self._loop.create_task(self._await_input(queue)))
         self.debug(f'Found {len(self.bridge_listeners)} input bridges')
 
@@ -268,7 +268,7 @@ class Node(Connectionist, Logger, Serializer):
                 
         clock = self._ctr if ctr is None else ctr
 
-        self.verbose('Emitting', channel, clock, ctr, self._ctr, np.array(data).shape)
+        self.debug('Emitting', channel, clock, ctr, self._ctr, np.array(data).shape)
         self.data_storage.put(channel, clock, data)
 
 
@@ -277,7 +277,7 @@ class Node(Connectionist, Logger, Serializer):
         called in location of self
         called every time something is put into the queue / we received some data (ie if there are three inputs, we expect this to be called three times, before the clock should advance)
         """
-        self.verbose('_Process triggered')
+        self.debug('_Process triggered')
 
         # update current state, based on own clock
         _current_data = self.data_storage.get(ctr=ctr)
@@ -296,12 +296,12 @@ class Node(Connectionist, Logger, Serializer):
                     emit_data, emit_ctr = emit_data
                 for key, val in emit_data.items():
                     self._emit_data(data=val, channel=key, ctr=emit_ctr)
-            self.verbose('process fn finished')
+            self.debug('process fn finished')
             self._report(node = self) # for latency and calc reasons
             self.data_storage.discard_before(ctr)
         else:
-            self.verbose('Decided not to process', ctr, _current_data.keys())
-        self.verbose('_Process finished')
+            self.debug('Decided not to process', ctr, _current_data.keys())
+        self.debug('_Process finished')
 
     # === Performance Stuff =================
     # def timeit(self):

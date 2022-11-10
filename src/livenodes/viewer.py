@@ -42,7 +42,7 @@ class View(Node, abstract_class=True):
             # always execute the update, even if no new data is added, as a view might want to update not based on the self emited data
             # this happens for instance if the view wants to update based on user interaction (and not data)
             if self._should_draw(**cur_state):
-                self.verbose('Decided to draw', cur_state.keys())
+                self.debug('Decided to draw', cur_state.keys())
                 res = update_fn(**cur_state)
                 self.fps.count()
                 return res
@@ -86,7 +86,7 @@ class View(Node, abstract_class=True):
         Called in computation process, ie self.process
         Emits data to draw process, ie draw_inits update fn
         """
-        self.verbose('Storing for draw:', kwargs.keys())
+        self.debug('Storing for draw:', kwargs.keys())
         try:
             self._draw_state.put_nowait(kwargs)
         except queue.Full:
@@ -156,7 +156,7 @@ class View_MPL(View, abstract_class=True):
             # always execute the update, even if no new data is added, as a view might want to update not based on the self emited data
             # this happens for instance if the view wants to update based on user interaction (and not data)
             if self._should_draw(**cur_state):
-                self.verbose('Decided to draw', cur_state.keys())
+                self.debug('Decided to draw', cur_state.keys())
                 artis_storage['returns'] = update_fn(**cur_state)
                 self.fps.count()
             else:
@@ -197,7 +197,7 @@ class View_QT(View, abstract_class=True):
                 # always execute the update, even if no new data is added, as a view might want to update not based on the self emited data
                 # this happens for instance if the view wants to update based on user interaction (and not data)
                 if self._should_draw(**cur_state):
-                    self.verbose('Decided to draw', cur_state.keys())
+                    self.debug('Decided to draw', cur_state.keys())
                     update_fn(**cur_state)
                     self.fps.count()
                     return True
@@ -239,7 +239,7 @@ class View_Vispy(View, abstract_class=True):
             # always execute the update, even if no new data is added, as a view might want to update not based on the self emited data
             # this happens for instance if the view wants to update based on user interaction (and not data)
             if self._should_draw(**cur_state):
-                self.verbose('Decided to draw', cur_state.keys())
+                self.debug('Decided to draw', cur_state.keys())
                 update_fn(**cur_state)
                 self.fps.count()
                 return True

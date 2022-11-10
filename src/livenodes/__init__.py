@@ -17,4 +17,3 @@ from .node import Node
 from .graph import Graph
 from .viewer import View
 from .producer import Producer
-from .components.utils.logger import logger, LogLevel

@@ -2,12 +2,10 @@ import time
 import pytest
 import multiprocessing as mp
 
-from livenodes.producer import Producer
+import logging
+logging.basicConfig(level=logging.DEBUG)
 
-from livenodes import logger, LogLevel, Node, Graph
-logger.set_log_level(LogLevel.VERBOSE)
-logger.remove_cb(logger._print)
-logger.register_cb(logger._print, LogLevel.VERBOSE)
+from livenodes import Node, Producer, Graph, get_registry
 
 from typing import NamedTuple
 from .utils import Port_Data
