@@ -26,7 +26,7 @@ class Logger():
         self._log_level = default_level
         self._max_log_level = default_level
         if stdout:
-            self.register_cb(self._print, LogLevel.ERROR)
+            self.register_cb(self._print, LogLevel.WARN)
 
     def _print(self, msg):
         print(msg, flush=True)

@@ -78,7 +78,7 @@ class Processor_threads(Logger):
         self.info('Stopping')
         self.stop_lock.release()
         self.subprocess.join(timeout)
-        self.info('Returning; thread finished: ', not self.subprocess.isAlive())
+        self.info('Returning; thread finished: ', not self.subprocess.is_alive())
 
     # parent thread
     def close(self, timeout=0.1):
@@ -87,23 +87,33 @@ class Processor_threads(Logger):
         self.subprocess.join(timeout)
         if self.subprocess.is_alive():
             self.info('Timout reached, but still alive')
-        self.subprocess = None
+        # self.subprocess = None
+    
+    # parent thread
+    def is_finished(self):
+        return (self.subprocess is not None) and (not self.subprocess.is_alive())
         
     # worker thread
     def start_subprocess(self, bridges):
         self.info('Starting Thread')
 
+        def custom_exception_handler(loop, context):
+            nonlocal self
+            self.error(context)
+            return loop.default_exception_handler(context)
+
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
+        # TODO: this doesn't seem to do much?
+        self.loop.set_exception_handler(custom_exception_handler)
 
         futures = []
 
         for node, bridges in zip(self.nodes, bridges):
-            input_bridges, output_bridges = bridges
-            futures.append(node.ready(input_bridges, output_bridges))
+            input_bridges, output_bridges = bridges['recv'], bridges['emit']
+            futures.append(node.ready(input_endpoints=input_bridges, output_endpoints=output_bridges))
 
         self.start_lock.acquire()
-
         for node in self.nodes:
             node.start()
 
@@ -220,6 +230,7 @@ class Processor_process(Logger):
     # as: the start() of the thread processor used inside of this processors supbrocess are non-blockign
     # therefore: we are waiting on the stop-lock which will be released once someone calls stop -> thus joining the subprocess will never return!
     # in the join case we would want to be able to join each thread cmp instead of waiting on stop or close...
+    # FIXED: inside of the subprocess we are short_ciruiting the stop and close locks if the threads have returned by themselves, thus the join returns once close is called or the sub-threads return
     # parent process
     def join(self):
         """ used if the processing is nown to end"""
@@ -243,8 +254,16 @@ class Processor_process(Logger):
         if self.subprocess.is_alive():
             self.subprocess.terminate()
             self.info('Timout reached: killed process')
-        self.subprocess = None
+        # self.subprocess = None
+
+    # parent thread
+    def is_finished(self):
+        return self.subprocess is not None and not self.subprocess.is_alive()
         
+    # worker process
+    def check_threads_finished(self, computers):
+        return all([cmp.is_finished() for cmp in computers])
+
     # worker process
     def start_subprocess(self, bridges):
         self.info('Starting Process')
@@ -252,13 +271,13 @@ class Processor_process(Logger):
         computers = []
         # TODO: it's a little weird, that bridges are specifically passed, but nodes are not, we should investigate that
         # ie, probably this is fine, as we specifcially need the bridge endpoints, but the nodes may just be pickled, but looking into this never hurts....
-        bridge_lookup = {node.identify(): bridge for node, bridge in zip(self.nodes, bridges)}
+        bridge_lookup = {str(node): bridge for node, bridge in zip(self.nodes, bridges)}
 
         locations = groupby(sorted(self.nodes, key=lambda n: n.compute_on), key=lambda n: n.compute_on)
         for loc, loc_nodes in locations:
             loc_nodes = list(loc_nodes)
             print(f'Resolving computer group. Location: {loc}; Nodes: {len(loc_nodes)}')
-            node_specific_bridges = [bridge_lookup[n.identify()] for n in loc_nodes]
+            node_specific_bridges = [bridge_lookup[str(n)] for n in loc_nodes]
             cmp = Processor_threads(nodes=loc_nodes, location=loc, bridges=node_specific_bridges)
             cmp.setup()
             computers.append(cmp)
@@ -270,16 +289,24 @@ class Processor_process(Logger):
             # inside of this process all sub-threads will run until stop is called
             cmp.start()
 
-        self.stop_lock.acquire()
-        self.info('Stopping Computers')
-        for cmp in computers:
-            # the cmps are all returning after the timeout, as they all are Processor_Threads
-            # -> therefore, this cannot block indefinetly and we can soon wait on the close_lock
-            cmp.stop(timeout=self.stop_timeout_threads)
 
-        self.close_lock.acquire()
-        self.info('Closing Computers')
-        for cmp in computers:
-            cmp.close(timeout=self.close_timeout_threads)
+        all_computers_finished = False
+        while not self.stop_lock.acquire(timeout=0.1) and not all_computers_finished:
+            all_computers_finished = all([cmp.is_finished() for cmp in computers])
+        
+        if all_computers_finished:
+            self.info('All Computers have finished, returning')
+        else:
+            self.info('Stopping Computers')
+            for cmp in computers:
+                # the cmps are all returning after the timeout, as they all are Processor_Threads
+                # -> therefore, this cannot block indefinetly and we can soon wait on the close_lock
+                cmp.stop(timeout=self.stop_timeout_threads)
+
+            # if not all_computers_finished:
+            self.close_lock.acquire()
+            self.info('Closing Computers')
+            for cmp in computers:
+                cmp.close(timeout=self.close_timeout_threads)
 
         self.info('Finished Process and returning')

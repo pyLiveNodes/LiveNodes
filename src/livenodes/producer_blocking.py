@@ -6,7 +6,7 @@ import threading as th
 # import multiprocessing as mp
 import aioprocessing
 
-class Producer_Blocking(Producer):
+class Producer_Blocking(Producer, abstract_class=True):
     """
     Executes onstart and waits for it to return / indicate no more data is remaining.
     Then onstop is executed and 
@@ -71,7 +71,7 @@ class Producer_Blocking(Producer):
 
     # main thread (interfaced by node system)
     def _onstart(self):
-        self.subprocess = th.Thread(target=self._blocking_onstart, daemon=True)
+        self.subprocess = th.Thread(target=self._blocking_onstart, daemon=True, args=(self.stop_event,))
         # self.subprocess = mp.Process(target=self._blocking_onstart, daemon=True)
         self.subprocess.start()
 

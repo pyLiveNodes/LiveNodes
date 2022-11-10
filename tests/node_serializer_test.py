@@ -56,7 +56,7 @@ class TestNodeOperations():
     def test_node_json(self, node_a):
         # check json format
         assert json.dumps(node_a.to_dict()) == json.dumps(
-            {node_a.identify(): node_a.get_settings()})
+            {str(node_a): node_a.get_settings()})
 
         node_a_des = SimpleNode.from_dict(node_a.to_dict())
         assert node_a_des is not None
@@ -64,5 +64,18 @@ class TestNodeOperations():
 
     def test_graph_json(self, create_connection):
         graph = Node.from_dict(create_connection.to_dict(graph=True))
+        assert str(graph) == "A [SimpleNode]"
+        assert str(graph.output_connections[0]._recv_node) == "B [SimpleNode]"
+
+    
+    def test_graph_json_same_name(self):
+        node_a = SimpleNode(name="A")
+        node_b = SimpleNode(name="B")
+        node_c = SimpleNode(name="B")
+
+        node_b.connect_inputs_to(node_a)
+        node_c.connect_inputs_to(node_a)
+    
+        graph = Node.from_dict(node_a.to_dict(graph=True))
         assert str(graph) == "A [SimpleNode]"
         assert str(graph.output_connections[0]._recv_node) == "B [SimpleNode]"

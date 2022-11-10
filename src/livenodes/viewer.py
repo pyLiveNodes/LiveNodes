@@ -6,7 +6,7 @@ from .node import Node
 from .components.utils.reportable import Reportable
 
 
-class View(Node):
+class View(Node, abstract_class=True):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -16,7 +16,6 @@ class View(Node):
         # TODO: evaluate if one or two is better as maxsize (the difference should be barely noticable, but not entirely sure)
         # -> one: most up to date, but might just miss each other? probably only applicable if sensor sampling rate is vastly different from render fps?
         # -> two: always one frame behind, but might not jump then
-        # self._draw_state = mp.Queue()
         self._draw_state = mp.Queue(maxsize=2)
 
     def register_reporter(self, reporter_fn):
@@ -36,13 +35,19 @@ class View(Node):
             cur_state = {}
             res = None
 
-            while not self._draw_state.empty():
-                cur_state = self._draw_state.get()
-                if self._should_draw(**cur_state):
-                    self.verbose('Decided to draw', cur_state.keys())
-                    res = update_fn(**cur_state)
-                # else:
-                #     self.verbose('Decided not to draw', cur_state.keys())
+            try:
+                cur_state = self._draw_state.get_nowait()
+            except queue.Empty:
+                pass
+            # always execute the update, even if no new data is added, as a view might want to update not based on the self emited data
+            # this happens for instance if the view wants to update based on user interaction (and not data)
+            if self._should_draw(**cur_state):
+                self.verbose('Decided to draw', cur_state.keys())
+                res = update_fn(**cur_state)
+                self.fps.count()
+                return res
+            else:
+                self.debug('Decided not to draw', cur_state.keys())
             return res
 
         return update
@@ -88,6 +93,7 @@ class View(Node):
             self.debug('Could not render data, view not ready.')
 
 
+
 class FPS_Helper(Reportable):
     def __init__(self, name, report_every_x_seconds=5, **kwargs):
         super().__init__(**kwargs)
@@ -111,7 +117,7 @@ def print_fps(fps, **kwargs):
     print(f"Current fps: {fps['fps']:.2f} (Total frames: {fps['total_frames']}) -- {fps['name']}")
 
 
-class View_MPL(View):
+class View_MPL(View, abstract_class=True):
     def _init_draw(self, subfig):
         """
         Similar to init_draw, but specific to matplotlib animations
@@ -143,27 +149,25 @@ class View_MPL(View):
             nonlocal update_fn, artis_storage, self
             cur_state = {}
 
-            self.fps.count()
-
             try:
                 cur_state = self._draw_state.get_nowait()
             except queue.Empty:
                 pass
-
             # always execute the update, even if no new data is added, as a view might want to update not based on the self emited data
             # this happens for instance if the view wants to update based on user interaction (and not data)
             if self._should_draw(**cur_state):
-                artis_storage['returns'] = update_fn(**cur_state)
                 self.verbose('Decided to draw', cur_state.keys())
-            # else:
-            #     self.verbose('Decided not to draw', cur_state.keys())
+                artis_storage['returns'] = update_fn(**cur_state)
+                self.fps.count()
+            else:
+                self.debug('Decided not to draw', cur_state.keys())
                     
             return artis_storage['returns']
 
         return update
 
 
-class View_QT(View):
+class View_QT(View, abstract_class=True):
     def _init_draw(self, parent):
         pass
 
@@ -186,27 +190,26 @@ class View_QT(View):
                 nonlocal update_fn, self
                 cur_state = {}
                 
-                self.fps.count()
-
                 try:
                     cur_state = self._draw_state.get_nowait()
                 except queue.Empty:
                     pass
-
+                # always execute the update, even if no new data is added, as a view might want to update not based on the self emited data
+                # this happens for instance if the view wants to update based on user interaction (and not data)
                 if self._should_draw(**cur_state):
                     self.verbose('Decided to draw', cur_state.keys())
                     update_fn(**cur_state)
+                    self.fps.count()
                     return True
-                # else:
-                #     self.verbose('Decided not to draw', cur_state.keys())
-
+                else:
+                    self.debug('Decided not to draw', cur_state.keys())
                 return False
 
             return update_blocking
         self.debug('No update function was returned, as none exists.')
         return None
 
-class View_Vispy(View):
+class View_Vispy(View, abstract_class=True):
     def _init_draw(self, fig):
         def update(**kwargs):
             raise NotImplementedError()
@@ -229,20 +232,19 @@ class View_Vispy(View):
             nonlocal update_fn, self
             cur_state = {}
             
-            self.fps.count()
-
             try:
                 cur_state = self._draw_state.get_nowait()
             except queue.Empty:
                 pass
-
+            # always execute the update, even if no new data is added, as a view might want to update not based on the self emited data
+            # this happens for instance if the view wants to update based on user interaction (and not data)
             if self._should_draw(**cur_state):
                 self.verbose('Decided to draw', cur_state.keys())
                 update_fn(**cur_state)
+                self.fps.count()
                 return True
-            # else:
-            #     self.verbose('Decided not to draw', cur_state.keys())
-
+            else:
+                self.debug('Decided not to draw', cur_state.keys())
             return False
 
         return update_blocking

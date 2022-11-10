@@ -1,6 +1,6 @@
 import pytest
 
-from livenodes.components.node_connector import Connectionist
+from livenodes import Node
 
 from typing import NamedTuple
 from .utils import Port_Data
@@ -8,7 +8,7 @@ from .utils import Port_Data
 class Ports_simple(NamedTuple):
     data: Port_Data = Port_Data("Data")
 
-class SimpleNode(Connectionist):
+class SimpleNode(Node):
     ports_in = Ports_simple()
     ports_out = Ports_simple()
 
@@ -21,7 +21,7 @@ class Ports_complex_out(NamedTuple):
     meta: Port_Data = Port_Data("Meta")
     info: Port_Data = Port_Data("Info")
 
-class ComplexNode(Connectionist):
+class ComplexNode(Node):
     ports_in = Ports_complex_in()
     ports_out = Ports_complex_out()
 
@@ -88,22 +88,6 @@ class TestGraphOperations():
 
         # Now they shouldn't be related anymore
         assert not node_b.requires_input_of(node_a)
-
-    def test_error_duplicate_port_keys(self):
-
-        # there may not be two ports with the same label (which would result in also the same key and therefore serialzation and message passing problems)
-        class Ports_simple(NamedTuple):
-            data: Port_Data = Port_Data("Data")
-            alternate_data: Port_Data = Port_Data("Data")
-
-        try:
-            class SimpleNode(Connectionist):
-                ports_in = Ports_simple()
-                ports_out = Ports_simple()
-        except ValueError:
-            return
-        pytest.fail()
-
 
 # if __name__ == "__main__":
 #     # TestGraphOperations().test_relationships(create_simple_graph())

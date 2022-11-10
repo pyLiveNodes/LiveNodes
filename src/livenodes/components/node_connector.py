@@ -18,15 +18,29 @@ class Connectionist(Logger):
     ports_in = Ports_simple()
     ports_out = Ports_simple()
 
-    def __init__(self):
+    def __init__(self, name="Name"):
         super().__init__()
 
         self.input_connections = []
         self.output_connections = []
 
-    def __str__(self) -> str:
-        return f"<Connectionist: {self.__class__.__name__}>"
+        self.name = name
 
+        self._set_port_keys()
+
+    def _set_port_keys(self):
+        for key in self.ports_in._fields:
+            getattr(self.ports_in, key).set_key(key)
+
+        for key in self.ports_out._fields:
+            getattr(self.ports_out, key).set_key(key)
+
+    def string(self, name):
+        return f"{name} [{self.__class__.__name__}]"
+
+    def __str__(self):
+        return self.string(self.name)
+        
     @staticmethod
     def __check_ports(ports):
         for x in ports:
@@ -43,16 +57,28 @@ class Connectionist(Logger):
         cls.__check_ports(cls.ports_out)
 
     def get_port_in_by_key(self, key):
-        possible_ins = [x for x in self.ports_in._asdict().values() if x.key == key]
-        if len(possible_ins) == 0: 
-            raise ValueError(f'No possible input ports for key: {key} in node: {str(self)}')
-        return possible_ins[0]
+        # possible_ins = [x for x in self.ports_in._asdict().values() if x.key == key]
+        # if len(possible_ins) == 0: 
+        #     print(self.ports_in._asdict(), [x.key for x in self.ports_in._asdict().values()])
+        #     raise ValueError(f'No possible input ports for key: {key} in node: {str(self)}')
+        # return possible_ins[0]
+        try:
+            return getattr(self.ports_in, key)
+        except Exception as err:
+            print(self, key)
+            raise err
 
     def get_port_out_by_key(self, key):
-        possible_outs = [x for x in self.ports_out._asdict().values() if x.key == key]
-        if len(possible_outs) == 0: 
-            raise ValueError(f'No possible output ports for key: {key} in node: {str(self)}')
-        return possible_outs[0]
+        # possible_outs = [x for x in self.ports_out._asdict().values() if x.key == key]
+        # if len(possible_outs) == 0: 
+        #     print(self.ports_out._asdict(), [x.key for x in self.ports_out._asdict().values()])
+        #     raise ValueError(f'No possible output ports for key: {key} in node: {str(self)}')
+        # return possible_outs[0]
+        try:
+            return getattr(self.ports_out, key)
+        except Exception as err:
+            print(self, key)
+            raise err
 
     def connect_inputs_to(self, emit_node: 'Connectionist'):
         """
@@ -77,6 +103,7 @@ class Connectionist(Logger):
         Main function to connect two nodes together with connect_inputs_to
         """
 
+        # === Check if ports are available
         if emit_port not in emit_node.ports_out:
             raise ValueError(
                 f"Emitting Channel not present on given emitting node ({str(emit_node)}). Got",
@@ -87,13 +114,20 @@ class Connectionist(Logger):
                 f"Receiving Channel not present on node ({str(self)}). Got",
                 str(recv_port), 'Available ports:', ', '.join(map(str, self.ports_in)))
 
-        # This is too simple, as when connecting two nodes, we really are connecting two sub-graphs, which need to be checked
-        # TODO: implement this proper
-        # nodes_in_graph = emit_node.discover_full(emit_node)
-        # if list(map(str, nodes_in_graph)):
-        #     raise ValueError("Name already in parent sub-graph. Got:", str(self))
+        # === Check if class + name are unique across connected graph
+        nodes_in_emit_graph = list(self.discover_graph(emit_node))
+        nodes_in_recv_graph = list(self.discover_graph(self))
 
-        # Create connection instance
+        # the subgraphs may already be connected -> thus remove duplicate nodes based on instance pointers (not names!)
+        combined_node_list = self.remove_discovered_duplicates(nodes_in_emit_graph + nodes_in_recv_graph)
+        # if we connect two subraphs, we can always expect no duplicates in each sub-graph and thus it suffices to update the recv (ie "newly added") subgraph
+        for node in nodes_in_recv_graph:
+            if not node.is_unique_name(node.name, node_list=combined_node_list):
+                new_name = node.create_unique_name(node.name, node_list=combined_node_list)
+                self.warn(f"{str(node)} not unique in new graph. Renaming Node to: {new_name}")
+                node._set_attr(name=new_name)
+         
+        # === Create connection instance
         connection = Connection(emit_node,
                                 self,
                                 emit_port=emit_port,
@@ -111,6 +145,29 @@ class Connectionist(Logger):
         # Not sure if this'll actually work, otherwise we should name them _add_output
         emit_node._add_output(connection)
         self.input_connections.append(connection)
+
+    def is_unique_name(self, name, node_list=None):
+        if node_list is None:
+            node_list = self.discover_graph(self)
+        
+        nodes_names = list(map(str, set(node_list) - set([self])))
+
+        return not self.string(name) in nodes_names
+
+    def create_unique_name(self, base, node_list=None):
+        if self.is_unique_name(base, node_list=node_list):
+            return base
+
+        if node_list is None:
+            node_list = self.discover_graph(self)
+
+        # basically adjust base by counting then recurse until we find a good name and return that
+        return self.create_unique_name(f"{base}_1", node_list=node_list)
+        
+        
+        
+
+        
 
     def remove_all_inputs(self):
         for con in self.input_connections:
@@ -239,10 +296,10 @@ class Connectionist(Logger):
         return node in self.discover_output_deps(self)
 
 
-    def dot_graph(self, nodes, name=False, transparent_bg=False, edge_labels=True, **kwargs):
+    def dot_graph(self, nodes, name=False, transparent_bg=False, edge_labels=True, format='png', **kwargs):
         graph_attr = {"size": "10,10!", "ratio": "fill"}
         if transparent_bg: graph_attr["bgcolor"] = "#00000000"
-        dot = Digraph(format='png', strict=not edge_labels, graph_attr=graph_attr)
+        dot = Digraph(format=format, strict=not edge_labels, graph_attr=graph_attr)
 
         for node in nodes:
             shape = 'rect'
@@ -262,8 +319,11 @@ class Connectionist(Logger):
                 dot.edge(str(node),
                          str(con._recv_node),
                          label=l)
+        return dot
 
-        return Image.open(BytesIO(dot.pipe()))
-
-    def dot_graph_full(self, **kwargs):
-        return self.dot_graph(self.discover_graph(self), **kwargs)
+    def dot_graph_full(self, filename=None, file_type='png', **kwargs):
+        if filename is None:
+            print('filename will be required in future versions')
+            return Image.open(BytesIO(self.dot_graph(self.discover_graph(self), format=file_type, **kwargs).pipe()))
+        else:
+            self.dot_graph(self.discover_graph(self), **kwargs).render(filename=filename, format=file_type)

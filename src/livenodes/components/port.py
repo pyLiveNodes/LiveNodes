@@ -1,18 +1,24 @@
+
 class Port():
 
     example_values = []
 
-    def __init__(self, label, key=None, optional=False):
+    def __init__(self, label, optional=False):
         self.label = label
         self.optional = optional
 
-        if key is None or type(key) is not str:
-            key = label.lower().replace(' ', '_')
+        # Just as a fallback, the key should still be set by the connectionist / node_connector
+        self.key = label.lower().replace(' ', '_')
+
+    def set_key(self, key):
+        if key == None:
+            raise ValueError('Key may not be none')
         self.key = key
-    
+
     def __str__(self):
         return f"<{self.__class__.__name__}: {self.key}>"
 
+    # TODO: figure out if we really need to check the key as well...
     def __eq__(self, other):
         return type(self) == type(other) \
             and self.key == other.key 
@@ -43,3 +49,7 @@ class Port():
             # we use any here in order to allow for dynamic converters, e.g. adding or removing axes from a package
             # we could consider using all() instead of any(), but this would require specfic converter nodes, which i'm not sure i want to go for right now
             # but let's keep an eye on this
+
+
+# unfortunately a stable named tuple implementation with subclassing is not possible with python 3.6
+# this is precisely the scenario we would have liked to use: https://github.com/python/typing/issues/526

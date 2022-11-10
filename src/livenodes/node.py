@@ -1,6 +1,8 @@
 import asyncio
 from functools import partial
+import json
 import multiprocessing as mp
+import pathlib
 import numpy as np
 import traceback
 
@@ -14,6 +16,8 @@ from .components.node_logger import Logger
 from .components.node_serializer import Serializer
 from .components.bridges import Multiprocessing_Data_Storage
 
+INSTALL_LOC = str(pathlib.Path(__file__).parent.resolve())
+    
 
 class Node(Connectionist, Logger, Serializer):
     # === Information Stuff =================
@@ -32,8 +36,7 @@ class Node(Connectionist, Logger, Serializer):
                  compute_on="",
                  **kwargs):
         
-        self.name = name
-        super().__init__(**kwargs)
+        super().__init__(name=name, **kwargs)
 
         self.should_time = should_time
         self.compute_on = compute_on
@@ -56,18 +59,15 @@ class Node(Connectionist, Logger, Serializer):
         # Fix this on creation such that we can still identify a node if it was pickled into another (spawned) process
         self._id_ = id(self)
 
+        self.ret_accumulated = None
+
+
     def __repr__(self):
         return str(self)
         # return f"{str(self)} Settings:{json.dumps(self._serialize())}"
 
-    def __str__(self):
-        return f"{self.name} [{self.__class__.__name__}]"
-
     def __hash__(self) -> int:
         return id(self)
-
-    def identify(self) -> int:
-        return self._id_
 
     # === Connection Stuff =================
     def add_input(self, emit_node: 'Node', emit_port:Port, recv_port:Port):
@@ -77,11 +77,33 @@ class Node(Connectionist, Logger, Serializer):
         return super().add_input(emit_node, emit_port, recv_port)
 
     # # === Subclass Validation Stuff =================
-    # def __init_subclass__(self):
-    #     """
-    #     Check if a new class instance is valid, ie if channels are correct, info is existing etc
-    #     """
-    #     pass
+    def __init_subclass__(self, abstract_class=False):
+        """
+        Check if a new class instance is valid, ie if channels are correct, info is existing etc
+        """
+        if not abstract_class:
+            ### check if ports where set correctly
+            if self.ports_in is None:
+                raise Exception('Class is required to define input ports.')
+            else:
+                for p in self.ports_in:
+                    if (not isinstance(p, Port)) or (p.__class__ == Port):
+                        raise Exception('Input ports must be subclasses of port. Got: ', p.__class__, p)
+
+            if self.ports_out is None:
+                raise Exception('Class is required to define output ports.')
+            else:
+                for p in self.ports_out:
+                    if (not isinstance(p, Port)) or (p.__class__ == Port):
+                        raise Exception('Output ports must be subclasses of port. Got: ', p.__class__, p)
+        # if len(self.ports_in.example_values) <= 0:
+        #     raise Exception('Ports likely still set to default')
+        # else:
+        #     # check if check_value is implemented -> also a good way to know if Port instead of a subclass is used
+        #     for val in self.ports_in.example_values:
+        #         self.ports_in.check_value(val)
+            
+
     
     def _call_user_fn(self, _fn, _fn_name, *args, **kwargs):
         try:
@@ -102,22 +124,27 @@ class Node(Connectionist, Logger, Serializer):
         self.locked.set()
 
         self.info('Resolving Bridges')
-        emit_endpoint_pairs = []
+        send_endpoint_pairs = []
         recv_endpoint_pairs = []
 
         for con in self.input_connections:
-            emit_endpoint, recv_endpoint= Multiprocessing_Data_Storage.resolve_bridge(con)
-            emit_endpoint_pairs.append((con, emit_endpoint))
+            send_endpoint, recv_endpoint = Multiprocessing_Data_Storage.resolve_bridge(con)
+            send_endpoint_pairs.append((con, send_endpoint))
             recv_endpoint_pairs.append((con, recv_endpoint))
         
         self.info('Ready to proceed with run calls')
+        # self.error('unique send bridges', np.unique([str(b[1]) for b in send_endpoint_pairs], return_counts=True))
+        # self.error('unique recv bridges', np.unique([str(b[1]) for b in recv_endpoint_pairs], return_counts=True))
         
-        return emit_endpoint_pairs, recv_endpoint_pairs
+        return send_endpoint_pairs, recv_endpoint_pairs
 
     # _computer thread
     # here inputs are the endpoints we receive data from and outputs are the endpoints we send data through
     def ready(self, input_endpoints=None, output_endpoints=None):
         self.info('Readying')
+        self.debug('unique send endpoints', [[str(b) for b in bl] for bl in output_endpoints.values()])
+        self.debug('unique recv endpoints', [str(b) for b in input_endpoints.values()])
+        
         self.data_storage = Multiprocessing_Data_Storage(input_endpoints, output_endpoints)
 
         if not self.locked.is_set():
@@ -164,7 +191,7 @@ class Node(Connectionist, Logger, Serializer):
         # close bridges telling the following nodes they will not receive input from us anymore
         for con in self.output_connections:
             self.debug('Closing', str(con))
-            self.data_storage.close_bridges(self)
+            self.data_storage.close_bridges()
 
         # indicate to the node, that it now should finish wrapping up
         self.stop()
@@ -179,13 +206,18 @@ class Node(Connectionist, Logger, Serializer):
     # _computer thread
     async def _await_input(self, queue):
         while True:
-            ctr = await queue.update()
-            self._process(ctr)
+            try:
+                ctr = await queue.update()
+                self._process(ctr)
+            except Exception as e:
+                self.error(f'failed to execute queue update')
+                self.error(e)
+                self.error(traceback.format_exc())
 
     # _computer thread
     def _setup_process(self):
         self.bridge_listeners = []
-        # TODO: this should not be here. Node should not now about internals of data storage (albeit, that should actually be a mixin...)
+        # TODO: this should not be here. Node should not now about internals of data storage (albeit, data_storage could actually be a mixin...)
         for queue in self.data_storage.in_bridges.values():
             # self.verbose(str(queue))
             self.bridge_listeners.append(self._loop.create_task(self._await_input(queue)))
@@ -194,40 +226,51 @@ class Node(Connectionist, Logger, Serializer):
         # TODO: should we add a "on fail wrap up and tell parent" task here? ie task(wait(self.bridge_listeners, return=first_exception))
 
 
+    def ret(self, **kwargs):
+        return kwargs
+
+    # optional way to accumulate returns over multiple calls
+    # will reset once ret_accumulated is called in the end
+    def ret_accu(self, value, port):
+        if self.ret_accumulated is None:
+            def h(**kwargs):
+                nonlocal self
+                self.ret_accumulated = None
+                return self.ret(**kwargs)
+            self.ret_accumulated = h
+        self.ret_accumulated = partial(self.ret_accumulated, **{port.key: value})
+
+
     # === Data Stuff =================
     def _emit_data(self, data, channel: Port = None, ctr: int = None):
         """
         Called in computation process, ie self.process
         Emits data to childs, ie child.receive_data
         """
+        # TODO: consider how to handle this:
+        # basically: i would like every node to pass data via returns
+        # however, in some producer cases (also biokit train status cases), returns are not feasible but emit must be called directly
+        # not sure how to handle that...
+        # parent_caller = inspect.getouterframes( inspect.currentframe() )[1]
+        # if not parent_caller.filename.startswith(INSTALL_LOC):
+        #     print('parent', parent_caller.filename)
+        #     self.warn('_emit_data should only be called by nodes directly if they know what they ')
+
         if channel is None:
             channel = list(self.ports_out._asdict().values())[0].key
         elif isinstance(channel, Port):
             channel = channel.key
         elif type(channel) == str:
-            self.info(f'Call by str will be deprecated, got: {channel}')
-            if channel not in self.ports_out._fields:
+            self.info(f'Call by str will be deprecated, got: {channel}', [p.key for p in self.ports_out])
+            if channel not in [p.key for p in self.ports_out]: 
+                #._fields:
                 raise ValueError('Unknown Port', channel)
                 
         clock = self._ctr if ctr is None else ctr
 
         self.verbose('Emitting', channel, clock, ctr, self._ctr, np.array(data).shape)
-        for con in self.output_connections:
-            if con._emit_port.key == channel:
-                # self.data_storage
-                # con._recv_node.receive_data(clock, con, data)
-                self.data_storage.put(con, clock, data)
+        self.data_storage.put(channel, clock, data)
 
-    # def receive_data(self, ctr, connection, data):
-    #     """
-    #     called in location of emitting node
-    #     """
-    #     # store all received data in their according mp.simplequeues
-    #     # self.error(f'Received: "{connection._recv_port.key}" with clock {ctr}')
-    #     # self._received_data[key].put(ctr, val)
-    #     # this is called in the context of the emitting node, the data storage is then in charge of using the right means of transport, such that the process triggered has the available data in the same context as the receiving node's process is called
-    #     self.verbose('Received', connection, ctr)
-    #     self.data_storage.put(connection, ctr, data)
 
     def _process(self, ctr):
         """
@@ -245,13 +288,14 @@ class Node(Connectionist, Logger, Serializer):
         # then cleanup aggregated data and advance our own clock
         if self._should_process(**_current_data):
             self.debug('Decided to process', ctr, _current_data.keys())
-            # yes, ```if self.process``` is shorter, but as long as the documentation isn't there this is also very clear on the api
-            # prevent_tick = self.process(**_current_data)
-            # IMPORTANT: this is possible, due to the fact that only sender and syncs have their own clock
-            # sender will never receive inputs and therefore will never have
-            # TODO: IMPORTANT: every node it's own clock seems to have been a mistake: go back to the original idea of "senders and syncs implement clocks and everyone else just passes them along"
             self._ctr = ctr
-            self._call_user_fn_process(self.process, 'process', **_current_data, _ctr=ctr)
+            emit_data = self._call_user_fn_process(self.process, 'process', **_current_data, _ctr=ctr)
+            if emit_data is not None:
+                emit_ctr = None
+                if type(emit_data) == tuple:
+                    emit_data, emit_ctr = emit_data
+                for key, val in emit_data.items():
+                    self._emit_data(data=val, channel=key, ctr=emit_ctr)
             self.verbose('process fn finished')
             self._report(node = self) # for latency and calc reasons
             self.data_storage.discard_before(ctr)
@@ -267,8 +311,17 @@ class Node(Connectionist, Logger, Serializer):
 
     ## TODO: this is an absolute hack. remove! consider how to do this, maybe consider the pickle/sklearn interfaces?
     def _set_attr(self, **kwargs):
+        # make sure the names are unique when being set
+        if 'name' in kwargs:
+            if not self.is_unique_name(kwargs['name']):
+                kwargs['name'] = self.create_unique_name(kwargs['name'])
+
+        # set values (again, we need a more specific idea of how node states and setting changes should look like!)
         for key, val in kwargs.items():
             setattr(self, key, val)
+
+        # return the finally set values (TODO: should this be explizit? or would it be better to expect that params might not by finally set as passed?)
+        return kwargs
 
     # === Node Specific Stuff =================
     # (Computation, Render)
@@ -287,6 +340,7 @@ class Node(Connectionist, Logger, Serializer):
     def process_time_series(self, ts):
         return ts
 
+    # TODO: does this hold up for anything except the "standard" Data stream?
     def process(self, data, **kwargs):
         """
         Heart of the nodes processing, should be a stateless(/functional) processing function, 
@@ -300,8 +354,8 @@ class Node(Connectionist, Logger, Serializer):
         params: **ports_in
         returns None
         """
-        res = list(map(self.process_time_series, data))
-        self._emit_data(res)
+        self.ret_accu(list(map(self.process_time_series, data)), port=self.ports_out[0])
+        return self.ret_accumulated()
 
     def _onstart(self):
         """

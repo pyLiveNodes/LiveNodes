@@ -2,9 +2,12 @@ import time
 import pytest
 import multiprocessing as mp
 
-from livenodes.node import Node
 from livenodes.producer import Producer
-from livenodes.graph import Graph
+
+from livenodes import logger, LogLevel, Node, Graph
+logger.set_log_level(LogLevel.VERBOSE)
+logger.remove_cb(logger._print)
+logger.register_cb(logger._print, LogLevel.VERBOSE)
 
 from typing import NamedTuple
 from .utils import Port_Data
@@ -13,7 +16,7 @@ class Ports_none(NamedTuple):
     pass
 
 class Ports_simple(NamedTuple):
-    data: Port_Data = Port_Data("Alternate Data")
+    alternate_data: Port_Data = Port_Data("Alternate Data")
 
 class Data(Producer):
     ports_in = Ports_none()
@@ -24,8 +27,7 @@ class Data(Producer):
     def _run(self):
         for ctr in range(10):
             self.info(ctr)
-            self._emit_data(ctr)
-            yield ctr < 9
+            yield self.ret(alternate_data=ctr)
 
 
 class Quadratic(Node):
@@ -33,7 +35,7 @@ class Quadratic(Node):
     ports_out = Ports_simple()
 
     def process(self, alternate_data, **kwargs):
-        self._emit_data(alternate_data**2)
+        return self.ret(alternate_data=alternate_data**2)
 
 
 class Save(Node):
@@ -45,7 +47,7 @@ class Save(Node):
         self.out = mp.SimpleQueue()
 
     def process(self, alternate_data, **kwargs):
-        self.error('re data', alternate_data)
+        self.debug('re data', alternate_data)
         self.out.put(alternate_data)
 
     def get_state(self):
@@ -69,12 +71,24 @@ def create_simple_graph():
 
     return data, quadratic, out1, out2
 
+@pytest.fixture
+def create_simple_graph_th():
+    data = Data(name="A", compute_on="1")
+    quadratic = Quadratic(name="B", compute_on="1")
+    out1 = Save(name="C", compute_on="2")
+    out2 = Save(name="D", compute_on="1")
+
+    out1.connect_inputs_to(data)
+    quadratic.connect_inputs_to(data)
+    out2.connect_inputs_to(quadratic)
+
+    return data, quadratic, out1, out2
 
 @pytest.fixture
 def create_simple_graph_mp():
     data = Data(name="A", compute_on="1:1")
-    quadratic = Quadratic(name="B", compute_on="1:1")
-    out1 = Save(name="C", compute_on="1:1")
+    quadratic = Quadratic(name="B", compute_on="2:1")
+    out1 = Save(name="C", compute_on="3:1")
     out2 = Save(name="D", compute_on="1:1")
 
     out1.connect_inputs_to(data)
@@ -86,8 +100,8 @@ def create_simple_graph_mp():
 
 @pytest.fixture
 def create_simple_graph_mixed():
-    data = Data(name="A", compute_on="1")
-    quadratic = Quadratic(name="B", compute_on="")
+    data = Data(name="A", compute_on="1:2")
+    quadratic = Quadratic(name="B", compute_on="2:1")
     out1 = Save(name="C", compute_on="1:1")
     out2 = Save(name="D", compute_on="1")
 
@@ -109,6 +123,7 @@ class TestProcessing():
 
         assert out1.get_state() == list(range(10))
         assert out2.get_state() == list(map(lambda x: x**2, range(10)))
+        assert g.is_finished()
 
     def test_calc_twice(self, create_simple_graph):
         data, quadratic, out1, out2 = create_simple_graph
@@ -119,6 +134,7 @@ class TestProcessing():
 
         assert out1.get_state() == list(range(10))
         assert out2.get_state() == list(map(lambda x: x**2, range(10)))
+        assert g.is_finished()
 
         g = Graph(start_node=data)
         g.start_all()
@@ -126,6 +142,7 @@ class TestProcessing():
 
         assert out1.get_state() == list(range(10))
         assert out2.get_state() == list(map(lambda x: x**2, range(10)))
+        assert g.is_finished()
 
     def test_calc_twice(self, create_simple_graph):
         data, quadratic, out1, out2 = create_simple_graph
@@ -136,6 +153,7 @@ class TestProcessing():
 
         assert out1.get_state() == list(range(10))
         assert out2.get_state() == list(map(lambda x: x**2, range(10)))
+        assert g.is_finished()
 
         g = Graph(start_node=data)
         g.start_all()
@@ -143,7 +161,18 @@ class TestProcessing():
 
         assert out1.get_state() == list(range(10))
         assert out2.get_state() == list(map(lambda x: x**2, range(10)))
+        assert g.is_finished()
 
+    def test_calc_th(self, create_simple_graph_th):
+        data, quadratic, out1, out2 = create_simple_graph_th
+
+        g = Graph(start_node=data)
+        g.start_all()
+        g.join_all()
+
+        assert out1.get_state() == list(range(10))
+        assert out2.get_state() == list(map(lambda x: x**2, range(10)))
+        assert g.is_finished()
 
     def test_calc_mp(self, create_simple_graph_mp):
         data, quadratic, out1, out2 = create_simple_graph_mp
@@ -154,6 +183,7 @@ class TestProcessing():
 
         assert out1.get_state() == list(range(10))
         assert out2.get_state() == list(map(lambda x: x**2, range(10)))
+        assert g.is_finished()
 
     def test_calc_mixed(self, create_simple_graph_mixed):
         data, quadratic, out1, out2 = create_simple_graph_mixed
@@ -161,6 +191,8 @@ class TestProcessing():
         g = Graph(start_node=data)
         g.start_all()
         g.join_all()
+        # g.stop_all()
 
         assert out1.get_state() == list(range(10))
         assert out2.get_state() == list(map(lambda x: x**2, range(10)))
+        assert g.is_finished()
