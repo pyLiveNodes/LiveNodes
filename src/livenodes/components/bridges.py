@@ -144,9 +144,7 @@ class Bridge_local(Bridge):
             self._read[itm_ctr] = item
             return itm_ctr
         except Exception as err:
-            print(f'Could not get value')
-            print(err)
-            print(traceback.format_exc())
+            self.logger.exception(f'Could not get value')
             self.error(err)
 
 

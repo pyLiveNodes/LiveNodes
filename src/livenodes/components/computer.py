@@ -58,8 +58,7 @@ class Processor_threads(Logger):
 
         self.subprocess = th.Thread(
                         target=self.start_subprocess,
-                        args=(self.bridges,))
-        self.subprocess.name = f"{str(self)}-{self.subprocess.name.split('-')[-1]}"
+                        args=(self.bridges,), name=str(self))
         self.subprocess.start()
 
     # parent thread
@@ -231,8 +230,7 @@ class Processor_process(Logger):
 
         self.subprocess = mp.Process(
                         target=self.start_subprocess,
-                        args=(self.bridges, parent_log_queue, logger_name,))
-        self.subprocess.name = f"{str(self)}-{self.subprocess.name.split('-')[-1]}"
+                        args=(self.bridges, parent_log_queue, logger_name,), name=str(self))
         self.subprocess.start()
 
     # parent process

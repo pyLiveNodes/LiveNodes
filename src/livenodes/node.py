@@ -261,7 +261,7 @@ class Node(Connectionist, Logger, Serializer):
         elif isinstance(channel, Port):
             channel = channel.key
         elif type(channel) == str:
-            self.info(f'Call by str will be deprecated, got: {channel}', [p.key for p in self.ports_out])
+            # self.info(f'Call by str will be deprecated, got: {channel}', [p.key for p in self.ports_out])
             if channel not in [p.key for p in self.ports_out]: 
                 #._fields:
                 raise ValueError('Unknown Port', channel)
