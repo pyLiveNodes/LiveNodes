@@ -1,3 +1,4 @@
+import queue
 import logging
 import traceback
 import sys
@@ -8,8 +9,10 @@ def drain_log_queue(parent_log_queue, logger_name, stop_log_event):
     logger = logging.getLogger(logger_name)
     while not stop_log_event.is_set():
         try:
-            record = parent_log_queue.get()
+            record = parent_log_queue.get(timeout=0.1)
             logger.handle(record)
+        except queue.Empty:
+            pass
         except (KeyboardInterrupt, SystemExit):
             raise
         except EOFError:
