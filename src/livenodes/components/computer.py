@@ -59,6 +59,7 @@ class Processor_threads(Logger):
         self.subprocess = th.Thread(
                         target=self.start_subprocess,
                         args=(self.bridges,))
+        self.subprocess.name = f"{str(self)}-{self.subprocess.name.split('-')[-1]}"
         self.subprocess.start()
 
     # parent thread
@@ -225,11 +226,13 @@ class Processor_process(Logger):
 
         self.worker_log_handler = th.Thread(target=drain_log_queue, args=(parent_log_queue, logger_name, self.worker_log_handler_termi_sig))
         self.worker_log_handler.deamon = True
+        self.worker_log_handler.name = f"LogDrain-{self.worker_log_handler.name.split('-')[-1]}"
         self.worker_log_handler.start()
 
         self.subprocess = mp.Process(
                         target=self.start_subprocess,
                         args=(self.bridges, parent_log_queue, logger_name,))
+        self.subprocess.name = f"{str(self)}-{self.subprocess.name.split('-')[-1]}"
         self.subprocess.start()
 
     # parent process
