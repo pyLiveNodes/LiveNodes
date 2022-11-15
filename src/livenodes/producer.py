@@ -51,18 +51,25 @@ class Producer(Node, abstract_class=True):
 
         # create generator
         runner = self._run()
+
+        def handle_next_data():
+            try:
+                emit_data = next(runner)
+            
+                for key, val in emit_data.items():
+                    self._emit_data(data=val, channel=key)
+                    
+                self._ctr = self._clock.tick()
+            except StopIteration:
+                return False
+            return True
+
         # wrap in call user fn
-        fn = partial(self._call_user_fn_process, next, "runner")
+        fn = partial(self._call_user_fn_process, handle_next_data, "handle_next_data")
 
         # finish either if no data is present anymore or parent told us to stop (via stop() -> _onstop())
         while self._running:
-            emit_data = fn(runner)
-            
-            if emit_data is not None:
-                for key, val in emit_data.items():
-                    self._emit_data(data=val, channel=key)
-                self._ctr = self._clock.tick()
-            else:
+            if not fn():
                 # Received no data from the generator, thus stopping the production :-) 
                 self._onstop()
 

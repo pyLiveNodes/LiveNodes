@@ -267,6 +267,7 @@ class Processor_process(Logger):
             self.subprocess.terminate()
             self.info('Timout reached: killed process')
         # self.subprocess = None
+        self.info('Closing Log Drain')
         self.worker_log_handler_termi_sig.set()
 
     # parent thread

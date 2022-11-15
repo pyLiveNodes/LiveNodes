@@ -56,7 +56,7 @@ class Ports_none(NamedTuple):
     pass
 
 class Ports_simple(NamedTuple):
-    data: Port_Data = Port_Data("Alternate Data")
+    alternate_data: Port_Data = Port_Data("Alternate Data")
 
 class Data(Producer):
     ports_in = Ports_none()
@@ -101,7 +101,7 @@ class Save(Node):
 
 if __name__ == "__main__":
     # Processing test
-    mixed = False
+    mixed = True
     if not mixed:
         data = Data(name="A", compute_on="1")
         quadratic = Quadratic(name="B", compute_on="1")
@@ -120,6 +120,7 @@ if __name__ == "__main__":
     g = Graph(start_node=data)
     g.start_all()
     g.join_all()
+    g.stop_all()
 
     print(out1.get_state())
     print(out2.get_state())
