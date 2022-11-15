@@ -28,7 +28,7 @@ class Logger(Reportable):
             self._report(log=" ".join(str(t) for t in text))
 
     def warn(self, *text):
-        self.logger.warn(self._prep_log(*text))
+        self.logger.warning(self._prep_log(*text))
         if self.logger.isEnabledFor(logging.WARN):
             self._report(log=" ".join(str(t) for t in text))
 
