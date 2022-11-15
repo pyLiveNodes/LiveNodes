@@ -30,6 +30,8 @@ class Processor_threads(Logger):
     def __init__(self, nodes, location, bridges) -> None:
         super().__init__()
         # -- both threads
+        # indicates that the subprocess is ready
+        self.ready_event = th.Event() 
         # indicates that the readied nodes should start sending data
         self.start_lock = th.Lock() 
         # indicates that the started nodes should stop sending data
@@ -60,6 +62,9 @@ class Processor_threads(Logger):
                         target=self.start_subprocess,
                         args=(self.bridges,), name=str(self))
         self.subprocess.start()
+        
+        self.info('Waiting for worker to be ready')
+        self.ready_event.wait()
 
     # parent thread
     def start(self):
@@ -97,6 +102,7 @@ class Processor_threads(Logger):
     # worker thread
     def start_subprocess(self, bridges):
         self.info('Starting Thread')
+        self.ready_event.set()
 
         def custom_exception_handler(loop, context):
             nonlocal self
@@ -187,6 +193,8 @@ class Processor_process(Logger):
     def __init__(self, nodes, location, bridges, stop_timeout_threads=0.1, close_timeout_threads=0.1) -> None:
         super().__init__()
         # -- both processes
+        # indicates that the subprocess is ready
+        self.ready_event = mp.Event() 
         # indicates that the readied nodes should start sending data
         self.start_lock = mp.Lock() 
         # indicates that the started nodes should stop sending data
@@ -232,6 +240,9 @@ class Processor_process(Logger):
                         target=self.start_subprocess,
                         args=(self.bridges, parent_log_queue, logger_name,), name=str(self))
         self.subprocess.start()
+        
+        self.info('Waiting for worker to be ready')
+        self.ready_event.wait()
 
     # parent process
     def start(self):
@@ -284,6 +295,7 @@ class Processor_process(Logger):
         logger.addHandler(QueueHandler(subprocess_log_queue))
 
         self.info('Starting Process')
+        self.ready_event.set()
 
         computers = []
         # TODO: it's a little weird, that bridges are specifically passed, but nodes are not, we should investigate that

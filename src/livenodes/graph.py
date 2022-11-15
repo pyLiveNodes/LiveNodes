@@ -48,7 +48,6 @@ class Graph():
             if not process == '':
                 node_specific_bridges = [bridges[str(n)] for n in process_nodes]
                 cmp = Processor_process(nodes=process_nodes, location=process, bridges=node_specific_bridges)
-                cmp.setup()
                 self.computers.append(cmp)
             else:
                 thread_groups = groupby(sorted(zip(process_threads, process_nodes), key=lambda t: t[0]), key=lambda t: t[0])
@@ -56,8 +55,10 @@ class Graph():
                     _, thread_nodes = list(zip(*list(thread_group)))
                     node_specific_bridges = [bridges[str(n)] for n in thread_nodes]
                     cmp = Processor_threads(nodes=thread_nodes, location=thread, bridges=node_specific_bridges)
-                    cmp.setup()
                     self.computers.append(cmp)
+
+        for cmp in self.computers:
+            cmp.setup()
 
         for cmp in self.computers:
             cmp.start()
