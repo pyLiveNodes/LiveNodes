@@ -2,14 +2,7 @@ import time
 import pytest
 import multiprocessing as mp
 
-import logging
-
 from livenodes import Node, Producer, Graph, get_registry
-
-import multiprocessing as mp
-mp.set_start_method(
-    'fork',
-    force=True)
 
 from typing import NamedTuple
 from .utils import Port_Data
