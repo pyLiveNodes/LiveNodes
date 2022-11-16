@@ -102,15 +102,15 @@ class Save(Node):
 if __name__ == "__main__":
     # Processing test
     mixed = True
-    if not mixed:
-        data = Data(name="A", compute_on="1")
-        quadratic = Quadratic(name="B", compute_on="1")
-        out1 = Save(name="C", compute_on="1")
-        out2 = Save(name="D", compute_on="1")
-    else:
+    if mixed:
         data = Data(name="A", compute_on="1:2")
         quadratic = Quadratic(name="B", compute_on="2:1")
         out1 = Save(name="C", compute_on="1:1")
+        out2 = Save(name="D", compute_on="1")
+    else:
+        data = Data(name="A", compute_on="1")
+        quadratic = Quadratic(name="B", compute_on="1")
+        out1 = Save(name="C", compute_on="1")
         out2 = Save(name="D", compute_on="1")
 
     out1.connect_inputs_to(data)

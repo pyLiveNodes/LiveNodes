@@ -213,7 +213,7 @@ class Bridge_threads(Bridge):
                 itm_ctr, item = self.queue.get_nowait()
                 got_item = True
             except queue.Empty:
-                await asyncio.sleep(0.000001)
+                await asyncio.sleep(0.001)
         self._read[itm_ctr] = item
         return itm_ctr
 

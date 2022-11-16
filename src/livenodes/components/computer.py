@@ -52,7 +52,7 @@ class Processor_threads(Logger):
         self.info(f'Creating Threading Computer with {len(self.nodes)} nodes.')
 
     def __str__(self) -> str:
-        return f"Computer:{self.location}"
+        return f"CMP-TH:{self.location}"
 
     # parent thread
     def setup(self):
@@ -64,7 +64,8 @@ class Processor_threads(Logger):
         self.subprocess.start()
         
         self.info('Waiting for worker to be ready')
-        self.ready_event.wait()
+        self.ready_event.wait(10)
+        self.info('Worker ready, resuming')
 
     # parent thread
     def start(self):
@@ -203,6 +204,8 @@ class Processor_process(Logger):
         self.close_lock = mp.Lock() 
         # used for logging identification
         self.location = location
+        # tell log drainer thread that it should return 
+        self.worker_log_handler_termi_sig = th.Event()
 
         # -- main process
         self.nodes = nodes
@@ -220,7 +223,7 @@ class Processor_process(Logger):
 
 
     def __str__(self) -> str:
-        return f"Computer:{self.location}"
+        return f"CMP-PR:{self.location}"
 
     # parent process
     def setup(self):
@@ -229,8 +232,6 @@ class Processor_process(Logger):
         parent_log_queue = mp.Queue()
         logger_name = 'livenodes'
         
-        self.worker_log_handler_termi_sig = th.Event()
-
         self.worker_log_handler = th.Thread(target=drain_log_queue, args=(parent_log_queue, logger_name, self.worker_log_handler_termi_sig))
         self.worker_log_handler.deamon = True
         self.worker_log_handler.name = f"LogDrain-{self.worker_log_handler.name.split('-')[-1]}"
@@ -242,7 +243,8 @@ class Processor_process(Logger):
         self.subprocess.start()
         
         self.info('Waiting for worker to be ready')
-        self.ready_event.wait()
+        self.ready_event.wait(timeout=10)
+        self.info('Worker ready, resuming')
 
     # parent process
     def start(self):
@@ -295,7 +297,6 @@ class Processor_process(Logger):
         logger.addHandler(QueueHandler(subprocess_log_queue))
 
         self.info('Starting Process')
-        self.ready_event.set()
 
         computers = []
         # TODO: it's a little weird, that bridges are specifically passed, but nodes are not, we should investigate that
@@ -305,12 +306,20 @@ class Processor_process(Logger):
         locations = groupby(sorted(self.nodes, key=lambda n: n.compute_on), key=lambda n: n.compute_on)
         for loc, loc_nodes in locations:
             loc_nodes = list(loc_nodes)
-            print(f'Resolving computer group. Location: {loc}; Nodes: {len(loc_nodes)}')
+            self.info(f'Resolving computer group. Location: {loc}; Nodes: {len(loc_nodes)}')
             node_specific_bridges = [bridge_lookup[str(n)] for n in loc_nodes]
             cmp = Processor_threads(nodes=loc_nodes, location=loc, bridges=node_specific_bridges)
-            cmp.setup()
             computers.append(cmp)
+        
+        self.info('Created computers:', list(map(str, computers)))
+        self.info('Setting up computers')
+        for cmp in computers:
+            cmp.setup()
 
+        self.info('All Computers ready')
+        self.ready_event.set()
+
+        
         self.start_lock.acquire()
         self.info('Starting Computers')
         for cmp in computers:

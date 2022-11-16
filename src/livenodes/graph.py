@@ -2,14 +2,21 @@ from collections import defaultdict
 from itertools import groupby
 from .node import Node
 from .components.computer import parse_location, Processor_threads, Processor_process
+from .components.node_logger import Logger
 
-class Graph():
+class Graph(Logger):
 
     def __init__(self, start_node) -> None:
+        super().__init__()
         self.start_node = start_node
         self.nodes = Node.discover_graph(start_node)
 
         self.computers = []
+
+        self.info(f'Handling {len(self.nodes)} nodes.')
+
+    def __str__(self) -> str:
+        return f"Graph"
 
     def lock_all(self):
         # Lock all nodes for processing (ie no input/output or setting changes allowed from here on)
@@ -32,15 +39,17 @@ class Graph():
         return bridges
 
     def start_all(self):
+        self.info('Starting all')
         hosts, processes, threads = list(zip(*[parse_location(n.compute_on) for n in self.nodes]))
         
         # not sure yet if this should be called externally yet...
+        self.info('Locking all nodes and resolving bridges')
         bridges = self.lock_all()
-        # bridges = {}
         # ignore hosts for now, as we do not have an implementation for them atm
         # host_group = groupby(sorted(zip(hosts, self.nodes), key=lambda t: t[0]))
         # for host in hosts:
 
+        self.info('Resolving computers')
         process_groups = groupby(sorted(zip(processes, threads, self.nodes), key=lambda t: t[0]), key=lambda t: t[0])
         for process, process_group in process_groups:
             _, process_threads, process_nodes = list(zip(*list(process_group)))
@@ -57,9 +66,12 @@ class Graph():
                     cmp = Processor_threads(nodes=thread_nodes, location=thread, bridges=node_specific_bridges)
                     self.computers.append(cmp)
 
+        self.info('Created computers:', list(map(str, self.computers)))
+        self.info('Setting up computers')
         for cmp in self.computers:
             cmp.setup()
 
+        self.info('Starting up computers')
         for cmp in self.computers:
             cmp.start()
                 
@@ -68,13 +80,16 @@ class Graph():
         return all([cmp.is_finished() for cmp in self.computers])
 
     def join_all(self):
+        self.info('Joining computers')
         for cmp in self.computers:
             cmp.join()
 
     def stop_all(self, stop_timeout=0.1, close_timeout=0.1):
+        self.info('Stopping computers')
         for cmp in self.computers:
             cmp.stop(timeout=stop_timeout)
 
+        self.info('Closing computers')
         for cmp in self.computers:
             cmp.close(timeout=close_timeout)
 
