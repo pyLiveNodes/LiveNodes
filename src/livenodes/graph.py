@@ -18,6 +18,11 @@ class Graph(Logger):
     def __str__(self) -> str:
         return f"Graph"
 
+    # def get_all_settings(self):
+    #     settings = {}
+    #     for node in self.nodes:
+    #         settings[str(node)] == node.
+
     def lock_all(self):
         # Lock all nodes for processing (ie no input/output or setting changes allowed from here on)
         # also resolves bridges between nodes soon to be bridges across computers

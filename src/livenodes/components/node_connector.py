@@ -31,9 +31,11 @@ class Connectionist(Logger):
     def _set_port_keys(self):
         for key in self.ports_in._fields:
             getattr(self.ports_in, key).set_key(key)
+            self.debug(f'[PortsIn], setting: {key}')
 
         for key in self.ports_out._fields:
             getattr(self.ports_out, key).set_key(key)
+            self.debug(f'[PortsOut], setting: {key}')
 
     def string(self, name):
         return f"{name} [{self.__class__.__name__}]"
@@ -79,6 +81,20 @@ class Connectionist(Logger):
         except Exception as err:
             print(self, key)
             raise err
+
+    def get_port_in_by_label(self, label):
+        for port in self.ports_in:
+            if port.label == label:
+                return port
+        
+        raise ValueError(f'Could not find input port on {str(self)} via label: {label}')
+
+    def get_port_out_by_label(self, label):
+        for port in self.ports_out:
+            if port.label == label:
+                return port
+        
+        raise ValueError(f'Could not find output port on {str(self)} via label: {label}')
 
     def connect_inputs_to(self, emit_node: 'Connectionist'):
         """

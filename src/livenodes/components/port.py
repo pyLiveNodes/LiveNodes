@@ -8,7 +8,7 @@ class Port():
         self.optional = optional
 
         # Just as a fallback, the key should still be set by the connectionist / node_connector
-        self.key = label.lower().replace(' ', '_')
+        self.key = None #label.lower().replace(' ', '_')
 
     def set_key(self, key):
         if key == None:
