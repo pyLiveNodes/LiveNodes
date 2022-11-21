@@ -30,7 +30,7 @@ class Port():
         for val in self.example_values:
             valid, msg = self.check_value(val)
             if not valid:
-                raise Exception(f'Example value does not pass check. Msg: {msg}. Value: {val}')
+                raise Exception(f'Example value does not pass check ({str(self)}). Msg: {msg}. Value: {val}')
         return super().__init_subclass__()
 
     @classmethod
