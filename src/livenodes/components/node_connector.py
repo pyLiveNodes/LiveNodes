@@ -311,6 +311,10 @@ class Connectionist(Logger):
         # self is always a parent of itself
         return node in self.discover_output_deps(self)
 
+    @staticmethod
+    def _sanitize_node_str(node):
+        # the dot renderer doesn't like :
+        return str(node).replace(':', '')
 
     def dot_graph(self, nodes, name=False, transparent_bg=False, edge_labels=True, format='png', **kwargs):
         graph_attr = {"size": "10,10!", "ratio": "fill"}
@@ -323,8 +327,8 @@ class Connectionist(Logger):
                 shape = 'invtrapezium'
             if len(node.ports_out) <= 0:
                 shape = 'trapezium'
-            disp_name = node.name if name else str(node)
-            dot.node(str(node), disp_name, shape=shape, style='rounded')
+            disp_name = node.name if name else self._sanitize_node_str(node)
+            dot.node(self._sanitize_node_str(node), disp_name, shape=shape, style='rounded')
 
         # Second pass: add edges based on output links
         for node in nodes:
@@ -332,8 +336,8 @@ class Connectionist(Logger):
                 l = None
                 if edge_labels:
                     l = f"{con._emit_port.label}\n->\n{con._recv_port.label}"
-                dot.edge(str(node),
-                         str(con._recv_node),
+                dot.edge(self._sanitize_node_str(node),
+                         self._sanitize_node_str(con._recv_node),
                          label=l)
         return dot
 
