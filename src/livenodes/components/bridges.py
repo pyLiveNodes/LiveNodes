@@ -2,8 +2,8 @@ import asyncio
 import queue
 import threading as th
 import multiprocessing as mp
-import traceback
-import aioprocessing
+# import traceback
+# import aioprocessing
 from .node_logger import Logger
 
 from .connection import Connection
@@ -328,7 +328,7 @@ class Bridge_processes(Bridge_threads):
 
 
 # TODO: this should be part of Node class or at least a mixin?
-class Multiprocessing_Data_Storage():
+class Multiprocessing_Data_Storage(Logger):
     # enpoints should be dicts with con.key: bridge
     def __init__(self, input_endpoints, output_endpoints) -> None:
         self.in_bridges = input_endpoints
@@ -341,8 +341,7 @@ class Multiprocessing_Data_Storage():
         for b in self.in_bridges.values():
             b.ready_recv()
         
-    @staticmethod
-    def resolve_bridge(connection: Connection):
+    def resolve_bridge(self, connection: Connection):
         emit_loc = connection._emit_node.compute_on
         recv_loc = connection._recv_node.compute_on
 
@@ -361,8 +360,8 @@ class Multiprocessing_Data_Storage():
             raise ValueError('No known bridge for connection', connection)
 
         possible_bridges = list(zip(*list(sorted(possible_bridges_pair, key=lambda t:t[0]))))[1]
-        print('Possible Bridges in order:', possible_bridges)
-        print('Using Bridge: ', possible_bridges[0])
+        self.debug('Possible Bridges in order:', possible_bridges)
+        self.info('Using Bridge: ', possible_bridges[0])
         
         bridge = possible_bridges[0](_from=emit_loc, _to=recv_loc)
         endpoint_send, endpoint_receive = bridge, bridge
@@ -375,7 +374,7 @@ class Multiprocessing_Data_Storage():
     # _to thread
     async def on_all_closed(self):
         await asyncio.gather(*[b.onclose() for b in self.in_bridges.values()])
-        print('All bridges empty and closed')
+        self.info('All bridges empty and closed')
 
     # TODO: may be removed?
     def empty(self):

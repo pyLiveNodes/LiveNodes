@@ -84,10 +84,12 @@ class Graph(Logger):
         # print([(str(cmp), cmp.is_finished()) for cmp in self.computers])
         return all([cmp.is_finished() for cmp in self.computers])
 
-    def join_all(self):
+    def join_all(self, timeout=None):
         self.info('Joining computers')
+        if timeout is not None:
+            timeout = timeout / len(self.computers)
         for cmp in self.computers:
-            cmp.join()
+            cmp.join(timeout)
 
     def stop_all(self, stop_timeout=0.1, close_timeout=0.1):
         self.info('Stopping computers')

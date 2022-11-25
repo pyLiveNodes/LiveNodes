@@ -73,10 +73,10 @@ class Processor_threads(Logger):
         self.start_lock.release()
 
     # parent thread
-    def join(self):
+    def join(self, timeout=None):
         """ used if the processing is nown to end"""
         self.info('Joining')
-        self.subprocess.join()
+        self.subprocess.join(timeout)
 
     # parent thread
     def stop(self, timeout=0.1):
@@ -257,10 +257,10 @@ class Processor_process(Logger):
     # in the join case we would want to be able to join each thread cmp instead of waiting on stop or close...
     # FIXED: inside of the subprocess we are short_ciruiting the stop and close locks if the threads have returned by themselves, thus the join returns once close is called or the sub-threads return
     # parent process
-    def join(self):
+    def join(self, timeout=None):
         """ used if the processing is nown to end"""
         self.info('Joining')
-        self.subprocess.join()
+        self.subprocess.join(timeout)
 
     # parent process
     def stop(self, timeout=0.3):
