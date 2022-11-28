@@ -16,7 +16,8 @@ dependencies = [
     "phx-class-registry",
     "python-dotenv",
     "aioprocessing>=2.0.1",
-    "deprecation>=2.1.0"
+    "deprecation>=2.1.0",
+    "pyyaml>=6.0.0"
 ]
 
 [project.optional-dependencies]
