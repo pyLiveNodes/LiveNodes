@@ -5,13 +5,13 @@ from livenodes.node import Node
 from livenodes import get_registry
 
 from typing import NamedTuple
-from .utils import Port_List_of_Ints
+from .utils import Port_Ints
 
 
 registry = get_registry()
 
 class Ports_simple(NamedTuple):
-    data: Port_List_of_Ints = Port_List_of_Ints("Data")
+    data: Port_Ints = Port_Ints("Data")
 
 @registry.nodes.decorator
 class SimpleNode(Node):
