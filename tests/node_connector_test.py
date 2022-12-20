@@ -3,23 +3,23 @@ import pytest
 from livenodes import Node
 
 from typing import NamedTuple
-from .utils import Port_Data
+from .utils import Port_List_of_Ints
 
 class Ports_simple(NamedTuple):
-    data: Port_Data = Port_Data("Data")
+    data: Port_List_of_Ints = Port_List_of_Ints("Data")
 
 class SimpleNode(Node):
     ports_in = Ports_simple()
     ports_out = Ports_simple()
 
 class Ports_complex_in(NamedTuple):
-    data: Port_Data = Port_Data("Data")
-    meta: Port_Data = Port_Data("Meta")
+    data: Port_List_of_Ints = Port_List_of_Ints("Data")
+    meta: Port_List_of_Ints = Port_List_of_Ints("Meta")
 
 class Ports_complex_out(NamedTuple):
-    data: Port_Data = Port_Data("Data")
-    meta: Port_Data = Port_Data("Meta")
-    info: Port_Data = Port_Data("Info")
+    data: Port_List_of_Ints = Port_List_of_Ints("Data")
+    meta: Port_List_of_Ints = Port_List_of_Ints("Meta")
+    info: Port_List_of_Ints = Port_List_of_Ints("Info")
 
 class ComplexNode(Node):
     ports_in = Ports_complex_in()

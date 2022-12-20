@@ -1,18 +1,16 @@
 from livenodes.components.port import Port
 
-import numpy as np
+class Port_List_of_Ints(Port):
 
-class Port_Data(Port):
+    example_values = [
+        [0, 1, 20, -15]
+    ]
 
-    example_values = [np.array([[[1]]])]
-
-    def __init__(self, name='Data', optional=False):
+    def __init__(self, name='File', optional=False):
         super().__init__(name, optional)
 
     @staticmethod
     def check_value(value):
-        if not isinstance(value, np.ndarray):
-            return False, "Should be numpy array;"
-        elif len(value.shape) != 3:
-            return False, "Shape should be of length three (Batch, Time, Channel)"
+        if not (type(value) == list and type(value[0]) == int):
+            return False, "Should be list of ints;"
         return True, None

@@ -5,13 +5,13 @@ import multiprocessing as mp
 from livenodes import Node, Producer, Graph, get_registry
 
 from typing import NamedTuple
-from .utils import Port_Data
+from .utils import Port_List_of_Ints
 
 class Ports_none(NamedTuple): 
     pass
 
 class Ports_simple(NamedTuple):
-    alternate_data: Port_Data = Port_Data("Alternate Data")
+    alternate_data: Port_List_of_Ints = Port_List_of_Ints("Alternate Data")
 
 class Data(Producer):
     ports_in = Ports_none()
