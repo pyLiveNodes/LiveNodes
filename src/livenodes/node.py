@@ -270,7 +270,7 @@ class Node(Connectionist, Logger, Serializer):
 
         if __debug__:
             val_ok, msg = self.get_port_out_by_key(channel).check_value(data)
-            assert val_ok, msg
+            assert val_ok, f"Error: {msg}; On channel: {channel}"
 
         self.debug('Emitting', channel, clock, ctr, self._ctr, np.array(data).shape)
         self.data_storage.put(channel, clock, data)
