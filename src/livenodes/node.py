@@ -268,6 +268,10 @@ class Node(Connectionist, Logger, Serializer):
                 
         clock = self._ctr if ctr is None else ctr
 
+        if __debug__:
+            val_ok, msg = self.get_port_out_by_key(channel).check_value(data)
+            assert val_ok, msg
+
         self.debug('Emitting', channel, clock, ctr, self._ctr, np.array(data).shape)
         self.data_storage.put(channel, clock, data)
 
@@ -278,6 +282,7 @@ class Node(Connectionist, Logger, Serializer):
         called every time something is put into the queue / we received some data (ie if there are three inputs, we expect this to be called three times, before the clock should advance)
         """
         self.debug('_Process triggered')
+        assert (self._ctr is None) or (self._ctr <= ctr), "Ctr already processed"
 
         # update current state, based on own clock
         _current_data = self.data_storage.get(ctr=ctr)
