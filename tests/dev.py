@@ -18,8 +18,8 @@ class Port_Data(Port):
     def __init__(self, name='Data', optional=False):
         super().__init__(name, optional)
 
-    @staticmethod
-    def check_value(value):
+    @classmethod
+    def check_value(cls, value):
         if not isinstance(value, np.ndarray):
             return False, "Should be numpy array;"
         elif len(value.shape) != 3:
@@ -43,8 +43,8 @@ class Port_Data(Port):
     def __init__(self, name='Data', optional=False):
         super().__init__(name, optional)
 
-    @staticmethod
-    def check_value(value):
+    @classmethod
+    def check_value(cls, value):
         if not isinstance(value, np.ndarray):
             return False, "Should be numpy array;"
         elif len(value.shape) != 3:

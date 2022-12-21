@@ -1,7 +1,7 @@
 
 class Port():
-
     example_values = []
+    compound_type = None
 
     def __init__(self, label, optional=False):
         self.label = label
@@ -37,8 +37,8 @@ class Port():
     def add_examples(cls, *args):
         cls.example_values.extend(args)
 
-    @staticmethod
-    def check_value(value):
+    @classmethod
+    def check_value(cls, value):
         raise NotImplementedError()
 
     @classmethod

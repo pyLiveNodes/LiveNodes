@@ -9,8 +9,8 @@ class Port_Ints(Port):
     def __init__(self, name='Int', optional=False):
         super().__init__(name, optional)
 
-    @staticmethod
-    def check_value(value):
+    @classmethod
+    def check_value(cls, value):
         if type(value) != int:
             return False, "Should be int;"
         return True, None
