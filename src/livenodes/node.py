@@ -209,10 +209,9 @@ class Node(Connectionist, Logger, Serializer):
             try:
                 ctr = await queue.update()
                 self._process(ctr)
-            except Exception as e:
-                self.error(f'failed to execute queue update')
-                self.error(e)
-                self.error(traceback.format_exc())
+            except Exception as err:
+                self.logger.exception(f'failed to execute _process in queue update')
+                self.error(err)
 
     # _computer thread
     def _setup_process(self):

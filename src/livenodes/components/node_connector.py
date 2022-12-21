@@ -6,6 +6,7 @@ from PIL import Image
 from io import BytesIO
 
 from typing import NamedTuple
+import deprecation
 
 from .connection import Connection
 from .port import Port
@@ -96,6 +97,7 @@ class Connectionist(Logger):
         
         raise ValueError(f'Could not find output port on {str(self)} via label: {label}')
 
+    @deprecation.deprecated(details="Connect Inputs will be removed due to implicit failures. If nodes are not connected but where assumed connected.")
     def connect_inputs_to(self, emit_node: 'Connectionist'):
         """
         Add all matching channels from the emitting nodes to self as input.
