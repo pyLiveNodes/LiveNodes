@@ -28,7 +28,7 @@ def create_connection():
     node_b = SimpleNode(name="A")
     node_c = SimpleNode(name="B")
 
-    node_c.connect_inputs_to(node_b)
+    node_c.add_input(node_b, emit_port=node_b.ports_out.data, recv_port=node_c.ports_in.data)
   
     return node_b
 
@@ -73,8 +73,8 @@ class TestNodeOperations():
         node_b = SimpleNode(name="B")
         node_c = SimpleNode(name="B")
 
-        node_b.connect_inputs_to(node_a)
-        node_c.connect_inputs_to(node_a)
+        node_b.add_input(node_a, emit_port=node_a.ports_out.data, recv_port=node_b.ports_in.data)
+        node_c.add_input(node_a, emit_port=node_a.ports_out.data, recv_port=node_c.ports_in.data)
     
         graph = Node.from_dict(node_a.to_dict(graph=True))
         assert str(graph) == "A [SimpleNode]"

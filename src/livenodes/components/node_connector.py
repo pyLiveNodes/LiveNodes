@@ -108,6 +108,7 @@ class Connectionist(Logger):
         lookup_emit = dict(zip(map(str, emit_node.ports_out), emit_node.ports_out))
         for key in lookup_recv:
             if key in lookup_emit:
+                self.warn(f'Replace with: a.add_input(b, emit_port=b.{lookup_emit[key]}, recv_port=a.{lookup_recv[key]}')
                 self.add_input(emit_node=emit_node,
                             emit_port=lookup_emit[key],
                             recv_port=lookup_recv[key])

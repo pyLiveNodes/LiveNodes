@@ -60,9 +60,9 @@ def create_simple_graph():
     out1 = Save(name="C", compute_on="")
     out2 = Save(name="D", compute_on="")
 
-    out1.connect_inputs_to(data)
-    quadratic.connect_inputs_to(data)
-    out2.connect_inputs_to(quadratic)
+    out1.add_input(data, emit_port=data.ports_out.alternate_data, recv_port=out1.ports_in.alternate_data)
+    quadratic.add_input(data, emit_port=data.ports_out.alternate_data, recv_port=quadratic.ports_in.alternate_data)
+    out2.add_input(quadratic, emit_port=quadratic.ports_out.alternate_data, recv_port=out2.ports_in.alternate_data)
 
     return data, quadratic, out1, out2
 
@@ -73,9 +73,9 @@ def create_simple_graph_th():
     out1 = Save(name="C", compute_on="2")
     out2 = Save(name="D", compute_on="1")
 
-    out1.connect_inputs_to(data)
-    quadratic.connect_inputs_to(data)
-    out2.connect_inputs_to(quadratic)
+    out1.add_input(data, emit_port=data.ports_out.alternate_data, recv_port=out1.ports_in.alternate_data)
+    quadratic.add_input(data, emit_port=data.ports_out.alternate_data, recv_port=quadratic.ports_in.alternate_data)
+    out2.add_input(quadratic, emit_port=quadratic.ports_out.alternate_data, recv_port=out2.ports_in.alternate_data)
 
     return data, quadratic, out1, out2
 
@@ -86,9 +86,9 @@ def create_simple_graph_mp():
     out1 = Save(name="C", compute_on="3:1")
     out2 = Save(name="D", compute_on="1:1")
 
-    out1.connect_inputs_to(data)
-    quadratic.connect_inputs_to(data)
-    out2.connect_inputs_to(quadratic)
+    out1.add_input(data, emit_port=data.ports_out.alternate_data, recv_port=out1.ports_in.alternate_data)
+    quadratic.add_input(data, emit_port=data.ports_out.alternate_data, recv_port=quadratic.ports_in.alternate_data)
+    out2.add_input(quadratic, emit_port=quadratic.ports_out.alternate_data, recv_port=out2.ports_in.alternate_data)
 
     return data, quadratic, out1, out2
 
@@ -100,9 +100,9 @@ def create_simple_graph_mixed():
     out1 = Save(name="C", compute_on="1:1")
     out2 = Save(name="D", compute_on="1")
 
-    out1.connect_inputs_to(data)
-    quadratic.connect_inputs_to(data)
-    out2.connect_inputs_to(quadratic)
+    out1.add_input(data, emit_port=data.ports_out.alternate_data, recv_port=out1.ports_in.alternate_data)
+    quadratic.add_input(data, emit_port=data.ports_out.alternate_data, recv_port=quadratic.ports_in.alternate_data)
+    out2.add_input(quadratic, emit_port=quadratic.ports_out.alternate_data, recv_port=out2.ports_in.alternate_data)
 
     return data, quadratic, out1, out2
 

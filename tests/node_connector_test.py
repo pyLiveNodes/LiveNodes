@@ -49,8 +49,10 @@ def create_simple_graph_complex_nodes():
     node_b = ComplexNode()
     node_c = ComplexNode()
 
-    node_b.connect_inputs_to(node_a)
-    node_c.connect_inputs_to(node_b)
+    node_b.add_input(node_a, emit_port=node_a.ports_out.data, recv_port=node_b.ports_in.data)
+    node_b.add_input(node_a, emit_port=node_a.ports_out.meta, recv_port=node_b.ports_in.meta)
+    node_c.add_input(node_b, emit_port=node_b.ports_out.data, recv_port=node_b.ports_in.data)
+    node_c.add_input(node_b, emit_port=node_b.ports_out.meta, recv_port=node_b.ports_in.meta)
 
     return node_a, node_b, node_c
 
