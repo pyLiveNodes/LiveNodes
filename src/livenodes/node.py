@@ -268,8 +268,9 @@ class Node(Connectionist, Logger, Serializer):
         clock = self._ctr if ctr is None else ctr
 
         if __debug__:
+            # checks if the sent data adhere to the set port type
             val_ok, msg = self.get_port_out_by_key(channel).check_value(data)
-            assert val_ok, f"Error: {msg}; On channel: {channel}"
+            assert val_ok, f"Error: {msg}; On channel: {str(self)}.{channel}"
 
         self.debug('Emitting', channel, clock, ctr, self._ctr, np.array(data).shape)
         self.data_storage.put(channel, clock, data)
