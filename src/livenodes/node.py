@@ -263,7 +263,7 @@ class Node(Connectionist, Logger, Serializer):
             # self.info(f'Call by str will be deprecated, got: {channel}', [p.key for p in self.ports_out])
             if channel not in [p.key for p in self.ports_out]: 
                 #._fields:
-                raise ValueError('Unknown Port', channel)
+                raise ValueError(f'Unknown Port {str(self)}.{channel}')
                 
         clock = self._ctr if ctr is None else ctr
 
