@@ -14,3 +14,18 @@ class Port_Ints(Port):
         if type(value) != int:
             return False, "Should be int;"
         return True, None
+
+class Port_Str(Port):
+    example_values = [
+        "Some example value",
+        "another_one"
+    ]
+
+    def __init__(self, name='Text'):
+        super().__init__(name)
+
+    @classmethod
+    def check_value(cls, value):
+        if type(value) != str:
+            return False, f"Should be string; got {type(value)}."
+        return True, None

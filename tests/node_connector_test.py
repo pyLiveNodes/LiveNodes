@@ -3,7 +3,7 @@ import pytest
 from livenodes import Node
 
 from typing import NamedTuple
-from .utils import Port_Ints
+from .utils import Port_Ints, Port_Str
 
 class Ports_simple(NamedTuple):
     data: Port_Ints = Port_Ints("Data")
@@ -19,7 +19,7 @@ class Ports_complex_in(NamedTuple):
 class Ports_complex_out(NamedTuple):
     data: Port_Ints = Port_Ints("Data")
     meta: Port_Ints = Port_Ints("Meta")
-    info: Port_Ints = Port_Ints("Info")
+    info: Port_Str = Port_Str("Info")
 
 class ComplexNode(Node):
     ports_in = Ports_complex_in()
@@ -90,6 +90,13 @@ class TestGraphOperations():
 
         # Now they shouldn't be related anymore
         assert not node_b.requires_input_of(node_a)
+
+    def test_incompatible_nodes(self):
+        a = ComplexNode()
+        b = ComplexNode()
+
+        with pytest.raises(ValueError):
+            b.add_input(a, emit_port=a.ports_out.info, recv_port=b.ports_in.data)
 
 # if __name__ == "__main__":
 #     # TestGraphOperations().test_relationships(create_simple_graph())

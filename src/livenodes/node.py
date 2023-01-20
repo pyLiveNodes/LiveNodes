@@ -74,6 +74,10 @@ class Node(Connectionist, Logger, Serializer):
         if not isinstance(emit_node, Node):
             raise ValueError("Emitting Node must be of instance Node. Got:",
                              emit_node)
+        
+        if not emit_port.can_input_to(recv_port):
+            raise ValueError(f'Port {str(emit_port)} cannot input into {str(recv_port)}')
+        
         return super().add_input(emit_node, emit_port, recv_port)
 
     # # === Subclass Validation Stuff =================
@@ -286,6 +290,10 @@ class Node(Connectionist, Logger, Serializer):
 
         # update current state, based on own clock
         _current_data = self.data_storage.get(ctr=ctr)
+
+        # Considered to type check here as well, but not necessary, as every data that arrives here must be the type it was sent
+        # and connections should only be allowed between compatible types
+
         # sure?
         self._report(current_state = {"ctr": ctr, "data": _current_data})
 

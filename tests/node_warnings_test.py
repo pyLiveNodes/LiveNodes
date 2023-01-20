@@ -28,6 +28,6 @@ class Data(Producer):
 class TestWarnings():
 
     def test_nonexisting_port(self):
+        data = Data(name="A", compute_on="")
         with pytest.raises(ValueError):
-            data = Data(name="A", compute_on="")
             data._emit_data(data=[], channel='nonexistantportname')
