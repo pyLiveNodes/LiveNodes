@@ -42,10 +42,10 @@ class Port():
         raise NotImplementedError()
 
     @classmethod
-    def can_input_to(cls, other_port_cls):
-        # print(list(map(cls.check_value, other_port_cls.example_values)))
-        return cls == other_port_cls \
-            or any([compatible for compatible, _ in map(cls.check_value, other_port_cls.example_values)])
+    def can_input_to(emit_port_cls, recv_port_cls):
+        # print(list(map(cls.check_value, recv_port_cls.example_values)))
+        return emit_port_cls == recv_port_cls \
+            or any([compatible for compatible, _ in map(recv_port_cls.check_value, emit_port_cls.example_values)])
             # we use any here in order to allow for dynamic converters, e.g. adding or removing axes from a package
             # we could consider using all() instead of any(), but this would require specfic converter nodes, which i'm not sure i want to go for right now
             # but let's keep an eye on this
