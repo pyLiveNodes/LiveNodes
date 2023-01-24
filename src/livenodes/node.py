@@ -76,6 +76,7 @@ class Node(Connectionist, Logger, Serializer):
                              emit_node)
         
         if not emit_port.can_input_to(recv_port):
+            self.info(recv_port.accepts_inputs(emit_port.example_values))
             raise ValueError(f'Port {str(emit_port)} cannot input into {str(recv_port)}')
         
         return super().add_input(emit_node, emit_port, recv_port)
