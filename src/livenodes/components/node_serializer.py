@@ -5,6 +5,9 @@ from .utils.utils import NumpyEncoder
 from livenodes.components.connection import Connection
 from livenodes import get_registry
 
+import logging
+logger_ln = logging.getLogger('livenodes')
+
 class Serializer():
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
@@ -56,7 +59,7 @@ class Serializer():
         return res
 
     @classmethod
-    def from_dict(cls, items, initial_node=None, **kwargs):
+    def from_dict(cls, items, initial_node=None, ignore_connection_errors=False, **kwargs):
         # TODO: implement children=True, parents=True
         # format should be as in to_dict, ie a dictionary, where the name is unique and the values is a dictionary with three values (settings, ins, outs)
         
@@ -90,11 +93,18 @@ class Serializer():
         for name, itm in items.items():
             # only add inputs, as, if we go through all nodes this automatically includes all outputs as well
             for con in itm['inputs']:
-                items_instc[name].add_input(
-                    emit_node = items_instc[con["emit_node"]],
-                    emit_port = items_instc[con["emit_node"]].get_port_out_by_key(con['emit_port']),
-                    recv_port = items_instc[name].get_port_in_by_key(con['recv_port'])
-                    )
+                try:
+                    items_instc[name].add_input(
+                        emit_node = items_instc[con["emit_node"]],
+                        emit_port = items_instc[con["emit_node"]].get_port_out_by_key(con['emit_port']),
+                        recv_port = items_instc[name].get_port_in_by_key(con['recv_port'])
+                        )
+                except Exception as err:
+                    if ignore_connection_errors:
+                        logger_ln.exception(err)
+                    else:
+                        raise err
+                        
 
         return initial
 
