@@ -4,7 +4,7 @@ Generally this has quite some similarities. Including but not limited to cluster
 
 
 ## Very Similar
-- https://timeflux.io
+- https://timeflux.io -> awesome framework, as of yet no interaction?
 - https://github.com/facebookresearch/labgraph
 
 ## Pipline Systems
