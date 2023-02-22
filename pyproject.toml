@@ -13,8 +13,11 @@ dependencies = [
     "joblib>=1.1.0",
     "scikit-learn>=1.0.2",
     "scipy>=1.7.3",
-    "phx-class-registry",
+    "phx-class-registry~=3.0.5",
     "python-dotenv",
+    "aioprocessing>=2.0.1",
+    "deprecation>=2.1.0",
+    "pyyaml>=6.0.0"
 ]
 
 [project.optional-dependencies]

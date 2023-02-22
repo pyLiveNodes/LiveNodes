@@ -21,7 +21,13 @@ project = 'LiveNodes'
 year = '2022'
 author = 'Yale Hartmann'
 copyright = '{0}, {1}'.format(year, author)
-version = release = '0.7.0'
+
+# determine version number
+import re
+# The full version, including alpha/beta/rc tags.
+release = re.sub('^v', '', os.popen('git describe').read().strip())
+# The short X.Y version.
+version = release
 
 pygments_style = 'trac'
 templates_path = ['.']

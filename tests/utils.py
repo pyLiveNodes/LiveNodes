@@ -1,18 +1,31 @@
-from livenodes.port import Port
+from livenodes.components.port import Port
 
-import numpy as np
+class Port_Ints(Port):
 
-class Port_Data(Port):
+    example_values = [
+        0, 1, 20, -15
+    ]
 
-    example_values = [np.array([[[1]]])]
-
-    def __init__(self, name='Data', optional=False):
+    def __init__(self, name='Int', optional=False):
         super().__init__(name, optional)
 
-    @staticmethod
-    def check_value(value):
-        if not isinstance(value, np.ndarray):
-            return False, "Should be numpy array;"
-        elif len(value.shape) != 3:
-            return False, "Shape should be of length three (Batch, Time, Channel)"
+    @classmethod
+    def check_value(cls, value):
+        if type(value) != int:
+            return False, "Should be int;"
+        return True, None
+
+class Port_Str(Port):
+    example_values = [
+        "Some example value",
+        "another_one"
+    ]
+
+    def __init__(self, name='Text'):
+        super().__init__(name)
+
+    @classmethod
+    def check_value(cls, value):
+        if type(value) != str:
+            return False, f"Should be string; got {type(value)}."
         return True, None

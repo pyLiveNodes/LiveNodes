@@ -1,9 +1,24 @@
 # Contributing
 
+Thank you! :-)
+
+
+## Bugs and Features
+
+## Qeustions and Suggestions 
+
+## Use Cases and Documentation
+
+## Hosting a Node Package
+
+
+# How to PR
+
+
 TODO:
-- how the documentation is structured (ie folders, modules folder is auto generated etc)
-- when / how to build the documentation
-- how to contribute
+- when / how to build the documentation, how tests and builds are run, badges etc...
+- fill in the above notes (see also the main index.md for an exsiting paragraph on contibutions)
+
 
 ```{eval-rst}
 .. toctree::
