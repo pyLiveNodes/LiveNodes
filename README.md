@@ -9,6 +9,13 @@ Any contribution is welcome! These projects take more time, than I can muster, s
 Have fun and good coding!
 Yale
 
+
+To disable assertion checks for types etc use
+```
+PYTHONOPTIMIZE=1 smart_studio
+```
+
+
 # Known Bugs:
 
 ## nodes not computing due to multiprocessing issues

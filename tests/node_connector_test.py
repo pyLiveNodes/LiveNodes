@@ -1,27 +1,27 @@
 import pytest
 
-from livenodes.node_connector import Connectionist
+from livenodes import Node
 
 from typing import NamedTuple
-from .utils import Port_Data
+from .utils import Port_Ints, Port_Str
 
 class Ports_simple(NamedTuple):
-    data: Port_Data = Port_Data("Data")
+    data: Port_Ints = Port_Ints("Data")
 
-class SimpleNode(Connectionist):
+class SimpleNode(Node):
     ports_in = Ports_simple()
     ports_out = Ports_simple()
 
 class Ports_complex_in(NamedTuple):
-    data: Port_Data = Port_Data("Data")
-    meta: Port_Data = Port_Data("Meta")
+    data: Port_Ints = Port_Ints("Data")
+    meta: Port_Ints = Port_Ints("Meta")
 
 class Ports_complex_out(NamedTuple):
-    data: Port_Data = Port_Data("Data")
-    meta: Port_Data = Port_Data("Meta")
-    info: Port_Data = Port_Data("Info")
+    data: Port_Ints = Port_Ints("Data")
+    meta: Port_Ints = Port_Ints("Meta")
+    info: Port_Str = Port_Str("Info")
 
-class ComplexNode(Connectionist):
+class ComplexNode(Node):
     ports_in = Ports_complex_in()
     ports_out = Ports_complex_out()
 
@@ -49,8 +49,10 @@ def create_simple_graph_complex_nodes():
     node_b = ComplexNode()
     node_c = ComplexNode()
 
-    node_b.connect_inputs_to(node_a)
-    node_c.connect_inputs_to(node_b)
+    node_b.add_input(node_a, emit_port=node_a.ports_out.data, recv_port=node_b.ports_in.data)
+    node_b.add_input(node_a, emit_port=node_a.ports_out.meta, recv_port=node_b.ports_in.meta)
+    node_c.add_input(node_b, emit_port=node_b.ports_out.data, recv_port=node_b.ports_in.data)
+    node_c.add_input(node_b, emit_port=node_b.ports_out.meta, recv_port=node_b.ports_in.meta)
 
     return node_a, node_b, node_c
 
@@ -89,21 +91,12 @@ class TestGraphOperations():
         # Now they shouldn't be related anymore
         assert not node_b.requires_input_of(node_a)
 
-    def test_error_duplicate_port_keys(self):
+    def test_incompatible_nodes(self):
+        a = ComplexNode()
+        b = ComplexNode()
 
-        # there may not be two ports with the same label (which would result in also the same key and therefore serialzation and message passing problems)
-        class Ports_simple(NamedTuple):
-            data: Port_Data = Port_Data("Data")
-            alternate_data: Port_Data = Port_Data("Data")
-
-        try:
-            class SimpleNode(Connectionist):
-                ports_in = Ports_simple()
-                ports_out = Ports_simple()
-        except ValueError:
-            return
-        pytest.fail()
-
+        with pytest.raises(ValueError):
+            b.add_input(a, emit_port=a.ports_out.info, recv_port=b.ports_in.data)
 
 # if __name__ == "__main__":
 #     # TestGraphOperations().test_relationships(create_simple_graph())
