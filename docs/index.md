@@ -5,13 +5,12 @@ Livenodes is a pure python, node-based framework for online and offline digital 
 You'll find a list with use cases, features and all the other good stuff below. It's awesome to have you here! Good Coding, Good Research and Good Luck in your Endeavours!
 
 Yale Hartmann
-
-https://www.uni-bremen.de/en/csl/institute/team/staff/yale-hartmann
+[Website](https://www.uni-bremen.de/en/csl/institute/team/staff/yale-hartmann)
 
 ## Use cases / Examples
 - Biosignal-Based Interaction Applications
-    - Visualization of ML Predictions in Realtime and dependent on user input: [youtube](https://www.youtube.com/watch?v=E8EEMYG2PpQ)
-    - Live Human Activity Recognition: [gitlab](https://gitlab.csl.uni-bremen.de/livenodes/example-project)
+    - Visualization of ML Predictions in Realtime and dependent on user input: [Youtube](https://www.youtube.com/watch?v=E8EEMYG2PpQ)
+    - Live Human Activity Recognition: [Gitlab Repo](https://gitlab.csl.uni-bremen.de/livenodes/example-project)
     - Online ASR (with distributed computing, where the ASR Model can run on a different machine): [TODO create and add link]()
     - EMG and Accelermoter-based Gesture Recognition using Plux MuscleBans and BioKIT-based HMMs: [TODO Link to Felix' BA]()
     - EMG-based biosignals calculator: [TODO Link to Dennis' BA]()
@@ -23,13 +22,13 @@ https://www.uni-bremen.de/en/csl/institute/team/staff/yale-hartmann
 
 ## Features
 - Core LiveNodes:
-    - [Pure Python (Stateful) Nodes](./concepts/node.md)
+    - [Pure Python (Stateful) Nodes](./usage/node.md)
     - [Acyclic Graphs with synced data packages and typed data streams](./concepts/streams.md)
-    - [Easy Multithreading and Multiprocessing (just set a Flag and the framework will do the rest)](./concepts/multiprocessing.md)
+    - [Easy Multithreading and Multiprocessing (just set a Flag and the framework will do the rest)](./advanced/multiprocessing.md)
     - [Distributed Computing (currently in works)]()
     - Don't choose between offline and online processing, do both. Parameter optimization of a graph offline and run with online sensors.
-    - [Create graphs in python, yaml, json or a visual editor](./concepts/serialization.md)
-    - [Full Logging](./concepts/logger.md)
+    - [Create graphs in python, yaml, json or a visual editor](./advanced/serialization.md)
+    - [Full Logging](./advanced/logger.md)
     - [TODO: Graph Macros/Recursion]()
 - Visual Ecosystem: [Smart-Studio](https://livenodes.pages.csl.uni-bremen.de/smart-studio/readme.html)
     - Visualize everything (data, states, interaction)
@@ -37,7 +36,7 @@ https://www.uni-bremen.de/en/csl/institute/team/staff/yale-hartmann
     - Create and edit graphs in a visual editor
     - Time and profile of your graphs
 - Package Ecosystem:
-    - [Easy Node installation via pip packages or local nodes](./concepts/extensibility.md)
+    - [Easy Node installation via pip packages or local nodes](./usage/extensibility.md)
     - [Large set of tried and tested nodes](https://gitlab.csl.uni-bremen.de/groups/livenodes/-/packages)
 
 
@@ -47,8 +46,8 @@ You've mostly found it!
 
 If you want to
 - create and run a graph, have a look at the [quickstart](./quickstart/index.md)
-- write your own nodes, you can find more information [here](./concepts/node.md)
-- delve into the concepts of the core livenode system, I recommend you take a look at the [concepts](./concepts/index.md).
+- write your own nodes, you can find more information [here](./usage/node.md)
+- delve into the concepts of the core livenode system, I recommend you take a look at the [advanced concepts](./advanced/index.md).
 - run or see an example, use the link from [above](##use-cases). 
 - look at specific features, use the link from [above](##features). 
 
@@ -56,7 +55,7 @@ If you are seasoned with all the concepts, and need specific information, the [m
 
 ## Similar Frameworks
 
-There are multiple node-based and python frameworks, but as far as I know none, that combines recording, processing, visualzing and interaction for biosignals in one combined package. Further frameworks are listed [here](./concepts/similar_framworks.md). 
+There are multiple node-based and python frameworks, but as far as I know none, that combines recording, processing, visualzing and interaction for biosignals in one combined package. Further frameworks are listed [here](./advanced/similar_framworks.md). 
 
 
 ## Platform independence
@@ -95,15 +94,31 @@ Further information: [Contributing](./contributing/index.md)
 ```{eval-rst}
 .. toctree::
     :maxdepth: 2
-    :caption: Usage
+    :caption: Start
 
-    usage/index.md
+    usage/quickstart.md
+
+    usage/projects.md
+    usage/create.md
+    usage/run.md
+    usage/multiprocessing.md
+
+    usage/node.md
+    usage/draw.md
+    usage/packages.md
+
 
 .. toctree::
     :maxdepth: 2
     :caption: Advanced
 
-    advanced/index.md
+    advanced/syncronisation.md
+    advanced/execution.md
+    advanced/typing.md
+
+    advanced/serialization.md
+    advanced/logging.md
+    advanced/profiling.md
 
 .. toctree::
     :caption: Modules
