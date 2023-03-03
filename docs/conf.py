@@ -32,8 +32,8 @@ version = release
 pygments_style = 'trac'
 templates_path = ['.']
 extlinks = {
-    'issue': ('https://gitlab.csl.uni-bremen.de/yale1/livenodes/issues/%s', '#'),
-    'pr': ('https://gitlab.csl.uni-bremen.de/yale1/livenodes/pull/%s', 'PR #'),
+    'issue': ('https://gitlab.csl.uni-bremen.de/livenodes/livenodes/issues/%s', '#'),
+    'pr': ('https://gitlab.csl.uni-bremen.de/livenodes/livenodes/pull/%s', 'PR #'),
 }
 # on_rtd is whether we are on readthedocs.org
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
