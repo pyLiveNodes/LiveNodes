@@ -2,13 +2,13 @@
 
 <!-- Role  -->
 Nodes are the core unit of the livenodes framework. 
-At their core they receive zero or more inputs and produce zero or more outputs using their `process` method. The nodes are then connected via their input/output `ports` to create an acyclic directed computation graph which can be run in [python](./run.md) or [Smart Studio](https://livenodes.pages.csl.uni-bremen.de/smart-studio/index.html).
+At their core they receive zero or more inputs and produce zero or more outputs using their `process` method. The nodes are then connected via their input/output `ports` to create an acyclic directed computation graph which can be run in [python](./run.md) or [Smart Studio](http://livenodes.pages.csl.uni-bremen.de/smart-studio/index.html).
 
 ## Node Structure
 
 I encourage you to look at existing nodes that do similar stuff to what you want to do when creating a new node.
 
-In that spirit, let's have a look at the subtraction node implemented in the [livenodes core nodes package](https://livenodes.pages.csl.uni-bremen.de/packages/livenodes_core_nodes/modules/livenodes_basic_nodes.html#module-livenodes_basic_nodes.math_subtract).
+In that spirit, let's have a look at the subtraction node implemented in the [livenodes core nodes package](http://livenodes.pages.csl.uni-bremen.de/packages/livenodes_core_nodes/modules/livenodes_basic_nodes.html#module-livenodes_basic_nodes.math_subtract).
 
 ```
 class Ports_in(NamedTuple):
@@ -129,7 +129,7 @@ A node has access to all of the associated methods described below and thus can 
 However, most of the time the node design can be drastically simplified by spliting this behaviour in multiple nodes. Take the data storage example: the data storage may just send it's capacity through a outwards port and you can then choose the visualization (with a bar diagram for instance) or if this should be further processed. In the video example on the other hand, moving the pause button outside would potentially require an infinite memory buffer, whereas in the video node it just abstains from loading more data. As a general Rule, I would recommend to built what you need and *then* consider factoring out. 
 
 ### Producers
-*Producer* typically don't take an input and are responsible for producing data, which then will be processed by subsequent nodes. They often either implement the `Producer_async` (typically in memory or io producers, for example the [function input](https://livenodes.pages.csl.uni-bremen.de/packages/livenodes_core_nodes/modules/livenodes_basic_nodes.html#module-livenodes_basic_nodes.in_function)) or `Producer_blocking` (typically sensors that have a blocking interface, for example the [plux hub](https://livenodes.pages.csl.uni-bremen.de/packages/livenodes_plux/modules/livenodes_plux.html#livenodes-plux-in-biosignalsplux-module) implementation) node class. 
+*Producer* typically don't take an input and are responsible for producing data, which then will be processed by subsequent nodes. They often either implement the `Producer_async` (typically in memory or io producers, for example the [function input](http://livenodes.pages.csl.uni-bremen.de/packages/livenodes_core_nodes/modules/livenodes_basic_nodes.html#module-livenodes_basic_nodes.in_function)) or `Producer_blocking` (typically sensors that have a blocking interface, for example the [plux hub](http://livenodes.pages.csl.uni-bremen.de/packages/livenodes_plux/modules/livenodes_plux.html#livenodes-plux-in-biosignalsplux-module) implementation) node class. 
 
 TODO: describe interface to be implemented and reference documentation.
 
@@ -137,13 +137,13 @@ TODO: describe interface to be implemented and reference documentation.
 *Transformers* typically take inputs do some computation and produce an output. This can be simple subtraction or a deep learning model, or whatever you need. The subtraction example from above falls in this category. This is the most common node form.
 
 ### Sinks
-*Sinks* typically take values and write them to disk. They most often don't produce any output. A good example is the [Out_data node](https://livenodes.pages.csl.uni-bremen.de/packages/livenodes_core_nodes/modules/livenodes_basic_nodes.html#module-livenodes_basic_nodes.out_data).
+*Sinks* typically take values and write them to disk. They most often don't produce any output. A good example is the [Out_data node](http://livenodes.pages.csl.uni-bremen.de/packages/livenodes_core_nodes/modules/livenodes_basic_nodes.html#module-livenodes_basic_nodes.out_data).
 
 TODO: describe interface to be implemented and reference documentation.
 
 ### Visualization / Interaction
 *Visualization* / *Interaction* these nodes declare a graphical user interface which either expects input to be further processed or visualizes data the node received. This is what makes the livenodes framework especially unique, as every node can have this property. 
-Good examples are the [matplotlib](https://livenodes.pages.csl.uni-bremen.de/packages/livenodes_matplotlib/) and [qt](https://livenodes.pages.csl.uni-bremen.de/packages/livenodes_qt/) nodes.
+Good examples are the [matplotlib](http://livenodes.pages.csl.uni-bremen.de/packages/livenodes_matplotlib/) and [qt](http://livenodes.pages.csl.uni-bremen.de/packages/livenodes_qt/) nodes.
 
 TODO: describe interface to be implemented and reference documentation.
 
