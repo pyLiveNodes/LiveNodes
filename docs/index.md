@@ -30,7 +30,7 @@ Yale Hartmann
     - [Create graphs in python, yaml, json or a visual editor](./advanced/serialization.md)
     - [Full Logging](./advanced/logger.md)
     - [TODO: Graph Macros/Recursion]()
-- Visual Ecosystem: [Smart-Studio](https://livenodes.pages.csl.uni-bremen.de/smart-studio/readme.html)
+- Visual Ecosystem: [Smart-Studio](http://livenodes.pages.csl.uni-bremen.de/smart-studio/readme.html)
     - Visualize everything (data, states, interaction)
     - Graphical Interaction
     - Create and edit graphs in a visual editor
