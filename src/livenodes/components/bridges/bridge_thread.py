@@ -3,11 +3,8 @@ import queue
 import threading as th
 from livenodes.components.computer import parse_location
 
-from livenodes import REGISTRY
-
 from .bridge_abstract import Bridge
 
-@REGISTRY.bridges.decorator
 class Bridge_thread(Bridge):
     
     # _build thread

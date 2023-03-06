@@ -1,11 +1,8 @@
 import asyncio
 import threading as th
 
-from livenodes import REGISTRY
-
 from .bridge_abstract import Bridge
 
-@REGISTRY.bridges.decorator
 class Bridge_local(Bridge):
     
     # _build thread

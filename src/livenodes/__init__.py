@@ -4,13 +4,26 @@ from .registry import Register
 # this registry is only created the first an instance is needed and then stored for subsequent configs etc
 REGISTRY = Register()
 
+import logging
+logger = logging.getLogger('livenodes')
+
 def get_registry():
+    logger.warning('retrieving registry')
     global REGISTRY
     if not REGISTRY.collected_installed:
+        # --- first hook up the default briges
+        from .components.bridges import Bridge_local, Bridge_thread, Bridge_process
+        logger.warning('registering default bridges')
+        REGISTRY.bridges.register('Bridge_local', Bridge_local)
+        REGISTRY.bridges.register('Bridge_thread', Bridge_thread)
+        REGISTRY.bridges.register('Bridge_process', Bridge_process)
+        # reg.bridges.register('Bridge_thread_aio', Bridge_thread_aio)
+        # reg.bridges.register('Bridge_process_aio', Bridge_process_aio)
+
+        # --- now collect all installed packages
         REGISTRY.collect_installed()
+
     return REGISTRY
-
-
 
 
 from .node import Node
