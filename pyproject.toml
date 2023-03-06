@@ -28,7 +28,7 @@ dev = [
 
 [build-system]
 requires = [
-    "setuptools>=48",
+    "setuptools~=60",
     "wheel",
     "setuptools_scm >= 2.0.0, <3",
     "setuptools-git-versioning"
