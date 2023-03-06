@@ -1,13 +1,11 @@
 import aioprocessing
 from livenodes.components.computer import parse_location
 
-from livenodes import REGISTRY
 from .bridge_abstract import Bridge
 
 ### IMPORTANT: the aio bridges are faster (threads) or as fast (processes) as the above implementations. However, i don't know why the feeder queues are not closed afterwards leading to multiple undesired consequences (including a broken down application)
 # THUS => only re-enable these if you are willing to debug and test that!
 
-@REGISTRY.bridges.decorator
 class Bridge_thread_aio(Bridge):
     
     # _build thread
