@@ -1,5 +1,9 @@
 from class_registry import ClassRegistry, EntryPointClassRegistry
 
+import logging
+logger = logging.getLogger('livenodes')
+
+
 class Register():
     def __init__(self):
         self.nodes = Entrypoint_Register(entrypoints='livenodes.nodes')
@@ -10,10 +14,15 @@ class Register():
         # self.ports = Entrypoint_Register(entrypoints='livenodes.ports')
 
     def collect_installed(self):
+        logger.debug('Collecting installed Packages')
+
         if not self.collected_installed:
-            self.collected_installed = True
             self.nodes.collect_installed()
             self.bridges.collect_installed()
+            self.collected_installed = True
+
+        # TODO: check if there is a more elegant way to access the number of installed classes
+        logger.info(f'Collected installed Packages ({len(list(self.bridges.values()))} Bridges; {len(list(self.nodes.values()))} Nodes)')
 
     def package_enable(self, package_name):
         raise NotImplementedError()
@@ -44,6 +53,7 @@ class Entrypoint_Register():
         return cls
 
     def register(self, key, class_):
+        logger.debug(f'Registered: {key} -> {class_}')
         return self.reg._register(key=key.lower(), class_=class_)
 
     def get(self, key, *args, **kwargs):

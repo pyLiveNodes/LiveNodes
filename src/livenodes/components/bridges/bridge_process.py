@@ -2,11 +2,8 @@ import multiprocessing as mp
 
 from livenodes.components.computer import parse_location
 
-from livenodes import REGISTRY
-
 from .bridge_thread import Bridge_thread
 
-@REGISTRY.bridges.decorator
 class Bridge_process(Bridge_thread):
 
     # _build thread
