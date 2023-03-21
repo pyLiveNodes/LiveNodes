@@ -4,7 +4,7 @@ Livenodes is a pure python, node-based framework for online and offline digital 
 
 You'll find a list with use cases, features and all the other good stuff below. It's awesome to have you here! Good Coding, Good Research and Good Luck in your Endeavours!
 
-Yale Hartmann
+Yale Hartmann  
 [Website](https://www.uni-bremen.de/en/csl/institute/team/staff/yale-hartmann)
 
 ## Use cases / Examples
@@ -39,6 +39,17 @@ Yale Hartmann
     - [Easy Node installation via pip packages or local nodes](./usage/extensibility.md)
     - [Large set of tried and tested nodes](https://gitlab.csl.uni-bremen.de/groups/livenodes/-/packages)
 
+## Node Packages
+
+- [Core Nodes](https://livenodes.pages.csl.uni-bremen.de/packages/livenodes_core_nodes/) Everyday usefull nodes mostly based on the efficient (Batch, Time, Channel) stream format.
+- [BioKIT](https://livenodes.pages.csl.uni-bremen.de/packages/livenodes_biokit/) BioKIT based HMM training and evaluation nodes.
+- [Matplotlib](https://livenodes.pages.csl.uni-bremen.de/packages/livenodes_matplotlib/) Everyday plotting with Matplotlib.
+- [PLUX](https://livenodes.pages.csl.uni-bremen.de/packages/livenodes_plux/) Connect to PLUX devices.
+- [QT](https://livenodes.pages.csl.uni-bremen.de/packages/livenodes_qt/) Everyday UI Elements.
+- [Intel RealSense](https://livenodes.pages.csl.uni-bremen.de/packages/livenodes_realsense/) Connect to the Intel RealSense.
+- [TS Matplotlib](https://livenodes.pages.csl.uni-bremen.de/packages/livenodes_ts_matplotlib/) Plotting with Matplotlib, but using (Time, Channel) format.
+- [Simple TimeSeries](https://gitlab.csl.uni-bremen.de/livenodes/packages/livenodes_simple_timeseries) Utility package for (Time, Channel) format, rather than (Batch, Time, Channel)
+- [Vispy](https://gitlab.csl.uni-bremen.de/livenodes/packages/livenodes_vispy) Plotting using Vispy. Mostly demo, as the matplotlib packages are optimized and thus similarly fast. 
 
 ## Documentation
 
