@@ -109,13 +109,9 @@ Further information: [Contributing](./contributing/index.md)
 
     usage/quickstart.md
 
-    usage/projects.md
-    usage/create.md
-    usage/run.md
-    usage/multiprocessing.md
-
     usage/node.md
-    usage/draw.md
+    usage/graph.md
+    usage/multiprocessing.md
     usage/packages.md
 
 
@@ -123,9 +119,11 @@ Further information: [Contributing](./contributing/index.md)
     :maxdepth: 2
     :caption: Advanced
 
+    advanced/streams.md
     advanced/syncronisation.md
     advanced/execution.md
-    advanced/typing.md
+
+    advanced/draw.md
 
     advanced/serialization.md
     advanced/logging.md

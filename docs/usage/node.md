@@ -148,13 +148,3 @@ Good examples are the [matplotlib](http://livenodes.pages.csl.uni-bremen.de/pack
 TODO: describe interface to be implemented and reference documentation.
 
 
-## Connecting Nodes to a Graph
-TODO: maybe somewhere else?
-
-
-## Implementation 
-
-The graph/node system is iplemented in the node.py module.
-
-Each node consists of named input and output channels through which data is emited and received in form of messages (/ streams) and handled automatically across processes. 
-Two Nodes A and B can be connected by using the ```B.add_input(A)``` and ```B.connect_inputs_to(A)``` methods. Indicating, that whenever a message is emitted in Node A it will be passed to node B and for further processing.
