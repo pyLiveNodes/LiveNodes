@@ -58,7 +58,7 @@ class Math_subtract(Node):
     ports_out = Ports_np()
 ```
 
-It declares two input [Ports](./ports.md), which are of type `Port_np_compatible` and accept anything, that can be cast to a numpy array. The GUI names will be "Data 1" and "Data 2" (passed parameters). In code the port names will be `data_1` and `data_2` as declared in the tuple names. 
+It declares two input [Ports](./ports.md), which are of type `Port_np_compatible` and accept anything, that can be cast to a numpy array. The GUI names will be "Data 1" and "Data 2" (passed parameters). In code the port names will be `data_1` and `data_2` as declared in the tuple names.
 
 Important: Values for these ports will be passed as keyword arguments to your `process` and `_should_process` methods, so renaming should be done with care.
 
@@ -82,6 +82,8 @@ The meta information of category, description and example initial values are imp
 ```
 
 The heart of your node is the `process` method. In this case it takes two data points and returns the subtraced values. Nothing more, nothing less. 
+
+Important: as noted above the names `data_1` and `data_2` are not random, but all data through the above declared input ports are passed with these keywords. Meaning, that if you rename the first parameter to `data` without updating the ports declaration, `data` will always be `None`.
 
 You might have noticed that the results are not returned directly, but wrapped in a `self.ret` call, where they are assigned to the `data_np` parameter. This parameter is how Livenodes nows which port to send the result through and coresponds to the output port defined analogus to the input port.
 

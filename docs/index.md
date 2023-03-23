@@ -120,7 +120,7 @@ Further information: [Contributing](./contributing/index.md)
     :caption: Advanced
 
     advanced/streams.md
-    advanced/syncronisation.md
+    advanced/synchronization.md
     advanced/execution.md
 
     advanced/draw.md
