@@ -1,16 +1,50 @@
 # Draw System
 
 Every node may choose to implement a draw/interactive frontend.
-Each node may choose what to draw. This can either be data in form of plots, information in form of text or even controls, like playback speed etc. At the moment only a matplotlib frontend is implemented, but any qt based frontend will be possible in the future.
+Each node may choose what to draw. This can either be data in form of plots, information in form of text or even controls, like playback speed etc. At the moment Matplotlib QT and Vispy based frontends are implemented, just inherit from the appropriate `View_<>` class. 
 
-Note, that the way to implement the draw functionality is by inheriting from teh viewer class.
-The node then implements a drw_init funciton, which gets passed tyhe canvas to draw on. Do not xreate your own as that will not be embedded properly. The init funciton returns an update funciton which may acess the scope of its parent function (ie draw_init). and will be called on every matplotlib animation update with the last stored draw state (draw data) from emit_draw. This might be exactly the same as before (ie if the animation update is called more frequently thant the draw_emit)!
+Here is an example from the Matplotlib package. It follows most of the standard Node aspects, declaring ports, category etc. The key interfaces are the `process` and `_init_draw` methods: `process` receives all data passed in via the connecting ports and `_init_draw` is responsible to initialize the passed subfigure.
 
+In this case `process` does no procesing itself and just passes the data to the drawing portion of the node. `_init_draw` receives the subfigure it will be drawing on and may set it up as needed. It then needs to return an update function, whos task is to update the canvas based on the received inputs. It returns the changed elements of the subfigure, which will be used in blitting and is responsible for making Matplotlib capable of realtime rendering. Simply out, blitting only redraws these elements keeping the background in memory. If you can avoid updating the axis scale and update as little in the graph as possible, then you'll see the best performance. 
 
-updates are called in the main process while processing is called in the nodes process (see multiprocessing.md). Qt currently does not elegantly support multiprocess drawing. 
+Note, that `process` and `_init_draw`/`update` are likely called in separate processes. Smart-Studio for instance uses separate processes in order to keep the render and interface snapy even if heavy calculations take place.
 
-for best performances with matplotlib smart uses blit=true. therefore, make sure to return all matplotlib artists, that should be in the foreground and/or are updated in your uptate function.
+```
+class Draw_heatmap(View_MPL):
+    ports_in = Ports_in()
+    ports_out = Ports_empty()
 
+    category = "Draw"
+    description = ""
 
-at the moment the draw functionality would work without qt only using matplotlib.
-Note, that this might not be available in the future, as user resizing will only be available in qt and faster rendering backends might not be compatible with matplotlib. For support of as many hardwares as possible we will try to further support this option in the futrue, but no guarantees.
+...
+
+    def _init_draw(self, subfig):
+        subfig.suptitle(self.name, fontsize=14)
+        ax = subfig.subplots(1, 1)
+        
+        if not self.disp_ticks:
+            ax.set_yticks([])
+            ax.set_xticks([])
+
+        mesh = None
+        zlim = self.zlim
+
+        def update(data):
+            nonlocal zlim, mesh
+
+            if mesh == None:
+                mesh = ax.pcolormesh(data, cmap="YlGnBu", vmax=zlim, vmin=0)
+            else:
+                mesh.set_array(data)
+
+            # return image elements that changed. This is used in blitting and is what makes this 20/30 times faster.
+            return [mesh]
+
+        return update
+
+    def process(self, data,  **kwargs):  
+        # only every draw the last batch
+        # since no history is displayed we also don't need to keep it
+        self._emit_draw(data=data)
+```
