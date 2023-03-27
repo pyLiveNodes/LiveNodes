@@ -6,7 +6,7 @@ Livenodes are small units of computation for digital signal processing in python
 
 Any contribution is welcome! These projects take more time, than I can muster, so feel free to create issues for everything that you think might work better and feel free to create a MR for them as well!
 
-Have fun and good coding!
+Have fun and good coding!  
 Yale
 
 
