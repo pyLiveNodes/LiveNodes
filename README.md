@@ -16,27 +16,11 @@ To disable assertion checks for types etc use
 PYTHONOPTIMIZE=1 smart_studio
 ```
 
+# Installation
 
-# Known Bugs:
+`pip install livenodes --extra-index-url https://package_puller:8qYs4hBAsmAHJ5AdS_y9@gitlab.csl.uni-bremen.de/api/v4/groups/368/-/packages/pypi/simple`
 
-## nodes not computing due to multiprocessing issues
-Scenario:
-1. node A runs in a thread
-2. node B runs on another thread, but with location = Same
-3. A calls emit_data in its own process()
-4. this triggers a call of B.receive_data, but in the context of As thread
-=> if B also waits for input from a node C, the data will be processed on different threads and will not be syncronised
+# Testing
 
-### Circumvent / Hack:
-Set node B to location = 2 or 3.
-This works, because the state manager opens up a multiprocessing queue and therefore can receive data from multiple threads/processes.
-(Also then B triggers not via direct call, but when the queue has data.)
-
-### Proper solution:
-The proper solution would be to implement "connections", ie passing data and triggering "process" functions is then handled by a conneciotn class, that differs based on which things are connected.
-
-ie if the connection is same->same => use class SameSame which triggers directly (or with asyncio for non-blocking behaviour), if the conneciton is process->same => use class ProcessSame which handles this case accordingly.
-
-This then would also allow for optimized connections to replace default ones. ie process->process might also be solved with shared memorey, rather than a multiprocessing queue.
-
-## multiple smaller ones
+1. `pip install -r requirements_setup.txt`
+2. `tox -e py38` or `tox -e py39`

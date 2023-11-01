@@ -3,7 +3,8 @@ import yaml
 
 from .utils.utils import NumpyEncoder
 from livenodes.components.connection import Connection
-from livenodes import get_registry, Node
+from livenodes.components.node_connector import Connectionist
+from livenodes import get_registry
 
 import logging
 logger_ln = logging.getLogger('livenodes')
@@ -90,21 +91,21 @@ class Serializer():
         return initial
 
     def to_compact_dict(self, graph=False):
-        def compact_settings(settings):
+        def compact_settings(node, settings):
             config = settings.get('settings', {})
             inputs = [
-                str(Connection(**inp)) for inp in settings.get('inputs', [])
+                inp.serialize_compact() for inp in node.input_connections
             ]
             return config, inputs
         
-        cfg, ins = compact_settings(self.get_settings())
+        cfg, ins = compact_settings(self, self.get_settings())
 
         nodes = {str(self): cfg}
         inputs = ins
 
         if graph:
             for node in self.sort_discovered_nodes(self.discover_graph(self)):
-                cfg, ins = compact_settings(node.get_settings())
+                cfg, ins = compact_settings(node, node.get_settings())
                 nodes[str(node)] = cfg
                 inputs.extend(ins)
 
@@ -115,13 +116,15 @@ class Serializer():
     def from_compact_dict(cls, items, initial_node=None, ignore_connection_errors=False, **kwargs):
         # convert connections and names to the correct format and then pass to from_dict
         dct = {}
-        for node, cfg in items['Nodes'].items():
-            dct[node] = {'settings': cfg, **Node.str_to_dict(node)}
+        for node_str, cfg in items['Nodes'].items():
+            dct[node_str] = {'settings': cfg, 'inputs': [], **Connectionist.str_to_dict(node_str)}
+            print(dct[node_str])
         
         for inp in items['Inputs']:
-            dct[inp['recv_node']]['inputs'].append(Connection.repr_to_dict(inp))
+            con = Connection.deserialize_compact(inp)
+            dct[con['recv_node']]['inputs'].append(con)
 
-        return cls.from_dict(items, initial_node=initial_node, ignore_connection_errors=ignore_connection_errors, **kwargs)
+        return cls.from_dict(dct, initial_node=initial_node, ignore_connection_errors=ignore_connection_errors, **kwargs)
 
     def save(self, path, graph=True, extension='yml'):
         # backwards compatibility
