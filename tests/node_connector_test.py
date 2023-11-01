@@ -61,7 +61,7 @@ class TestGraphOperations():
 
     def test_name_conversion(self, create_simple_graph):
         node_a, node_b, node_c, node_d, node_e = create_simple_graph
-        assert node_a.output_connections[0].serialize_compact() == "A [SimpleNode].data -> 0 -> C [SimpleNode].data"
+        assert node_a.output_connections[0].serialize_compact() == "A [SimpleNode].data -> C [SimpleNode].data"
         assert node_a.output_connections[0].to_dict() == Connection.deserialize_compact(node_a.output_connections[0].serialize_compact())
 
     def test_relationships(self, create_simple_graph):

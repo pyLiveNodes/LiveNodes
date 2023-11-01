@@ -164,12 +164,6 @@ class Connectionist(Logger):
         if len(list(filter(connection.__eq__, self.input_connections))) > 0:
             raise ValueError("Connection already exists.")
 
-        # Find existing connections of these nodes and channels
-        counter = len(list(filter(connection._similar,
-                                  self.input_connections)))
-        # Update counter
-        connection._set_connection_counter(counter)
-
         # Not sure if this'll actually work, otherwise we should name them _add_output
         emit_node._add_output(connection)
         self.input_connections.append(connection)
@@ -204,8 +198,7 @@ class Connectionist(Logger):
     def remove_input(self,
                      emit_node,
                      emit_port: Port,
-                     recv_port: Port,
-                     connection_counter=0):
+                     recv_port: Port):
         """
         Remove an input from self via attributes
         """
@@ -213,8 +206,7 @@ class Connectionist(Logger):
             Connection(emit_node,
                        self,
                        emit_port=emit_port,
-                       recv_port=recv_port,
-                       connection_counter=connection_counter))
+                       recv_port=recv_port))
 
     def remove_input_by_connection(self, connection):
         """
