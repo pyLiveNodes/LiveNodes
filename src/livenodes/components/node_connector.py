@@ -1,6 +1,7 @@
 import numpy as np
 import queue
 
+import re
 from graphviz import Digraph
 from PIL import Image
 from io import BytesIO
@@ -43,6 +44,14 @@ class Connectionist(Logger):
 
     def __str__(self):
         return self.string(self.name)
+    
+    @staticmethod
+    def str_to_dict(str):
+        search = re.search("(.*?) \[(.*?)\]", str)
+        if search is None:
+            raise ValueError(f'Could not parse {str}')
+        return {'name': search.group(1), 'class': search.group(2)}
+
         
     @staticmethod
     def __check_ports(ports):
