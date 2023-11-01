@@ -1,6 +1,6 @@
 import pytest
 
-from livenodes import Node
+from livenodes import Node, Connection
 
 from typing import NamedTuple
 from .utils import Port_Ints, Port_Str
@@ -58,6 +58,11 @@ def create_simple_graph_complex_nodes():
 
 
 class TestGraphOperations():
+
+    def test_name_conversion(self, create_simple_graph):
+        node_a, node_b, node_c, node_d, node_e = create_simple_graph
+        assert str(node_a.output_connections[0]) == "A [SimpleNode] -> 0 -> C [SimpleNode]"
+        assert node_a.output_connections[0] == Connection(**node_a.repr_to_dict(str(node_a.output_connections[0])))
 
     def test_relationships(self, create_simple_graph):
         node_a, node_b, node_c, node_d, node_e = create_simple_graph
