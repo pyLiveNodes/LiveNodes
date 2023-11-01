@@ -1,11 +1,9 @@
 import asyncio
 from functools import partial
-import json
 import multiprocessing as mp
 import pathlib
 import numpy as np
 import traceback
-
 
 from .components.utils.perf import Time_Per_Call, Time_Between_Call
 from .components.port import Port
@@ -37,6 +35,10 @@ class Node(Connectionist, Logger, Serializer):
                  **kwargs):
         
         super().__init__(name=name, **kwargs)
+
+        reserved_sequences = ['->', '[', ']', '.']
+        if any(ext in name for ext in reserved_sequences):
+            raise ValueError(f'Node name must not contain any of the following: {reserved_sequences}, got: {name}')
 
         self.should_time = should_time
         self.compute_on = compute_on
