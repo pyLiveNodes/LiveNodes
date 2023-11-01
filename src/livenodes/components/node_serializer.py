@@ -3,6 +3,7 @@ import yaml
 
 from .utils.utils import NumpyEncoder
 from livenodes.components.connection import Connection
+from livenodes.components.node_connector import Connectionist
 from livenodes import get_registry
 
 import logging
@@ -31,24 +32,6 @@ class Serializer():
             # Assumption: we do not actually need the outputs, as they just mirror the inputs and the outputs can always be reconstructed from those
             # "outputs": [con.to_dict() for con in self.output_connections]
         }
-
-    def to_compact_dict(self, graph=False):
-        self.warn('The compact graph format cannot be read again. This is just for human readability.')
-
-        def compact_settings(settings):
-            config = settings.get('settings', {})
-            inputs = [
-                str(Connection(**inp)) for inp in settings.get('inputs', [])
-            ]
-            return {'Config': config, 'Inputs': inputs}
-
-        res = {str(self): compact_settings(self.get_settings())}
-        if graph:
-            for node in self.sort_discovered_nodes(self.discover_graph(self)):
-                res[str(node)] = compact_settings(node.get_settings())
-
-        return res
-
 
     def to_dict(self, graph=False):
         # Assume no nodes in the graph have the same name+node_class -> should be checked in the add_inputs
@@ -104,34 +87,81 @@ class Serializer():
                         logger_ln.exception(err)
                     else:
                         raise err
-                        
-
+                    
         return initial
 
-    def save(self, path, graph=True, extension='json', compact=False):
-        if compact:
-            graph_dict = self.to_compact_dict(graph=graph)
-        else:
-            graph_dict = self.to_dict(graph=graph)
+    def to_compact_dict(self, graph=False):
+        def compact_settings(node, settings):
+            config = settings.get('settings', {})
+            inputs = [
+                inp.serialize_compact() for inp in node.input_connections
+            ]
+            return config, inputs
+        
+        cfg, ins = compact_settings(self, self.get_settings())
 
+        nodes = {str(self): cfg}
+        inputs = ins
+
+        if graph:
+            for node in self.sort_discovered_nodes(self.discover_graph(self)):
+                cfg, ins = compact_settings(node, node.get_settings())
+                nodes[str(node)] = cfg
+                inputs.extend(ins)
+
+        return {'Nodes': nodes, 'Inputs': inputs}
+
+
+    @classmethod
+    def from_compact_dict(cls, items, initial_node=None, ignore_connection_errors=False, **kwargs):
+        # convert connections and names to the correct format and then pass to from_dict
+        dct = {}
+        for node_str, cfg in items['Nodes'].items():
+            dct[node_str] = {'settings': cfg, 'inputs': [], **Connectionist.str_to_dict(node_str)}
+            print(dct[node_str])
+        
+        for inp in items['Inputs']:
+            con = Connection.deserialize_compact(inp)
+            dct[con['recv_node']]['inputs'].append(con)
+
+        return cls.from_dict(dct, initial_node=initial_node, ignore_connection_errors=ignore_connection_errors, **kwargs)
+
+    def save(self, path, graph=True, extension='yml'):
         # backwards compatibility
         if path.endswith('.json'):
             path = path.replace('.json', '')
 
+    
         # TODO: check if folder exists
         if extension == 'json':
+            logger_ln.warning('Saving to json is deprecated, please use yaml instead')
             with open(f'{path}.{extension}', 'w') as f:
+                graph_dict = self.to_dict(graph=graph)
                 json.dump(graph_dict, f, cls=NumpyEncoder, indent=2)
+        
         elif extension == 'yml':
             with open(f'{path}.{extension}', 'w') as f:
+                graph_dict = self.to_compact_dict(graph=graph)
                 yaml.dump(graph_dict, f, allow_unicode=True)
+
         else:
             raise ValueError('Unkown Extension', extension)
 
+
     @classmethod
     def load(cls, path, **kwargs):
-        with open(path, 'r') as f:
-            json_str = json.load(f)
-        return cls.from_dict(json_str, **kwargs)
+        if path.endswith('.json'):
+            logger_ln.warning('Loading from json is deprecated, please use yaml instead')
+            with open(path, 'r') as f:
+                json_str = json.load(f)
+            return cls.from_dict(json_str, **kwargs)
+        
+        elif path.endswith('.yml'):
+            with open(path, 'r') as f:
+                yaml_dict = yaml.safe_load(f)
+            return cls.from_compact_dict(yaml_dict, **kwargs)
+        
+        else:
+            raise ValueError('Unkown Extension', path)
 
     

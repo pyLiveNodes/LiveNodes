@@ -34,6 +34,22 @@ def create_connection():
 
 class TestNodeOperations():
 
+    def test_name_convention_reserved_symbols(self):
+        with pytest.raises(ValueError):
+            SimpleNode(name="A -> B")
+
+        with pytest.raises(ValueError):
+            SimpleNode(name="A [B]")
+
+        with pytest.raises(ValueError):
+            SimpleNode(name="A.B")
+
+    def test_name_convention_parsing(self):
+        node_a = SimpleNode(name="A")
+        assert str(node_a) == "A [SimpleNode]"
+        assert SimpleNode.str_to_dict(str(node_a)) == {"name": "A", "class": "SimpleNode"}
+
+
     def test_node_settings(self, node_a):
         # check direct serialization
         d = node_a.get_settings()
@@ -67,6 +83,12 @@ class TestNodeOperations():
         assert str(graph) == "A [SimpleNode]"
         assert str(graph.output_connections[0]._recv_node) == "B [SimpleNode]"
 
+
+    def test_graph_compact(self, create_connection):
+        graph = Node.from_compact_dict(create_connection.to_compact_dict(graph=True))
+        assert str(graph) == "A [SimpleNode]"
+        assert str(graph.output_connections[0]._recv_node) == "B [SimpleNode]"
+
     
     def test_graph_json_same_name(self):
         node_a = SimpleNode(name="A")
@@ -79,3 +101,5 @@ class TestNodeOperations():
         graph = Node.from_dict(node_a.to_dict(graph=True))
         assert str(graph) == "A [SimpleNode]"
         assert str(graph.output_connections[0]._recv_node) == "B [SimpleNode]"
+
+        

@@ -13,7 +13,24 @@ class Connection():
         self._connection_counter = connection_counter
 
     def __repr__(self):
-        return f"{str(self._emit_node)}.{str(self._emit_port)} -> {str(self._recv_node)}.{str(self._recv_port)}"
+        return f"{str(self._emit_node)}.{str(self._emit_port)} -> {self._connection_counter} -> {str(self._recv_node)}.{str(self._recv_port)}"
+
+    def serialize_compact(self) -> str:
+        return f"{str(self._emit_node)}.{str(self._emit_port.key)} -> {self._connection_counter} -> {str(self._recv_node)}.{str(self._recv_port.key)}"
+
+    @staticmethod
+    def deserialize_compact(compact_str):
+        emit, connection_counter, recv = compact_str.split(" -> ")
+        emit_node, emit_port = emit.split(".")
+        recv_node, recv_port = recv.split(".")
+        return {
+            "emit_node": str(emit_node),
+            "recv_node": str(recv_node),
+            "emit_port": emit_port,
+            "recv_port": recv_port,
+            "connection_counter": int(connection_counter)
+        }
+
 
     def to_dict(self):
         return {

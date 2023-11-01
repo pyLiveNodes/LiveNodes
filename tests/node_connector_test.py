@@ -1,6 +1,6 @@
 import pytest
 
-from livenodes import Node
+from livenodes import Node, Connection
 
 from typing import NamedTuple
 from .utils import Port_Ints, Port_Str
@@ -28,9 +28,9 @@ class ComplexNode(Node):
 # Arrange
 @pytest.fixture
 def create_simple_graph():
-    node_a = SimpleNode()
-    node_b = SimpleNode()
-    node_c = SimpleNode()
+    node_a = SimpleNode(name='A')
+    node_b = SimpleNode(name='B')
+    node_c = SimpleNode(name='C')
     node_d = SimpleNode()
     node_e = SimpleNode()
 
@@ -58,6 +58,11 @@ def create_simple_graph_complex_nodes():
 
 
 class TestGraphOperations():
+
+    def test_name_conversion(self, create_simple_graph):
+        node_a, node_b, node_c, node_d, node_e = create_simple_graph
+        assert node_a.output_connections[0].serialize_compact() == "A [SimpleNode].data -> 0 -> C [SimpleNode].data"
+        assert node_a.output_connections[0].to_dict() == Connection.deserialize_compact(node_a.output_connections[0].serialize_compact())
 
     def test_relationships(self, create_simple_graph):
         node_a, node_b, node_c, node_d, node_e = create_simple_graph
