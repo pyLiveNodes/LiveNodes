@@ -34,3 +34,8 @@ To disable assertion checks for types etc use
 ```
 PYTHONOPTIMIZE=1 lns
 ```
+
+# Testing
+
+1. `pip install -r requirements_setup.txt`
+2. `tox -e py38` or `tox -e py39`

@@ -28,9 +28,9 @@ class ComplexNode(Node):
 # Arrange
 @pytest.fixture
 def create_simple_graph():
-    node_a = SimpleNode()
-    node_b = SimpleNode()
-    node_c = SimpleNode()
+    node_a = SimpleNode(name='A')
+    node_b = SimpleNode(name='B')
+    node_c = SimpleNode(name='C')
     node_d = SimpleNode()
     node_e = SimpleNode()
 
@@ -61,8 +61,8 @@ class TestGraphOperations():
 
     def test_name_conversion(self, create_simple_graph):
         node_a, node_b, node_c, node_d, node_e = create_simple_graph
-        assert str(node_a.output_connections[0]) == "A [SimpleNode] -> 0 -> C [SimpleNode]"
-        assert node_a.output_connections[0] == Connection(**node_a.repr_to_dict(str(node_a.output_connections[0])))
+        assert node_a.output_connections[0].serialize_compact() == "A [SimpleNode].data -> 0 -> C [SimpleNode].data"
+        assert node_a.output_connections[0].to_dict() == Connection.deserialize_compact(node_a.output_connections[0].serialize_compact())
 
     def test_relationships(self, create_simple_graph):
         node_a, node_b, node_c, node_d, node_e = create_simple_graph

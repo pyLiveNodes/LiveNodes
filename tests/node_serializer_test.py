@@ -47,7 +47,7 @@ class TestNodeOperations():
     def test_name_convention_parsing(self):
         node_a = SimpleNode(name="A")
         assert str(node_a) == "A [SimpleNode]"
-        assert SimpleNode.repr_parse(str(node_a)) == ("A", "SimpleNode")
+        assert SimpleNode.str_to_dict(str(node_a)) == {"name": "A", "class": "SimpleNode"}
 
 
     def test_node_settings(self, node_a):
@@ -84,7 +84,7 @@ class TestNodeOperations():
         assert str(graph.output_connections[0]._recv_node) == "B [SimpleNode]"
 
 
-    def test_graph_json(self, create_connection):
+    def test_graph_compact(self, create_connection):
         graph = Node.from_compact_dict(create_connection.to_compact_dict(graph=True))
         assert str(graph) == "A [SimpleNode]"
         assert str(graph.output_connections[0]._recv_node) == "B [SimpleNode]"
