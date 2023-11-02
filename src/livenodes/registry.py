@@ -24,6 +24,14 @@ class Register():
         # TODO: check if there is a more elegant way to access the number of installed classes
         logger.info(f'Collected installed Packages ({len(list(self.bridges.values()))} Bridges; {len(list(self.nodes.values()))} Nodes)')
 
+    def installed_packages(self):
+        packages = []
+        for item in self.nodes.values():
+            packages.append(item.__module__.split('.')[0])
+        for item in self.bridges.values():
+            packages.append(item.__module__.split('.')[0])
+        return list(dict.fromkeys(packages)) # works because form 3.7 dict insertion order is preserved (as opposed to sets)
+
     def package_enable(self, package_name):
         raise NotImplementedError()
 
