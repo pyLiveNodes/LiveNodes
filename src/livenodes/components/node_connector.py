@@ -44,7 +44,7 @@ class Connectionist(Logger):
 
     def __str__(self):
         return self.string(self.name)
-    
+
     @staticmethod
     def str_to_dict(str):
         search = re.search("(.*?) \[(.*?)\]", str)
@@ -52,13 +52,13 @@ class Connectionist(Logger):
             raise ValueError(f'Could not parse {str}')
         return {'name': search.group(1), 'class': search.group(2)}
 
-        
+
     @staticmethod
     def __check_ports(ports):
         for x in ports:
             if not isinstance(x, Port):
                 raise ValueError('Ports must subclass Port. Got:', type(x))
-        
+
         keys = [x.key for x in ports]
         # there may not be two ports with the same label (which would result in also the same key and therefore serialzation and message passing problems)
         if len(set(keys)) != len(keys):
@@ -70,7 +70,7 @@ class Connectionist(Logger):
 
     def get_port_in_by_key(self, key):
         # possible_ins = [x for x in self.ports_in._asdict().values() if x.key == key]
-        # if len(possible_ins) == 0: 
+        # if len(possible_ins) == 0:
         #     print(self.ports_in._asdict(), [x.key for x in self.ports_in._asdict().values()])
         #     raise ValueError(f'No possible input ports for key: {key} in node: {str(self)}')
         # return possible_ins[0]
@@ -82,7 +82,7 @@ class Connectionist(Logger):
 
     def get_port_out_by_key(self, key):
         # possible_outs = [x for x in self.ports_out._asdict().values() if x.key == key]
-        # if len(possible_outs) == 0: 
+        # if len(possible_outs) == 0:
         #     print(self.ports_out._asdict(), [x.key for x in self.ports_out._asdict().values()])
         #     raise ValueError(f'No possible output ports for key: {key} in node: {str(self)}')
         # return possible_outs[0]
@@ -96,14 +96,14 @@ class Connectionist(Logger):
         for port in self.ports_in:
             if port.label == label:
                 return port
-        
+
         raise ValueError(f'Could not find input port on {str(self)} via label: {label}')
 
     def get_port_out_by_label(self, label):
         for port in self.ports_out:
             if port.label == label:
                 return port
-        
+
         raise ValueError(f'Could not find output port on {str(self)} via label: {label}')
 
     @deprecation.deprecated(details="Connect Inputs will be removed due to implicit failures. If nodes are not connected but where assumed connected.")
@@ -154,7 +154,7 @@ class Connectionist(Logger):
                 new_name = node.create_unique_name(node.name, node_list=combined_node_list)
                 self.warn(f"{str(node)} not unique in new graph. Renaming Node to: {new_name}")
                 node._set_attr(name=new_name)
-         
+
         # === Create connection instance
         connection = Connection(emit_node,
                                 self,
@@ -171,7 +171,7 @@ class Connectionist(Logger):
     def is_unique_name(self, name, node_list=None):
         if node_list is None:
             node_list = self.discover_graph(self)
-        
+
         nodes_names = list(map(str, set(node_list) - set([self])))
 
         return not self.string(name) in nodes_names
@@ -185,11 +185,11 @@ class Connectionist(Logger):
 
         # basically adjust base by counting then recurse until we find a good name and return that
         return self.create_unique_name(f"{base}_1", node_list=node_list)
-        
-        
-        
 
-        
+
+
+
+
 
     def remove_all_inputs(self):
         for con in self.input_connections:
@@ -229,14 +229,14 @@ class Connectionist(Logger):
 
     def _add_output(self, connection):
         """
-        Add an output to self. 
+        Add an output to self.
         Only ever called by another node, that wants this node as input
         """
         self.output_connections.append(connection)
 
     def _remove_output(self, connection):
         """
-        Remove an output from self. 
+        Remove an output from self.
         Only ever called by another node, that wants this node as input
         """
         cons = list(filter(connection.__eq__, self.output_connections))
@@ -350,4 +350,4 @@ class Connectionist(Logger):
             print('filename will be required in future versions')
             return Image.open(BytesIO(self.dot_graph(self.discover_graph(self), format=file_type, **kwargs).pipe()))
         else:
-            self.dot_graph(self.discover_graph(self), **kwargs).render(filename=filename, format=file_type)
+            self.dot_graph(self.discover_graph(self), **kwargs).render(filename=filename, format=file_type, cleanup=True)
