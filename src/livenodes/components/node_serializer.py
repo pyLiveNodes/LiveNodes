@@ -12,7 +12,7 @@ logger_ln = logging.getLogger('livenodes')
 class Serializer():
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
-        
+
     def copy(self, graph=False):
         """
         Copy the current node
@@ -45,7 +45,7 @@ class Serializer():
     def from_dict(cls, items, initial_node=None, ignore_connection_errors=False, **kwargs):
         # TODO: implement children=True, parents=True
         # format should be as in to_dict, ie a dictionary, where the name is unique and the values is a dictionary with three values (settings, ins, outs)
-        
+
         items_instc = {}
         initial = None
 
@@ -87,7 +87,7 @@ class Serializer():
                         logger_ln.exception(err)
                     else:
                         raise err
-                    
+
         return initial
 
     def to_compact_dict(self, graph=False):
@@ -97,7 +97,7 @@ class Serializer():
                 inp.serialize_compact() for inp in node.input_connections
             ]
             return config, inputs
-        
+
         cfg, ins = compact_settings(self, self.get_settings())
 
         nodes = {str(self): cfg}
@@ -119,7 +119,7 @@ class Serializer():
         for node_str, cfg in items['Nodes'].items():
             dct[node_str] = {'settings': cfg, 'inputs': [], **Connectionist.str_to_dict(node_str)}
             print(dct[node_str])
-        
+
         for inp in items['Inputs']:
             con = Connection.deserialize_compact(inp)
             dct[con['recv_node']]['inputs'].append(con)
@@ -131,14 +131,14 @@ class Serializer():
         if path.endswith('.json'):
             path = path.replace('.json', '')
 
-    
+
         # TODO: check if folder exists
         if extension == 'json':
             logger_ln.warning('Saving to json is deprecated, please use yaml instead')
             with open(f'{path}.{extension}', 'w') as f:
                 graph_dict = self.to_dict(graph=graph)
                 json.dump(graph_dict, f, cls=NumpyEncoder, indent=2)
-        
+
         elif extension == 'yml':
             with open(f'{path}.{extension}', 'w') as f:
                 graph_dict = self.to_compact_dict(graph=graph)
@@ -155,13 +155,13 @@ class Serializer():
             with open(path, 'r') as f:
                 json_str = json.load(f)
             return cls.from_dict(json_str, **kwargs)
-        
+
         elif path.endswith('.yml'):
             with open(path, 'r') as f:
-                yaml_dict = yaml.safe_load(f)
+                yaml_dict = yaml.load(f, Loader=yaml.Loader)
             return cls.from_compact_dict(yaml_dict, **kwargs)
-        
+
         else:
             raise ValueError('Unkown Extension', path)
 
-    
+
