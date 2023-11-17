@@ -32,7 +32,7 @@ class Node(Connectionist, Logger, Serializer):
                  should_time=False,
                  compute_on="",
                  **kwargs):
-        
+
         super().__init__(name=name, **kwargs)
 
         reserved_sequences = ['->', '[', ']', '.']
@@ -75,11 +75,11 @@ class Node(Connectionist, Logger, Serializer):
         if not isinstance(emit_node, Node):
             raise ValueError("Emitting Node must be of instance Node. Got:",
                              emit_node)
-        
+
         if not emit_port.can_input_to(recv_port):
             self.info(recv_port.accepts_inputs(emit_port.example_values))
             raise ValueError(f'Port {str(emit_port)} cannot input into {str(recv_port)}')
-        
+
         return super().add_input(emit_node, emit_port, recv_port)
 
     # # === Subclass Validation Stuff =================
@@ -108,9 +108,9 @@ class Node(Connectionist, Logger, Serializer):
         #     # check if check_value is implemented -> also a good way to know if Port instead of a subclass is used
         #     for val in self.ports_in.example_values:
         #         self.ports_in.check_value(val)
-            
 
-    
+
+
     def _call_user_fn(self, _fn, _fn_name, *args, **kwargs):
         try:
             return _fn(*args, **kwargs)
@@ -121,7 +121,7 @@ class Node(Connectionist, Logger, Serializer):
 
 
     # === API for Computers =================
-    
+
     # no further inputs, outputs or settings changes are allowed and we will resolve connections
     # TODO: actually lock those ressources
     # _main thread
@@ -137,11 +137,11 @@ class Node(Connectionist, Logger, Serializer):
             send_endpoint, recv_endpoint = Multiprocessing_Data_Storage.resolve_bridge(con)
             send_endpoint_pairs.append((con, send_endpoint))
             recv_endpoint_pairs.append((con, recv_endpoint))
-        
+
         self.info('Ready to proceed with run calls')
         # self.error('unique send bridges', np.unique([str(b[1]) for b in send_endpoint_pairs], return_counts=True))
         # self.error('unique recv bridges', np.unique([str(b[1]) for b in recv_endpoint_pairs], return_counts=True))
-        
+
         return send_endpoint_pairs, recv_endpoint_pairs
 
     # _computer thread
@@ -150,7 +150,7 @@ class Node(Connectionist, Logger, Serializer):
         self.info('Readying')
         self.debug('unique send endpoints', [[str(b) for b in bl] for bl in output_endpoints.values()])
         self.debug('unique recv endpoints', [str(b) for b in input_endpoints.values()])
-        
+
         self.data_storage = Multiprocessing_Data_Storage(input_endpoints, output_endpoints)
 
         if not self.locked.is_set():
@@ -171,9 +171,9 @@ class Node(Connectionist, Logger, Serializer):
     # _computer thread
     def start(self):
         self.info('Starting')
-        # TODO: not sure about this yet: seems uneccessary if we have the ready anyway.. 
-        # -> then again this pattern might prove quite helpful in the future, ie try to connect to some sensor and disply "waiting" until all nodes are online and we can start 
-        #   -> prob. rather within the nodes.. 
+        # TODO: not sure about this yet: seems uneccessary if we have the ready anyway..
+        # -> then again this pattern might prove quite helpful in the future, ie try to connect to some sensor and disply "waiting" until all nodes are online and we can start
+        #   -> prob. rather within the nodes..
         #   -> but when thinking about multiple network pcs this might make a lot of sense...
         self._onstart()
 
@@ -241,7 +241,7 @@ class Node(Connectionist, Logger, Serializer):
                 self.ret_accumulated = None
                 return self.ret(**inner_kwargs)
             self.ret_accumulated = h
-            
+
         self.ret_accumulated = partial(self.ret_accumulated, **kwargs)
 
 
@@ -279,10 +279,10 @@ class Node(Connectionist, Logger, Serializer):
             channel = channel.key
         elif type(channel) == str:
             # self.info(f'Call by str will be deprecated, got: {channel}', [p.key for p in self.ports_out])
-            if channel not in [p.key for p in self.ports_out]: 
+            if channel not in [p.key for p in self.ports_out]:
                 #._fields:
                 raise ValueError(f'Unknown Port {str(self)}.{channel}')
-                
+
         clock = self._ctr if ctr is None else ctr
 
         if __debug__:
@@ -361,8 +361,20 @@ class Node(Connectionist, Logger, Serializer):
         Given the inputs, this determines if process should be called on the new data or not
         params: **ports_in
         returns bool (if process should be called with these inputs)
+
+        Default:
+        1. All non-optional inputs must be present, they may be None
+        2. Optional inputs must be present if the input port is connected
+        3. Non-optional connected inputs may be omitted if the bridge is closed (e.g. for fire and forget nodes)
         """
-        return set([x.key for x in self.ports_in]) <= set(list(kwargs.keys()))
+        given_keys = set(kwargs.keys())
+        required_keys = set([x.key for x in self.ports_in if (
+            not x.optional or # if the port is not optional, it must be present
+            not self._is_input_connected(x) or # if the port is optional and connected it must be present as well
+            not self.data_storage.in_bridges[x].closed() # if the bridge is closed the port does not need to be present anymore, as no value would be sent anyway
+        )])
+
+        return given_keys == required_keys
 
     def process_time_series(self, ts):
         return ts
@@ -370,8 +382,8 @@ class Node(Connectionist, Logger, Serializer):
     # TODO: does this hold up for anything except the "standard" Data stream?
     def process(self, data, **kwargs):
         """
-        Heart of the nodes processing, should be a stateless(/functional) processing function, 
-        ie "self" should only be used to call _emit_[data|draw]. 
+        Heart of the nodes processing, should be a stateless(/functional) processing function,
+        ie "self" should only be used to call _emit_[data|draw].
         However, if you really require a separate state management of your own, you may use self
 
         TODO: consider later on if we might change this to not call _emit but just return the stuff needed...
