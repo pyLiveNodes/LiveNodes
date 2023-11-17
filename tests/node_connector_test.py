@@ -3,7 +3,7 @@ import pytest
 from livenodes import Node, Connection
 
 from typing import NamedTuple
-from .utils import Port_Ints, Port_Str
+from utils import Port_Ints, Port_Str
 
 class Ports_simple(NamedTuple):
     data: Port_Ints = Port_Ints("Data")
@@ -103,6 +103,7 @@ class TestGraphOperations():
         with pytest.raises(ValueError):
             b.add_input(a, emit_port=a.ports_out.info, recv_port=b.ports_in.data)
 
+
 # if __name__ == "__main__":
-#     # TestGraphOperations().test_relationships(create_simple_graph())
-#     TestGraphOperations().test_remove_connection(create_simple_graph_complex_nodes())
+    # TestGraphOperations().test_relationships(create_simple_graph())
+    # TestGraphOperations().test_remove_connection(create_simple_graph_complex_nodes())
