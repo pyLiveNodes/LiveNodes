@@ -28,7 +28,7 @@ class Connectionist(Logger):
 
     attrs = []
 
-    def __init__(self, name="Name"):
+    def __init__(self, name="Name", **kwargs):
         super().__init__()
 
         self.input_connections = []
@@ -294,10 +294,10 @@ class Connectionist(Logger):
     @staticmethod
     def discover_input_deps(node):
         return node.discover_graph(node, direction='parents', sort=False)
-    
+
     def has_circles(self):
         return len(list(self.discover_circles(self.discover_graph(self)))) > 0
-    
+
     def is_on_circle(self):
         for circ in self.discover_circles(self.discover_graph(self)):
             return self in circ
@@ -307,7 +307,7 @@ class Connectionist(Logger):
     def discover_circles(nodes):
         nx_graph = Connectionist.networkx_graph(nodes)
         return nx.simple_cycles(nx_graph)
-    
+
     @staticmethod
     def discover_parents(node):
         return node.remove_discovered_duplicates([con._emit_node for con in node.input_connections])
@@ -331,7 +331,7 @@ class Connectionist(Logger):
         )
         if direction not in mapper:
             raise ValueError(f'Unknown direction: {direction}. Known: {mapper.keys()}')
-        
+
         discovered_nodes = mapper[direction](node)
         found_nodes = [node]
         stack = queue.Queue()
@@ -347,7 +347,7 @@ class Connectionist(Logger):
         found = node.remove_discovered_duplicates(found_nodes)
         if not sort:
             return found
-        
+
         # sort for stable results (i presume) as the starting node as well as the set() operation result in non-deterministic ordering
         return node.sort_discovered_nodes(found)
 
@@ -363,7 +363,7 @@ class Connectionist(Logger):
     def _sanitize_node_str(node):
         # the dot renderer doesn't like :
         return str(node).replace(':', '')
-    
+
     @staticmethod
     def networkx_graph(nodes):
         G = nx.DiGraph()
@@ -371,7 +371,7 @@ class Connectionist(Logger):
             for con in node.output_connections:
                 G.add_edge(node, con._recv_node)
         return G
-    
+
     def dot_graph(self, nodes, name=False, transparent_bg=False, edge_labels=True, format='png', **kwargs):
         graph_attr = {"size": "10,10!", "ratio": "fill"}
         if transparent_bg: graph_attr["bgcolor"] = "#00000000"
