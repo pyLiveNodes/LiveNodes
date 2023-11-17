@@ -176,21 +176,17 @@ class Connectionist(Logger):
         emit_node._add_output(connection)
         self.input_connections.append(connection)
 
-        # # check if there is a circular dependency and if this is safe otherwise remove the connection again
-        # for circ in self.discover_circles(self.discover_graph(self)):
-        #     if self in circ:
-        #         attrs = np.concatenate([n.attrs for n in circ])
-        #         if Attr.circ_breaker in attrs and Attr.ctr_increase in attrs:
-        #             self.info(f'Found circular dependency, but should be safe. Found attributes: {attrs}')
-        #             # no return here, as the connection might still be part of another unsafe circle
-        #         else:
-        #             self.warn(f'Found unsafe circular dependency. Found attributes: {attrs}')
-        #             self.remove_input_by_connection(connection)
-        #             # connection is unsafe, other safe circles do not matter, connection has to be removed
-        #             return False
-        # # indicate everything worked out and the connection was established 
-        # return True
-
+        # check if there is a circular dependency and if this is safe otherwise remove the connection again
+        for circ in self.discover_circles(self.discover_graph(self)):
+            if self in circ:
+                attrs = np.concatenate([n.attrs for n in circ])
+                if Attr.circ_breaker in attrs and Attr.ctr_increase in attrs:
+                    self.info(f'Found circular dependency, but should be safe. Found attributes: {attrs}')
+                    # no return here, as the connection might still be part of another unsafe circle
+                else:
+                    self.remove_input_by_connection(connection)
+                    # connection is unsafe, other safe circles do not matter, connection has to be removed
+                    raise ValueError(f'Found unsafe circular dependency. Found attributes: {attrs}')
 
 
     def is_unique_name(self, name, node_list=None):
