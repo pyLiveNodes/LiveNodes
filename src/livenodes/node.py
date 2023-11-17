@@ -364,13 +364,14 @@ class Node(Connectionist, Logger, Serializer):
 
         Default:
         1. All non-optional inputs must be present unless their bridge is closed, they may be None
-        2. Optional inputs must be present if the input port is connected
-        -> psudeo: (not optional and not closed) or (optional and connected)
-        -> short: connected if optional else not closed
+        2. Optional inputs must be present if the input port is connected, but can be omitted if the bridge is closed
+        -> psudeo: (optional and connected) or not closed
+        # "not closed" is more expensive to calc so we hope for early termination in the first condition as those values do not change, we should pre-calc them in _on_start or similar
         """
         given_keys = set(kwargs.keys())
         required_keys = set([x.key for x in self.ports_in if
-            (self._is_input_connected(x) if x.optional else not self.data_storage.in_bridges[x].closed())
+            ((x.optional and self._is_input_connected(x)) or
+            self.data_storage.in_bridges[x.key].closed())
         ])
 
         return given_keys == required_keys
