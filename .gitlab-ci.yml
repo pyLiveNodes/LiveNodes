@@ -15,7 +15,7 @@ format:
 
 test:
   stage: test
-  # TODO: build a custom image for this, needs to include biokit stuff in the future as well...
+
   image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/python:3.8
   cache:
     key: tox-test
@@ -24,15 +24,15 @@ test:
   script:
     - tox -e py38
   before_script:
+    - pip install -U pip cython wheel
     - pip install -r requirements_setup.txt
   artifacts:
     when: always
     reports:
       junit: dist/tests/report.xml
-      # current gitlab is: 14.0.12, this is available starting in 14.10.x
-      # coverage_report: 
-      #   coverage_format: cobertura
-      #   path: dist/tests/coverage.xml
+      coverage_report: 
+        coverage_format: cobertura
+        path: dist/tests/coverage.xml
 
 
 pages:

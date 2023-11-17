@@ -1,8 +1,10 @@
 import numpy as np
 import queue
+from enum import Enum
 
 import re
 from graphviz import Digraph
+import networkx as nx
 from PIL import Image
 from io import BytesIO
 
@@ -13,12 +15,18 @@ from .connection import Connection
 from .port import Port
 from .node_logger import Logger
 
+class Attr(Enum):
+    ctr_increase = 1
+    circ_breaker = 2
+
 class Ports_simple(NamedTuple):
     data: Port = Port("Data")
 
 class Connectionist(Logger):
     ports_in = Ports_simple()
     ports_out = Ports_simple()
+
+    attrs = []
 
     def __init__(self, name="Name"):
         super().__init__()
@@ -168,6 +176,19 @@ class Connectionist(Logger):
         emit_node._add_output(connection)
         self.input_connections.append(connection)
 
+        # check if there is a circular dependency and if this is safe otherwise remove the connection again
+        for circ in self.discover_circles(self.discover_graph(self)):
+            if self in circ:
+                attrs = np.concatenate([n.attrs for n in circ])
+                if Attr.circ_breaker in attrs and Attr.ctr_increase in attrs:
+                    self.info(f'Found circular dependency, but should be safe. Found attributes: {attrs}')
+                    # no return here, as the connection might still be part of another unsafe circle
+                else:
+                    self.remove_input_by_connection(connection)
+                    # connection is unsafe, other safe circles do not matter, connection has to be removed
+                    raise ValueError(f'Found unsafe circular dependency. Found attributes: {attrs}')
+
+
     def is_unique_name(self, name, node_list=None):
         if node_list is None:
             node_list = self.discover_graph(self)
@@ -268,44 +289,67 @@ class Connectionist(Logger):
         """
         Find all nodes who depend on our output
         """
-        if len(node.output_connections) > 0:
-            output_deps = [
-                con._recv_node.discover_output_deps(con._recv_node)
-                for con in node.output_connections
-            ]
-            return [node] + list(np.concatenate(output_deps))
-        return [node]
+        return node.discover_graph(node, direction='childs', sort=False)
 
     @staticmethod
     def discover_input_deps(node):
-        if len(node.input_connections) > 0:
-            input_deps = [
-                con._emit_node.discover_input_deps(con._emit_node)
-                for con in node.input_connections
-            ]
-            return [node] + list(np.concatenate(input_deps))
-        return [node]
+        return node.discover_graph(node, direction='parents', sort=False)
+    
+    def has_circles(self):
+        return len(list(self.discover_circles(self.discover_graph(self)))) > 0
+    
+    def is_on_circle(self):
+        for circ in self.discover_circles(self.discover_graph(self)):
+            return self in circ
+        return False
+
+    @staticmethod
+    def discover_circles(nodes):
+        nx_graph = Connectionist.networkx_graph(nodes)
+        return nx.simple_cycles(nx_graph)
+    
+    @staticmethod
+    def discover_parents(node):
+        return node.remove_discovered_duplicates([con._emit_node for con in node.input_connections])
+
+    @staticmethod
+    def discover_childs(node):
+        return node.remove_discovered_duplicates([con._recv_node for con in node.output_connections])
 
     @staticmethod
     def discover_neighbors(node):
-        childs = [con._recv_node for con in node.output_connections]
-        parents = [con._emit_node for con in node.input_connections]
+        childs = node.discover_childs(node)
+        parents = node.discover_parents(node)
         return node.remove_discovered_duplicates([node] + childs + parents)
 
     @staticmethod
-    def discover_graph(node):
-        discovered_nodes = node.discover_neighbors(node)
+    def discover_graph(node, direction='both', sort=True):
+        mapper = dict(
+            both=node.discover_neighbors,
+            parents=node.discover_parents,
+            childs=node.discover_childs,
+        )
+        if direction not in mapper:
+            raise ValueError(f'Unknown direction: {direction}. Known: {mapper.keys()}')
+        
+        discovered_nodes = mapper[direction](node)
         found_nodes = [node]
         stack = queue.Queue()
         for node in discovered_nodes:
             if not node in found_nodes:
                 found_nodes.append(node)
-                for n in node.discover_neighbors(node):
+                for n in mapper[direction](node):
                     if not n in discovered_nodes:
                         discovered_nodes.append(n)
                         stack.put(n)
 
-        return node.sort_discovered_nodes(node.remove_discovered_duplicates(found_nodes))
+
+        found = node.remove_discovered_duplicates(found_nodes)
+        if not sort:
+            return found
+        
+        # sort for stable results (i presume) as the starting node as well as the set() operation result in non-deterministic ordering
+        return node.sort_discovered_nodes(found)
 
     def requires_input_of(self, node):
         # self is always a child of itself
@@ -319,7 +363,15 @@ class Connectionist(Logger):
     def _sanitize_node_str(node):
         # the dot renderer doesn't like :
         return str(node).replace(':', '')
-
+    
+    @staticmethod
+    def networkx_graph(nodes):
+        G = nx.DiGraph()
+        for node in nodes:
+            for con in node.output_connections:
+                G.add_edge(node, con._recv_node)
+        return G
+    
     def dot_graph(self, nodes, name=False, transparent_bg=False, edge_labels=True, format='png', **kwargs):
         graph_attr = {"size": "10,10!", "ratio": "fill"}
         if transparent_bg: graph_attr["bgcolor"] = "#00000000"
@@ -351,3 +403,4 @@ class Connectionist(Logger):
             return Image.open(BytesIO(self.dot_graph(self.discover_graph(self), format=file_type, **kwargs).pipe()))
         else:
             self.dot_graph(self.discover_graph(self), **kwargs).render(filename=filename, format=file_type, cleanup=True)
+

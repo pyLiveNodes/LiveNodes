@@ -15,7 +15,6 @@ from .components.node_serializer import Serializer
 from .components.bridges import Multiprocessing_Data_Storage
 
 INSTALL_LOC = str(pathlib.Path(__file__).parent.resolve())
-    
 
 class Node(Connectionist, Logger, Serializer):
     # === Information Stuff =================
@@ -235,8 +234,20 @@ class Node(Connectionist, Logger, Serializer):
     def ret(self, **kwargs):
         return kwargs
 
+    def ret_accu_new(self, **kwargs):
+        if self.ret_accumulated is None:
+            def h(**inner_kwargs):
+                nonlocal self
+                self.ret_accumulated = None
+                return self.ret(**inner_kwargs)
+            self.ret_accumulated = h
+            
+        self.ret_accumulated = partial(self.ret_accumulated, **kwargs)
+
+
     # optional way to accumulate returns over multiple calls
     # will reset once ret_accumulated is called in the end
+    # todo: depreacte this in favor of keeping the same interface between ret and ret_accu
     def ret_accu(self, value, port):
         if self.ret_accumulated is None:
             def h(**kwargs):
