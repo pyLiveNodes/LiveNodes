@@ -17,7 +17,7 @@ class Logger(Reportable):
     def _construct_str(self):
         limit = 30
         name = str(self)
-        name = name if len(name) < limit else name[:limit - 3] + '...' 
+        name = name if len(name) < limit else name[:limit - 3] + '...'
         return f"{name: <30}"
 
     # === Logging Stuff =================
