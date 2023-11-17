@@ -15,7 +15,6 @@ from .components.node_serializer import Serializer
 from .components.bridges import Multiprocessing_Data_Storage
 
 INSTALL_LOC = str(pathlib.Path(__file__).parent.resolve())
-    
 
 class Node(Connectionist, Logger, Serializer):
     # === Information Stuff =================

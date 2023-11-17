@@ -3,7 +3,7 @@ import pytest
 from livenodes import Node, Connection
 
 from typing import NamedTuple
-from .utils import Port_Ints, Port_Str
+from utils import Port_Ints, Port_Str
 
 class Ports_simple(NamedTuple):
     data: Port_Ints = Port_Ints("Data")
@@ -103,6 +103,39 @@ class TestGraphOperations():
         with pytest.raises(ValueError):
             b.add_input(a, emit_port=a.ports_out.info, recv_port=b.ports_in.data)
 
-# if __name__ == "__main__":
-#     # TestGraphOperations().test_relationships(create_simple_graph())
-#     TestGraphOperations().test_remove_connection(create_simple_graph_complex_nodes())
+    def test_circ_simple(self):
+        # with pytest.raises(Exception):
+        a = SimpleNode()
+        assert not a.discover_circle(a)
+
+        a.add_input(a, emit_port=a.ports_out.data, recv_port=a.ports_in.data)
+        assert a.discover_circle(a)
+
+    def test_circ_complex(self, create_simple_graph):
+        node_a, node_b, node_c, node_d, node_e = create_simple_graph
+
+        node_a.add_input(node_e, emit_port=node_e.ports_out.data, recv_port=node_a.ports_in.data)
+        assert node_a.discover_circle(node_a)
+        assert not node_b.discover_circle(node_b)
+
+
+
+if __name__ == "__main__":
+    # TestGraphOperations().test_relationships(create_simple_graph())
+    # TestGraphOperations().test_remove_connection(create_simple_graph_complex_nodes())
+    node_a = SimpleNode(name='A')
+    node_b = SimpleNode(name='B')
+    node_c = SimpleNode(name='C')
+    node_d = SimpleNode()
+    node_e = SimpleNode()
+
+    node_c.add_input(node_a, emit_port=SimpleNode.ports_out.data, recv_port=SimpleNode.ports_in.data)
+    node_c.add_input(node_b, emit_port=SimpleNode.ports_out.data, recv_port=SimpleNode.ports_in.data)
+
+    node_d.add_input(node_c, emit_port=SimpleNode.ports_out.data, recv_port=SimpleNode.ports_in.data)
+    node_e.add_input(node_c, emit_port=SimpleNode.ports_out.data, recv_port=SimpleNode.ports_in.data)
+
+    node_a.add_input(node_e, emit_port=node_e.ports_out.data, recv_port=node_a.ports_in.data)
+    assert node_a.is_on_circle()
+    assert not node_d.is_on_circle()
+    assert not node_b.is_on_circle()
