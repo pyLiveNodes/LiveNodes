@@ -363,16 +363,15 @@ class Node(Connectionist, Logger, Serializer):
         returns bool (if process should be called with these inputs)
 
         Default:
-        1. All non-optional inputs must be present, they may be None
+        1. All non-optional inputs must be present unless their bridge is closed, they may be None
         2. Optional inputs must be present if the input port is connected
-        3. Non-optional connected inputs may be omitted if the bridge is closed (e.g. for fire and forget nodes)
+        -> psudeo: (not optional and not closed) or (optional and connected)
+        -> short: connected if optional else not closed
         """
         given_keys = set(kwargs.keys())
-        required_keys = set([x.key for x in self.ports_in if (
-            not x.optional or # if the port is not optional, it must be present
-            not self._is_input_connected(x) or # if the port is optional and connected it must be present as well
-            not self.data_storage.in_bridges[x].closed() # if the bridge is closed the port does not need to be present anymore, as no value would be sent anyway
-        )])
+        required_keys = set([x.key for x in self.ports_in if
+            self._is_input_connected(x) if x.optional else not self.data_storage.in_bridges[x].closed()
+        ])
 
         return given_keys == required_keys
 
