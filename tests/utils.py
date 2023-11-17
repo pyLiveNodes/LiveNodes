@@ -12,7 +12,7 @@ class Port_Ints(Port):
     @classmethod
     def check_value(cls, value):
         if type(value) != int:
-            return False, "Should be int;"
+            return False, f"Should be int; got: {type(value)}."
         return True, None
 
 class Port_Str(Port):
