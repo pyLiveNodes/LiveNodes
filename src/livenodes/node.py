@@ -370,7 +370,7 @@ class Node(Connectionist, Logger, Serializer):
         """
         given_keys = set(kwargs.keys())
         required_keys = set([x.key for x in self.ports_in if
-            self._is_input_connected(x) if x.optional else not self.data_storage.in_bridges[x].closed()
+            (self._is_input_connected(x) if x.optional else not self.data_storage.in_bridges[x].closed())
         ])
 
         return given_keys == required_keys
