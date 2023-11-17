@@ -18,6 +18,7 @@ dependencies = [
     "aioprocessing>=2.0.1",
     "deprecation>=2.1.0",
     "pyyaml>=6.0.0",
+    "networkx>=3.2.1",
 
     "setuptools>=60.0.0, <67",
 ]
