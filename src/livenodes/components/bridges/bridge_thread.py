@@ -6,9 +6,9 @@ from livenodes.components.computer import parse_location
 from .bridge_abstract import Bridge
 
 class Bridge_thread(Bridge):
-    
+
     # _build thread
-    # TODO: this is a serious design flaw: 
+    # TODO: this is a serious design flaw:
     # if __init__ is called in the _build / main thread, the queues etc are not only shared between the nodes using them, but also the _build thread
     # explicitly: if a local queue is created for two nodes inside of the same process computer (ie mp process) it is still shared between two processes (main and computer/worker)
     # however: we might be lucky as the main thread never uses it / keeps it.
@@ -17,7 +17,7 @@ class Bridge_thread(Bridge):
         # both threads
         self.queue = queue.Queue()
         self.closed_event = th.Event()
-        
+
     # _computer thread
     def ready_send(self):
         # self.queue = queue.Queue()
@@ -48,7 +48,7 @@ class Bridge_thread(Bridge):
     async def onclose(self):
         while True:
             await asyncio.sleep(0.01)
-            if self.closed() and self.empty():
+            if self.closed_and_empty():
                 self.debug('Closed Event set and queue empty -- telling multiprocessing data storage')
                 return
 
@@ -59,6 +59,9 @@ class Bridge_thread(Bridge):
     # _to thread
     def empty(self):
         return self.queue.empty()
+
+    def closed_and_empty(self):
+        return self.closed() and self.empty()
 
     # _to thread
     async def update(self):

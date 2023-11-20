@@ -365,16 +365,19 @@ class Node(Connectionist, Logger, Serializer):
         Default:
         1. All non-optional inputs must be present unless their bridge is closed, they may be None
         2. Optional inputs must be present if the input port is connected, but can be omitted if the bridge is closed
-        -> psudeo: (optional and connected) or not closed
+        -> psudeo: (optional and connected) or not closed 
         # "not closed" is more expensive to calc so we hope for early termination in the first condition as those values do not change, we should pre-calc them in _on_start or similar
         """
         given_keys = set(kwargs.keys())
-        required_keys = set([x.key for x in self.ports_in if
+        required_keys = set([x.key for x in self.ports_in if 
             ((x.optional and self._is_input_connected(x)) or
-            self.data_storage.in_bridges[x.key].closed())
+            not self.data_storage.in_bridges[x.key].closed_and_empty())
         ])
-
-        return given_keys == required_keys
+        
+        # it's okay if we get more keys than are needed
+        # e.g. we might get one key, whose bridge is then closed and get the other key later
+        # then the given would move from {1} to {1, 2} and the required would have moved from {1, 2} to {2} => given >= required
+        return given_keys >= required_keys
 
     def process_time_series(self, ts):
         return ts
