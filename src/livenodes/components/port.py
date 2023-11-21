@@ -38,9 +38,11 @@ class Port():
             and self.key == other.key
 
     def __init_subclass__(cls):
-        # if cls.compound_type is not None:
-        #     compunded_examples = list(filter(lambda x: cls.check_value(x)[0], map(cls.example_compound_construction, cls.compound_type.example_values)))
-        #     cls.example_values += compunded_examples
+        if cls.compound_type is not None:
+            compounded_examples = list(filter(lambda x: cls.check_value(x)[0], map(cls.example_compound_construction, cls.compound_type.example_values)))
+            print(cls)
+            print(compounded_examples)
+            cls.example_values.extend(compounded_examples)
 
         if len(cls.example_values) <= 0:
             raise Exception('Need to provide at least one example value.')
