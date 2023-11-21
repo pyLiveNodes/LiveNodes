@@ -36,14 +36,7 @@ class Port_Int(Port):
 
 # TODO: consider if it really makes sense to mix lists and arrays...
 class Port_List(Port):
-    example_values = [
-        ["EMG1", "EMG2", "EMG2"],
-        [0, 1],
-        [0, -1],
-        [20, .1, .1],
-        np.array([20, 1])
-    ]
-
+    example_values = []
     compound_type = Port_Any
 
     @classmethod
@@ -59,9 +52,7 @@ class Port_List(Port):
         return True, None
 
 class Port_List_Int(Port_List):
-    example_values = [
-        [0, 1]
-    ]
+    example_values = [] # as we would otherwise inherit Port_lists (which compounds any, which in turn is incompatible with Port_Int)
     compound_type = Port_Int
     
 
@@ -104,3 +95,5 @@ class TestPorts():
 
         
 
+if __name__ == "__main__":
+    a = Port_List_Int("")
