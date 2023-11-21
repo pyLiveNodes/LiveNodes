@@ -1,3 +1,17 @@
+import numpy as np
+
+ALL_VALUES = [
+    np.array([[[1]]]),
+    ["EMG1", "EMG2"],
+    [["EMG1", "EMG2"]],
+    [[["EMG1", "EMG2"]]],
+    [0, 1],
+    [20, .1],
+    [[20, .1]],
+    [[[20, .1]]],
+    20,
+    "Foo",
+]
 
 class Port():
     example_values = []
@@ -21,17 +35,27 @@ class Port():
     # TODO: figure out if we really need to check the key as well...
     def __eq__(self, other):
         return type(self) == type(other) \
-            and self.key == other.key 
+            and self.key == other.key
 
-    def __init_subclass__(self):
-        if len(self.example_values) <= 0:
+    def __init_subclass__(cls):
+        if cls.compound_type is not None:
+            compunded_examples = list(filter(lambda x: cls.check_value(x)[0], map(cls.example_compound_construction, cls.compound_type.example_values)))
+            cls.example_values += compunded_examples
+
+        if len(cls.example_values) <= 0:
             raise Exception('Need to provide at least one example value.')
 
-        for val in self.example_values:
-            valid, msg = self.check_value(val)
+        for val in cls.example_values:
+            valid, msg = cls.check_value(val)
             if not valid:
-                raise Exception(f'Example value does not pass check ({str(self)}). Msg: {msg}. Value: {val}')
+                raise Exception(f'Example value does not pass check ({str(cls)}). Msg: {msg}. Value: {val}')
+            if id(val) not in list(map(id, ALL_VALUES)):
+                ALL_VALUES.append(val)
         return super().__init_subclass__()
+
+    @classmethod
+    def example_compound_construction(cls, compounding_value):
+        raise NotImplementedError()
 
     @classmethod
     def add_examples(cls, *args):
