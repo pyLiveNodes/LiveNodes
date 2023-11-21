@@ -1,9 +1,9 @@
 from livenodes.components.node_logger import Logger
 
 class Bridge(Logger):
-    
+
     # _build thread
-    # TODO: this is a serious design flaw: 
+    # TODO: this is a serious design flaw:
     # if __init__ is called in the _build / main thread, the queues etc are not only shared between the nodes using them, but also the _build thread
     # explicitly: if a local queue is created for two nodes inside of the same process computer (ie mp process) it is still shared between two processes (main and computer/worker)
     # however: we might be lucky as the main thread never uses it / keeps it.
@@ -32,7 +32,7 @@ class Bridge(Logger):
 
     @staticmethod
     def can_handle(_from, _to, _data_type=None):
-        # Returns 
+        # Returns
         #   - True if it can handle this connection
         #   - 0-10 how high the handle cost (indicates which implementation to use if multiple can handle this)
         raise NotImplementedError()
@@ -43,6 +43,10 @@ class Bridge(Logger):
 
     # _from thread
     def put(self):
+        raise NotImplementedError()
+
+    # _to thread (called by _should_process)
+    def closed_and_empty():
         raise NotImplementedError()
 
     # _to thread
