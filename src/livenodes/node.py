@@ -166,6 +166,11 @@ class Node(Connectionist, Logger, Serializer):
             self.info("Node has no input connections, please make sure it calls self._finish once it's done")
         self._setup_process()
 
+        # pre-compute required keys for _should_process
+        # all keys that are non-optional or if optional, but connected
+        # see _should_process for more details
+        self._required_keys = [(x.key, not x.key in self.data_storage.in_bridges) for x in self.ports_in if not x.optional or self._is_input_connected(x)]
+
         return self._finished
 
     # _computer thread
@@ -366,12 +371,17 @@ class Node(Connectionist, Logger, Serializer):
         1. All non-optional inputs must be present unless their bridge is closed, they may be None
         2. Optional inputs must be present if the input port is connected, but can be omitted if the bridge is closed
         -> psudeo: (optional and connected) or not closed 
-        # "not closed" is more expensive to calc so we hope for early termination in the first condition as those values do not change, we should pre-calc them in _on_start or similar
+        "not closed" is more expensive to calc so we hope for early termination in the first condition as those values do not change, we should pre-calc them in _on_start or similar
+        -> see ready() for the pre-calculation
         """
         given_keys = set(kwargs.keys())
-        required_keys = set([x.key for x in self.ports_in if 
-            ((x.optional and self._is_input_connected(x)) or
-            not self.data_storage.in_bridges[x.key].closed_and_empty())
+        required_keys = set([key for key, key_not_in_bridge in self._required_keys if 
+            # the key is required as long as the bridge is not closed and empty
+            # if the key is is not present in the storage bridges, the node is wrongly connected, but the key should still be required
+            # if key_not_in_bridge or returns True early not evaluating the second part
+            # if key_not_in_bridge is false (ie the key is present), the second part determines if the whole statement is true
+            (key_not_in_bridge or \
+            not self.data_storage.in_bridges[key].closed_and_empty())
         ])
         
         # it's okay if we get more keys than are needed
