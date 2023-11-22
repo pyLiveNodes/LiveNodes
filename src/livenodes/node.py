@@ -371,7 +371,7 @@ class Node(Connectionist, Logger, Serializer):
         given_keys = set(kwargs.keys())
         required_keys = set([x.key for x in self.ports_in if 
             ((x.optional and self._is_input_connected(x)) or
-            not self.data_storage.in_bridges[x.key].closed_and_empty())
+            x.key in self.data_storage.in_bridges and not self.data_storage.in_bridges[x.key].closed_and_empty())
         ])
         
         # it's okay if we get more keys than are needed
