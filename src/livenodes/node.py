@@ -2,7 +2,6 @@ import asyncio
 from functools import partial
 import multiprocessing as mp
 import pathlib
-import numpy as np
 import traceback
 
 from .components.utils.perf import Time_Per_Call, Time_Between_Call
@@ -295,7 +294,7 @@ class Node(Connectionist, Logger, Serializer):
             val_ok, msg = self.get_port_out_by_key(channel).check_value(data)
             assert val_ok, f"Error: {msg}; On channel: {str(self)}.{channel}"
 
-        self.debug('Emitting', channel, clock, ctr, self._ctr, np.array(data).shape)
+        self.debug('Emitting', channel, clock, ctr)
         self.data_storage.put(channel, clock, data)
 
 
@@ -370,12 +369,12 @@ class Node(Connectionist, Logger, Serializer):
         Default:
         1. All non-optional inputs must be present unless their bridge is closed, they may be None
         2. Optional inputs must be present if the input port is connected, but can be omitted if the bridge is closed
-        -> psudeo: (optional and connected) or not closed 
+        -> psudeo: (optional and connected) or not closed
         "not closed" is more expensive to calc so we hope for early termination in the first condition as those values do not change, we should pre-calc them in _on_start or similar
         -> see ready() for the pre-calculation
         """
         given_keys = set(kwargs.keys())
-        required_keys = set([key for key, key_not_in_bridge in self._required_keys if 
+        required_keys = set([key for key, key_not_in_bridge in self._required_keys if
             # the key is required as long as the bridge is not closed and empty
             # if the key is is not present in the storage bridges, the node is wrongly connected, but the key should still be required
             # if key_not_in_bridge or returns True early not evaluating the second part
@@ -383,7 +382,7 @@ class Node(Connectionist, Logger, Serializer):
             (key_not_in_bridge or \
             not self.data_storage.in_bridges[key].closed_and_empty())
         ])
-        
+
         # it's okay if we get more keys than are needed
         # e.g. we might get one key, whose bridge is then closed and get the other key later
         # then the given would move from {1} to {1, 2} and the required would have moved from {1, 2} to {2} => given >= required
