@@ -26,6 +26,18 @@ class Data(Producer_async):
             yield self.ret(alternate_data=ctr)
             await asyncio.sleep(0)
 
+class Data_failing(Producer_async):
+    ports_in = Ports_none()
+    ports_out = Ports_simple()
+
+    async def _async_run(self):
+        for ctr in range(10):
+            self.info(ctr)
+            yield self.ret(alternate_data=ctr)
+            await asyncio.sleep(0)
+            if ctr == 5:
+                raise ValueError('Test error')
+
 
 class Quadratic(Node):
     ports_in = Ports_simple()
@@ -58,6 +70,19 @@ class Save(Node):
 @pytest.fixture
 def create_simple_graph():
     data = Data(name="A", compute_on="")
+    quadratic = Quadratic(name="B", compute_on="")
+    out1 = Save(name="C", compute_on="")
+    out2 = Save(name="D", compute_on="")
+
+    out1.add_input(data, emit_port=data.ports_out.alternate_data, recv_port=out1.ports_in.alternate_data)
+    quadratic.add_input(data, emit_port=data.ports_out.alternate_data, recv_port=quadratic.ports_in.alternate_data)
+    out2.add_input(quadratic, emit_port=quadratic.ports_out.alternate_data, recv_port=out2.ports_in.alternate_data)
+
+    return data, quadratic, out1, out2
+
+@pytest.fixture
+def create_simple_graph_fail():
+    data = Data_failing(name="A", compute_on="")
     quadratic = Quadratic(name="B", compute_on="")
     out1 = Save(name="C", compute_on="")
     out2 = Save(name="D", compute_on="")
@@ -121,6 +146,18 @@ class TestProcessingAsync():
 
         assert out1.get_state() == list(range(10))
         assert out2.get_state() == list(map(lambda x: x**2, range(10)))
+        assert g.is_finished()
+
+    def test_calc_fail(self, create_simple_graph_fail):
+        data, quadratic, out1, out2 = create_simple_graph_fail
+
+        g = Graph(start_node=data)
+        g.start_all()
+        g.join_all()
+        g.stop_all()
+
+        assert out1.get_state() == list(range(4))
+        assert out2.get_state() == list(map(lambda x: x**2, range(4)))
         assert g.is_finished()
 
     def test_calc_twice(self, create_simple_graph):
