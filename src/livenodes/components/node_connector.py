@@ -55,7 +55,7 @@ class Connectionist(Logger):
 
     @staticmethod
     def str_to_dict(str):
-        search = re.search("(.*?) \[(.*?)\]", str)
+        search = re.search(r"(.*?) \[(.*?)\]", str)
         if search is None:
             raise ValueError(f'Could not parse {str}')
         return {'name': search.group(1), 'class': search.group(2)}
