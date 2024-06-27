@@ -22,19 +22,27 @@ class Producer_async(Producer, abstract_class=True):
         # Note to future self: the clock.tick() requirement might have been removed if _emit_data was dropped in favor of returns
         """ 
 
+        # Note on timing: 
+        # this node cannot be timed at the moment, as i'm not sure how the Time_Per_Call and Time_Between_Calls should be handled in the async case...
         async def _anext(ait):
-            return await ait.__anext__()
+            try:
+                return await ait.__anext__(), True
+            except StopAsyncIteration:
+                return None, False
+            except Exception as e:
+                self.error(f'failed to execute _async_run')
+                self.error(e)
+                self.error(traceback.format_exc())
+                return None, False
 
         # create generator
         runner = self._async_run()
-        # wrap in call user fn
-        fn = partial(self._call_user_fn_process, _anext, "async runner")
-
+            
         # finish either if no data is present anymore or parent told us to stop (via stop() -> _onstop())
         while self._running:
-            emit_data = await fn(runner)
-            
-            if emit_data is not None:
+            emit_data, empty = await _anext(runner)
+             
+            if empty:
                 for key, val in emit_data.items():
                     self._emit_data(data=val, channel=key)
                 self._ctr = self._clock.tick()
