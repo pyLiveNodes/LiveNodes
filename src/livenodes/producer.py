@@ -70,7 +70,7 @@ class Producer(Node, abstract_class=True):
         # finish either if no data is present anymore or parent told us to stop (via stop() -> _onstop())
         while self._running:
             if not fn():
-                # Received no data from the generator, thus stopping the production :-) 
+                # generator empty, thus stopping the production :-)
                 self._onstop()
 
             self._report(node=self)            
