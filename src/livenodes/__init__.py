@@ -30,5 +30,6 @@ from .node import Node
 from .graph import Graph
 from .viewer import View
 from .producer import Producer
+from .producer_async import Producer_async
 from .components.connection import Connection
 from .components.node_connector import Attr
