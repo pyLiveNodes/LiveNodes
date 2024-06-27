@@ -156,8 +156,8 @@ class TestProcessingAsync():
         g.join_all()
         g.stop_all()
 
-        assert out1.get_state() == list(range(4))
-        assert out2.get_state() == list(map(lambda x: x**2, range(4)))
+        assert out1.get_state() == list(range(6))
+        assert out2.get_state() == list(map(lambda x: x**2, range(6)))
         assert g.is_finished()
 
     def test_calc_twice(self, create_simple_graph):
