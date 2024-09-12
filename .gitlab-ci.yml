@@ -51,8 +51,6 @@ pages:
   artifacts:
     paths:
     - public
-  only:
-    - tags
 
 build-package:
   stage: deploy
