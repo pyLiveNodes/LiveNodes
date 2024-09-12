@@ -50,7 +50,6 @@ class Entrypoint_Register():
     def __init__(self, entrypoints):
         # create local registry
         self.reg = ClassRegistry()
-        self.reg.create_instance = create_instance
         self.entrypoints = entrypoints
         
     def collect_installed(self):
