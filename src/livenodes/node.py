@@ -158,9 +158,13 @@ class Node(Connectionist, Logger, Serializer):
             raise Exception('Node was not locked and no inputs where set')
 
         if sys.version_info < (3, 10):
-            self._loop  = asyncio.get_event_loop()
+            self._loop = asyncio.get_event_loop()
         else:
-            self._loop  = asyncio.get_running_loop()
+            try:
+                self._loop = asyncio.get_running_loop()
+            except RuntimeError:
+                self._loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(self._loop)
 
         self._finished = self._loop.create_future()
         if len(self.input_connections) > 0:
