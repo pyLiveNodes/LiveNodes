@@ -1,6 +1,6 @@
 import pytest
 import multiprocessing as mp
-
+  
 from livenodes import Node, Attr, Producer, Graph
 
 from typing import NamedTuple
