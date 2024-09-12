@@ -11,8 +11,9 @@ format:
     - python -m pip install yapf toml
   script:
     - yapf -ri ./src ./tests
-  only: 
-    - changes
+  rules:
+    - changes:
+      - /{src, tests}/**/*
 
 
 test:
@@ -27,8 +28,9 @@ test:
   before_script:
     - pip install -U pip wheel setuptools cython
     - pip install -r requirements_setup.txt
-  only: 
-    - changes
+  rules:
+    - changes:
+      - /{src, tests}/**/*
   artifacts:
     when: always
     reports:
