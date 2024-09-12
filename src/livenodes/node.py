@@ -164,7 +164,7 @@ class Node(Connectionist, Logger, Serializer):
                 self._loop = asyncio.get_running_loop()
             except RuntimeError:
                 self._loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(self._loop)
+                asyncio.set_event_loop(self._loop)
 
         self._finished = self._loop.create_future()
         if len(self.input_connections) > 0:
