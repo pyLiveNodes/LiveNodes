@@ -12,12 +12,13 @@ format:
   script:
     - yapf -ri ./src ./tests
   only: 
-    - changes
+    - changes:
+      - src/**/*
+      - tests/**/*
 
 
 test:
   stage: test
-
   image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/python:3.12
   cache:
     key: tox-test
@@ -29,7 +30,9 @@ test:
     - pip install -U pip wheel setuptools cython
     - pip install -r requirements_setup.txt
   only: 
-    - changes
+    - changes:
+      - src/**/*
+      - tests/**/*
   artifacts:
     when: always
     reports:
@@ -57,6 +60,7 @@ pages:
     - public
   only: 
     - tags
+
 
 build-package:
   stage: deploy
