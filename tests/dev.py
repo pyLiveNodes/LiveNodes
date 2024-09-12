@@ -8,7 +8,7 @@ from livenodes import Node, Producer, Graph, get_registry
 
 from typing import NamedTuple
 from livenodes.components.port import Port
-
+  
 registry = get_registry()
 
 class Port_Data(Port):
