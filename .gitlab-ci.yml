@@ -22,7 +22,7 @@ test:
     paths:
       - .tox
   script:
-    - tox -e py312
+    - tox -e py312 --verbose
   before_script:
     - pip install -U pip wheel setuptools cython
     - pip install -r requirements_setup.txt
