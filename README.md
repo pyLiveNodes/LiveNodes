@@ -38,4 +38,4 @@ PYTHONOPTIMIZE=1 lns
 # Testing
 
 1. `pip install -r requirements_setup.txt`
-2. `tox -e py38` or `tox -e py39`
+2. `tox -e py311` or `tox -e py312`
