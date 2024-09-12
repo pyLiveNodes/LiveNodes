@@ -40,6 +40,9 @@ class Register():
     def package_disable(self, package_name):
         raise NotImplementedError()
 
+def create_instance(class_, *args, **kwargs):
+    return class_
+
 # yes, this basically just wraps the ClassRegistry, but i am contemplating namespacing the local_registries
 # and also allows to merge local registries or classes (currently only used in a test case, but the scenario of registering a class outside of a package is still valid)
 class Entrypoint_Register():
@@ -47,11 +50,13 @@ class Entrypoint_Register():
     def __init__(self, entrypoints):
         # create local registry
         self.reg = ClassRegistry()
+        self.reg.create_instance = create_instance
         self.entrypoints = entrypoints
         
     def collect_installed(self):
         # load all findable packages
         self.installed_packages = EntryPointClassRegistry(self.entrypoints)
+        self.installed_packages.create_instance = create_instance
         self.add_register(self.installed_packages)
 
     def add_register(self, register):
