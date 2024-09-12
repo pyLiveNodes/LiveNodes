@@ -1,4 +1,5 @@
-from class_registry import ClassRegistry, EntryPointClassRegistry
+from class_registry import ClassRegistry
+from class_registry.entry_points import EntryPointClassRegistry
 
 import logging
 logger = logging.getLogger('livenodes')
@@ -22,7 +23,8 @@ class Register():
             self.collected_installed = True
 
         # TODO: check if there is a more elegant way to access the number of installed classes
-        logger.info(f'Collected installed Packages ({len(list(self.bridges.values()))} Bridges; {len(list(self.nodes.values()))} Nodes)')
+        logger.info(f'Collected installed Nodes ({len(list(self.nodes.values()))}') 
+        logger.info(f'Collected installed Bridges ({len(list(self.bridges.values()))}')
 
     def installed_packages(self):
         packages = []
@@ -53,8 +55,8 @@ class Entrypoint_Register():
         self.add_register(self.installed_packages)
 
     def add_register(self, register):
-        for key, val in register.items():
-            self.register(key=key.lower(), class_=val)
+        for key in register.keys():
+            self.register(key=key.lower(), class_=register[key])
 
     def decorator(self, cls):
         self.register(key=cls.__name__.lower(), class_=cls)
@@ -62,10 +64,18 @@ class Entrypoint_Register():
 
     def register(self, key, class_):
         logger.debug(f'Registered: {key} -> {class_}')
-        return self.reg._register(key=key.lower(), class_=class_)
+        return self.reg.register(key.lower())(class_)
 
     def get(self, key, *args, **kwargs):
         return self.reg.get(key.lower(), *args, **kwargs)
 
     def values(self):
-        return self.reg.values()
+        return self.reg.classes()
+    
+
+if __name__ == "__main__":
+    r = Register()
+    r.collect_installed()
+    from livenodes.components.bridges import Bridge_local, Bridge_thread, Bridge_process
+    r.bridges.register('Bridge_local', Bridge_local)
+    print(list(r.bridges.reg.keys()))
