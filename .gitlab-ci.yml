@@ -29,8 +29,6 @@ test:
       changes:
         - src/**/*
         - tests/**/*
-      # when: manual
-      # allow_failure: true
   artifacts:
     when: always
     reports:
