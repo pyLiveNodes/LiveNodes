@@ -11,7 +11,8 @@ format:
     - python -m pip install yapf toml
   script:
     - yapf -ri ./src ./tests
-  only: changes
+  only: 
+    - changes
 
 
 test:
@@ -27,7 +28,8 @@ test:
   before_script:
     - pip install -U pip wheel setuptools cython
     - pip install -r requirements_setup.txt
-  only: changes
+  only: 
+    - changes
   artifacts:
     when: always
     reports:
@@ -53,7 +55,8 @@ pages:
   artifacts:
     paths:
     - public
-  only: tags
+  only: 
+    - tags
 
 build-package:
   stage: deploy
@@ -62,4 +65,5 @@ build-package:
     - pip install twine build
     - python3 -m build --wheel
     - TWINE_PASSWORD=${TWINE_PASSWORD} TWINE_USERNAME=${TWINE_USERNAME} python3 -m twine upload --repository-url ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi dist/*
-  only: tags
+  only: 
+    - tags
