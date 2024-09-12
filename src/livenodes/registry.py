@@ -64,10 +64,18 @@ class Entrypoint_Register():
 
     def register(self, key, class_):
         logger.debug(f'Registered: {key} -> {class_}')
-        return self.reg._register(key=key.lower(), class_=class_)
+        return self.reg.register(key.lower())(class_)
 
     def get(self, key, *args, **kwargs):
         return self.reg.get(key.lower(), *args, **kwargs)
 
     def values(self):
         return self.reg.classes()
+    
+
+if __name__ == "__main__":
+    r = Register()
+    r.collect_installed()
+    from livenodes.components.bridges import Bridge_local, Bridge_thread, Bridge_process
+    r.bridges.register('Bridge_local', Bridge_local)
+    print(list(r.bridges.reg.keys()))
