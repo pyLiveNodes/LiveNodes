@@ -25,8 +25,11 @@ test:
     - pip install -U pip wheel setuptools cython
     - pip install -r requirements_setup.txt
   rules:
-    - changes:
-      - "src/**/*"
+    - if: $CI_PIPELINE_SOURCE == "push"
+    # - changes:
+    #   - "src/**/*"
+    #   when: manual
+    #   allow_failure: true
   artifacts:
     when: always
     reports:
