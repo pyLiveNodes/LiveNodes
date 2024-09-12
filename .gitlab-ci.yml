@@ -13,7 +13,7 @@ format:
     - yapf -ri ./src ./tests
   rules:
     - changes:
-      - /{src, tests}/**/*
+      - "{src, tests}/**/*"
 
 
 test:
@@ -30,7 +30,7 @@ test:
     - pip install -r requirements_setup.txt
   rules:
     - changes:
-      - /{src, tests}/**/*
+      - "{src, tests}/**/*"
   artifacts:
     when: always
     reports:
