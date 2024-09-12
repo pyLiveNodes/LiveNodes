@@ -26,10 +26,11 @@ test:
     - pip install -r requirements_setup.txt
   rules:
     - if: $CI_PIPELINE_SOURCE == "push"
-    # - changes:
-    #   - "src/**/*"
-    #   when: manual
-    #   allow_failure: true
+      changes:
+        - src/**/*
+        - tests/**/*
+      # when: manual
+      # allow_failure: true
   artifacts:
     when: always
     reports:
