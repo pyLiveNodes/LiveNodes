@@ -9,18 +9,15 @@ dependencies = [
     "numpy>=1.22.1",
     "matplotlib>=3.5.1",
     "graphviz>=0.19.1",
-    "seaborn>=0.11.2",
     "joblib>=1.1.0",
-    "scikit-learn>=1.0.2",
-    "scipy>=1.7.3",
-    "phx-class-registry~=3.0.5",
+    "phx-class-registry>=5.0.0",
     "python-dotenv",
     "aioprocessing>=2.0.1",
     "deprecation>=2.1.0",
     "pyyaml>=6.0.0",
-    "networkx>=2.8.8",
-
-    "setuptools>=60.0.0, <67",
+    "networkx>=3.0.0",
+    "pandas", # as networkx does not install this by itself anymore
+    "scipy" # as networkx does not install this by itself anymore
 ]
 
 [project.optional-dependencies]
@@ -31,9 +28,9 @@ dev = [
 
 [build-system]
 requires = [
-    "setuptools>=60.0.0, <67",
+    "setuptools>=60.0.0",
     "wheel",
-    "setuptools_scm >= 2.0.0, <3",
+    "setuptools_scm >= 8.0.0",
     "setuptools-git-versioning"
 ]
 build-backend = 'setuptools.build_meta'
@@ -43,5 +40,5 @@ enabled = true
 
 [tool.black]
 line-length = 140
-target-version = ['py36']
+target-version = ['py312']
 skip-string-normalization = true

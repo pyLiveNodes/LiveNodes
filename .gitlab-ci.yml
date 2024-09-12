@@ -6,7 +6,7 @@ stages:
 
 format:
   stage: clean
-  image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/python:3.9-slim
+  image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/python:3.12-slim
   before_script:
     - python -m pip install yapf toml
   script:
@@ -16,15 +16,15 @@ format:
 test:
   stage: test
 
-  image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/python:3.8
+  image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/python:3.12
   cache:
     key: tox-test
     paths:
       - .tox
   script:
-    - tox -e py38
+    - tox -e py312
   before_script:
-    - pip install -U pip cython wheel
+    - pip install -U pip wheel setuptools cython
     - pip install -r requirements_setup.txt
   artifacts:
     when: always
@@ -37,7 +37,7 @@ test:
 
 pages:
   stage: deploy
-  image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/python:3.9-slim
+  image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/python:3.12-slim
   cache:
     key: tox-docs
     paths:
@@ -56,7 +56,7 @@ pages:
 
 build-package:
   stage: deploy
-  image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/python:3.8
+  image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/python:3.12
   script:
     - pip install twine build
     - python3 -m build --wheel
