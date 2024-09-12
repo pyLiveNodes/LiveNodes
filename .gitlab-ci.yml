@@ -24,7 +24,7 @@ test:
   script:
     - tox -e py312
   before_script:
-    - pip install -U pip cython wheel
+    - pip install -U pip wheel setuptools
     - pip install -r requirements_setup.txt
   artifacts:
     when: always
