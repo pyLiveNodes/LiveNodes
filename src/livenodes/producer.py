@@ -86,5 +86,5 @@ class Producer(Node, abstract_class=True):
         self._running = True
 
         # mmh, wouldn't this fit more into a on_ready() call?
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         loop.create_task(self._async_onstart())

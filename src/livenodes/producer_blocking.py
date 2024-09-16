@@ -75,7 +75,7 @@ class Producer_Blocking(Producer, abstract_class=True):
         # self.subprocess = mp.Process(target=self._blocking_onstart, daemon=True)
         self.subprocess.start()
 
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         loop.create_task(self._async_onstart())
 
 
