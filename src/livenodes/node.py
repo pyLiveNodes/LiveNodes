@@ -157,7 +157,7 @@ class Node(Connectionist, Logger, Serializer):
             self.error('Forgot to lock node')
             raise Exception('Node was not locked and no inputs where set')
 
-        self._loop = asyncio.get_running_loop()
+        self._loop = asyncio.get_event_loop()
         self._finished = self._loop.create_future()
         if len(self.input_connections) > 0:
             self._bridges_closed = self._loop.create_task(self.data_storage.on_all_closed())
