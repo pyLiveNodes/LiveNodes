@@ -3,6 +3,7 @@ from itertools import groupby
 from .node import Node
 from .components.computer import parse_location, Processor_threads, Processor_process
 from .components.node_logger import Logger
+import asyncio
 
 class Graph(Logger):
 
@@ -46,10 +47,18 @@ class Graph(Logger):
     def start_all(self):
         self.info('Starting all')
         hosts, processes, threads = list(zip(*[parse_location(n.compute_on) for n in self.nodes]))
-        
+
+        # required for asyncio to work for local nodes
+        # not required for threading, as there its already implemented.
+        # However, we should really consider adding a "local" computer, which handles all of the asynio stuff, so that it is consistent within thread, process and local...
+        # self.loop = asyncio.new_event_loop()
+        # asyncio.set_event_loop(self.loop)
+
         # not sure yet if this should be called externally yet...
+        # TODO: this should only be called if there are local nodes, so maybe we should clean up the computer mess we currently have and resolve that by adding a local computer and clear hierarchy? -yh
         self.info('Locking all nodes and resolving bridges')
         bridges = self.lock_all()
+
         # ignore hosts for now, as we do not have an implementation for them atm
         # host_group = groupby(sorted(zip(hosts, self.nodes), key=lambda t: t[0]))
         # for host in hosts:

@@ -58,7 +58,7 @@ class Bridge_thread(Bridge):
 
     # _to thread
     def empty(self):
-        return self.queue.empty()
+        return self.queue.empty() and self._read == {}
 
     def closed_and_empty(self):
         return self.closed() and self.empty()

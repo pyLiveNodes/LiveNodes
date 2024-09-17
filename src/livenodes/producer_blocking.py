@@ -20,6 +20,7 @@ class Producer_Blocking(Producer, abstract_class=True):
 
         # both threads
         self.stop_event = th.Event()
+        self.finished_event = th.Event()
         self.msgs = aioprocessing.AioQueue()
 
         # self.stop_event = mp.Event()
@@ -48,7 +49,7 @@ class Producer_Blocking(Producer, abstract_class=True):
     
     async def _async_onstart(self):
         port_lookup = self.ports_out._asdict()
-        print(port_lookup)
+        # print(port_lookup)
         while not self.stop_event.is_set():
             try:
                 item, port_name, tick = await self.msgs.coro_get()
@@ -61,21 +62,26 @@ class Producer_Blocking(Producer, abstract_class=True):
                 self.error(traceback.format_exc())
 
         self._finish()  
+        self.finished_event.set()
     
     # main thread (interfaced by node system)
     def _onstop(self):
         self.stop_event.set()
-
+        # wait until we are sure the async task is done
+        if not self.finished_event.is_set():
+            self.finished_event.wait(timeout=1)
         # self.subprocess.join(0.1)
         # self.subprocess.terminate()
 
     # main thread (interfaced by node system)
     def _onstart(self):
+        # deamon => kill once main thread is done, see: https://stackoverflow.com/questions/190010/daemon-threads-explanation
         self.subprocess = th.Thread(target=self._blocking_onstart, daemon=True, args=(self.stop_event,))
         # self.subprocess = mp.Process(target=self._blocking_onstart, daemon=True)
         self.subprocess.start()
 
         loop = asyncio.get_event_loop()
         loop.create_task(self._async_onstart())
+        # asyncio.run(self._async_onstart())
 
 
