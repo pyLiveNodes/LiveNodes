@@ -46,11 +46,13 @@ class Bridge_local(Bridge):
     def closed(self):
         return self.closed_event.is_set()
 
+    # _to thread
     def closed_and_empty(self):
         return self.closed() and self.empty()
 
     # _to thread
     async def onclose(self):
+        # ouch, can we remove this to not be a busy wait somehow? -yh
         while True:
             await asyncio.sleep(0.01)
             if self.closed_and_empty():
@@ -59,7 +61,9 @@ class Bridge_local(Bridge):
 
     # _to thread
     def empty(self):
-        return self.queue.qsize() <= 0
+        # wait for the input queue to be empty == our input node / predecessor has sent all they wanted to send
+        # then also wait for our node to have processed all of it (since _process on successfull execution calls discard_before) the _read should now be empty (discard before also discards the currently worked on value)
+        return self.queue.qsize() <= 0 and self._read == {}
 
     # _to thread
     async def update(self):
