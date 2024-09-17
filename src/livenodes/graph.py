@@ -51,8 +51,8 @@ class Graph(Logger):
         # required for asyncio to work for local nodes
         # not required for threading, as there its already implemented.
         # However, we should really consider adding a "local" computer, which handles all of the asynio stuff, so that it is consistent within thread, process and local...
-        self.loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(self.loop)
+        # self.loop = asyncio.new_event_loop()
+        # asyncio.set_event_loop(self.loop)
 
         # not sure yet if this should be called externally yet...
         # TODO: this should only be called if there are local nodes, so maybe we should clean up the computer mess we currently have and resolve that by adding a local computer and clear hierarchy? -yh
