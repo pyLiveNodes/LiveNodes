@@ -58,10 +58,13 @@ class Bridge(Logger):
         raise NotImplementedError()
 
     # _to thread
+    # TODO: rename, this is not before, but before and including
     def discard_before(self, ctr):
+        # TODO: this should be doable more efficiently...
+        # maybe choose a diferent datasetructur
         self._read = {
             key: val
-            for key, val in self._read.items() if key >= ctr
+            for key, val in self._read.items() if key > ctr
         }
 
     # _to thread

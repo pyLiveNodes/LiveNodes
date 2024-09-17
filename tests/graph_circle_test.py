@@ -82,8 +82,12 @@ class CircBreakerNode(Node):
     # using this might actually lead to timing issues, as _should_process could be checked before the first input is processed and therefore, before the fallback is reset
     fallback = 1000
 
+    def _finish(self, task=None):
+        return super()._finish(task)
+
     def ready(self, input_endpoints=None, output_endpoints=None):
         future = super().ready(input_endpoints, output_endpoints)
+        # This seems to be correct, since it checks for closed and empty -> but it should not yet be empty!
         self._bridges_closed = self._loop.create_task(input_endpoints['data'].onclose())
         self._bridges_closed.add_done_callback(self._finish)
         return future
