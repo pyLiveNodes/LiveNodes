@@ -49,6 +49,8 @@ class Graph(Logger):
         hosts, processes, threads = list(zip(*[parse_location(n.compute_on) for n in self.nodes]))
 
         # required for asyncio to work for local nodes
+        # not required for threading, as there its already implemented.
+        # However, we should really consider adding a "local" computer, which handles all of the asynio stuff, so that it is consistent within thread, process and local...
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
 
