@@ -1,6 +1,7 @@
 import asyncio
 from functools import partial
 from .node import Node
+import threading as th
 from .components.utils.clock import Clock
 
 from typing import NamedTuple
@@ -23,6 +24,7 @@ class Producer(Node, abstract_class=True):
         self._emit_ctr_fallback = 0
 
         self._running = False
+        self.finished_event = th.Event()
 
     def __init_subclass__(cls, abstract_class=False):
         super().__init_subclass__(abstract_class)
@@ -78,13 +80,16 @@ class Producer(Node, abstract_class=True):
             await asyncio.sleep(0)
 
         self._finish()
+        self.finished_event.set()
 
     def _onstop(self):
         self._running = False
+        if not self.finished_event.is_set():
+            self.finished_event.wait(timeout=1)
 
     def _onstart(self):
         self._running = True
 
-        # mmh, wouldn't this fit more into a on_ready() call?
         loop = asyncio.get_event_loop()
         loop.create_task(self._async_onstart())
+        # asyncio.run(self._async_onstart())

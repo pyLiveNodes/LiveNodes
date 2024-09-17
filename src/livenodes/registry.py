@@ -56,7 +56,7 @@ class Entrypoint_Register():
 
     def add_register(self, register):
         for key in register.keys():
-            self.register(key=key.lower(), class_=register[key])
+            self.register(key=key.lower(), class_=register.get_class(key))
 
     def decorator(self, cls):
         self.register(key=cls.__name__.lower(), class_=cls)
