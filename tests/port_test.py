@@ -1,5 +1,6 @@
 import pytest
 
+from typing import NamedTuple
 from livenodes.components.port import Port, ALL_VALUES
 import numpy as np
 
@@ -55,6 +56,8 @@ class Port_List_Int(Port_List):
     example_values = [] # as we would otherwise inherit Port_lists (which compounds any, which in turn is incompatible with Port_Int)
     compound_type = Port_Int
     
+class Ports_any(NamedTuple):
+    any: Port_Any = Port_Any("Any")
 
 class TestPorts():
 
@@ -91,6 +94,34 @@ class TestPorts():
         assert not a.check_value([[1, -3]])[0]
         assert not a.check_value([['1', -3]])[0]
         assert not a.check_value(None)[0]
+
+
+    def test_my_insanity(self):
+        a = Port_Any("a port")
+        b = Port_Any("b port")
+        assert a == b, "Ports define equality by their key (and type), so they should be equal here."
+        assert id(a) != id(b), "Ports are two different instances, so they should never be equal here."
+
+        a.set_key('b')
+        assert str(a) == '<Port_Any: b>'
+        assert str(b) == '<Port_Any: None>'
+
+    def test_my_insanity2(self):
+        a = Ports_any()
+        b = Ports_any()
+
+        assert a == b, "This is a named tuple, apparently this is still just the base class and thus equal?"
+
+    def test_my_insanity3(self):
+        a = Ports_any()
+        b = Ports_any()
+
+        a.any.set_key('b')
+        assert str(a.any) == '<Port_Any: b>'
+        assert str(b.any) == '<Port_Any: None>'
+
+
+        
 
 
         
