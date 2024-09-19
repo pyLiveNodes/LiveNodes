@@ -1,16 +1,13 @@
 import pytest
 import json
 
-from livenodes.node import Node
-from livenodes import get_registry
-
-from typing import NamedTuple
+from livenodes import get_registry, Ports_collection, Node
 from .utils import Port_Ints
 
 
 registry = get_registry()
 
-class Ports_simple(NamedTuple):
+class Ports_simple(Ports_collection):
     data: Port_Ints = Port_Ints("Data")
 
 @registry.nodes.decorator

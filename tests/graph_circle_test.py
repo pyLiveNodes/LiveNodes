@@ -1,18 +1,16 @@
 import pytest
 import multiprocessing as mp
 
-from livenodes import Node, Attr, Producer, Graph
-
-from typing import NamedTuple
+from livenodes import Node, Attr, Producer, Graph, Ports_collection
 from utils import Port_Ints
 
-class Ports_none(NamedTuple): 
+class Ports_none(Ports_collection): 
     pass
 
-class Ports_simple(NamedTuple):
+class Ports_simple(Ports_collection):
     data: Port_Ints = Port_Ints("Data")
 
-class Ports_sync(NamedTuple):
+class Ports_sync(Ports_collection):
     data: Port_Ints = Port_Ints("Data")
     delayed: Port_Ints = Port_Ints("Delayed")
 

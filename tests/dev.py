@@ -4,19 +4,13 @@ import multiprocessing as mp
 import logging
 logging.basicConfig(level=logging.DEBUG)
 
-from livenodes import Node, Producer, Graph, get_registry
-
-from typing import NamedTuple
-from livenodes.components.port import Port
+from livenodes import Node, Producer, Graph, get_registry, Port, Ports_collection
 
 registry = get_registry()
 
 class Port_Data(Port):
 
     example_values = [np.array([[[1]]])]
-
-    def __init__(self, name='Data', optional=False):
-        super().__init__(name, optional)
 
     @classmethod
     def check_value(cls, value):
@@ -27,7 +21,7 @@ class Port_Data(Port):
         return True, None
 
 
-class Ports_simple(NamedTuple):
+class Ports_simple(Ports_collection):
     data: Port_Data = Port_Data("Data")
 
 @registry.nodes.decorator
@@ -40,9 +34,6 @@ class Port_Data(Port):
 
     example_values = [np.array([[[1]]])]
 
-    def __init__(self, name='Data', optional=False):
-        super().__init__(name, optional)
-
     @classmethod
     def check_value(cls, value):
         if not isinstance(value, np.ndarray):
@@ -52,10 +43,10 @@ class Port_Data(Port):
         return True, None
 
 
-class Ports_none(NamedTuple): 
+class Ports_none(Ports_collection): 
     pass
 
-class Ports_simple(NamedTuple):
+class Ports_simple(Ports_collection):
     alternate_data: Port_Data = Port_Data("Alternate Data")
 
 class Data(Producer):
