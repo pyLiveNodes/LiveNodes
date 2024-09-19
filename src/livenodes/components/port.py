@@ -34,6 +34,9 @@ class Ports_collection():
     def __len__(self):
         return len(list(self._itr_helper()))
 
+    def _asdict(self):
+        return {key: getattr(self, key) for key in self._itr_helper()}
+
 class Port():
     example_values = []
     compound_type = None
