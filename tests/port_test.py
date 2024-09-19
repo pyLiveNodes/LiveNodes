@@ -143,8 +143,14 @@ class TestPorts():
 
 
 if __name__ == "__main__":
-    # a = Port_List_Int("")
+    a = Port_List_Int("")
     a = Ports_any()
+    assert str(a.any) == '<Port_Any: any>'
+    assert len(a) == 1
+    assert a._asdict() == {'any': a.any}
+    assert a._fields == ['any']
+
+    a = type('Ports_any', (Ports_collection,), {'any': Port_Any("Any")})()
     assert str(a.any) == '<Port_Any: any>'
     assert len(a) == 1
     assert a._asdict() == {'any': a.any}
