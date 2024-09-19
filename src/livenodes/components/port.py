@@ -13,21 +13,37 @@ ALL_VALUES = [
     "Foo",
 ]
 
+class Ports_collection():
+    def __init__(self):
+        for key in self.__annotations__:
+            if issubclass(self.__annotations__[key], Port):
+                setattr(self, key, getattr(self, key).contextualize(key))
+
+        # for field in fields(self):
+        #     # set the key of the port to the key its located under in the port collection 
+        #     updated_value = getattr(self, field.name).contextualize(field.name)
+        #     setattr(self, field.name, updated_value)
+    # def __post_init__(self):
+    #     for field in fields(self):
+    #         # set the key of the port to the key it's located under in the port collection 
+    #         updated_value = getattr(self, field.name).contextualize(field.name)
+    #         setattr(self, field.name, updated_value)
+# TODO: consider if init should change the default value, as this seems to still be a reference then?
+# TODO: check if this would still allow for type hints in code editors
+
 class Port():
     example_values = []
     compound_type = None
 
-    def __init__(self, label, optional=False):
+    def __init__(self, label, optional=False, key=None):
         self.label = label
         self.optional = optional
+        self.key = key
 
-        # Just as a fallback, the key should still be set by the connectionist / node_connector
-        self.key = None #label.lower().replace(' ', '_')
-
-    def set_key(self, key):
+    def contextualize(self, key):
         if key == None:
             raise ValueError('Key may not be none')
-        self.key = key
+        return self.__class__(self.label, self.optional, key)
 
     def __str__(self):
         return f"<{self.__class__.__name__}: {self.key}>"

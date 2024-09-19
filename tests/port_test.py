@@ -1,7 +1,4 @@
-import pytest
-
-from typing import NamedTuple
-from livenodes.components.port import Port, ALL_VALUES
+from livenodes.components.port import Port, ALL_VALUES, Ports_collection
 import numpy as np
 
 # === Special Case Any ========================================================
@@ -56,8 +53,11 @@ class Port_List_Int(Port_List):
     example_values = [] # as we would otherwise inherit Port_lists (which compounds any, which in turn is incompatible with Port_Int)
     compound_type = Port_Int
     
-class Ports_any(NamedTuple):
+class Ports_any(Ports_collection):
     any: Port_Any = Port_Any("Any")
+
+class Ports_any2(Ports_collection):
+    any2: Port_Any = Port_Any("Any")
 
 class TestPorts():
 
@@ -102,29 +102,35 @@ class TestPorts():
         assert a == b, "Ports define equality by their key (and type), so they should be equal here."
         assert id(a) != id(b), "Ports are two different instances, so they should never be equal here."
 
-        a.set_key('b')
+        a = a.contextualize('b')
         assert str(a) == '<Port_Any: b>'
         assert str(b) == '<Port_Any: None>'
 
     def test_my_insanity2(self):
         a = Ports_any()
         b = Ports_any()
-
-        assert a == b, "This is a named tuple, apparently this is still just the base class and thus equal?"
+        assert a != b, "This is an instantiated class so this should not be the same instance."
 
     def test_my_insanity3(self):
         a = Ports_any()
         b = Ports_any()
 
-        a.any.set_key('b')
+        a.any = a.any.contextualize('b')
         assert str(a.any) == '<Port_Any: b>'
-        assert str(b.any) == '<Port_Any: None>'
+        assert str(b.any) == '<Port_Any: any>'
 
+    def test_my_insanity4(self):
+        a = Ports_any()
+        b = Ports_any2()
 
+        assert a != b
+        assert str(a.any) == '<Port_Any: any>'
+        assert str(b.any2) == '<Port_Any: any2>'
+        assert a.any != b.any2
         
 
-
-        
 
 if __name__ == "__main__":
-    a = Port_List_Int("")
+    # a = Port_List_Int("")
+    a = Ports_any()
+    assert str(a.any) == '<Port_Any: any>'

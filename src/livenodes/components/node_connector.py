@@ -36,16 +36,16 @@ class Connectionist(Logger):
 
         self.name = name
 
-        self._set_port_keys()
+    #     self._set_port_keys()
 
-    def _set_port_keys(self):
-        for key in self.ports_in._fields:
-            getattr(self.ports_in, key).set_key(key)
-            self.debug(f'[PortsIn], setting: {key}')
+    # def _set_port_keys(self):
+    #     for key in self.ports_in._fields:
+    #         getattr(self.ports_in, key).set_key(key)
+    #         self.debug(f'[PortsIn], setting: {key}')
 
-        for key in self.ports_out._fields:
-            getattr(self.ports_out, key).set_key(key)
-            self.debug(f'[PortsOut], setting: {key}')
+    #     for key in self.ports_out._fields:
+    #         getattr(self.ports_out, key).set_key(key)
+    #         self.debug(f'[PortsOut], setting: {key}')
 
     def string(self, name):
         return f"{name} [{self.__class__.__name__}]"
