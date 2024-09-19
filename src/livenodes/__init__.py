@@ -33,3 +33,4 @@ from .producer import Producer
 from .producer_async import Producer_async
 from .components.connection import Connection
 from .components.node_connector import Attr
+from .components.port import Port, Ports_collection
