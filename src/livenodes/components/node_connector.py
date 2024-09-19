@@ -8,18 +8,17 @@ import networkx as nx
 from PIL import Image
 from io import BytesIO
 
-from typing import NamedTuple
 import deprecation
 
 from .connection import Connection
-from .port import Port
+from .port import Port, Ports_collection
 from .node_logger import Logger
 
 class Attr(Enum):
     ctr_increase = 1
     circ_breaker = 2
 
-class Ports_simple(NamedTuple):
+class Ports_simple(Ports_collection):
     data: Port = Port("Data")
 
 class Connectionist(Logger):

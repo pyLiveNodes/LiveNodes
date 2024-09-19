@@ -3,9 +3,8 @@ from functools import partial
 from .node import Node
 import threading as th
 from .components.utils.clock import Clock
-
-from typing import NamedTuple
-class Ports_empty(NamedTuple):
+from .components.port import Ports_collection
+class Ports_empty(Ports_collection):
     pass
 
 class Producer(Node, abstract_class=True):

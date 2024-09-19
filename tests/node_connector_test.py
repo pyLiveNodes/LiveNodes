@@ -1,22 +1,20 @@
 import pytest
 
-from livenodes import Node, Connection
-
-from typing import NamedTuple
+from livenodes import Node, Connection, Ports_collection
 from utils import Port_Ints, Port_Str
 
-class Ports_simple(NamedTuple):
+class Ports_simple(Ports_collection):
     data: Port_Ints = Port_Ints("Data")
 
 class SimpleNode(Node):
     ports_in = Ports_simple()
     ports_out = Ports_simple()
 
-class Ports_complex_in(NamedTuple):
+class Ports_complex_in(Ports_collection):
     data: Port_Ints = Port_Ints("Data")
     meta: Port_Ints = Port_Ints("Meta")
 
-class Ports_complex_out(NamedTuple):
+class Ports_complex_out(Ports_collection):
     data: Port_Ints = Port_Ints("Data")
     meta: Port_Ints = Port_Ints("Meta")
     info: Port_Str = Port_Str("Info")
