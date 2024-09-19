@@ -6,9 +6,6 @@ class Port_Ints(Port):
         0, 1, 20, -15
     ]
 
-    def __init__(self, name='Int', optional=False):
-        super().__init__(name, optional)
-
     @classmethod
     def check_value(cls, value):
         if type(value) != int:
@@ -20,9 +17,6 @@ class Port_Str(Port):
         "Some example value",
         "another_one"
     ]
-
-    def __init__(self, name='Text'):
-        super().__init__(name)
 
     @classmethod
     def check_value(cls, value):

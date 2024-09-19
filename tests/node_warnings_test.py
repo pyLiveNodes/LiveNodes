@@ -1,16 +1,11 @@
-import time
 import pytest
-import multiprocessing as mp
-
-from livenodes import Node, Producer, Graph, get_registry
-
-from typing import NamedTuple
+from livenodes import Producer, Ports_collection
 from .utils import Port_Ints
 
-class Ports_none(NamedTuple): 
+class Ports_none(Ports_collection): 
     pass
 
-class Ports_simple(NamedTuple):
+class Ports_simple(Ports_collection):
     alternate_data: Port_Ints = Port_Ints("Alternate Data")
 
 class Data(Producer):
