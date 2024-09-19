@@ -96,7 +96,7 @@ class TestPorts():
         assert not a.check_value(None)[0]
 
 
-    def test_my_insanity(self):
+    def test_default_reference_initialization(self):
         a = Port_Any("a port")
         b = Port_Any("b port")
         assert a == b, "Ports define equality by their key (and type), so they should be equal here."
@@ -106,12 +106,12 @@ class TestPorts():
         assert str(a) == '<Port_Any: b>'
         assert str(b) == '<Port_Any: None>'
 
-    def test_my_insanity2(self):
+    def test_default_reference_initialization2(self):
         a = Ports_any()
         b = Ports_any()
         assert a != b, "This is an instantiated class so this should not be the same instance."
 
-    def test_my_insanity3(self):
+    def test_default_reference_initialization3(self):
         a = Ports_any()
         b = Ports_any()
 
@@ -119,7 +119,7 @@ class TestPorts():
         assert str(a.any) == '<Port_Any: b>'
         assert str(b.any) == '<Port_Any: any>'
 
-    def test_my_insanity4(self):
+    def test_default_reference_initialization4(self):
         a = Ports_any()
         b = Ports_any2()
 
@@ -128,7 +128,6 @@ class TestPorts():
         assert str(b.any2) == '<Port_Any: any2>'
         assert a.any != b.any2
         
-
 
 if __name__ == "__main__":
     # a = Port_List_Int("")
