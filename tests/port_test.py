@@ -135,7 +135,7 @@ class TestPorts():
         assert a._fields == ['any']
 
     def test_port_collection_subclass(self):
-        a = type('Ports_any', (Ports_collection), {'any': Port_Any("Any")})()
+        a = type('Ports_any', (Ports_collection,), {'any': Port_Any("Any")})()
         assert str(a.any) == '<Port_Any: any>'
         assert len(a) == 1
         assert a._asdict() == {'any': a.any}
