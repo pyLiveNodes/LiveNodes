@@ -36,6 +36,11 @@ class Ports_collection():
 
     def _asdict(self):
         return {key: getattr(self, key) for key in self._itr_helper()}
+    
+    @property
+    def _fields(self):
+        return list(self._itr_helper())
+
 
 class Port():
     example_values = []
