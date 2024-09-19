@@ -11,23 +11,45 @@ ALL_VALUES = [
     [[[20, .1]]],
     20,
     "Foo",
+    {},
 ]
+
+class Ports_collection():
+    # this is the problem we had with NamedTuple summed up: https://peps.python.org/pep-0557/#mutable-default-values
+    def __init__(self):
+        for key in self._itr_helper():
+            # set the key of the port to the key its located under in the port collection 
+            setattr(self, key, getattr(self, key).contextualize(key))
+    
+    def __iter__(self):
+        for key in self._itr_helper():
+            yield getattr(self, key)
+    
+    def _itr_helper(self):
+        if hasattr(self, '__annotations__'):
+            for key in self.__annotations__:
+                if issubclass(self.__annotations__[key], Port):
+                    yield key
+
+    def __len__(self):
+        return len(list(self._itr_helper()))
 
 class Port():
     example_values = []
     compound_type = None
 
-    def __init__(self, label, optional=False):
+    def __init__(self, label, optional=False, key=None):
         self.label = label
         self.optional = optional
+        self.key = key
 
-        # Just as a fallback, the key should still be set by the connectionist / node_connector
-        self.key = None #label.lower().replace(' ', '_')
-
-    def set_key(self, key):
+    def contextualize(self, key):
         if key == None:
             raise ValueError('Key may not be none')
-        self.key = key
+        try:
+            return self.__class__(self.label, self.optional, key)
+        except:
+            raise NotImplementedError(f'Double check if the class {self.__class__} implemenrts the new port interface correctly. I.e. accepts the optional and key arguments.')
 
     def __str__(self):
         return f"<{self.__class__.__name__}: {self.key}>"
