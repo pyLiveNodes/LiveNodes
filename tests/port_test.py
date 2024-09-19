@@ -127,9 +127,25 @@ class TestPorts():
         assert str(a.any) == '<Port_Any: any>'
         assert str(b.any2) == '<Port_Any: any2>'
         assert a.any != b.any2
-        
+
+    def test_port_collection_helper_functions(self):
+        a = Ports_any()
+        assert len(a) == 1
+        assert a._asdict() == {'any': a.any}
+        assert a._fields == ['any']
+
+    def test_port_collection_subclass(self):
+        a = type('Ports_any', (Ports_collection), {'any': Port_Any("Any")})()
+        assert str(a.any) == '<Port_Any: any>'
+        assert len(a) == 1
+        assert a._asdict() == {'any': a.any}
+        assert a._fields == ['any']
+
 
 if __name__ == "__main__":
     # a = Port_List_Int("")
     a = Ports_any()
     assert str(a.any) == '<Port_Any: any>'
+    assert len(a) == 1
+    assert a._asdict() == {'any': a.any}
+    assert a._fields == ['any']
