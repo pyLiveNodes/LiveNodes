@@ -90,22 +90,24 @@ class Serializer():
 
         return initial
 
+    def compact_settings(self):
+        config = self.get_settings().get('settings', {})
+        inputs = [
+            inp.serialize_compact() for inp in self.input_connections
+        ]
+        return config, inputs
+
     def to_compact_dict(self, graph=False):
-        def compact_settings(node, settings):
-            config = settings.get('settings', {})
-            inputs = [
-                inp.serialize_compact() for inp in node.input_connections
-            ]
-            return config, inputs
-
-        cfg, ins = compact_settings(self, self.get_settings())
-
-        nodes = {str(self): cfg}
-        inputs = ins
-
-        if graph:
-            for node in self.sort_discovered_nodes(self.discover_graph(self)):
-                cfg, ins = compact_settings(node, node.get_settings())
+        if not graph:
+            cfg, ins = self.compact_settings()
+            nodes = {str(self): cfg}
+            inputs = ins
+        else:
+            nodes = {}
+            inputs = []
+            # this does not include duplicates, as discover_graph removes them
+            for node in self.discover_graph(self, direction='both', sort=True):
+                cfg, ins = node.compact_settings()
                 nodes[str(node)] = cfg
                 inputs.extend(ins)
 
