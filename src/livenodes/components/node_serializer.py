@@ -95,7 +95,7 @@ class Serializer():
         inputs = [
             inp.serialize_compact() for inp in self.input_connections
         ]
-        return config, inputs
+        return config, inputs, str(self)
 
     def to_compact_dict(self, graph=False):
         if not graph:
@@ -107,8 +107,9 @@ class Serializer():
             inputs = []
             # this does not include duplicates, as discover_graph removes them
             for node in self.discover_graph(self, direction='both', sort=True):
-                cfg, ins = node.compact_settings()
-                nodes[str(node)] = cfg
+                # the main reason for the implementation here is to support the macro node in the ln_macro package
+                cfg, ins, name = node.compact_settings()
+                nodes[name] = cfg
                 inputs.extend(ins)
 
         return {'Nodes': nodes, 'Inputs': inputs}
