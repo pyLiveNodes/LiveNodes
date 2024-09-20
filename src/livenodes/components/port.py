@@ -1,4 +1,5 @@
 import numpy as np
+from inspect import getmembers
 
 ALL_VALUES = [
     np.array([[[1]]]),
@@ -26,13 +27,20 @@ class Ports_collection():
             yield getattr(self, key)
     
     def _itr_helper(self):
-        if hasattr(self, '__annotations__'):
-            for key in self.__annotations__:
-                if issubclass(self.__annotations__[key], Port):
-                    yield key
+        for key in dir(self):
+            if not key.startswith('_') and isinstance(getattr(self, key), Port):
+                yield key
 
     def __len__(self):
         return len(list(self._itr_helper()))
+
+    def _asdict(self):
+        return {key: getattr(self, key) for key in self._itr_helper()}
+    
+    @property
+    def _fields(self):
+        return list(self._itr_helper())
+
 
 class Port():
     example_values = []
