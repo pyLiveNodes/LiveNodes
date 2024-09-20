@@ -80,11 +80,23 @@ class TestNodeOperations():
         assert str(graph) == "A [SimpleNode]"
         assert str(graph.output_connections[0]._recv_node) == "B [SimpleNode]"
 
+    def test_graph_compact_serialization(self, create_connection):
+        dct = create_connection.to_compact_dict(graph=True)
+        assert list(sorted(dct['Nodes'].keys())) == ["A [SimpleNode]", "B [SimpleNode]"]
+        assert dct['Inputs'] == ["A [SimpleNode].data -> B [SimpleNode].data"]
 
-    def test_graph_compact(self, create_connection):
-        graph = Node.from_compact_dict(create_connection.to_compact_dict(graph=True))
-        assert str(graph) == "A [SimpleNode]"
-        assert str(graph.output_connections[0]._recv_node) == "B [SimpleNode]"
+    def test_graph_compact_serialization_node_w_inputs(self, create_connection):
+        node_c = create_connection.output_connections[0]._recv_node
+        dct = node_c.to_compact_dict(graph=True)
+        assert list(sorted(dct['Nodes'].keys())) == ["A [SimpleNode]", "B [SimpleNode]"]
+        assert dct['Inputs'] == ["A [SimpleNode].data -> B [SimpleNode].data"]
+
+    def test_graph_compact_deserialization(self, create_connection):
+        dct = create_connection.to_compact_dict(graph=True)
+        print(dct)
+        graph = Node.from_compact_dict(dct)
+        assert str(graph) == "B [SimpleNode]"
+        assert str(graph.input_connections[0]._emit_node) == "A [SimpleNode]"
 
     
     def test_graph_json_same_name(self):
