@@ -46,7 +46,7 @@ class Bridge(Logger):
         raise NotImplementedError()
 
     # _to thread (called by _should_process)
-    def closed_and_empty():
+    def closed_and_empty(self):
         raise NotImplementedError()
 
     # _to thread

@@ -48,6 +48,19 @@ class Bridge_thread_aio(Bridge):
         self.queue.put_nowait((ctr, item))
 
     # _to thread
+    def closed(self):
+        return self.closed_event.is_set()
+    
+    # _to thread
+    def empty(self):
+        return self.queue.empty() and self._read == {}
+    
+    def closed_and_empty(self):
+        ret = self.closed() and self.empty()    
+        self.debug(f'Checking if closed and empty: {ret}')
+        return ret
+
+    # _to thread
     async def onclose(self):
         await self.closed_event.coro_wait()
         await self.queue.coro_join()
