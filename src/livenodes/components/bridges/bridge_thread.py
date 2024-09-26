@@ -50,6 +50,7 @@ class Bridge_thread(Bridge):
             await asyncio.sleep(0.01)
             if self.closed_and_empty():
                 self.debug('Closed Event set and queue empty -- telling multiprocessing data storage')
+                break
 
     # _to thread
     def closed(self):
