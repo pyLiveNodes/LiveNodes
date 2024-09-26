@@ -23,10 +23,10 @@ class Register():
             self.collected_installed = True
 
         # TODO: check if there is a more elegant way to access the number of installed classes
-        logger.info(f'Collected installed Nodes ({len(list(self.nodes.values()))}') 
-        logger.info(f'Collected installed Bridges ({len(list(self.bridges.values()))}')
-
+        logger.info(f'Collected installed Nodes ({len(list(self.nodes.values()))})') 
+        logger.info(f'Collected installed Bridges ({len(list(self.bridges.values()))})')
     def installed_packages(self):
+
         packages = []
         for item in self.nodes.values():
             packages.append(item.__module__.split('.')[0])

@@ -87,6 +87,7 @@ class Node(Connectionist, Logger, Serializer):
         """
         Check if a new class instance is valid, ie if channels are correct, info is existing etc
         """
+        self.abstract_class = abstract_class
         if not abstract_class:
             ### check if ports where set correctly
             if self.ports_in is None:

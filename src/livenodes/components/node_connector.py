@@ -197,11 +197,11 @@ class Connectionist(Logger):
         return not self.string(name) in nodes_names
 
     def create_unique_name(self, base, node_list=None):
-        if self.is_unique_name(base, node_list=node_list):
-            return base
-
         if node_list is None:
             node_list = self.discover_graph(self)
+
+        if self.is_unique_name(base, node_list=node_list):
+            return base
 
         # basically adjust base by counting then recurse until we find a good name and return that
         return self.create_unique_name(f"{base}_1", node_list=node_list)
