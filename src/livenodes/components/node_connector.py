@@ -35,6 +35,9 @@ class Connectionist(Logger):
 
         self.name = name
 
+        assert isinstance(self.ports_in, Ports_collection), 'NamedTuples are deprecated, please use Ports_collection instead'
+        assert isinstance(self.ports_out, Ports_collection), 'NamedTuples are deprecated, please use Ports_collection instead'
+
     #     self._set_port_keys()
 
     # def _set_port_keys(self):
