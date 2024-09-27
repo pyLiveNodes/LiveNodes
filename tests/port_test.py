@@ -1,5 +1,7 @@
 from livenodes.components.port import Port, ALL_VALUES, Ports_collection
+from livenodes import Node
 import numpy as np
+import pytest 
 
 # === Special Case Any ========================================================
 class Port_Any(Port):
@@ -57,6 +59,10 @@ class Ports_any(Ports_collection):
     any: Port_Any = Port_Any("Any")
 
 class Ports_any2(Ports_collection):
+    any2: Port_Any = Port_Any("Any")
+
+from typing import NamedTuple
+class Ports_deprecated(NamedTuple):
     any2: Port_Any = Port_Any("Any")
 
 class TestPorts():
@@ -140,6 +146,17 @@ class TestPorts():
         assert len(a) == 1
         assert a._asdict() == {'any': a.any}
         assert a._fields == ['any']
+
+    def test_raise_namedtuple_error(self):
+        class Quadratic(Node):
+            ports_in = Ports_deprecated()
+            ports_out = Ports_deprecated()
+
+            def process(self, alternate_data, **kwargs):
+                return self.ret(alternate_data=alternate_data**2)
+        with pytest.raises(Exception):
+            Quadratic()
+
 
 
 if __name__ == "__main__":
