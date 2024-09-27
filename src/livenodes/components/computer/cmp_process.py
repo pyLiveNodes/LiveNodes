@@ -42,10 +42,6 @@ class Processor_process(Logger):
         self.stop_lock.acquire()
         self.close_lock.acquire()
 
-        # -- worker process
-        self.stop_timeout_threads = stop_timeout_threads
-        self.close_timeout_threads = close_timeout_threads
-
         self.info(f'Creating Process Computer with {len(self.nodes)} nodes.')
 
 
@@ -65,15 +61,15 @@ class Processor_process(Logger):
         self.worker_log_handler.start()
 
         self.subprocess = mp.Process(
-                        target=start_subprocess,
-                        args=(self.nodes, self.bridges, 
-                            self.ready_event, self.start_lock, self.stop_lock, self.close_lock,
-                            parent_log_queue, logger_name,
-                            self.stop_timeout_threads, self.close_timeout_threads), name=str(self))
+            target=start_subprocess,
+            args=(self.nodes, self.bridges, 
+                self.ready_event, self.start_lock, self.stop_lock, self.close_lock,
+                parent_log_queue, logger_name,
+                self.stop_timeout_threads, self.close_timeout_threads), name=str(self))
         self.subprocess.start()
         
         self.info('Waiting for worker to be ready')
-        self.ready_event.wait(timeout=10)
+        self.ready_event.wait(timeout=0.1)
         self.info('Worker ready, resuming')
 
     # parent process
@@ -93,7 +89,7 @@ class Processor_process(Logger):
         self.subprocess.join(timeout)
 
     # parent process
-    def stop(self, timeout=0.3):
+    def stop(self, timeout=0.1):
         """ used if the processing is nown to be endless"""
 
         self.info('Stopping')
@@ -102,7 +98,7 @@ class Processor_process(Logger):
         self.info('Returning; Process finished: ', not self.subprocess.is_alive())
 
     # parent process
-    def close(self, timeout=0.5):
+    def close(self, timeout=0.1):
         self.info('Closing')
         self.close_lock.release()
         self.subprocess.join(timeout)

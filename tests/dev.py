@@ -92,26 +92,26 @@ class Save(Node):
 
 if __name__ == "__main__":
     # Processing test
-    # mixed = True
-    # if mixed:
-    #     data = Data(name="A", compute_on="1:2")
-    #     quadratic = Quadratic(name="B", compute_on="2:1")
-    #     out1 = Save(name="C", compute_on="1:1")
-    #     out2 = Save(name="D", compute_on="1")
-    # else:
-    #     data = Data(name="A", compute_on="1")
-    #     quadratic = Quadratic(name="B", compute_on="1")
-    #     out1 = Save(name="C", compute_on="1")
-    #     out2 = Save(name="D", compute_on="1")
+    mixed = True
+    if mixed:
+        data = Data(name="A", compute_on="1:2")
+        quadratic = Quadratic(name="B", compute_on="2:1")
+        out1 = Save(name="C", compute_on="1:1")
+        out2 = Save(name="D", compute_on="1")
+    else:
+        data = Data(name="A", compute_on="1")
+        quadratic = Quadratic(name="B", compute_on="1")
+        out1 = Save(name="C", compute_on="1")
+        out2 = Save(name="D", compute_on="1")
 
-    # out1.connect_inputs_to(data)
-    # quadratic.connect_inputs_to(data)
-    # out2.connect_inputs_to(quadratic)
+    out1.connect_inputs_to(data)
+    quadratic.connect_inputs_to(data)
+    out2.connect_inputs_to(quadratic)
 
-    # g = Graph(start_node=data)
-    # g.start_all()
-    # g.join_all()
-    # g.stop_all()
+    g = Graph(start_node=data)
+    g.start_all()
+    g.join_all()
+    g.stop_all()
 
     # print(out1.get_state())
     # print(out2.get_state())
@@ -131,20 +131,20 @@ if __name__ == "__main__":
 
 
     # test_calc_mp
-    data = Data(name="A", compute_on="1:1")
-    quadratic = Quadratic(name="B", compute_on="2:1")
-    out1 = Save(name="C", compute_on="3:1")
-    out2 = Save(name="D", compute_on="1:1")
+    # data = Data(name="A", compute_on="1:1")
+    # quadratic = Quadratic(name="B", compute_on="2:1")
+    # out1 = Save(name="C", compute_on="3:1")
+    # out2 = Save(name="D", compute_on="1:1")
 
-    out1.add_input(data, emit_port=data.ports_out.alternate_data, recv_port=out1.ports_in.alternate_data)
-    quadratic.add_input(data, emit_port=data.ports_out.alternate_data, recv_port=quadratic.ports_in.alternate_data)
-    out2.add_input(quadratic, emit_port=quadratic.ports_out.alternate_data, recv_port=out2.ports_in.alternate_data)
-    g = Graph(start_node=data)
-    g.start_all()
-    g.join_all()
-    g.stop_all()
+    # out1.add_input(data, emit_port=data.ports_out.alternate_data, recv_port=out1.ports_in.alternate_data)
+    # quadratic.add_input(data, emit_port=data.ports_out.alternate_data, recv_port=quadratic.ports_in.alternate_data)
+    # out2.add_input(quadratic, emit_port=quadratic.ports_out.alternate_data, recv_port=out2.ports_in.alternate_data)
+    # g = Graph(start_node=data)
+    # g.start_all()
+    # g.join_all()
+    # g.stop_all()
 
-    assert out1.get_state() == list(range(10))
-    assert out2.get_state() == list(map(lambda x: x**2, range(10)))
-    assert g.is_finished()
+    # assert out1.get_state() == list(range(10))
+    # assert out2.get_state() == list(map(lambda x: x**2, range(10)))
+    # assert g.is_finished()
     
