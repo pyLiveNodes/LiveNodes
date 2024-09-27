@@ -2,7 +2,79 @@ import asyncio
 import threading as th
 from livenodes.components.node_logger import Logger
 
-class WorkerThread(Logger):
+
+class Processor_threads(Logger):
+    def __init__(self, nodes, location, bridges) -> None:
+        super().__init__()
+        self.ready_event = th.Event()
+        self.start_lock = th.Lock()
+        self.stop_lock = th.Lock()
+        self.close_lock = th.Lock()
+        self.location = location
+        self.nodes = nodes
+        self.bridges = bridges
+        self.subprocess = None
+        self.start_lock.acquire()
+        self.stop_lock.acquire()
+        self.close_lock.acquire()
+
+        self.info(f'Creating Threading Computer with {len(self.nodes)} nodes.')
+
+    def __str__(self) -> str:
+        return f"CMP-TH:{self.location}"
+
+    def setup(self):
+        self.info('Readying')
+        self.subprocess = th.Thread(
+            target=start_subprocess,
+            args=(self.nodes, self.bridges, self.ready_event, self.start_lock, self.stop_lock, self.close_lock, self.location),
+            name=str(self)
+        )
+        self.subprocess.start()
+        self.info('Waiting for worker to be ready')
+        self.ready_event.wait(10)
+        self.info('Worker ready, resuming')
+
+    def start(self):
+        self.info('Starting')
+        self.start_lock.release()
+
+    def join(self, timeout=None):
+        self.info('Joining')
+        self.subprocess.join(timeout)
+
+    def stop(self, timeout=0.1):
+        self.info('Stopping')
+        self.stop_lock.release()
+        self.subprocess.join(timeout)
+        self.info('Returning; thread finished: ', not self.subprocess.is_alive())
+
+    def close(self, timeout=0.1):
+        self.info('Closing')
+        self.close_lock.release()
+        self.subprocess.join(timeout)
+        if self.subprocess.is_alive():
+            self.info('Timeout reached, but still alive')
+
+    def is_finished(self):
+        return (self.subprocess is not None) and (not self.subprocess.is_alive())
+
+
+
+def start_subprocess(nodes, bridges, ready_event, start_lock, stop_lock, close_lock, location):
+    worker = Worker_Thread(
+        nodes=nodes,
+        bridges=bridges,
+        ready_event=ready_event,
+        start_lock=start_lock,
+        stop_lock=stop_lock,
+        close_lock=close_lock,
+        location=location
+    )
+    worker.start()
+
+
+class Worker_Thread(Logger):
     def __init__(self, nodes, bridges, ready_event, start_lock, stop_lock, close_lock, location):
         super().__init__()
         self.nodes = nodes
@@ -78,72 +150,3 @@ class WorkerThread(Logger):
         # await asyncio.sleep(0)
         self.info('Closed called, stopping all remaining tasks')
         self.onprocess_task.cancel()
-
-
-def start_subprocess(nodes, bridges, ready_event, start_lock, stop_lock, close_lock, location):
-    worker = WorkerThread(
-        nodes=nodes,
-        bridges=bridges,
-        ready_event=ready_event,
-        start_lock=start_lock,
-        stop_lock=stop_lock,
-        close_lock=close_lock,
-        location=location
-    )
-    worker.start()
-
-class Processor_threads(Logger):
-    def __init__(self, nodes, location, bridges) -> None:
-        super().__init__()
-        self.ready_event = th.Event()
-        self.start_lock = th.Lock()
-        self.stop_lock = th.Lock()
-        self.close_lock = th.Lock()
-        self.location = location
-        self.nodes = nodes
-        self.bridges = bridges
-        self.subprocess = None
-        self.start_lock.acquire()
-        self.stop_lock.acquire()
-        self.close_lock.acquire()
-
-        self.info(f'Creating Threading Computer with {len(self.nodes)} nodes.')
-
-    def __str__(self) -> str:
-        return f"CMP-TH:{self.location}"
-
-    def setup(self):
-        self.info('Readying')
-        self.subprocess = th.Thread(
-            target=start_subprocess,
-            args=(self.nodes, self.bridges, self.ready_event, self.start_lock, self.stop_lock, self.close_lock, self.location),
-            name=str(self)
-        )
-        self.subprocess.start()
-        self.info('Waiting for worker to be ready')
-        self.ready_event.wait(10)
-        self.info('Worker ready, resuming')
-
-    def start(self):
-        self.info('Starting')
-        self.start_lock.release()
-
-    def join(self, timeout=None):
-        self.info('Joining')
-        self.subprocess.join(timeout)
-
-    def stop(self, timeout=0.1):
-        self.info('Stopping')
-        self.stop_lock.release()
-        self.subprocess.join(timeout)
-        self.info('Returning; thread finished: ', not self.subprocess.is_alive())
-
-    def close(self, timeout=0.1):
-        self.info('Closing')
-        self.close_lock.release()
-        self.subprocess.join(timeout)
-        if self.subprocess.is_alive():
-            self.info('Timeout reached, but still alive')
-
-    def is_finished(self):
-        return (self.subprocess is not None) and (not self.subprocess.is_alive())
