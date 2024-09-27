@@ -9,12 +9,12 @@ from livenodes.components.node_logger import Logger
 
 from .cmp_thread import Processor_threads
 
-import platform
-if platform.system() == 'Darwin':
-        mp.set_start_method(
-            'fork',
-            force=True)
-# mp.set_start_method('spawn', force=True)
+# import platform
+# if platform.system() == 'Darwin':
+#         mp.set_start_method(
+#             'fork',
+#             force=True)
+mp.set_start_method('spawn', force=True)
 
 class Processor_process(Logger):
     def __init__(self, nodes, location, bridges, stop_timeout_threads=0.1, close_timeout_threads=0.1) -> None:
