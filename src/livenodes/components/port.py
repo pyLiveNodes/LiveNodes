@@ -1,5 +1,4 @@
 import numpy as np
-from inspect import getmembers
 
 ALL_VALUES = [
     np.array([[[1]]]),
