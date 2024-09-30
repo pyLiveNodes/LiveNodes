@@ -12,6 +12,17 @@ class Port_Any(Port):
     def check_value(cls, value):
         return True, None
     
+class Port_Str(Port):
+    example_values = ["Some example value", "another_one", np.array(['test'])[0]]
+
+    def __init__(self, name='Text', *args, **kwargs):
+        super().__init__(name, *args, **kwargs)
+
+    @classmethod
+    def check_value(cls, value):
+        if not isinstance(value, str):
+            return False, f"Should be string; got {type(value)}, val: {value}."
+        return True, None
 
 class Port_Int(Port):
     example_values = [
@@ -157,7 +168,19 @@ class TestPorts():
         with pytest.raises(Exception):
             Quadratic()
 
+    def test_compound_with_example(self):
+        class Port_List_Str(Port_List):
+            example_values = []
+            compound_type = Port_Str
 
+        d = Port_List_Str("test")
+        assert len(d.example_values) > 0
+        assert all([d.check_value(x) for x in d.example_values])
+
+    def test_compound_without_example(self):
+        with pytest.raises(Exception):
+            class Port_List_Str_no_example(Port_List):
+                compound_type = Port_Str
 
 if __name__ == "__main__":
     a = Port_List_Int("")
