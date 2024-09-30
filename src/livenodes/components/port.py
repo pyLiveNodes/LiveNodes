@@ -1,5 +1,4 @@
 import numpy as np
-from inspect import getmembers
 
 ALL_VALUES = [
     np.array([[[1]]]),
@@ -68,6 +67,9 @@ class Port():
             and self.key == other.key
 
     def __init_subclass__(cls):
+        if id(cls.example_values) == id(super(cls, cls).example_values):
+            raise Exception('Child should not have the same example values as parent. Why is this another port if they share the same values? If you did not want to set values, please set example_values=[]')
+        
         if cls.compound_type is not None:
             compounded_examples = list(filter(lambda x: cls.check_value(x)[0], map(cls.example_compound_construction, cls.compound_type.example_values)))
             cls.example_values.extend(compounded_examples)
@@ -75,11 +77,12 @@ class Port():
         if len(cls.example_values) <= 0:
             raise Exception('Need to provide at least one example value.')
 
+        ids = list(map(id, ALL_VALUES))
         for val in cls.example_values:
             valid, msg = cls.check_value(val)
             if not valid:
                 raise Exception(f'Example value does not pass check ({str(cls)}). Msg: {msg}. Value: {val}')
-            if id(val) not in list(map(id, ALL_VALUES)):
+            if id(val) not in ids:
                 ALL_VALUES.append(val)
         return super().__init_subclass__()
 
