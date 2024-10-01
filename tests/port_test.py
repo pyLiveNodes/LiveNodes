@@ -181,6 +181,32 @@ class TestPorts():
         with pytest.raises(Exception):
             class Port_List_Str_no_example(Port_List):
                 compound_type = Port_Str
+    
+    def test_attr_name(self):
+        class A(Port_List):
+            example_values = []
+            compound_type = Port_Str
+            label = 'test'
+        
+        a = A()
+        assert a.label == 'test'
+
+    def test_compound_example_construction(self):
+        class Port_List_Str(Port_List):
+            example_values = []
+            compound_type = Port_Str
+
+            @classmethod
+            def all_examples_compound_construction(cls):
+                res = []
+                for x in cls.compound_type.example_values:
+                    res.append([x])
+                    res.append(np.array([x]))
+                return list(filter(lambda x: cls.check_value(x)[0], res))
+
+        a = Port_List_Str()
+        assert a.example_values[-1] == np.array([a.compound_type.example_values[-1]])
+        assert a.example_values[-2] == [a.compound_type.example_values[-1]]
 
 if __name__ == "__main__":
     a = Port_List_Int("")
