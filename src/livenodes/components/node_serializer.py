@@ -19,10 +19,10 @@ class Serializer():
         if deep=True copy all childs as well
         """
         # not sure if this will work, as from_dict expects a cls not self...
-        dct = self.to_dict(graph=graph)
+        dct = self.to_compact_dict(graph=graph)
         if not graph:
             dct['Inputs'] = []
-        return self.from_dict(dct)
+        return self.from_compact_dict(dct)
 
     def _node_settings(self):
         return {"name": self.name, "compute_on": self.compute_on, **self._settings()}
@@ -102,8 +102,8 @@ class Serializer():
 
     def to_compact_dict(self, graph=False):
         if not graph:
-            cfg, ins = self.compact_settings()
-            nodes = {str(self): cfg}
+            cfg, ins, name = self.compact_settings()
+            nodes = {name: cfg}
             inputs = ins
         else:
             nodes = {}
