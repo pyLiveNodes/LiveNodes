@@ -44,9 +44,11 @@ class Ports_collection():
 class Port():
     example_values = []
     compound_type = None
+    label = 'No Label Set'
 
-    def __init__(self, label, optional=False, key=None):
-        self.label = label
+    def __init__(self, label=None, optional=False, key=None):
+        if label is not None:
+            self.label = label
         self.optional = optional
         self.key = key
 
@@ -71,8 +73,8 @@ class Port():
             raise Exception('Child should not have the same example values as parent. Why is this another port if they share the same values? If you did not want to set values, please set example_values=[]')
         
         if cls.compound_type is not None:
-            compounded_examples = list(filter(lambda x: cls.check_value(x)[0], map(cls.example_compound_construction, cls.compound_type.example_values)))
-            cls.example_values.extend(compounded_examples)
+            # We need to do this at runtime, because classes like Any will have changing example values and thus compound values as well
+            cls.example_values.extend(cls.all_examples_compound_construction())
 
         if len(cls.example_values) <= 0:
             raise Exception('Need to provide at least one example value.')
@@ -89,6 +91,10 @@ class Port():
     @classmethod
     def example_compound_construction(cls, compounding_value):
         raise NotImplementedError()
+    
+    @classmethod
+    def all_examples_compound_construction(cls):
+        return list(filter(lambda x: cls.check_value(x)[0], map(cls.example_compound_construction, cls.compound_type.example_values)))
 
     @classmethod
     def add_examples(cls, *args):
