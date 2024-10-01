@@ -74,7 +74,7 @@ class Port():
         
         if cls.compound_type is not None:
             # We need to do this at runtime, because classes like Any will have changing example values and thus compound values as well
-            cls.example_values.extend(cls.all_examples_compound_construction(cls))
+            cls.example_values.extend(cls.all_examples_compound_construction())
 
         if len(cls.example_values) <= 0:
             raise Exception('Need to provide at least one example value.')

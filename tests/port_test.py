@@ -196,6 +196,7 @@ class TestPorts():
             example_values = []
             compound_type = Port_Str
 
+            @classmethod
             def all_examples_compound_construction(cls):
                 res = []
                 for x in cls.compound_type.example_values:
