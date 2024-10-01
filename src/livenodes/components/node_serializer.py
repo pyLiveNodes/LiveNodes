@@ -19,7 +19,10 @@ class Serializer():
         if deep=True copy all childs as well
         """
         # not sure if this will work, as from_dict expects a cls not self...
-        return self.from_dict(self.to_dict(graph=graph))
+        dct = self.to_dict(graph=graph)
+        if not graph:
+            dct['Inputs'] = []
+        return self.from_dict(dct)
 
     def _node_settings(self):
         return {"name": self.name, "compute_on": self.compute_on, **self._settings()}
