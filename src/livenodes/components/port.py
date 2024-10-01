@@ -44,9 +44,11 @@ class Ports_collection():
 class Port():
     example_values = []
     compound_type = None
+    label = 'No Label Set'
 
-    def __init__(self, label, optional=False, key=None):
-        self.label = label
+    def __init__(self, label=None, optional=False, key=None):
+        if label is not None:
+            self.label = label
         self.optional = optional
         self.key = key
 
@@ -72,7 +74,7 @@ class Port():
         
         if cls.compound_type is not None:
             # We need to do this at runtime, because classes like Any will have changing example values and thus compound values as well
-            cls.example_values.extend(cls.all_examples_compound_construction())
+            cls.example_values.extend(cls.all_examples_compound_construction(cls))
 
         if len(cls.example_values) <= 0:
             raise Exception('Need to provide at least one example value.')

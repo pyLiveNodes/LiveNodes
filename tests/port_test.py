@@ -186,10 +186,10 @@ class TestPorts():
         class A(Port_List):
             example_values = []
             compound_type = Port_Str
-            name = 'test'
+            label = 'test'
         
         a = A()
-        assert a.name == 'test'
+        assert a.label == 'test'
 
     def test_compound_example_construction(self):
         class Port_List_Str(Port_List):
