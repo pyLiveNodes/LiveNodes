@@ -59,12 +59,20 @@ class TestNodeOperations():
         })
         assert len(d['inputs']) == 0
 
-    def test_node_copy(self, node_a):
+    def test_node_copy_standalone(self, node_a):
         # check copy
         node_a_copy = node_a.copy()
         assert node_a_copy is not None
         assert json.dumps(node_a.get_settings()) == json.dumps(
             node_a_copy.get_settings())
+    
+    def test_node_copy_graph(self, create_connection):
+        node_b = SimpleNode(name="A")
+        node_c = SimpleNode(name="B")
+        node_c.add_input(node_b, emit_port=node_b.ports_out.data, recv_port=node_c.ports_in.data)
+    
+        assert id(node_b.copy()) != id(node_b)
+        assert id(node_c.copy()) != id(node_c)
 
     def test_node_json(self, node_a):
         # check json format
