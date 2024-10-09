@@ -23,6 +23,9 @@ class Serializer():
         if not graph:
             dct['Inputs'] = []
         return self.from_compact_dict(dct)
+    
+    def _serialize_name(self):
+        return str(self)
 
     def _node_settings(self):
         return {"name": self.name, "compute_on": self.compute_on, **self._settings()}
@@ -38,10 +41,10 @@ class Serializer():
 
     def to_dict(self, graph=False):
         # Assume no nodes in the graph have the same name+node_class -> should be checked in the add_inputs
-        res = {str(self): self.get_settings()}
+        res = {self._serialize_name(): self.get_settings()}
         if graph:
             for node in self.sort_discovered_nodes(self.discover_graph(self)):
-                res[str(node)] = node.get_settings()
+                res[node._serialize_name()] = node.get_settings()
         return res
 
     @classmethod
@@ -98,7 +101,7 @@ class Serializer():
         inputs = [
             inp.serialize_compact() for inp in self.input_connections
         ]
-        return config, inputs, str(self)
+        return config, inputs, self._serialize_name()
 
     def to_compact_dict(self, graph=False):
         if not graph:
