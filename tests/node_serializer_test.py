@@ -107,7 +107,7 @@ class TestNodeOperations():
         assert str(graph.input_connections[0]._emit_node) == "A [SimpleNode]"
 
     
-    def test_graph_json_same_name(self):
+    def test_graph_json_same_name_after_serialization(self):
         node_a = SimpleNode(name="A")
         node_b = SimpleNode(name="B")
         node_c = SimpleNode(name="B")
@@ -119,4 +119,12 @@ class TestNodeOperations():
         assert str(graph) == "A [SimpleNode]"
         assert str(graph.output_connections[0]._recv_node) == "B [SimpleNode]"
 
+    def test_graph_duplicate_names(self):
+        node_a = SimpleNode(name="A")
+        assert node_a.name == "A"
+        node_b = SimpleNode(name="A")
+        assert node_b.name == "A"
+        node_b.add_input(node_a, emit_port=node_a.ports_out.data, recv_port=node_b.ports_in.data)
+        assert node_b.name == "A_1", "After connection the name should be changed to be unique in the graph"
+    
         
