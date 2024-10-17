@@ -9,6 +9,15 @@ def test_register_reporter():
     reportable.register_reporter(dummy_reporter)
     assert dummy_reporter in reportable.reporters, "Reporter should be registered"
 
+def test_register_reporter_once():
+    reportable = Reportable()
+    def dummy_reporter(**kwargs):
+        pass
+
+    reportable.register_reporter_once(dummy_reporter)
+    reportable.register_reporter_once(dummy_reporter)
+    assert reportable.reporters.count(dummy_reporter) == 1, "Reporter should only be registered once"
+
 def test_deregister_reporter():
     reportable = Reportable()
     def dummy_reporter(**kwargs):
