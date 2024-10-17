@@ -103,7 +103,7 @@ class FPS_Helper(Reportable):
         self.n_frames_total = 0
         self.report_every_x_seconds = report_every_x_seconds
         self.timer = time.time()
-        
+
     def count(self):
         self.n_frames += 1
         el_time = time.time() - self.timer
@@ -128,7 +128,7 @@ class View_MPL(View, abstract_class=True):
             raise NotImplementedError()
 
         return update
-        
+
     def init_draw(self, subfig):
         """
         Heart of the nodes drawing, should be a functional function
@@ -145,7 +145,7 @@ class View_MPL(View, abstract_class=True):
             self.fps = FPS_Helper(str(self))
             self.fps.register_reporter(print_fps)
 
-        def update(n_frames, **kwargs):
+        def update(*args, **kwargs):
             nonlocal update_fn, artis_storage, self
             cur_state = {}
 
@@ -161,7 +161,7 @@ class View_MPL(View, abstract_class=True):
                 self.fps.count()
             else:
                 self.debug('Decided not to draw', cur_state.keys())
-                    
+
             return artis_storage['returns']
 
         return update
@@ -189,7 +189,7 @@ class View_QT(View, abstract_class=True):
             def update_blocking():
                 nonlocal update_fn, self
                 cur_state = {}
-                
+
                 try:
                     cur_state = self._draw_state.get_nowait()
                 except queue.Empty:
@@ -231,7 +231,7 @@ class View_Vispy(View, abstract_class=True):
         def update_blocking():
             nonlocal update_fn, self
             cur_state = {}
-            
+
             try:
                 cur_state = self._draw_state.get_nowait()
             except queue.Empty:
