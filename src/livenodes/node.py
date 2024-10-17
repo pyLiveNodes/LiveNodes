@@ -7,7 +7,6 @@ import traceback
 
 from .components.utils.perf import Time_Per_Call, Time_Between_Call
 from .components.port import Port
-from .components.utils.reportable import Reportable
 
 from .components.node_connector import Connectionist
 from .components.node_logger import Logger
