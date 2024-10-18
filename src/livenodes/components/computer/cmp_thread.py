@@ -152,7 +152,7 @@ class Processor_threads(Logger):
         while not self.close_lock.acquire(timeout=0):
             await asyncio.sleep(0.001)
         
-        # print('Closing running nodes')
+        # # print('Closing running nodes')
         # for node in self.nodes:
         #     node.close()
 

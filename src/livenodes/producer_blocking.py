@@ -49,7 +49,7 @@ class Producer_Blocking(Producer, abstract_class=True):
     
     async def _async_onstart(self):
         port_lookup = self.ports_out._asdict()
-        # print(port_lookup)
+        # # print(port_lookup)
         while not self.stop_event.is_set():
             try:
                 item, port_name, tick = await self.msgs.coro_get()

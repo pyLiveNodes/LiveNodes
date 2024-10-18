@@ -44,7 +44,7 @@ class Bridge_thread_aio(Bridge):
 
     # _from thread
     def put(self, ctr, item):
-        # print('putting value', ctr)
+        # # print('putting value', ctr)
         self.queue.put_nowait((ctr, item))
 
     # _to thread
@@ -70,7 +70,7 @@ class Bridge_thread_aio(Bridge):
 
     # _to thread
     async def update(self):
-        # print('waiting for asyncio to receive a value')
+        # # print('waiting for asyncio to receive a value')
         itm_ctr, item = await self.queue.coro_get()
         self._read[itm_ctr] = item
         self.queue.task_done()

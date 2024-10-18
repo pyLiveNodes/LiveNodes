@@ -101,7 +101,7 @@ class TestNodeOperations():
 
     def test_graph_compact_deserialization(self, create_connection):
         dct = create_connection.to_compact_dict(graph=True)
-        print(dct)
+        # print(dct)
         graph = Node.from_compact_dict(dct)
         assert str(graph) == "B [SimpleNode]"
         assert str(graph.input_connections[0]._emit_node) == "A [SimpleNode]"
