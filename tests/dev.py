@@ -113,11 +113,11 @@ if __name__ == "__main__":
     g.join_all()
     g.stop_all()
 
-    print(out1.get_state())
-    print(out2.get_state())
+    # print(out1.get_state())
+    # print(out2.get_state())
     # data, quadratic, out1, out2, g = None, None, None, None, None
     # time.sleep(1)
-    # print('Finished Test')
+    # # print('Finished Test')
 
 
     # Same name test
@@ -127,6 +127,6 @@ if __name__ == "__main__":
 
     # node_b.connect_inputs_to(node_a)
     # node_c.connect_inputs_to(node_a)
-    # print('Finished Test')
+    # # print('Finished Test')
 
     
