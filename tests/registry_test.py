@@ -33,7 +33,7 @@ if __name__ == "__main__":
     node_class = list(r.nodes.values())[0]
     module = importlib.import_module(node_class.__module__)
     r.reload(invalidate_caches=True)
-    print(node_class)
+    # print(node_class)
 
     # import sys
     # module_name = node_class.__module__

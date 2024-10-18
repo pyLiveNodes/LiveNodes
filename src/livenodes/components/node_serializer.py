@@ -124,7 +124,6 @@ class Serializer():
         dct = {}
         for node_str, cfg in items['Nodes'].items():
             dct[node_str] = {'settings': cfg, 'inputs': [], **Connectionist.str_to_dict(node_str)}
-            print(dct[node_str])
 
         for inp in items['Inputs']:
             con = Connection.deserialize_compact(inp)

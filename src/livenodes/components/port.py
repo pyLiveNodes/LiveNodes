@@ -110,7 +110,7 @@ class Port():
 
     @classmethod
     def can_input_to(emit_port_cls, recv_port_cls):
-        # print(list(map(cls.check_value, recv_port_cls.example_values)))
+        # # print(list(map(cls.check_value, recv_port_cls.example_values)))
         return emit_port_cls == recv_port_cls \
             or any([compatible for compatible, _ in recv_port_cls.accepts_inputs(emit_port_cls.example_values)])
             # we use any here in order to allow for dynamic converters, e.g. adding or removing axes from a package

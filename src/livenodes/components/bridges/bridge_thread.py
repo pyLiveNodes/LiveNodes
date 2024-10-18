@@ -65,7 +65,7 @@ class Bridge_thread(Bridge):
 
     # _to thread
     async def update(self):
-        # print('waiting for asyncio to receive a value')
+        # # print('waiting for asyncio to receive a value')
         got_item = False
         while not got_item:
             try:

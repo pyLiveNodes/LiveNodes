@@ -90,7 +90,7 @@ class Graph(Logger):
             cmp.start()
                 
     def is_finished(self):
-        # print([(str(cmp), cmp.is_finished()) for cmp in self.computers])
+        # # print([(str(cmp), cmp.is_finished()) for cmp in self.computers])
         return all([cmp.is_finished() for cmp in self.computers])
 
     def join_all(self, timeout=None):
