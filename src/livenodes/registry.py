@@ -115,4 +115,4 @@ if __name__ == "__main__":
     r.collect_installed()
     from livenodes.components.bridges import Bridge_local, Bridge_thread, Bridge_process
     r.bridges.register('Bridge_local', Bridge_local)
-    print(list(r.bridges.reg.keys()))
+    # print(list(r.bridges.reg.keys()))

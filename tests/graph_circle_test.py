@@ -197,5 +197,5 @@ if __name__ == "__main__":
     # breaker will emit: [1000, x, x, x, x] with x being the last value from summer
     # summer will emit [0 + 1000, 1 + 1000, 2 + 1001, 3 + 1003, 4 + 1006]
     state = saver.get_state()
-    print(state)
+    # print(state)
     assert state == [0 + 1000, 1 + 1000, 2 + 1001, 3 + 1003, 4 + 1006]

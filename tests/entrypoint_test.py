@@ -7,12 +7,12 @@ DEPRECATION_MODULES = []
 @pytest.fixture()
 def async_loop_provider():
     # based on this answer: https://stackoverflow.com/a/39401087
-    print("setup")
+    # print("setup")
     # required by ready, typically done by graph, but since that's not available here, we do it manually
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     yield loop
-    print("teardown")
+    # print("teardown")
     loop.close()
 
 class TestProcessing:
@@ -21,7 +21,7 @@ class TestProcessing:
         for x in entry_points(group='livenodes.nodes'):
             if x.name in DEPRECATION_MODULES:
                 continue
-            print(x)
+            # print(x)
             # implicit test if module is loadable
             node_class = x.load()
             # implicit test if class is instantiable with default values
@@ -34,7 +34,7 @@ class TestProcessing:
         for x in entry_points(group='livenodes.nodes'):
             if x.name in DEPRECATION_MODULES:
                 continue
-            print(x)
+            # print(x)
             # implicit test if module is loadable
             node_class = x.load()
             # implicit test if class is instantiable with default values
@@ -53,7 +53,7 @@ class TestProcessing:
                 # -> likely no processing will happen, but we do already check if the naming is consistent
                 # -> TODO: we could also check consistency within the __subclass__ hook in Node.py...
                 example_values = {key: val.example_values[0]}
-                print(example_values)
+                # print(example_values)
                 example_node._should_process(**example_values)
 
         # essentially: the types are not fully fledged out yet.. :/
@@ -65,7 +65,7 @@ class TestProcessing:
         for x in entry_points(group='livenodes.nodes'):
             if x.name in DEPRECATION_MODULES:
                 continue
-            print(x)
+            # print(x)
             # implicit test if module is loadable
             node_class = x.load()
             # implicit test if class is instantiable with default values
@@ -80,13 +80,13 @@ class TestProcessing:
             example_values = {}
             for key, val in example_node.ports_in._asdict().items():
                 example_values[key] = val.example_values[0]
-                print(example_values)
+                # print(example_values)
 
                 res = None
                 try:
                     if example_node._should_process(**example_values):
                         res = example_node.process(**example_values)
-                        print(res)
+                        # print(res)
                 except:
                     pass
 
