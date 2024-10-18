@@ -13,7 +13,7 @@ from livenodes_core_nodes.out_data import Out_data
 if __name__ == '__main__':
     os.chdir('./sl')
 
-    print('=== Construct Pipeline ====')
+    # print('=== Construct Pipeline ====')
     # channel_names_raw = ['EMG1', 'Gonio2', 'AccLow2']
     # # channel_names_fts = ['EMG1__calc_mean', 'Gonio2__calc_mean', 'AccLow2__calc_mean']
     # channel_names_fts = ['EMG1__rms', 'Gonio2__calc_mean', 'AccLow2__calc_mean']
@@ -54,7 +54,7 @@ if __name__ == '__main__':
     # # draw = Draw_lines(name='Raw Data', compute_on="")
     # draw.connect_inputs_to(pipeline)
 
-    print('=== Load Pipeline ====')
+    # print('=== Load Pipeline ====')
     # pipeline = Node.load('./pipelines/recognize.json')
     # pipeline = Node.load('./pipelines/preprocess.json')
     # pipeline = Node.load('./pipelines/train.json')
