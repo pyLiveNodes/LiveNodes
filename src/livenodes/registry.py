@@ -127,7 +127,7 @@ class Entrypoint_Register():
     def collect_installed(self):
         # load all findable packages
         self.installed_packages = EntryPointClassRegistry(self.entrypoints)
-        self.installed_packages.report_progress = partial(self.trigger_callback('Discovering Entrypoints'))
+        self.installed_packages.report_progress = partial(self.trigger_callback, 'Discovering Entrypoints')
         self.add_register(self.installed_packages)
 
     def add_register(self, register):
