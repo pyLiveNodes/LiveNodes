@@ -17,9 +17,8 @@ def get_registry():
         REGISTRY.bridges.register('Bridge_local', Bridge_local)
         REGISTRY.bridges.register('Bridge_thread', Bridge_thread)
         REGISTRY.bridges.register('Bridge_process', Bridge_process)
-        from .components.bridges import Bridge_thread_aio, Bridge_process_aio
-        REGISTRY.bridges.register('Bridge_thread_aio', Bridge_thread_aio)
-        REGISTRY.bridges.register('Bridge_process_aio', Bridge_process_aio)
+        from .components.bridges import Bridge_aioprocessing
+        REGISTRY.bridges.register('Bridge_aioprocessing', Bridge_aioprocessing)
 
         # --- now collect all installed packages
         REGISTRY.collect_installed()
