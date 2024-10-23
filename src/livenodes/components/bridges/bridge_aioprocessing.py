@@ -3,9 +3,6 @@ from livenodes.components.computer import parse_location
 
 from .bridge_abstract import Bridge
 
-### IMPORTANT: the aio bridges are faster (threads) or as fast (processes) as the above implementations. However, i don't know why the feeder queues are not closed afterwards leading to multiple undesired consequences (including a broken down application)
-# THUS => only re-enable these if you are willing to debug and test that!
-
 class Bridge_aioprocessing(Bridge):
     
     # _build thread
@@ -33,13 +30,21 @@ class Bridge_aioprocessing(Bridge):
         # can handle same process, and same thread, with cost 1 (shared mem would be faster, but otherwise this is quite good)
         from_host, from_process, from_thread = parse_location(_from)
         to_host, to_process, to_thread = parse_location(_to)
-        # return from_host == to_host and from_process == to_process, 2
-        return from_host == to_host, 2
+        # Only claim to be capable of thread bridges
+        return from_host == to_host and from_process == to_process, 2
+    
+        # ## IMPORTANT: the aio bridges are faster (threads) or as fast (processes) as the above implementations. However, i don't know why the feeder queues are not closed afterwards leading to multiple undesired consequences (including a broken down application)
+        # THUS => only re-enable these if you are willing to debug and test that!
+
+        # Technically we are also able of handling process bridges, but we are not going to claim that because of the warnign above
+        # return from_host == to_host, 2
 
 
     # _from thread
     def close(self):
+        self.info('Closing Bridge')
         self.closed_event.set()
+        self.queue.close()
         # self.queue = None
         # self.closed_event = None
 
@@ -66,9 +71,6 @@ class Bridge_aioprocessing(Bridge):
         await self.closed_event.coro_wait()
         await self.queue.coro_join()
         self.debug('Closed Event set and queue empty -- telling multiprocessing data storage')
-        self.queue.close()
-        # self.queue = None
-        # self.closed_event = None
 
     # _to thread
     async def update(self):

@@ -12,12 +12,11 @@ def get_registry():
     global REGISTRY
     if not REGISTRY.collected_installed:
         # --- first hook up the default briges
-        from .components.bridges import Bridge_local, Bridge_thread, Bridge_process
+        from .components.bridges import Bridge_local, Bridge_thread, Bridge_process, Bridge_aioprocessing
         logger.warning('registering default bridges')
         REGISTRY.bridges.register('Bridge_local', Bridge_local)
         REGISTRY.bridges.register('Bridge_thread', Bridge_thread)
         REGISTRY.bridges.register('Bridge_process', Bridge_process)
-        from .components.bridges import Bridge_aioprocessing
         REGISTRY.bridges.register('Bridge_aioprocessing', Bridge_aioprocessing)
 
         # --- now collect all installed packages
