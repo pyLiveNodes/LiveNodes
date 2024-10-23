@@ -65,6 +65,7 @@ class Bridge_thread_aio(Bridge):
         await self.closed_event.coro_wait()
         await self.queue.coro_join()
         self.debug('Closed Event set and queue empty -- telling multiprocessing data storage')
+        self.queue.close()
         # self.queue = None
         # self.closed_event = None
 
