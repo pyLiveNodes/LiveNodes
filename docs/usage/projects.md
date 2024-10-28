@@ -1,7 +1,7 @@
 # Projects
 
 === TODO===
-This belong in the Smart Studio documentation!
+This belong in the LN-Studio documentation!
 
 A project is a scope for multiple files and graphs/pipelines.
 A project is required to have the following subfolders:
