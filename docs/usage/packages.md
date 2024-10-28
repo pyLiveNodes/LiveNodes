@@ -2,7 +2,7 @@
 
 The LiveNode framework keeps a registry of known Nodes (and Bridges) so that serialization and deserialization can take place. Technically you may be able to run a graph without the following, but I would not recommend it.
 
-Most Notes are *automatically added to the registry* using the pip `livenodes.nodes` entrypoint, which is declared in the `pyproject.toml` file (see for example [core node package](https://gitlab.csl.uni-bremen.de/livenodes/packages/livenodes_core_nodes/-/blob/main/pyproject.toml)). Therefore, if you install any package, e.g. run `pip install livenodes_core_nodes` the nodes are directly available and will show up in Smart Studio.
+Most Notes are *automatically added to the registry* using the pip `livenodes.nodes` entrypoint, which is declared in the `pyproject.toml` file (see for example [core node package](https://gitlab.csl.uni-bremen.de/livenodes/packages/livenodes_core_nodes/-/blob/main/pyproject.toml)). Therefore, if you install any package, e.g. run `pip install livenodes_core_nodes` the nodes are directly available and will show up in LN-Studio.
 
 ## Local Nodes
 
@@ -10,7 +10,7 @@ If you need to prototype Nodes or just don't want to host a package you have two
 1. add the nodes directly to the registry on startup
 2. use `pip install -e ./localnodes` for a local package install
 
-Adding the nodes on startup of, for instance, Smart Studio can be achieved thusly (see [start.py](https://gitlab.csl.uni-bremen.de/livenodes/example-project/-/blob/main/start.py) in the example project):
+Adding the nodes on startup of, for instance, LN-Studio can be achieved thusly (see [start.py](https://gitlab.csl.uni-bremen.de/livenodes/example-project/-/blob/main/start.py) in the example project):
 
 ```
 from sample_projects.online.nodes.math_square import Math_Square
@@ -20,7 +20,7 @@ reg = get_registry()
 reg.nodes.register('math_square', Math_Square)
 
 if __name__ == "__main__":
-    from smart_studio.main_qt import main
+    from lns.main_qt import main
     main()
 ```
 
