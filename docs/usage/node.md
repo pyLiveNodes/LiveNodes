@@ -2,7 +2,7 @@
 
 <!-- Role  -->
 Nodes are the core unit of the livenodes framework. 
-At their core they receive zero or more inputs and produce zero or more outputs using their `process` method. The nodes are then connected via their input/output `ports` to create an acyclic directed computation graph which can be run in [python](./run.md) or [Smart Studio](https://livenodes.pages.csl.uni-bremen.de/smart-studio/index.html).
+At their core they receive zero or more inputs and produce zero or more outputs using their `process` method. The nodes are then connected via their input/output `ports` to create an acyclic directed computation graph which can be run in [python](./run.md) or [LN-Studio](https://livenodes.pages.csl.uni-bremen.de/LN-Studio/index.html).
 
 ## Node Structure
 
@@ -71,7 +71,7 @@ Important: Values for these ports will be passed as keyword arguments to your `p
     example_init = {'name': 'Subtract'}
 ```
 
-The meta information of category, description and example initial values are important for Smart Studio and Package managers to group or initialise your nodes. `Example init` will be used as suggestions and type inference for node instantiation values that have no defaults. More information: TODO.
+The meta information of category, description and example initial values are important for LN-Studio and Package managers to group or initialise your nodes. `Example init` will be used as suggestions and type inference for node instantiation values that have no defaults. More information: TODO.
 
 
 ```

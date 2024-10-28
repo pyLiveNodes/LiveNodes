@@ -69,6 +69,6 @@ default_context:
     travis_osx:                'no'
     version:                   '0.7.0'
     version_manager:           'bump2version'
-    website:                   'https://yale1.pages.csl.uni-bremen.de/smart-studio/'
+    website:                   'https://yale1.pages.csl.uni-bremen.de/LN-Studio/'
     year_from:                 '2022'
     year_to:                   '2022'
