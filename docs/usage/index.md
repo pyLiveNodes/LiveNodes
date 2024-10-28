@@ -1,6 +1,6 @@
 
 <!-- Quickstart
-    install and run smart studio
+    install and run LN-Studio
     quickstart.md
 
 Start
@@ -8,7 +8,7 @@ Start
     projects.md
     create new graphs including macros, and yaml
     create.md
-    run new graph, including smart studio and python 
+    run new graph, including LN-Studio and python 
     run.md
     short intro to multiprocessing and distributed computing
     multiprocessing.md

@@ -30,7 +30,7 @@ Yale Hartmann
     - [Create graphs in python, yaml, json or a visual editor](./advanced/serialization.md)
     - [Full Logging](./advanced/logger.md)
     - [TODO: Graph Macros/Recursion]()
-- Visual Ecosystem: [Smart-Studio](https://livenodes.pages.csl.uni-bremen.de/smart-studio/readme.html)
+- Visual Ecosystem: [LN-Studio](https://livenodes.pages.csl.uni-bremen.de/LN-Studio/readme.html)
     - Visualize everything (data, states, interaction)
     - Graphical Interaction
     - Create and edit graphs in a visual editor
@@ -76,7 +76,7 @@ The LiveNode Package itself is pureley python based and most node packages are t
 That being said, a node require a platform-specific library or dependency. Check the dependencies of the node packages you want to  install!
 
 Notable cases:
-- Smart-Studio requires PyQTAds, which does currently have no easy installable ARM version
+- LN-Studio requires PyQTAds, which does currently have no easy installable ARM version
 - BioKIT is mainly build for Ubuntu
 
 ## Citing and Mentioning
