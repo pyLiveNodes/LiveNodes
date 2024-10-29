@@ -3,10 +3,7 @@ from livenodes.components.computer import parse_location
 
 from .bridge_abstract import Bridge
 
-### IMPORTANT: the aio bridges are faster (threads) or as fast (processes) as the above implementations. However, i don't know why the feeder queues are not closed afterwards leading to multiple undesired consequences (including a broken down application)
-# THUS => only re-enable these if you are willing to debug and test that!
-
-class Bridge_thread_aio(Bridge):
+class Bridge_aioprocessing(Bridge):
     
     # _build thread
     # TODO: this is a serious design flaw: 
@@ -33,12 +30,31 @@ class Bridge_thread_aio(Bridge):
         # can handle same process, and same thread, with cost 1 (shared mem would be faster, but otherwise this is quite good)
         from_host, from_process, from_thread = parse_location(_from)
         to_host, to_process, to_thread = parse_location(_to)
-        return from_host == to_host and from_process == to_process, 2
+        # disable, as they don't actually seem to be better.
+        # process & thread
+        # ( python3 tests/dev.py; 1_000)  0.60s user 0.16s system 27% cpu 2.708 total
+        # ( python3 tests/dev.py; 2_000)  0.68s user 0.21s system 31% cpu 2.806 total
+        # # process & aio thread
+        # ( python3 tests/dev.py; 1_000)  0.61s user 0.22s system 29% cpu 2.849 total
+        # ( python3 tests/dev.py; 2_000)  0.77s user 0.30s system 35% cpu 2.977 total
+        return False, 10
+        # Only claim to be capable of thread bridges
+        # return from_host == to_host and from_process == to_process, 2
+    
+        # ## IMPORTANT: the aio bridges are faster (threads) or as fast (processes) as the above implementations. However, i don't know why the feeder queues are not closed afterwards leading to multiple undesired consequences (including a broken down application)
+        # THUS => only re-enable these if you are willing to debug and test that!
+
+        # Technically we are also able of handling process bridges, but we are not going to claim that because of the warnign above
+        # return from_host == to_host, 2
 
 
     # _from thread
     def close(self):
+        self.info('Closing Bridge')
+        if self.closed_event.is_set():
+            return
         self.closed_event.set()
+        self.queue.close()
         # self.queue = None
         # self.closed_event = None
 
@@ -65,8 +81,8 @@ class Bridge_thread_aio(Bridge):
         await self.closed_event.coro_wait()
         await self.queue.coro_join()
         self.debug('Closed Event set and queue empty -- telling multiprocessing data storage')
-        # self.queue = None
-        # self.closed_event = None
+        # this feels very hacky -yh
+        self.close()
 
     # _to thread
     async def update(self):

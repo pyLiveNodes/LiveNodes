@@ -160,6 +160,7 @@ class Node(Connectionist, Logger, Serializer):
         self._loop = asyncio.get_event_loop()
         self._finished = self._loop.create_future()
         if len(self.input_connections) > 0:
+            self.info('Registering _finished callback')
             self._bridges_closed = self._loop.create_task(self.data_storage.on_all_closed())
             self._bridges_closed.add_done_callback(self._finish)
         else:
@@ -191,6 +192,12 @@ class Node(Connectionist, Logger, Serializer):
         # cancel all remaining bridge listeners (we'll not receive any further data now anymore)
         for future in self.bridge_listeners:
             future.cancel()
+        self.bridge_listeners = [] # in case this gets called multiple times
+
+        # close bridges telling the following nodes they will not receive input from us anymore
+        for con in self.output_connections:
+            self.debug('Closing', str(con))
+            self.data_storage.close_bridges()
 
         self._onstop()
 
@@ -199,16 +206,11 @@ class Node(Connectionist, Logger, Serializer):
         self.info('Finishing')
         # task=none is needed for the done_callback but not used
 
-        # close bridges telling the following nodes they will not receive input from us anymore
-        for con in self.output_connections:
-            self.debug('Closing', str(con))
-            self.data_storage.close_bridges()
-
         # indicate to the node, that it now should finish wrapping up
         self.stop()
 
         # also indicate to parent, that we're finished
-        # the note may have been finished before thus, we need to check the future before setting a result
+        # the node may have been finished before thus, we need to check the future before setting a result
         # -> if it finished and now stop() is called
         if not self._finished.done():
             self._finished.set_result(True)
@@ -220,6 +222,10 @@ class Node(Connectionist, Logger, Serializer):
             try:
                 ctr = await queue.update()
                 self._process(ctr)
+            except asyncio.CancelledError:
+                break
+            except EOFError:
+                break
             except Exception as err:
                 self.logger.exception(f'failed to execute _process in queue update')
                 self.error(err)
