@@ -1,4 +1,4 @@
-name: CI Pipeline
+name: Format and Test
 run-name: ${{ github.actor }} - ${{ github.event_name }}
 on:
   push:

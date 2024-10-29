@@ -1,4 +1,4 @@
-name: CI Pipeline
+name: Publish
 run-name: ${{ github.actor }} - ${{ github.event_name }}
 on:
   push:
