@@ -1,10 +1,10 @@
 # Livenodes
 
-Livenodes is a pure python, node-based framework for online and offline digital signal processing (of biosignals) with and without graphical user interfaces and user interaction. 
+Livenodes is a pure python, node-based framework for online and offline digital signal processing (of biosignals) with and without graphical user interfaces and user interaction.
 
 You'll find a list with use cases, features and all the other good stuff below. It's awesome to have you here! Good Coding, Good Research and Good Luck in your Endeavours!
 
-Yale Hartmann  
+Yale Hartmann
 [Website](https://www.uni-bremen.de/en/csl/institute/team/staff/yale-hartmann)
 
 ## Use cases / Examples
@@ -49,29 +49,33 @@ Yale Hartmann
 - [Intel RealSense](https://livenodes.pages.csl.uni-bremen.de/packages/livenodes_realsense/) Connect to the Intel RealSense.
 - [TS Matplotlib](https://livenodes.pages.csl.uni-bremen.de/packages/livenodes_ts_matplotlib/) Plotting with Matplotlib, but using (Time, Channel) format.
 - [Simple TimeSeries](https://gitlab.csl.uni-bremen.de/livenodes/packages/livenodes_simple_timeseries) Utility package for (Time, Channel) format, rather than (Batch, Time, Channel)
-- [Vispy](https://gitlab.csl.uni-bremen.de/livenodes/packages/livenodes_vispy) Plotting using Vispy. Mostly demo, as the matplotlib packages are optimized and thus similarly fast. 
+- [Vispy](https://gitlab.csl.uni-bremen.de/livenodes/packages/livenodes_vispy) Plotting using Vispy. Mostly demo, as the matplotlib packages are optimized and thus similarly fast.
+
+## Where to start
+
+I recomend to checkout the example repository, which contains great examples ranging from very simple graphs for recording and online data annotation, how to use livendes for DSP in jupyter notebooks up to very complex online unsupervised segmentation used for online training and recognition of an HAR system.
+
+Examples Repository: https://gitlab.csl.uni-bremen.de/livenodes/example-project
 
 ## Documentation
-
-You've mostly found it!
 
 If you want to
 - create and run a graph, have a look at the [quickstart](./quickstart/index.md)
 - write your own nodes, you can find more information [here](./usage/node.md)
 - delve into the concepts of the core livenode system, I recommend you take a look at the [advanced concepts](./advanced/index.md).
-- run or see an example, use the link from [above](##use-cases). 
-- look at specific features, use the link from [above](##features). 
+- run or see an example, use the link from [above](##use-cases).
+- look at specific features, use the link from [above](##features).
 
 If you are seasoned with all the concepts, and need specific information, the [module reference](./modules/modules.rst) is for you.
 
 ## Similar Frameworks
 
-There are multiple node-based and python frameworks, but as far as I know none, that combines recording, processing, visualzing and interaction for biosignals in one combined package. Further frameworks are listed [here](./advanced/similar_framworks.md). 
+There are multiple node-based and python frameworks, but as far as I know none, that combines recording, processing, visualzing and interaction for biosignals in one combined package. Further frameworks are listed [here](./advanced/similar_framworks.md).
 
 
 ## Platform independence
 
-The LiveNode Package itself is pureley python based and most node packages are to, so they should run on all major platforms. I personally work on primarily Unix-based systems, so let me know if you encounter troubles anywhere.  
+The LiveNode Package itself is pureley python based and most node packages are to, so they should run on all major platforms. I personally work on primarily Unix-based systems, so let me know if you encounter troubles anywhere.
 
 That being said, a node require a platform-specific library or dependency. Check the dependencies of the node packages you want to  install!
 
@@ -142,7 +146,7 @@ Further information: [Contributing](./contributing/index.md)
     contributing/index.md
     authors.rst
     changelog.rst
-    
+
 ```
 
 
