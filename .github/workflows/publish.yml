@@ -6,37 +6,37 @@ on:
       - '*.*.*'
 
 jobs:
-  pages:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+  # pages:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.12
+  #     - name: Set up Python
+  #       uses: actions/setup-python@v5
+  #       with:
+  #         python-version: 3.12
 
-      - name: Cache tox environment
-        uses: actions/cache@v3
-        with:
-          path: .tox
-          key: ${{ runner.os }}-tox-${{ hashFiles('**/tox.ini') }}
+  #     - name: Cache tox environment
+  #       uses: actions/cache@v3
+  #       with:
+  #         path: .tox
+  #         key: ${{ runner.os }}-tox-${{ hashFiles('**/tox.ini') }}
 
-      - name: Install dependencies
-        run: pip install -r requirements_setup.txt
+  #     - name: Install dependencies
+  #       run: pip install -r requirements_setup.txt
 
-      - name: Build documentation
-        run: tox -e docs
+  #     - name: Build documentation
+  #       run: tox -e docs
 
-      - name: Move documentation to public
-        run: mv dist/docs/ public/
+  #     - name: Move documentation to public
+  #       run: mv dist/docs/ public/
 
-      - name: Upload documentation
-        uses: actions/upload-artifact@v4
-        with:
-          name: documentation
-          path: public
+  #     - name: Upload documentation
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: documentation
+  #         path: public
 
   build-package:
     runs-on: ubuntu-latest
@@ -53,7 +53,7 @@ jobs:
         run: pip install twine build
 
       - name: Build package
-        run: python3 -m build --wheel
+        run: python3 -m build
 
       - name: Upload package to PyPI
         run: python3 -m twine upload --repository pypi dist/*.{whl,tar.gz}
