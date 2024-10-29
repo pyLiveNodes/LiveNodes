@@ -99,6 +99,7 @@ class Processor_threads(Logger):
         futures = []
 
         for node, bridges in zip(self.nodes, bridges):
+            self.info(f'Node {node} readying')
             input_bridges, output_bridges = bridges['recv'], bridges['emit']
             futures.append(node.ready(input_endpoints=input_bridges, output_endpoints=output_bridges))
 
