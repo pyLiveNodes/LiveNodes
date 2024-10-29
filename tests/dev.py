@@ -117,7 +117,7 @@ if __name__ == "__main__":
     # print(out2.get_state())
     # data, quadratic, out1, out2, g = None, None, None, None, None
     # time.sleep(1)
-    # print('Finished Test')
+    # # print('Finished Test')
 
 
     # Same name test
@@ -127,7 +127,7 @@ if __name__ == "__main__":
 
     # node_b.connect_inputs_to(node_a)
     # node_c.connect_inputs_to(node_a)
-    # print('Finished Test')
+    # # print('Finished Test')
 
 
     # test_calc_mp

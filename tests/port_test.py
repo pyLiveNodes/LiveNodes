@@ -1,5 +1,7 @@
 from livenodes.components.port import Port, ALL_VALUES, Ports_collection
+from livenodes import Node
 import numpy as np
+import pytest 
 
 # === Special Case Any ========================================================
 class Port_Any(Port):
@@ -10,6 +12,17 @@ class Port_Any(Port):
     def check_value(cls, value):
         return True, None
     
+class Port_Str(Port):
+    example_values = ["Some example value", "another_one", np.array(['test'])[0]]
+
+    def __init__(self, name='Text', *args, **kwargs):
+        super().__init__(name, *args, **kwargs)
+
+    @classmethod
+    def check_value(cls, value):
+        if not isinstance(value, str):
+            return False, f"Should be string; got {type(value)}, val: {value}."
+        return True, None
 
 class Port_Int(Port):
     example_values = [
@@ -57,6 +70,10 @@ class Ports_any(Ports_collection):
     any: Port_Any = Port_Any("Any")
 
 class Ports_any2(Ports_collection):
+    any2: Port_Any = Port_Any("Any")
+
+from typing import NamedTuple
+class Ports_deprecated(NamedTuple):
     any2: Port_Any = Port_Any("Any")
 
 class TestPorts():
@@ -141,6 +158,55 @@ class TestPorts():
         assert a._asdict() == {'any': a.any}
         assert a._fields == ['any']
 
+    def test_raise_namedtuple_error(self):
+        class Quadratic(Node):
+            ports_in = Ports_deprecated()
+            ports_out = Ports_deprecated()
+
+            def process(self, alternate_data, **kwargs):
+                return self.ret(alternate_data=alternate_data**2)
+        with pytest.raises(Exception):
+            Quadratic()
+
+    def test_compound_with_example(self):
+        class Port_List_Str(Port_List):
+            example_values = []
+            compound_type = Port_Str
+
+        d = Port_List_Str("test")
+        assert len(d.example_values) > 0
+        assert all([d.check_value(x) for x in d.example_values])
+
+    def test_compound_without_example(self):
+        with pytest.raises(Exception):
+            class Port_List_Str_no_example(Port_List):
+                compound_type = Port_Str
+    
+    def test_attr_name(self):
+        class A(Port_List):
+            example_values = []
+            compound_type = Port_Str
+            label = 'test'
+        
+        a = A()
+        assert a.label == 'test'
+
+    def test_compound_example_construction(self):
+        class Port_List_Str(Port_List):
+            example_values = []
+            compound_type = Port_Str
+
+            @classmethod
+            def all_examples_compound_construction(cls):
+                res = []
+                for x in cls.compound_type.example_values:
+                    res.append([x])
+                    res.append(np.array([x]))
+                return list(filter(lambda x: cls.check_value(x)[0], res))
+
+        a = Port_List_Str()
+        assert a.example_values[-1] == np.array([a.compound_type.example_values[-1]])
+        assert a.example_values[-2] == [a.compound_type.example_values[-1]]
 
 if __name__ == "__main__":
     a = Port_List_Int("")

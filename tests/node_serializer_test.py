@@ -59,12 +59,20 @@ class TestNodeOperations():
         })
         assert len(d['inputs']) == 0
 
-    def test_node_copy(self, node_a):
+    def test_node_copy_standalone(self, node_a):
         # check copy
         node_a_copy = node_a.copy()
         assert node_a_copy is not None
         assert json.dumps(node_a.get_settings()) == json.dumps(
             node_a_copy.get_settings())
+    
+    def test_node_copy_graph(self, create_connection):
+        node_b = SimpleNode(name="A")
+        node_c = SimpleNode(name="B")
+        node_c.add_input(node_b, emit_port=node_b.ports_out.data, recv_port=node_c.ports_in.data)
+    
+        assert id(node_b.copy()) != id(node_b)
+        assert id(node_c.copy()) != id(node_c)
 
     def test_node_json(self, node_a):
         # check json format
@@ -93,7 +101,7 @@ class TestNodeOperations():
 
     def test_graph_compact_deserialization(self, create_connection):
         dct = create_connection.to_compact_dict(graph=True)
-        print(dct)
+        # print(dct)
         graph = Node.from_compact_dict(dct)
         assert str(graph) == "B [SimpleNode]"
         assert str(graph.input_connections[0]._emit_node) == "A [SimpleNode]"

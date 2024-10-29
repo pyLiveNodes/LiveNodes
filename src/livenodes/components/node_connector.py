@@ -35,6 +35,9 @@ class Connectionist(Logger):
 
         self.name = name
 
+        assert isinstance(self.ports_in, Ports_collection), 'NamedTuples are deprecated, please use Ports_collection instead'
+        assert isinstance(self.ports_out, Ports_collection), 'NamedTuples are deprecated, please use Ports_collection instead'
+
     #     self._set_port_keys()
 
     # def _set_port_keys(self):
@@ -78,25 +81,25 @@ class Connectionist(Logger):
     def get_port_in_by_key(self, key):
         # possible_ins = [x for x in self.ports_in._asdict().values() if x.key == key]
         # if len(possible_ins) == 0:
-        #     print(self.ports_in._asdict(), [x.key for x in self.ports_in._asdict().values()])
+        #     # print(self.ports_in._asdict(), [x.key for x in self.ports_in._asdict().values()])
         #     raise ValueError(f'No possible input ports for key: {key} in node: {str(self)}')
         # return possible_ins[0]
         try:
             return getattr(self.ports_in, key)
         except Exception as err:
-            print(self, key)
+            self.debug(self, key)
             raise err
 
     def get_port_out_by_key(self, key):
         # possible_outs = [x for x in self.ports_out._asdict().values() if x.key == key]
         # if len(possible_outs) == 0:
-        #     print(self.ports_out._asdict(), [x.key for x in self.ports_out._asdict().values()])
+        #     # print(self.ports_out._asdict(), [x.key for x in self.ports_out._asdict().values()])
         #     raise ValueError(f'No possible output ports for key: {key} in node: {str(self)}')
         # return possible_outs[0]
         try:
             return getattr(self.ports_out, key)
         except Exception as err:
-            print(self, key)
+            self.debug(self, key)
             raise err
 
     def get_port_in_by_label(self, label):
@@ -398,7 +401,7 @@ class Connectionist(Logger):
 
     def dot_graph_full(self, filename=None, file_type='png', **kwargs):
         if filename is None:
-            print('filename will be required in future versions')
+            self.warn('filename will be required in future versions')
             return Image.open(BytesIO(self.dot_graph(self.discover_graph(self), format=file_type, **kwargs).pipe()))
         else:
             self.dot_graph(self.discover_graph(self), **kwargs).render(filename=filename, format=file_type, cleanup=True)

@@ -29,10 +29,10 @@ class Multiprocessing_Data_Storage(Logger):
         emit_loc = connection._emit_node.compute_on
         recv_loc = connection._recv_node.compute_on
 
-        # print('----')
-        # print(connection)
-        # print('Bridging', emit_loc, recv_loc)
-        # print('Bridging', parse_location(emit_loc), parse_location(recv_loc))
+        # # print('----')
+        # # print(connection)
+        # # print('Bridging', emit_loc, recv_loc)
+        # # print('Bridging', parse_location(emit_loc), parse_location(recv_loc))
 
         possible_bridges_pair = []
         for bridge in get_registry().bridges.values():
@@ -84,7 +84,7 @@ class Multiprocessing_Data_Storage(Logger):
 
     # _from thread
     def put(self, output_channel, ctr, data):
-        # print('data storage putting value', connection._recv_port.key, type(self.bridges[connection._recv_port.key]))
+        # # print('data storage putting value', connection._recv_port.key, type(self.bridges[connection._recv_port.key]))
         # we are the emitting part :D
         # for b in self.out_bridges[connection._emit_port.key]:
         for b in self.out_bridges[output_channel]:

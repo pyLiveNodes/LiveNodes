@@ -7,7 +7,6 @@ import traceback
 
 from .components.utils.perf import Time_Per_Call, Time_Between_Call
 from .components.port import Port
-from .components.utils.reportable import Reportable
 
 from .components.node_connector import Connectionist
 from .components.node_logger import Logger
@@ -276,7 +275,7 @@ class Node(Connectionist, Logger, Serializer):
         # not sure how to handle that...
         # parent_caller = inspect.getouterframes( inspect.currentframe() )[1]
         # if not parent_caller.filename.startswith(INSTALL_LOC):
-        #     print('parent', parent_caller.filename)
+        #     # print('parent', parent_caller.filename)
         #     self.warn('_emit_data should only be called by nodes directly if they know what they ')
 
         if channel is None:
