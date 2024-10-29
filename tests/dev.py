@@ -129,4 +129,22 @@ if __name__ == "__main__":
     # node_c.connect_inputs_to(node_a)
     # # print('Finished Test')
 
+
+    # test_calc_mp
+    # data = Data(name="A", compute_on="1:1")
+    # quadratic = Quadratic(name="B", compute_on="2:1")
+    # out1 = Save(name="C", compute_on="3:1")
+    # out2 = Save(name="D", compute_on="1:1")
+
+    # out1.add_input(data, emit_port=data.ports_out.alternate_data, recv_port=out1.ports_in.alternate_data)
+    # quadratic.add_input(data, emit_port=data.ports_out.alternate_data, recv_port=quadratic.ports_in.alternate_data)
+    # out2.add_input(quadratic, emit_port=quadratic.ports_out.alternate_data, recv_port=out2.ports_in.alternate_data)
+    # g = Graph(start_node=data)
+    # g.start_all()
+    # g.join_all()
+    # g.stop_all()
+
+    # assert out1.get_state() == list(range(10))
+    # assert out2.get_state() == list(map(lambda x: x**2, range(10)))
+    # assert g.is_finished()
     

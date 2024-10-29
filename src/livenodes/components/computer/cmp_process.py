@@ -9,6 +9,13 @@ from livenodes.components.node_logger import Logger
 
 from .cmp_thread import Processor_threads
 
+# import platform
+# if platform.system() == 'Darwin':
+#         mp.set_start_method(
+#             'fork',
+#             force=True)
+mp.set_start_method('spawn', force=True)
+
 
 class Processor_process(Logger):
     def __init__(self, nodes, location, bridges, stop_timeout_threads=0.1, close_timeout_threads=0.1) -> None:
@@ -35,10 +42,6 @@ class Processor_process(Logger):
         self.stop_lock.acquire()
         self.close_lock.acquire()
 
-        # -- worker process
-        self.stop_timeout_threads = stop_timeout_threads
-        self.close_timeout_threads = close_timeout_threads
-
         self.info(f'Creating Process Computer with {len(self.nodes)} nodes.')
 
 
@@ -58,12 +61,15 @@ class Processor_process(Logger):
         self.worker_log_handler.start()
 
         self.subprocess = mp.Process(
-                        target=self.start_subprocess,
-                        args=(self.bridges, parent_log_queue, logger_name,), name=str(self))
+            target=start_subprocess,
+            args=(self.nodes, self.bridges, 
+                self.ready_event, self.start_lock, self.stop_lock, self.close_lock,
+                parent_log_queue, logger_name,
+                self.stop_timeout_threads, self.close_timeout_threads), name=str(self))
         self.subprocess.start()
         
         self.info('Waiting for worker to be ready')
-        self.ready_event.wait(timeout=10)
+        self.ready_event.wait(timeout=0.1)
         self.info('Worker ready, resuming')
 
     # parent process
@@ -83,7 +89,7 @@ class Processor_process(Logger):
         self.subprocess.join(timeout)
 
     # parent process
-    def stop(self, timeout=0.3):
+    def stop(self, timeout=0.1):
         """ used if the processing is nown to be endless"""
 
         self.info('Stopping')
@@ -92,7 +98,7 @@ class Processor_process(Logger):
         self.info('Returning; Process finished: ', not self.subprocess.is_alive())
 
     # parent process
-    def close(self, timeout=0.5):
+    def close(self, timeout=0.1):
         self.info('Closing')
         self.close_lock.release()
         self.subprocess.join(timeout)
@@ -107,64 +113,92 @@ class Processor_process(Logger):
     def is_finished(self):
         return self.subprocess is not None and not self.subprocess.is_alive()
         
+
     # worker process
-    def check_threads_finished(self, computers):
+    @staticmethod
+    def check_threads_finished(computers):
         return all([cmp.is_finished() for cmp in computers])
 
-    # worker process
-    def start_subprocess(self, bridges, subprocess_log_queue, logger_name):
-        logger = logging.getLogger(logger_name)
-        logger.addHandler(QueueHandler(subprocess_log_queue))
+def start_subprocess(nodes, bridges, ready_event, start_lock, stop_lock, close_lock, subprocess_log_queue, logger_name, stop_timeout_threads, close_timeout_threads):
+    worker = Worker_Process(
+        nodes=nodes,
+        bridges=bridges,
+        ready_event=ready_event,
+        start_lock=start_lock,
+        stop_lock=stop_lock,
+        close_lock=close_lock,
+        subprocess_log_queue=subprocess_log_queue,
+        logger_name=logger_name,
+        stop_timeout_threads=stop_timeout_threads,
+        close_timeout_threads=close_timeout_threads
+    )
+    worker.start()
 
-        self.info('Starting Process')
+class Worker_Process(Logger):
+    def __init__(self, nodes, bridges, ready_event, start_lock, stop_lock, close_lock, subprocess_log_queue, logger_name, stop_timeout_threads, close_timeout_threads):
+        super().__init__()
+        self.nodes = nodes
+        self.bridges = bridges
+        self.ready_event = ready_event
+        self.start_lock = start_lock
+        self.stop_lock = stop_lock
+        self.close_lock = close_lock
+        self.subprocess_log_queue = subprocess_log_queue
+        self.logger_name = logger_name
+        self.stop_timeout_threads = stop_timeout_threads
+        self.close_timeout_threads = close_timeout_threads
+        self.computers = []
 
-        computers = []
-        # TODO: it's a little weird, that bridges are specifically passed, but nodes are not, we should investigate that
-        # ie, probably this is fine, as we specifcially need the bridge endpoints, but the nodes may just be pickled, but looking into this never hurts....
-        bridge_lookup = {str(node): bridge for node, bridge in zip(self.nodes, bridges)}
+    def start(self):
+        logger = logging.getLogger(self.logger_name)
+        logger.addHandler(QueueHandler(self.subprocess_log_queue))
 
+        logger.info('Starting Process')
+
+        bridge_lookup = {str(node): bridge for node, bridge in zip(self.nodes, self.bridges)}
         locations = groupby(sorted(self.nodes, key=lambda n: n.compute_on), key=lambda n: n.compute_on)
+        
         for loc, loc_nodes in locations:
             loc_nodes = list(loc_nodes)
-            self.info(f'Resolving computer group. Location: {loc}; Nodes: {len(loc_nodes)}')
+            logger.info(f'Resolving computer group. Location: {loc}; Nodes: {len(loc_nodes)}')
             node_specific_bridges = [bridge_lookup[str(n)] for n in loc_nodes]
             cmp = Processor_threads(nodes=loc_nodes, location=loc, bridges=node_specific_bridges)
-            computers.append(cmp)
+            self.computers.append(cmp)
         
-        self.info('Created computers:', list(map(str, computers)))
-        self.info('Setting up computers')
-        for cmp in computers:
+        logger.info('Created computers:', list(map(str, self.computers)))
+        logger.info('Setting up computers')
+        
+        for cmp in self.computers:
             cmp.setup()
 
-        self.info('All Computers ready')
+        logger.info('All Computers ready')
         self.ready_event.set()
 
-        
         self.start_lock.acquire()
-        self.info('Starting Computers')
-        for cmp in computers:
-            # this is non-blocking -> this process will lock until the stop_lock can be aquired
-            # inside of this process all sub-threads will run until stop is called
+        logger.info('Starting Computers')
+        
+        for cmp in self.computers:
             cmp.start()
 
+        self.monitor_computers(logger)
 
+    def monitor_computers(self, logger):
         all_computers_finished = False
+        
         while not self.stop_lock.acquire(timeout=0.1) and not all_computers_finished:
-            all_computers_finished = all([cmp.is_finished() for cmp in computers])
+            all_computers_finished = all([cmp.is_finished() for cmp in self.computers])
         
         if all_computers_finished:
-            self.info('All Computers have finished, returning')
+            logger.info('All Computers have finished, returning')
         else:
-            self.info('Stopping Computers')
-            for cmp in computers:
-                # the cmps are all returning after the timeout, as they all are Processor_Threads
-                # -> therefore, this cannot block indefinetly and we can soon wait on the close_lock
+            logger.info('Stopping Computers')
+            for cmp in self.computers:
                 cmp.stop(timeout=self.stop_timeout_threads)
 
             # if not all_computers_finished:
             self.close_lock.acquire()
-            self.info('Closing Computers')
-            for cmp in computers:
+            logger.info('Closing Computers')
+            for cmp in self.computers:
                 cmp.close(timeout=self.close_timeout_threads)
 
-        self.info('Finished Process and returning')
+        logger.info('Finished Process and returning')
