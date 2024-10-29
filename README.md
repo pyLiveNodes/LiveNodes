@@ -11,7 +11,7 @@ Yale
 
 ## Citation
 
-If you use LN-Studio in your research, please cite it as follows:
+If you use Livenodes and/or LN-Studio in your research, please cite it as follows:
 
 As of 2024 there is no dedicated paper to LiveNodes yet. I'm working on it. But for now, please cite the following paper:
 ```
