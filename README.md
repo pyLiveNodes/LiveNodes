@@ -29,6 +29,10 @@ As of 2024 there is no dedicated paper to LiveNodes yet. I'm working on it. But 
 
 # Installation
 
+```
+pip install Livenodes
+```
+
 
 # Performance 
 To disable assertion checks for types etc use
