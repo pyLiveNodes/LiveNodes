@@ -51,6 +51,8 @@ class Bridge_aioprocessing(Bridge):
     # _from thread
     def close(self):
         self.info('Closing Bridge')
+        if self.closed_event.is_set():
+            return
         self.closed_event.set()
         self.queue.close()
         # self.queue = None

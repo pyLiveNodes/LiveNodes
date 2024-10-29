@@ -198,7 +198,6 @@ class Node(Connectionist, Logger, Serializer):
         for con in self.output_connections:
             self.debug('Closing', str(con))
             self.data_storage.close_bridges()
-        self.output_connections = [] # in case this gets called multiple times
 
         self._onstop()
 
