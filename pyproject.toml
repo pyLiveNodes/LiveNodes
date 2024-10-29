@@ -19,6 +19,8 @@ dependencies = [
     "pandas", # as networkx does not install this by itself anymore
     "scipy" # as networkx does not install this by itself anymore
 ]
+readme = "README.md"
+license = {file = "LICENSE"}
 
 [project.optional-dependencies]
 dev = [
