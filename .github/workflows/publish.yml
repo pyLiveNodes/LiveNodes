@@ -40,6 +40,11 @@ jobs:
 
   build-package:
     runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/Livenodes
+    permissions:
+      id-token: write 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -55,5 +60,5 @@ jobs:
       - name: Build package
         run: python3 -m build
 
-      - name: Upload package to PyPI
-        run: python3 -m twine upload --repository pypi dist/*.{whl,tar.gz}
+      - name: Publish dists to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
