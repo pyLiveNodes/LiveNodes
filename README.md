@@ -1,3 +1,7 @@
+[![Format and Test](https://github.com/pyLiveNodes/LiveNodes/actions/workflows/format_test.yml/badge.svg)](https://github.com/pyLiveNodes/LiveNodes/actions/workflows/format_test.yml)
+[![Publish](https://github.com/pyLiveNodes/LiveNodes/actions/workflows/publish.yml/badge.svg)](https://github.com/pyLiveNodes/LiveNodes/actions/workflows/publish.yml)
+
+
 # Livenodes
 
 Livenodes are small units of computation for digital signal processing in python. They are connected multiple synced channels to create complex graphs for real-time applications. Each node may provide a GUI or Graph for live interaction and visualization.
