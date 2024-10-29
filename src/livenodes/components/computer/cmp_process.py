@@ -115,6 +115,8 @@ class Processor_process(Logger):
     def start_subprocess(self, bridges, subprocess_log_queue, logger_name):
         logger = logging.getLogger(logger_name)
         logger.addHandler(QueueHandler(subprocess_log_queue))
+        logger.propagate = False # this fixes duplicate log entries. I'm not fully sure why, but i'm assuming that in case of forking the logger propagates to the parent logger and thus the log is duplicated
+        # however, we should double check once we moved to spawn everywhere, bc this whole drain queue migh not be necessary after all...
 
         self.info('Starting Process')
 

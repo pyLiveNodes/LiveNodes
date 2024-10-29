@@ -2,52 +2,28 @@ import numpy as np
 import multiprocessing as mp
 
 import logging
-logging.basicConfig(level=logging.DEBUG)
 
 from livenodes import Node, Producer, Graph, get_registry, Port, Ports_collection
 
-registry = get_registry()
+from livenodes.components.port import Port
 
-class Port_Data(Port):
+class Port_Ints(Port):
 
-    example_values = [np.array([[[1]]])]
-
-    @classmethod
-    def check_value(cls, value):
-        if not isinstance(value, np.ndarray):
-            return False, "Should be numpy array;"
-        elif len(value.shape) != 3:
-            return False, "Shape should be of length three (Batch, Time, Channel)"
-        return True, None
-
-
-class Ports_simple(Ports_collection):
-    data: Port_Data = Port_Data("Data")
-
-@registry.nodes.decorator
-class SimpleNode(Node):
-    ports_in = Ports_simple()
-    ports_out = Ports_simple()
-
-
-class Port_Data(Port):
-
-    example_values = [np.array([[[1]]])]
+    example_values = [
+        0, 1, 20, -15
+    ]
 
     @classmethod
     def check_value(cls, value):
-        if not isinstance(value, np.ndarray):
-            return False, "Should be numpy array;"
-        elif len(value.shape) != 3:
-            return False, "Shape should be of length three (Batch, Time, Channel)"
+        if type(value) != int:
+            return False, f"Should be int; got: {type(value)}."
         return True, None
-
 
 class Ports_none(Ports_collection): 
     pass
 
 class Ports_simple(Ports_collection):
-    alternate_data: Port_Data = Port_Data("Alternate Data")
+    alternate_data: Port_Ints = Port_Ints("Alternate Data")
 
 class Data(Producer):
     ports_in = Ports_none()
@@ -60,16 +36,12 @@ class Data(Producer):
             self.info(ctr)
             yield self.ret(alternate_data=ctr)
 
-
-
 class Quadratic(Node):
     ports_in = Ports_simple()
     ports_out = Ports_simple()
 
     def process(self, alternate_data, **kwargs):
         return self.ret(alternate_data=alternate_data**2)
-
-
 
 class Save(Node):
     ports_in = Ports_simple()
@@ -80,7 +52,7 @@ class Save(Node):
         self.out = mp.SimpleQueue()
 
     def process(self, alternate_data, **kwargs):
-        self.error('re data', alternate_data)
+        self.debug('re data', alternate_data)
         self.out.put(alternate_data)
 
     def get_state(self):
@@ -91,13 +63,15 @@ class Save(Node):
 
 
 if __name__ == "__main__":
+    logging.basicConfig(format='%(name)s | %(levelname)s | %(message)s', level=logging.DEBUG)
+
     # Processing test
     mixed = True
     if mixed:
-        data = Data(name="A", compute_on="1:2")
-        quadratic = Quadratic(name="B", compute_on="2:1")
-        out1 = Save(name="C", compute_on="1:1")
-        out2 = Save(name="D", compute_on="1")
+        data = Data(name="A", compute_on="1")
+        quadratic = Quadratic(name="B", compute_on="1:1")
+        out1 = Save(name="C", compute_on="")
+        out2 = Save(name="D", compute_on="")
     else:
         data = Data(name="A", compute_on="1")
         quadratic = Quadratic(name="B", compute_on="1")
@@ -112,6 +86,7 @@ if __name__ == "__main__":
     g.start_all()
     g.join_all()
     g.stop_all()
+    print('finished graph')
 
     # print(out1.get_state())
     # print(out2.get_state())
