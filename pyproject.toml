@@ -5,6 +5,8 @@ description = "LiveNodes: node based live streaming sensor/data and visualizatio
 authors = [
     { name = "Yale Hartmann", email = "yale.hartmann@uni-bremen.de" }
 ]
+readme = "README.md"
+license = {file = "LICENSE"}
 dependencies = [
     "numpy>=1.22.1",
     "matplotlib>=3.5.1",
@@ -19,8 +21,7 @@ dependencies = [
     "pandas", # as networkx does not install this by itself anymore
     "scipy" # as networkx does not install this by itself anymore
 ]
-readme = "README.md"
-license = {file = "LICENSE"}
+
 
 [project.optional-dependencies]
 dev = [

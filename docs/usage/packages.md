@@ -34,11 +34,11 @@ Local nodes can be installed using a barbones `pyproject.toml` and a subsequent 
 
 Here is a non-exhaustive list of currently existing packages. All of these packages are build automatically and can be installed via pip using the [gitlab package registry](https://gitlab.csl.uni-bremen.de/groups/livenodes/-/packages).
 
-New install:`pip install livenodes_core_nodes --extra-index-url https://package_puller:8qYs4hBAsmAHJ5AdS_y9@gitlab.csl.uni-bremen.de/api/v4/groups/368/-/packages/pypi/simple`
+New install:`pip install livenodes_core_nodes `
 
 Inside of a requirements.txt file:
 ```
---extra-index-url https://package_puller:8qYs4hBAsmAHJ5AdS_y9@gitlab.csl.uni-bremen.de/api/v4/groups/368/-/packages/pypi/simple
+
 livenodes~=0.9
 livenodes_core_nodes~=0.9.4
 livenodes_ease_tsd~=0.9.4
