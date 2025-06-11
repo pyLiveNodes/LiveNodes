@@ -301,7 +301,7 @@ class Node(Connectionist, Logger, Serializer):
             val_ok, msg = self.get_port_out_by_key(channel).check_value(data)
             assert val_ok, f"Error: {msg}; On channel: {str(self)}.{channel}"
 
-        self.debug('Emitting', channel, clock, ctr)
+        self.debug(f'Emitting data of {type(data)} over {channel} at clock: {clock} / ctr: {ctr}')
         self.data_storage.put(channel, clock, data)
 
 
@@ -325,7 +325,7 @@ class Node(Connectionist, Logger, Serializer):
         # check if all required data to proceed is available and then call process
         # then cleanup aggregated data and advance our own clock
         if self._should_process(**_current_data):
-            self.debug('Decided to process', ctr, _current_data.keys())
+            self.debug('[Processed]', ctr, _current_data.keys())
             self._ctr = ctr
             emit_data = self._call_user_fn_process(self.process, 'process', **_current_data, _ctr=ctr)
             if emit_data is not None:
@@ -338,7 +338,7 @@ class Node(Connectionist, Logger, Serializer):
             self._report(node = self) # for latency and calc reasons
             self.data_storage.discard_before(ctr)
         else:
-            self.debug('Decided not to process', ctr, _current_data.keys())
+            self.debug('[Skipped]', ctr, _current_data.keys())
         self.debug('_Process finished')
 
     # === Performance Stuff =================
