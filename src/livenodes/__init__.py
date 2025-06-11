@@ -20,7 +20,9 @@ def get_registry():
         REGISTRY.bridges.register('Bridge_aioprocessing', Bridge_aioprocessing)
 
         # --- now collect all installed packages
+        logger.warning('collecting installed nodes')
         REGISTRY.collect_installed()
+        logger.warning('All collected')
 
     return REGISTRY
 

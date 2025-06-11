@@ -123,11 +123,18 @@ class Entrypoint_Register():
         self.reg = ClassRegistry()
         self.entrypoints = entrypoints
         self.callbacks = []
-        
+
     def collect_installed(self):
         # load all findable packages
         self.installed_packages = EntryPointClassRegistry(self.entrypoints)
         self.installed_packages.report_progress = partial(self.trigger_callback, 'Discovering Entrypoints')
+
+        # trigger importlib to cache all of the file systems metadata
+        self.trigger_callback('Reading Metadata', None, None, None)
+        l = list(entry_points(group=self.entrypoints))
+        if len(l) > 0: l[0].load()
+        
+        # wrap the installed packages in a ClassRegistry
         self.add_register(self.installed_packages)
 
     def add_register(self, register):
