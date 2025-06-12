@@ -1,27 +1,44 @@
-import multiprocessing as mp
-import queue
 import time
+import pickle
+from multiprocessing import shared_memory, Lock
 
 from .node import Node
 from .components.utils.reportable import Reportable
 
+import os
+SHM_SIZE = int(os.getenv('SHM_SIZE', 1_048_576))  # Default to 1MB if not set
 
 class View(Node, abstract_class=True):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # TODO: consider if/how to disable the visualization of a node?
-        # self.display = display
-
-        # TODO: evaluate if one or two is better as maxsize (the difference should be barely noticable, but not entirely sure)
-        # -> one: most up to date, but might just miss each other? probably only applicable if sensor sampling rate is vastly different from render fps?
-        # -> two: always one frame behind, but might not jump then
-        self._draw_state = mp.Queue(maxsize=2)
+        # allocate a SharedMemory buffer to store only the latest pickled state
+        self._shm_size = SHM_SIZE
+        self._shm = shared_memory.SharedMemory(create=True, size=self._shm_size)
+        self._shm_lock = Lock()
+        # reserve first 8 bytes for payload length (little-endian)
+        self._shm.buf[0] = 1
+        self._shm.buf[1:9] = (0).to_bytes(8, 'little')
 
     def register_reporter(self, reporter_fn):
         if hasattr(self, 'fps'):
             self.fps.register_reporter(reporter_fn)
         return super().register_reporter(reporter_fn)
+    
+    def get_current_state(self):
+        """
+        Returns the current state of the view, which is the latest data emitted to the draw process
+        """
+        with self._shm_lock:
+            # if already-read flag is set, no new data
+            # read payload length from bytes 1..9
+            length = int.from_bytes(self._shm.buf[1:9], 'little')
+            if self._shm.buf[0] == 0 and length > 0:
+                raw = bytes(self._shm.buf[9:9 + length])
+                current_state = pickle.loads(raw)
+                self._shm.buf[0] = 1
+                return current_state
+        return {}
 
     def init_draw(self, *args, **kwargs):
         """
@@ -31,38 +48,25 @@ class View(Node, abstract_class=True):
         update_fn = self._init_draw(*args, **kwargs)
 
         def update():
-            nonlocal update_fn
-            cur_state = {}
-            res = None
-
-            try:
-                cur_state = self._draw_state.get_nowait()
-            except queue.Empty:
-                pass
-            # always execute the update, even if no new data is added, as a view might want to update not based on the self emited data
-            # this happens for instance if the view wants to update based on user interaction (and not data)
+            cur_state = self.get_current_state()
+            # decide if we should draw
             if self._should_draw(**cur_state):
-                self.debug('Decided to draw', cur_state.keys())
+                self.debug('[Draw]', cur_state.keys())
                 res = update_fn(**cur_state)
                 self.fps.count()
                 return res
             else:
-                self.debug('Decided not to draw', cur_state.keys())
-            return res
+                self.debug('[Skipped Draw]', cur_state.keys())
+                return None
 
         return update
 
     def stop_node(self, **kwargs):
-        # we need to clear the draw state, as otherwise the feederqueue never returns and the whole script never returns
-        if self._draw_state is not None:
-            while not self._draw_state.empty():
-                self._draw_state.get()
-
-            # should throw an error if anyone tries to insert anything into the queue after we emptied it
-            # also should allow the queue to be garbage collected
-            # seems not be important though...
-            self._draw_state.close()
-            self._draw_state = None
+        # clean up shared memory used for draw state
+        if hasattr(self, '_shm') and self._shm is not None:
+            self._shm.close()
+            self._shm.unlink()
+            self._shm = None
 
         # sets _running to false
         super().stop(**kwargs)
@@ -87,12 +91,17 @@ class View(Node, abstract_class=True):
         Emits data to draw process, ie draw_inits update fn
         """
         self.debug('Storing for draw:', kwargs.keys())
-        try:
-            self._draw_state.put_nowait(kwargs)
-        except queue.Full:
-            self.debug('Could not render data, view not ready.')
-
-
+        # pickle and write into shared memory
+        payload = pickle.dumps(kwargs)
+        length = len(payload)
+        # account for 1 flag byte + 8 length bytes
+        if length + 9 > self._shm_size:
+            raise RuntimeError(f"Draw state payload too large ({length} bytes)")
+        with self._shm_lock:
+            # clear read-flag, then write new length+payload
+            self._shm.buf[0] = 0
+            self._shm.buf[1:9] = length.to_bytes(8, 'little')
+            self._shm.buf[9:9 + length] = payload
 
 class FPS_Helper(Reportable):
     def __init__(self, name, report_every_x_seconds=5, **kwargs):
@@ -149,18 +158,15 @@ class View_MPL(View, abstract_class=True):
             nonlocal update_fn, artis_storage, self
             cur_state = {}
 
-            try:
-                cur_state = self._draw_state.get_nowait()
-            except queue.Empty:
-                pass
+            cur_state = self.get_current_state()
             # always execute the update, even if no new data is added, as a view might want to update not based on the self emited data
             # this happens for instance if the view wants to update based on user interaction (and not data)
             if self._should_draw(**cur_state):
-                self.debug('Decided to draw', cur_state.keys())
+                self.debug('[Draw]', cur_state.keys())
                 artis_storage['returns'] = update_fn(**cur_state)
                 self.fps.count()
             else:
-                self.debug('Decided not to draw', cur_state.keys())
+                self.debug('[Skipped Draw]', cur_state.keys())
 
             return artis_storage['returns']
 
@@ -188,21 +194,16 @@ class View_QT(View, abstract_class=True):
             # TODO: figure out more elegant way to not have this blocking until new data is available...
             def update_blocking():
                 nonlocal update_fn, self
-                cur_state = {}
-
-                try:
-                    cur_state = self._draw_state.get_nowait()
-                except queue.Empty:
-                    pass
+                cur_state = self.get_current_state()
                 # always execute the update, even if no new data is added, as a view might want to update not based on the self emited data
                 # this happens for instance if the view wants to update based on user interaction (and not data)
                 if self._should_draw(**cur_state):
-                    self.debug('Decided to draw', cur_state.keys())
+                    self.debug('[Draw]', cur_state.keys())
                     update_fn(**cur_state)
                     self.fps.count()
                     return True
                 else:
-                    self.debug('Decided not to draw', cur_state.keys())
+                    self.debug('[Skipped Draw]', cur_state.keys())
                 return False
 
             return update_blocking
@@ -230,21 +231,16 @@ class View_Vispy(View, abstract_class=True):
         # TODO: figure out more elegant way to not have this blocking until new data is available...
         def update_blocking():
             nonlocal update_fn, self
-            cur_state = {}
-
-            try:
-                cur_state = self._draw_state.get_nowait()
-            except queue.Empty:
-                pass
+            cur_state = self.get_current_state()
             # always execute the update, even if no new data is added, as a view might want to update not based on the self emited data
             # this happens for instance if the view wants to update based on user interaction (and not data)
             if self._should_draw(**cur_state):
-                self.debug('Decided to draw', cur_state.keys())
+                self.debug('[Draw]', cur_state.keys())
                 update_fn(**cur_state)
                 self.fps.count()
                 return True
             else:
-                self.debug('Decided not to draw', cur_state.keys())
+                self.debug('[Skipped Draw]', cur_state.keys())
             return False
 
         return update_blocking
