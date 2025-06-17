@@ -61,7 +61,7 @@ class View(Node, abstract_class=True):
 
         return update
 
-    def stop_node(self, **kwargs):
+    def _onstop(self, **kwargs):
         # clean up shared memory used for draw state
         if hasattr(self, '_shm') and self._shm is not None:
             self._shm.close()
@@ -69,7 +69,7 @@ class View(Node, abstract_class=True):
             self._shm = None
 
         # sets _running to false
-        super().stop(**kwargs)
+        super()._onstop(**kwargs)
 
     def _init_draw(self):
         """
