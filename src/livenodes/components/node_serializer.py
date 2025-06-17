@@ -155,15 +155,18 @@ class Serializer():
 
     @classmethod
     def load(cls, path, **kwargs):
+        logger_ln.info(f'Loading from {path}')
         if path.endswith('.json'):
             logger_ln.warning('Loading from json is deprecated, please use yaml instead')
             with open(path, 'r') as f:
                 json_str = json.load(f)
+            logger_ln.info(f'Loaded json from {path}')
             return cls.from_dict(json_str, **kwargs)
 
         elif path.endswith('.yml'):
             with open(path, 'r') as f:
                 yaml_dict = yaml.load(f, Loader=yaml.Loader)
+            logger_ln.info(f'Loaded yaml from {path}')
             return cls.from_compact_dict(yaml_dict, **kwargs)
 
         else:

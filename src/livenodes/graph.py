@@ -1,10 +1,7 @@
 from collections import defaultdict
-from itertools import groupby
 from .node import Node
-from .components.computer import parse_location, Processor_process, create_group_of_thread_comps
+from .components.computer import parse_location, Processor_process
 from .components.node_logger import Logger
-import threading
-import time
 
 class Graph(Logger):
 
@@ -67,8 +64,7 @@ class Graph(Logger):
         self.info('Resolving computers')
         self.computers = Processor_process.group_factory(
             items=zip(processes, threads, self.nodes),
-            bridges=bridges,
-            logger_fn=self.info
+            bridges=bridges
         )
 
         self.info('Created computers:', list(map(str, self.computers)))
@@ -102,30 +98,19 @@ class Graph(Logger):
 
         self.computers = []
 
-    def run_as_script(self, timeout=None):
+    def run_in_script(self, timeout=None):
         # TODO: rething this what is the api we actually can call here. ie sine local has a different api than thread and process i'm not sure if this works anymore...
         """Run the graph as a script, blocking until all nodes are finished."""
-
-        def _runner():
-            try:
-                self.start_all()
-                if timeout is not None:
-                    self.join_all(timeout=timeout)
-                else:
-                    while not self.is_finished():
-                        time.sleep(0.1)
-            finally:
-                # ensure we always clean up
-                self.stop_all()
-
-        thread = threading.Thread(target=_runner, daemon=True)
-        thread.start()
-
         try:
-            # keep main alive until thread finishes or Ctrl+C
-            while thread.is_alive():
-                thread.join(timeout=0.5)
+            self.info('Starting Graph')
+            self.start_all()
+            self.info('Graph started, waiting for completion')
+            self.join_all(timeout=timeout)
         except KeyboardInterrupt:
             self.info("KeyboardInterrupt received: stopping graph")
+        except Exception as e:
+            self.error(f"An error occurred: {e}")
+            raise
+        finally:
             self.stop_all()
-            thread.join()
+            self.info('Graph finished')

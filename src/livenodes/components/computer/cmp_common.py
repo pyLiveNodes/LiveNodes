@@ -2,17 +2,61 @@ import logging
 from logging.handlers import QueueHandler
 import threading as th
 from livenodes.components.node_logger import Logger
-from livenodes.components.utils.log import drain_log_queue
 from itertools import groupby
+
+def child_main(location, successor, successor_args,
+                ready_event, start_event, stop_event, close_event,
+                subprocess_log_queue, logger_name,
+                stop_timeout, close_timeout):
+    """Child process/thread entrypoint, runs the shared compute logic."""
+    logger = logging.getLogger(logger_name)
+    if subprocess_log_queue:
+        handler = QueueHandler(subprocess_log_queue)
+        logger.addHandler(handler)
+        # when using a queue handler, disable propagation to avoid duplicate logs
+        logger.propagate = False
+    else:
+        # no queue for local processor: enable propagation so logs go to console
+        logger.propagate = True
+
+    # enter
+    logger.info(f"[{location}] child_main starting")
+    computers = successor(*successor_args)
+    logger.info(f"Created computers: {list(map(str, computers))}")
+    # setup subcomputers
+    for c in computers:
+        c.setup()
+    ready_event.set()
+    
+    # wait for start signal
+    start_event.wait()
+    for proc in computers:
+        proc.start()
+    
+    # wait on stop_event or all finish
+    all_done = False
+    while not stop_event.wait(timeout=0.1) and not all_done:
+        all_done = all(c.is_finished() for c in computers)
+    
+    if not all_done:
+        for proc in computers:
+            proc.stop(timeout=stop_timeout)
+        close_event.wait()
+        for proc in computers:
+            proc.close(timeout=close_timeout)
+    
+    # exit
+    logger.info(f"[{location}] child_main exiting")
 
 class Processor_base(Logger):
     """
     Base class for processor implementations, handling common setup, threading/process control, and logging.
     """
     successor = None
+    # default child entrypoin
 
     @classmethod
-    def group_factory(cls, items, bridges, logger_fn):
+    def group_factory(cls, items, bridges):
         """
         items: List of tuples where the first element is the thread/process key
                        and the remaining elements are passed downstream. The last item should be the node itself
@@ -24,30 +68,27 @@ class Processor_base(Logger):
         items = sorted(items, key=lambda t: t[0])
         for loc, group in groupby(items, key=lambda t: t[0]):
             entries = list(group)
-            # drop the loc key, keep the remaining sub‐tuples
+            # drop the used loc key, keep the remaining sub‐tuples / locations
             sub_tuples = [entry[1:] for entry in entries]
-            logger_fn(f"Resolving computer group. Location: {loc}; Items: {len(sub_tuples)}")
+            # select only those bridges that are used by the sub‐tuples / entries of this group
+            sub_bridges = {str(entry[-1]): bridges[str(entry[-1])] for entry in entries}
 
             if not loc:
-                # no loc specified: hand off directly to threads
-                computers.extend(cls.successor(sub_tuples, bridges, logger_fn))
+                # no loc specified: hand off directly to successor so that it can be owned by our caller instead of us, since we are not used
+                computers.extend(cls.successor(sub_tuples, sub_bridges))
             else:
                 # loc specified: build a Processor_process that owns its sub‐tuples
-                nodes = [st[-1] for st in sub_tuples]
-                node_bridges = [bridges[str(n)] for n in nodes]
-                successor_args = (sub_tuples, node_bridges, logger_fn)
-                computers.append(cls(location=loc, successor_args=successor_args))
+                computers.append(cls(location=loc, successor_args=(sub_tuples, sub_bridges)))
 
         return computers
 
 
-    def __init__(self, location, successor_args, stop_timeout=0.1, close_timeout=0.1):
+    def __init__(self, location, successor_args, stop_timeout=30, close_timeout=30):
         super().__init__()
         self.location = location
         self.successor_args = successor_args
-        self.stop_timeout_threads = stop_timeout
-        self.close_timeout_threads = close_timeout
-        self.worker = None
+        self.stop_timeout = stop_timeout
+        self.close_timeout = close_timeout
         self.create_locks_for_next_run()
         self.info(f'Creating {self.__class__.__name__} with {len(self.successor_args[0])} nodes.')
 
@@ -65,6 +106,9 @@ class Processor_base(Logger):
         self.stop_event.clear()
         self.close_event.clear()
 
+        self.queue_listener = None
+
+
     def _make_events(self):
         """
         Abstract: subclasses should initialize self.ready_event, start_event, stop_event, close_event.
@@ -80,26 +124,37 @@ class Processor_base(Logger):
 
         self.parent_log_queue = self._make_queue()
         logger_name = 'livenodes'
+        # use QueueListener instead of manual drain thread
+        if self.parent_log_queue is not None:
+            from logging.handlers import QueueHandler, QueueListener
+            logger = logging.getLogger(logger_name)
+            # capture existing handlers and remove them from logger
+            existing_handlers = logger.handlers[:]
+            for h in existing_handlers:
+                logger.removeHandler(h)
+            # start listener to handle queued records
+            self.queue_listener = QueueListener(self.parent_log_queue, *existing_handlers)
+            self.queue_listener.start()
+            # attach queue handler to logger
+            logger.addHandler(QueueHandler(self.parent_log_queue))
+            logger.propagate = False
 
-        # start log draining thread
-        self.worker_log_handler = th.Thread(
-            target=drain_log_queue,
-            args=(self.parent_log_queue, logger_name, self.worker_log_handler_termi_sig)
-        )
-        self.worker_log_handler.daemon = True
-        self.worker_log_handler.name = f"LogDrain-{self.worker_log_handler.name.split('-')[-1]}"
-        self.worker_log_handler.start()
-
-        # start worker thread/process
+        self.info('Creating worker')
+        # start child via subclass-defined entrypoint
         self.worker = self._make_worker(
-            target=self.start_subprocess,
-            args=(self.successor_args, self.parent_log_queue, logger_name,),
+            args=(self.location, self.successor, self.successor_args,
+                  self.ready_event, self.start_event,
+                  self.stop_event, self.close_event,
+                  self.parent_log_queue, logger_name,
+                  self.stop_timeout, self.close_timeout),
             name=str(self)
         )
+        self.info('Starting worker')
         self.worker.start()
+        self.info(f"  → workername: {self.worker.name}")
 
         self.info('Waiting for worker to be ready')
-        if not self.ready_event.wait(timeout=10):
+        if not self.ready_event.wait(timeout=100):
             self.error('Worker did not become ready in time, terminating')
             self._kill_worker()
             raise RuntimeError('Worker did not become ready in time')
@@ -116,7 +171,7 @@ class Processor_base(Logger):
         if self.worker:
             self.worker.join(timeout)
 
-    def stop(self, timeout=0.3):
+    def stop(self, timeout=100):
         """Signal worker to stop and wait for thread/process to exit."""
         self.info('Stopping')
         self.stop_event.set()
@@ -125,7 +180,7 @@ class Processor_base(Logger):
         alive = self.worker.is_alive() if self.worker else False
         self.info(f"Returning; Worker finished: {not alive}")
 
-    def close(self, timeout=0.5):
+    def close(self, timeout=100):
         """Signal close, wait, and clean up logging and worker."""
         self.info('Closing')
         self.close_event.set()
@@ -134,13 +189,14 @@ class Processor_base(Logger):
             if self.worker.is_alive():
                 self.info('Timeout reached: worker still alive')
 
-        self.info('Closing Log Drain')
-        self.worker_log_handler_termi_sig.set()
-        self.worker_log_handler.join(timeout / 2)
+        # stop and cleanup queue listener if used
+        if self.queue_listener:
+            self.info('Closing Log QueueListener')
+            self.queue_listener.stop()
+            self.queue_listener = None
 
         # clean up parent log resources
         self.parent_log_queue = None
-        self.worker_log_handler = None
 
         self.info('Resetting for next run')
         self.create_locks_for_next_run()
@@ -152,58 +208,12 @@ class Processor_base(Logger):
     def check_threads_finished(self, computers):
         return all(c.is_finished() for c in computers)
 
-    def start_subprocess(self, successor_args, subprocess_log_queue, logger_name):
-        """Shared subprocess logic for both threading and multiprocessing implementations."""
-        logger = logging.getLogger(logger_name)
-        logger.addHandler(QueueHandler(subprocess_log_queue))
-        logger.propagate = False
-
-        self.info('Starting Process')
-
-        computers = self.successor(*successor_args, logger_fn=self.info)
-        self.info(f"Created computers: {list(map(str, computers))}")
-
-        try:
-            self.info('Setting up computers')
-            for c in computers:
-                c.setup()
-        except Exception:
-            self.error('Sub-computer setup failed', exc_info=True)
-            self.ready_event.set()
-            raise
-
-        self.info('All Computers ready')
-        self.ready_event.set()
-
-        # wait for start signal
-        self.start_event.wait()
-        self.info('Starting Computers')
-        for proc in computers:
-            proc.start()
-
-        all_done = False
-        while not self.stop_event.wait(timeout=0.1) and not all_done:
-            all_done = all(c.is_finished() for c in computers)
-
-        if all_done:
-            self.info('All Computers have finished, returning')
-        else:
-            self.info('Stopping Computers')
-            for proc in computers:
-                proc.stop(timeout=self.stop_timeout_threads)
-
-            self.close_event.wait()
-            self.info('Closing Computers')
-            for proc in computers:
-                proc.close(timeout=self.close_timeout_threads)
-
-        self.info('Finished Process and returning')
-
     # Abstract methods to implement in subclasses
     def _make_queue(self):
         raise NotImplementedError
 
-    def _make_worker(self, target, args, name):
+    def _make_worker(self, args, name):
+        # e.g. return th.Thread(target=child_main, args=args, name=name)
         raise NotImplementedError
 
     def _kill_worker(self):

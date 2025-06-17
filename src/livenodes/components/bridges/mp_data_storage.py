@@ -1,8 +1,6 @@
 import asyncio
 from livenodes.components.node_logger import Logger
-
 from livenodes.components.connection import Connection
-
 from livenodes import get_registry
 
 import logging
@@ -29,10 +27,10 @@ class Multiprocessing_Data_Storage(Logger):
         emit_loc = connection._emit_node.compute_on
         recv_loc = connection._recv_node.compute_on
 
-        # # print('----')
-        # # print(connection)
-        # # print('Bridging', emit_loc, recv_loc)
-        # # print('Bridging', parse_location(emit_loc), parse_location(recv_loc))
+        # print('----')
+        # print(connection)
+        # print('Bridging', emit_loc, recv_loc)
+        # print('Bridging', parse_location(emit_loc), parse_location(recv_loc))
 
         possible_bridges_pair = []
         for bridge in get_registry().bridges.values():

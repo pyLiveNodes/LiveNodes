@@ -1,6 +1,5 @@
 import threading as th
-import queue
-from .cmp_common import Processor_base
+from .cmp_common import Processor_base, child_main
 from .cmp_local import Processor_local
 
 class Processor_threads(Processor_base):
@@ -14,10 +13,10 @@ class Processor_threads(Processor_base):
         self.close_event = th.Event()
 
     def _make_queue(self):
-        return queue.Queue()
+        return None
 
-    def _make_worker(self, target, args, name):
-        return th.Thread(target=target, args=args, name=name)
+    def _make_worker(self, args, name):
+        return th.Thread(target=child_main, args=args, name=name)
 
     def _kill_worker(self):
         if self.worker and self.worker.is_alive():
