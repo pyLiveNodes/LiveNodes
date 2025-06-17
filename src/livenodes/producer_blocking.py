@@ -75,7 +75,7 @@ class Producer_Blocking(Producer, abstract_class=True):
 
     # main thread (interfaced by node system)
     def _onstart(self):
-        # deamon => kill once main thread is done, see: https://stackoverflow.com/questions/190010/daemon-threads-explanation
+        # daemon => kill once main thread is done, see: https://stackoverflow.com/questions/190010/daemon-threads-explanation
         self.subprocess = th.Thread(target=self._blocking_onstart, daemon=True, args=(self.stop_event,))
         # self.subprocess = mp.Process(target=self._blocking_onstart, daemon=True)
         self.subprocess.start()

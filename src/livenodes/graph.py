@@ -1,9 +1,10 @@
 from collections import defaultdict
 from itertools import groupby
 from .node import Node
-from .components.computer import parse_location, Processor_threads, Processor_process
+from .components.computer import parse_location, Processor_process, create_group_of_thread_comps
 from .components.node_logger import Logger
-import asyncio
+import threading
+import time
 
 class Graph(Logger):
 
@@ -64,21 +65,11 @@ class Graph(Logger):
         # for host in hosts:
 
         self.info('Resolving computers')
-        process_groups = groupby(sorted(zip(processes, threads, self.nodes), key=lambda t: t[0]), key=lambda t: t[0])
-        for process, process_group in process_groups:
-            _, process_threads, process_nodes = list(zip(*list(process_group)))
-
-            if not process == '':
-                node_specific_bridges = [bridges[str(n)] for n in process_nodes]
-                cmp = Processor_process(nodes=process_nodes, location=process, bridges=node_specific_bridges)
-                self.computers.append(cmp)
-            else:
-                thread_groups = groupby(sorted(zip(process_threads, process_nodes), key=lambda t: t[0]), key=lambda t: t[0])
-                for thread, thread_group in thread_groups:
-                    _, thread_nodes = list(zip(*list(thread_group)))
-                    node_specific_bridges = [bridges[str(n)] for n in thread_nodes]
-                    cmp = Processor_threads(nodes=thread_nodes, location=thread, bridges=node_specific_bridges)
-                    self.computers.append(cmp)
+        self.computers = Processor_process.group_factory(
+            items=zip(processes, threads, self.nodes),
+            bridges=bridges,
+            logger_fn=self.info
+        )
 
         self.info('Created computers:', list(map(str, self.computers)))
         self.info('Setting up computers')
@@ -110,3 +101,31 @@ class Graph(Logger):
             cmp.close(timeout=close_timeout)
 
         self.computers = []
+
+    def run_as_script(self, timeout=None):
+        # TODO: rething this what is the api we actually can call here. ie sine local has a different api than thread and process i'm not sure if this works anymore...
+        """Run the graph as a script, blocking until all nodes are finished."""
+
+        def _runner():
+            try:
+                self.start_all()
+                if timeout is not None:
+                    self.join_all(timeout=timeout)
+                else:
+                    while not self.is_finished():
+                        time.sleep(0.1)
+            finally:
+                # ensure we always clean up
+                self.stop_all()
+
+        thread = threading.Thread(target=_runner, daemon=True)
+        thread.start()
+
+        try:
+            # keep main alive until thread finishes or Ctrl+C
+            while thread.is_alive():
+                thread.join(timeout=0.5)
+        except KeyboardInterrupt:
+            self.info("KeyboardInterrupt received: stopping graph")
+            self.stop_all()
+            thread.join()
