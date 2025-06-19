@@ -9,16 +9,7 @@ import os
 SHM_SIZE = int(os.getenv('SHM_SIZE', 1_048_576))  # Default to 1MB if not set
 
 class View(Node, abstract_class=True):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        # allocate a SharedMemory buffer to store only the latest pickled state
-        self._shm_size = SHM_SIZE
-        self._shm = shared_memory.SharedMemory(create=True, size=self._shm_size)
-        self._shm_lock = Lock()
-        # reserve first 8 bytes for payload length (little-endian)
-        self._shm.buf[0] = 1
-        self._shm.buf[1:9] = (0).to_bytes(8, 'little')
+    _shm_size = SHM_SIZE
 
     def register_reporter(self, reporter_fn):
         if hasattr(self, 'fps'):
@@ -60,6 +51,20 @@ class View(Node, abstract_class=True):
                 return None
 
         return update
+    
+    def _onstart(self, **kwargs):
+        """
+        Called when the view is started, initializes the shared memory and draw state
+        """
+        # initialize shared memory for draw state
+        if not hasattr(self, '_shm') or self._shm is None:
+            self._shm = shared_memory.SharedMemory(create=True, size=self._shm_size)
+            self._shm_lock = Lock()
+            # reserve first 8 bytes for payload length (little-endian)
+            self._shm.buf[0] = 1
+            self._shm.buf[1:9] = (0).to_bytes(8, 'little')
+
+        super()._onstart(**kwargs)
 
     def _onstop(self, **kwargs):
         # clean up shared memory used for draw state

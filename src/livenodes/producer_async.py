@@ -1,5 +1,4 @@
 import asyncio
-from functools import partial
 import traceback
 from .producer import Producer
 
@@ -38,8 +37,8 @@ class Producer_async(Producer, abstract_class=True):
         # create generator
         runner = self._async_run()
             
-        # finish either if no data is present anymore or parent told us to stop (via stop() -> _onstop())
-        while self._running:
+        # finish either if no data is present anymore or parent told us to stop (via stop() -> _onbeforestop())
+        while not self.stop_event.is_set():
             emit_data, empty = await _anext(runner)
              
             if empty:
@@ -48,10 +47,12 @@ class Producer_async(Producer, abstract_class=True):
                 self._ctr = self._clock.tick()
             else:
                 # Received no data from the generator, thus stopping the production :-) 
-                self._onstop()
+                self.stop_event.set()
 
             self._report(node=self)            
             # allow others to chime in
             await asyncio.sleep(0)
 
         self._finish()
+        self.finished_event.set()
+

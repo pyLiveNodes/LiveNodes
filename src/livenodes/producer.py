@@ -15,15 +15,16 @@ class Producer(Node, abstract_class=True):
 
     ports_in = Ports_empty() # must be empty!
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def _re_init(self):
+        super()._re_init()
 
         self._clock = Clock(node_id=self)
         self._ctr = self._clock.ctr # set as is used in Node! (yes, we should rework this)
         self._emit_ctr_fallback = 0
 
-        self._running = False
+        self.stop_event = th.Event()
         self.finished_event = th.Event()
+
 
     def __init_subclass__(cls, abstract_class=False):
         super().__init_subclass__(abstract_class)
@@ -69,25 +70,26 @@ class Producer(Node, abstract_class=True):
         fn = partial(self._call_user_fn_process, handle_next_data, "handle_next_data")
 
         # finish either if no data is present anymore or parent told us to stop (via stop() -> _onstop())
-        while self._running:
+        while not self.stop_event.is_set():
             if not fn():
                 # generator empty, thus stopping the production :-)
-                self._onbeforestop()
+                self.stop_event.set()
 
             self._report(node=self)            
             # allow others to chime in
             await asyncio.sleep(0)
 
+        # we need to call _finish ourselfes, as we don't have any inputs and thus did not create a future on the close of those inputs
         self._finish()
         self.finished_event.set()
 
-    def _onbeforestop(self):
-        self._running = False
-        if not self.finished_event.is_set():
-            self.finished_event.wait(timeout=5)
+    def _onstop(self):
+        self.stop_event.set()
+        self.finished_event.wait(timeout=1)
 
     def _onstart(self):
-        self._running = True
+        self.stop_event.clear()
+        self.finished_event.clear()
 
         loop = asyncio.get_event_loop()
         loop.create_task(self._async_onstart())

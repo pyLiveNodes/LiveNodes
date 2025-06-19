@@ -39,6 +39,7 @@ class Bridge_thread(Bridge):
     # _from thread
     def close(self):
         self.closed_event.set()
+        # self.queue.close()
 
     # _from thread
     def put(self, ctr, item):

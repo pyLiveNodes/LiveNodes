@@ -40,6 +40,17 @@ class Node(Connectionist, Logger, Serializer):
 
         self.should_time = should_time
         self.compute_on = compute_on
+        # Fix this on creation such that we can still identify a node if it was pickled into another (spawned) process
+        self._id_ = id(self)
+        
+        if should_time:
+            self._call_user_fn_process = partial(self._perf_framework.call_fn, partial(self._perf_user_fn.call_fn, self._call_user_fn))
+        else:
+            self._call_user_fn_process = self._call_user_fn
+
+        self._re_init()        
+
+    def _re_init(self):
         self.bridge_listeners = []
 
         self.locked = mp.Event()
@@ -49,17 +60,11 @@ class Node(Connectionist, Logger, Serializer):
         self._perf_user_fn = Time_Per_Call()
         self._perf_framework = Time_Between_Call()
 
-        if should_time:
-            self._call_user_fn_process = partial(self._perf_framework.call_fn, partial(self._perf_user_fn.call_fn, self._call_user_fn))
-        else:
-            self._call_user_fn_process = self._call_user_fn
-
-        # Fix this on creation such that we can still identify a node if it was pickled into another (spawned) process
-        self._id_ = id(self)
         self.ret_accumulated = None
         self._bridges_closed = None
 
         self.stopped = False
+
 
 
     def __repr__(self):
@@ -206,6 +211,7 @@ class Node(Connectionist, Logger, Serializer):
             self.debug('Closing', str(con))
             self.data_storage.close_bridges()
 
+        self._re_init()
         self._onstop()
 
     # _computer thread
@@ -215,6 +221,7 @@ class Node(Connectionist, Logger, Serializer):
         called when all tasks are done, either because all of them finished or because they got cancelled, e.g by calling stop()
         """
         self.info('Finishing')
+        self._onbeforefinish()
 
         # indicate to the node, that it now should finish wrapping up
         if not self.stopped:
@@ -225,6 +232,8 @@ class Node(Connectionist, Logger, Serializer):
         # -> if it finished and now stop() is called
         if not self._finished.done():
             self._finished.set_result(True)
+
+        self._onfinish()
 
 
     # _computer thread
@@ -441,5 +450,17 @@ class Node(Connectionist, Logger, Serializer):
     def _onstop(self):
         """
         executed on stop
+        """
+        pass
+
+    def _onbeforefinish(self):
+        """
+        executed before finishing the node, ie before _finish is called
+        """
+        pass
+
+    def _onfinish(self):
+        """
+        executed after finishing the node, ie after _finish is called
         """
         pass

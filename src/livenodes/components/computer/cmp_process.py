@@ -32,3 +32,15 @@ class Processor_process(Processor_base):
             self.worker.terminate()
             self.worker.join()
         self.worker = None
+
+    def close(self):
+        """Extend cleanup to also clean up the manager and its resources."""
+        super().close()
+        try:
+            # Clean up the Manager to release resources
+            if hasattr(self, 'manager') and self.manager is not None:
+                self.info(f"Cleaning up manager at {self.manager}")
+                # Close the manager to release resources
+                self.manager.shutdown()
+        except Exception as e:
+            self.info(f"Manager cleanup failed: {e}")

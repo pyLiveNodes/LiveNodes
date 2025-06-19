@@ -2,6 +2,7 @@ import logging
 from logging.handlers import QueueHandler
 from livenodes.components.node_logger import Logger
 from itertools import groupby
+from logging.handlers import QueueHandler, QueueListener
 
 class EventHandshakeParent:
     def __init__(self, req_evt, done_evt, timeout=None):
@@ -126,39 +127,48 @@ class Processor_base(Logger):
         self.start_timeout = start_timeout
         self.stop_timeout = stop_timeout
         self.close_timeout = close_timeout
-        self.create_locks_for_next_run()
+        self._re_init()
         self.info(f'Creating {self.__class__.__name__} with {len(self.successor_args[0])} nodes ({self.successor_args[0][:10]}) at location {self.location}')
 
-    def create_locks_for_next_run(self):
+    def _re_init(self):
         """
-        Initialize locks by delegating to subclass event creation and resetting worker.
+        Clean up logging queue and listener before resetting locks and worker.
         """
-        # subclass-specific event setup
-        self._make_events()
-        # reset worker and queue listener
+        # reset worker and events for next run
         self.worker = None
-        self.queue_listener = None
-        self.parent_log_queue = None
+        self.evts_ready = None
+        self.evts_start = None
+        self.evts_stop = None
+        self.evts_close = None
 
     def setup(self):
         """Common setup: logging queue, drainer thread, and worker start."""
         self.info('Readying')
+        self._re_init()
+        self._make_events()
 
         self.parent_log_queue = self._make_queue()
         # use QueueListener instead of manual drain thread
+        # if self.parent_log_queue is not None:
+        #     logger = logging.getLogger(self.logger_name)
+        #     # capture existing handlers and remove them from logger
+        #     existing_handlers = logger.handlers[:]
+        #     for h in existing_handlers:
+        #         logger.removeHandler(h)
+        #     # start listener to handle queued records
+        #     self.queue_listener = QueueListener(self.parent_log_queue, *existing_handlers)
+        #     self.queue_listener.start()
+        #     # attach queue handler to logger
+        #     logger.addHandler(QueueHandler(self.parent_log_queue))
+        #     logger.propagate = False
         if self.parent_log_queue is not None:
-            from logging.handlers import QueueHandler, QueueListener
-            logger = logging.getLogger(self.logger_name)
-            # capture existing handlers and remove them from logger
-            existing_handlers = logger.handlers[:]
-            for h in existing_handlers:
-                logger.removeHandler(h)
-            # start listener to handle queued records
-            self.queue_listener = QueueListener(self.parent_log_queue, *existing_handlers)
-            self.queue_listener.start()
-            # attach queue handler to logger
-            logger.addHandler(QueueHandler(self.parent_log_queue))
-            logger.propagate = False
+            # read all logs from the queue and add them to self.get_logger()
+            self.info(f"Using parent log queue {self.parent_log_queue}")
+            # logger = self.get_logger()
+            queue_listener = QueueListener(self.parent_log_queue)
+            # start the listener to handle queued records
+            queue_listener.start()
+
 
         self.info('Creating worker')
         # start child via subclass-defined entrypoint
@@ -215,15 +225,24 @@ class Processor_base(Logger):
             self.warn('Worker did not acknowledge close request in time -> force termination')
             # if the worker did not exit cleanly, we will try to kill it
             self._kill_worker()
-        
+
+        # IMPORTANT: For some reason if we enable this the calc_twice test fails...
         # stop and cleanup queue listener if used
-        if self.queue_listener:
-            self.info('Closing Log QueueListener')
-            self.queue_listener.stop()
-            self.queue_listener = None
+        # if hasattr(self, "queue_listener") and self.queue_listener is not None:
+        #     self.queue_listener.stop()
+        #     self.queue_listener = None
+
+        # # close and cancel join of parent log queue if used
+        # if hasattr(self, "parent_log_queue") and self.parent_log_queue is not None:
+        #     try:
+        #         self.parent_log_queue.cancel_join_thread()
+        #         self.parent_log_queue.close()
+        #     except Exception:
+        #         pass
+        #     self.parent_log_queue = None
 
         self.info('Resetting for next run')
-        self.create_locks_for_next_run()
+        self._re_init()
 
     def is_finished(self):
         """Return True if worker thread/process has exited."""
