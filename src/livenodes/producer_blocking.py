@@ -1,9 +1,7 @@
 import asyncio
-import queue
 import traceback
 from .producer import Producer
 import threading as th
-# import multiprocessing as mp
 import aioprocessing
 
 class Producer_Blocking(Producer, abstract_class=True):
@@ -12,9 +10,9 @@ class Producer_Blocking(Producer, abstract_class=True):
     Then onstop is executed and 
     """
 
-    def _re_init(self):
-        super()._re_init()
-        
+    def __init__(self, name="Name", should_time=False, compute_on="", **kwargs):
+        super().__init__(name, should_time, compute_on, **kwargs)
+
         # main thread
         self.subprocess = None
 

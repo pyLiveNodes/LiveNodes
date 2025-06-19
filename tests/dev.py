@@ -23,7 +23,7 @@ class Ports_none(Ports_collection):
     pass
 
 class Ports_simple(Ports_collection):
-    alternate_data: Port_Ints = Port_Ints("Alternate Data")
+    data: Port_Ints = Port_Ints("Alternate Data")
 
 class Data(Producer):
     ports_in = Ports_none()
@@ -34,14 +34,14 @@ class Data(Producer):
     def _run(self):
         for ctr in range(10):
             self.info(ctr)
-            yield self.ret(alternate_data=ctr)
+            yield self.ret(data=ctr)
 
 class Quadratic(Node):
     ports_in = Ports_simple()
     ports_out = Ports_simple()
 
-    def process(self, alternate_data, **kwargs):
-        return self.ret(alternate_data=alternate_data**2)
+    def process(self, data, **kwargs):
+        return self.ret(data=data**2)
 
 class Save(Node):
     ports_in = Ports_simple()
@@ -51,11 +51,11 @@ class Save(Node):
         super().__init__(name, **kwargs)
         self.out = mp.SimpleQueue()
 
-    def process(self, alternate_data, **kwargs):
-        self.debug('re data', alternate_data)
-        self.out.put(alternate_data)
+    def process(self, data, **kwargs):
+        self.debug('re data', data)
+        self.out.put(data)
 
-    def get_state(self):
+    def get_state_and_close(self):
         res = []
         while not self.out.empty():
             res.append(self.out.get())
@@ -88,8 +88,8 @@ if __name__ == "__main__":
     g.stop_all()
     print('finished graph')
 
-    # print(out1.get_state())
-    # print(out2.get_state())
+    # print(out1.get_state_and_close())
+    # print(out2.get_state_and_close())
     # data, quadratic, out1, out2, g = None, None, None, None, None
     # time.sleep(1)
     # # print('Finished Test')

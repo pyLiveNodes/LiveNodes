@@ -25,3 +25,14 @@ class Processor_threads(Processor_base):
         if self.worker and self.worker.is_alive():
             self.info('Cannot terminate thread; ignoring')
         self.worker = None
+
+    def close(self):
+        # ensure thread worker is joined after close handshake
+        super().close()
+        try:
+            if self.worker and self.worker.is_alive():
+                self.info(f"Joining thread {self.worker.name}")
+                self.worker.join(self.close_timeout)
+        except Exception:
+            pass
+        self.worker = None

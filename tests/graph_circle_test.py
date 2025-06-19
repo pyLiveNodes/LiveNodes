@@ -1,67 +1,17 @@
 import pytest
-import multiprocessing as mp
 
-from livenodes import Node, Attr, Producer, Graph, Ports_collection
-from utils import Port_Ints
-
-class Ports_none(Ports_collection): 
-    pass
-
-class Ports_simple(Ports_collection):
-    data: Port_Ints = Port_Ints("Data")
+from livenodes import Node, Attr, Graph, Ports_collection
+from utils import Ports_simple, SimpleNode, Data, Save, Port_Ints, registry
 
 class Ports_sync(Ports_collection):
     data: Port_Ints = Port_Ints("Data")
     delayed: Port_Ints = Port_Ints("Delayed")
-
-class SimpleNode(Node):
-    ports_in = Ports_simple()
-    ports_out = Ports_simple()
-
-class Data(Producer):
-    ports_in = Ports_none()
-    # yes, "Data" would have been fine, but wanted to quickly test the naming parts
-    # TODO: consider
-    ports_out = Ports_simple()
-
-    def _run(self):
-        for ctr in range(5):
-            self.info(ctr)
-            yield self.ret(data=ctr)
-
-class Save(Node):
-    ports_in = Ports_simple()
-    ports_out = Ports_none()
-
-    def __init__(self, name='Save', **kwargs):
-        super().__init__(name, **kwargs)
-        self.out = mp.SimpleQueue()
-
-    def process(self, data, **kwargs):
-        self.debug('re data', data)
-        self.out.put(data)
-
-    def get_state(self):
-        res = []
-        while not self.out.empty():
-            res.append(self.out.get())
-        return res
 
 class CircBreakerNodeMock(Node):
     attrs = [Attr.circ_breaker, Attr.ctr_increase]
     ports_in = Ports_simple()
     ports_out = Ports_simple()
 
-class Sum(Node):
-    ports_in = Ports_sync()
-    ports_out = Ports_simple()
-
-    def _should_process(self, data=None, delayed=None):
-        return data is not None and delayed is not None
-
-    def process(self, data, delayed, **kwargs):
-        return self.ret(data=data + delayed)
-    
 class CtrIncrease(Node):
     attrs = [Attr.ctr_increase]
     ports_in = Ports_simple()
@@ -103,6 +53,19 @@ class CircBreakerNode(Node):
             self.ret_accu_new(delayed=delayed)
         
         return self.ret_accumulated()
+
+
+    
+@registry.nodes.decorator
+class Sum(Node):
+    ports_in = Ports_sync()
+    ports_out = Ports_simple()
+
+    def _should_process(self, data=None, delayed=None):
+        return data is not None and delayed is not None
+
+    def process(self, data, delayed, **kwargs):
+        return self.ret(data=data + delayed)
 
 # Arrange
 @pytest.fixture
@@ -169,7 +132,7 @@ class TestGraphOperations():
         # prod will emit: [0, 1, 2, 3, 4]
         # breaker will emit: [1000, x, x, x, x] with x being the last value from summer
         # summer will emit [0 + 1000, 1 + 1000, 2 + 1001, 3 + 1003, 4 + 1006]
-        assert saver.get_state() == [0 + 1000, 1 + 1000, 2 + 1001, 3 + 1003, 4 + 1006]
+        assert saver.get_state_and_close() == [0 + 1000, 1 + 1000, 2 + 1001, 3 + 1003, 4 + 1006, 5 + 1010, 6 + 1015, 7 + 1021, 8 + 1028, 9 + 1036]
 
 
 if __name__ == "__main__":
@@ -196,6 +159,6 @@ if __name__ == "__main__":
     # prod will emit: [0, 1, 2, 3, 4]
     # breaker will emit: [1000, x, x, x, x] with x being the last value from summer
     # summer will emit [0 + 1000, 1 + 1000, 2 + 1001, 3 + 1003, 4 + 1006]
-    state = saver.get_state()
+    state = saver.get_state_and_close()
     # print(state)
     assert state == [0 + 1000, 1 + 1000, 2 + 1001, 3 + 1003, 4 + 1006]

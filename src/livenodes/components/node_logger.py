@@ -19,6 +19,16 @@ class Logger(Reportable):
     def _construct_str(self):
         limit = 30
         name = str(self)
+        if name.startswith('<') and name.endswith('>'):
+            # remove the < and > from the string representation
+            if hasattr(self, 'name'):
+                # if the object has a name attribute, use that
+                name = self.name
+            elif self.__class__.__name__:
+                # otherwise use the class name
+                name = self.__class__.__name__
+            else:
+                name = name[1:-1].split('.')[-1]
         name = name if len(name) < limit else name[:limit - 3] + '...'
         return f"{name: <30}"
 

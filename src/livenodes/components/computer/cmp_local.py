@@ -73,6 +73,12 @@ def local_child_main(location, successor, successor_args,
             # signal to parent that local child has stopped
             stop_complete.set()
             await loop.run_in_executor(None, close_request.wait)
+        else:
+            # we will set the stop_request ourselves and then reset, as we cannot cancel the loop.run_in_executor(None, stop_request.wait) otherwise
+            stop_request.set()
+            stop_request.clear()
+            # we did not need to stop, but we can still signal completion
+            stop_complete.set()
         # cancel any still-pending tasks
         log.info('Canceling all remaining tasks')
         for task in tasks:

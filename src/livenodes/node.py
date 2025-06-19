@@ -43,29 +43,24 @@ class Node(Connectionist, Logger, Serializer):
         # Fix this on creation such that we can still identify a node if it was pickled into another (spawned) process
         self._id_ = id(self)
         
+        self._perf_user_fn = Time_Per_Call()
+        self._perf_framework = Time_Between_Call()
         if should_time:
             self._call_user_fn_process = partial(self._perf_framework.call_fn, partial(self._perf_user_fn.call_fn, self._call_user_fn))
         else:
             self._call_user_fn_process = self._call_user_fn
 
-        self._re_init()        
-
-    def _re_init(self):
         self.bridge_listeners = []
 
         self.locked = mp.Event()
 
         self._ctr = None
 
-        self._perf_user_fn = Time_Per_Call()
-        self._perf_framework = Time_Between_Call()
-
         self.ret_accumulated = None
         self._bridges_closed = None
 
         self.stopped = False
-
-
+        
 
     def __repr__(self):
         return str(self)
@@ -211,7 +206,6 @@ class Node(Connectionist, Logger, Serializer):
             self.debug('Closing', str(con))
             self.data_storage.close_bridges()
 
-        self._re_init()
         self._onstop()
 
     # _computer thread

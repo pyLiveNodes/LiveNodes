@@ -163,8 +163,8 @@ class TestPorts():
             ports_in = Ports_deprecated()
             ports_out = Ports_deprecated()
 
-            def process(self, alternate_data, **kwargs):
-                return self.ret(alternate_data=alternate_data**2)
+            def process(self, data, **kwargs):
+                return self.ret(data=data**2)
         with pytest.raises(Exception):
             Quadratic()
 

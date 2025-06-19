@@ -39,7 +39,11 @@ class Bridge_thread(Bridge):
     # _from thread
     def close(self):
         self.closed_event.set()
-        # self.queue.close()
+        # if self.queue:
+        #     if hasattr(self.queue, 'close'):
+        #         self.queue.close()
+        #     elif hasattr(self.queue, 'shutdown'):
+        #         self.queue.shutdown()
 
     # _from thread
     def put(self, ctr, item):

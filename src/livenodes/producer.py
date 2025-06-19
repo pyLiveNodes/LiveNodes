@@ -15,8 +15,8 @@ class Producer(Node, abstract_class=True):
 
     ports_in = Ports_empty() # must be empty!
 
-    def _re_init(self):
-        super()._re_init()
+    def __init__(self, name="Name", should_time=False, compute_on="", **kwargs):
+        super().__init__(name, should_time, compute_on, **kwargs)
 
         self._clock = Clock(node_id=self)
         self._ctr = self._clock.ctr # set as is used in Node! (yes, we should rework this)

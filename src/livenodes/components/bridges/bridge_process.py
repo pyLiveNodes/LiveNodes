@@ -18,6 +18,14 @@ class Bridge_process(Bridge_thread):
         self.closed_event = mp.Event()
         
 
+    def close(self):
+        self.closed_event.set()
+        # self.queue.close()
+        # try:
+        #     self.queue.cancel_join_thread()
+        # except Exception:
+        #     pass
+
     @staticmethod
     def can_handle(_from, _to, _data_type=None):
         # can handle same process, and same thread, with cost 1 (shared mem would be faster, but otherwise this is quite good)
