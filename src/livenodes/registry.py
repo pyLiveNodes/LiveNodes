@@ -69,7 +69,7 @@ class Entrypoint_Register():
         modules_to_reload = []
         for item in self.cache.values():
             module_name = item.__module__
-            modules_to_reload.add(module_name)
+            modules_to_reload.append(module_name)
 
         for module_name in modules_to_reload:
             try:

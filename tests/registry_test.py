@@ -12,19 +12,19 @@ class TestProcessing:
         node_class = list(r.nodes.values())[0]
         module = importlib.import_module(node_class.__module__)
         module.np = True
-        assert str(node_class) == "EntryPoint(name='in_function', value='ln_io_python.in_function:In_function', group='livenodes.nodes')", "Update the test, some env/params changed and we have an unexpected class"
+        assert str(node_class) == "<class 'tests.utils.SimpleNode'>', group='livenodes.nodes')", "Update the test, some env/params changed and we have an unexpected class"
         assert module.np, "The class attribute should now be set"
 
         node_class = list(r.nodes.values())[0]
         module = importlib.import_module(node_class.__module__)
-        assert str(node_class) == "EntryPoint(name='in_function', value='ln_io_python.in_function:In_function', group='livenodes.nodes')", "Update the test, some env/params changed and we have an unexpected class"
+        assert str(node_class) == "<class 'tests.utils.SimpleNode'>', group='livenodes.nodes')", "Update the test, some env/params changed and we have an unexpected class"
         assert type(module.np) == bool and module.np, "Value should still be set, as it techincally is the same class"
 
         # invalidate_caches is only required for this test, such that the reload works (as the module itself does not change in between and thus is cached)
         r.reload(invalidate_caches=True)
         node_class = list(r.nodes.values())[0]
         module = importlib.import_module(node_class.__module__)
-        assert str(node_class) == "EntryPoint(name='in_function', value='ln_io_python.in_function:In_function', group='livenodes.nodes')", "Update the test, some env/params changed and we have an unexpected class"
+        assert str(node_class) == "<class 'tests.utils.SimpleNode'>', group='livenodes.nodes')", "Update the test, some env/params changed and we have an unexpected class"
         assert type(module.np) != bool, "Now the class was reloaded, so the attribute should not be set anymore"
 
 
