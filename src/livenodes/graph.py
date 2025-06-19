@@ -42,8 +42,8 @@ class Graph(Logger):
 
         return bridges
 
-    def start_all(self):
-        self.info('Starting all')
+    def start_all(self, start_timeout=30, stop_timeout=30, close_timeout=30):
+        self.info(f'Starting all {len(self.nodes)} nodes (set timeouts: start={start_timeout}, stop={stop_timeout}, close={close_timeout})')
         hosts, processes, threads = list(zip(*[parse_location(n.compute_on) for n in self.nodes]))
 
         # required for asyncio to work for local nodes
@@ -64,7 +64,10 @@ class Graph(Logger):
         self.info('Resolving computers')
         self.computers = Processor_process.group_factory(
             items=zip(processes, threads, self.nodes),
-            bridges=bridges
+            bridges=bridges,
+            start_timeout=start_timeout,
+            stop_timeout=stop_timeout, 
+            close_timeout=close_timeout 
         )
 
         self.info('Created computers:', list(map(str, self.computers)))
@@ -87,14 +90,14 @@ class Graph(Logger):
         for cmp in self.computers:
             cmp.join(timeout)
 
-    def stop_all(self, stop_timeout=0.1, close_timeout=0.1):
+    def stop_all(self):
         self.info('Stopping computers')
         for cmp in self.computers:
-            cmp.stop(timeout=stop_timeout)
+            cmp.stop()
 
         self.info('Closing computers')
         for cmp in self.computers:
-            cmp.close(timeout=close_timeout)
+            cmp.close()
 
         self.computers = []
 
@@ -103,7 +106,7 @@ class Graph(Logger):
         """Run the graph as a script, blocking until all nodes are finished."""
         try:
             self.info('Starting Graph')
-            self.start_all()
+            self.start_all(start_timeout=15, stop_timeout=15, close_timeout=15)
             self.info('Graph started, waiting for completion')
             self.join_all(timeout=timeout)
         except KeyboardInterrupt:

@@ -46,8 +46,6 @@ class Node(Connectionist, Logger, Serializer):
 
         self._ctr = None
 
-        self._n_stop_calls = 0
-
         self._perf_user_fn = Time_Per_Call()
         self._perf_framework = Time_Between_Call()
 
@@ -58,8 +56,10 @@ class Node(Connectionist, Logger, Serializer):
 
         # Fix this on creation such that we can still identify a node if it was pickled into another (spawned) process
         self._id_ = id(self)
-
         self.ret_accumulated = None
+        self._bridges_closed = None
+
+        self.stopped = False
 
 
     def __repr__(self):
@@ -186,7 +186,14 @@ class Node(Connectionist, Logger, Serializer):
     # TODO: currently this may be called multiple times: should we change that to ensure a single call?
     # _computer thread
     def stop(self):
-        self.info('Stopping')
+        """ called to interrupt the node, ie stop processing and close all bridges """
+        self.info('Stopping (interruption)')
+        self.stopped = True
+        self._onbeforestop()
+
+        # if we call this _finish will still be triggered
+        if self._bridges_closed and not self._bridges_closed.done():
+            self._bridges_closed.cancel()
 
         # TODO: not sure about this here, check the documentation!
         # cancel all remaining bridge listeners (we'll not receive any further data now anymore)
@@ -203,11 +210,15 @@ class Node(Connectionist, Logger, Serializer):
 
     # _computer thread
     def _finish(self, task=None):
-        self.info('Finishing')
         # task=none is needed for the done_callback but not used
+        """ 
+        called when all tasks are done, either because all of them finished or because they got cancelled, e.g by calling stop()
+        """
+        self.info('Finishing')
 
         # indicate to the node, that it now should finish wrapping up
-        self.stop()
+        if not self.stopped:
+            self.stop()
 
         # also indicate to parent, that we're finished
         # the node may have been finished before thus, we need to check the future before setting a result
@@ -418,6 +429,12 @@ class Node(Connectionist, Logger, Serializer):
     def _onstart(self):
         """
         executed on start
+        """
+        pass
+
+    def _onbeforestop(self):
+        """
+        executed on stop
         """
         pass
 

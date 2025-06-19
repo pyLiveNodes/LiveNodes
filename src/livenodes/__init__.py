@@ -9,19 +9,19 @@ logger = logging.getLogger('livenodes')
 
 # TODO: if we do not want to support eager loading in the registry i'm pretty sure we can remove the get_registry() function and just initialize this properly the first time.
 def get_registry():
-    logger.warning('retrieving registry')
+    logger.info('retrieving registry')
     global REGISTRY
     if REGISTRY is None:
         REGISTRY = Register(lazy_load=True)
         # --- first hook up the default briges
         from .components.bridges import Bridge_local, Bridge_thread, Bridge_process, Bridge_aioprocessing
-        logger.warning('registering default bridges')
+        logger.info('registering default bridges')
         REGISTRY.bridges.register('Bridge_local', Bridge_local)
         REGISTRY.bridges.register('Bridge_thread', Bridge_thread)
         REGISTRY.bridges.register('Bridge_process', Bridge_process)
         # REGISTRY.bridges.register('Bridge_aioprocessing', Bridge_aioprocessing)
 
-    logger.warning('returning registry')
+    logger.info('returning registry')
     return REGISTRY
 
 

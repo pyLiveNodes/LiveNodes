@@ -1,103 +1,124 @@
 import threading as th
-from .cmp_common import Processor_base
+from .cmp_common import Processor_base, EventHandshakeChild, EventHandshakeParent
 import asyncio
-import logging
+from livenodes.components.node_logger import Logger
 from logging.handlers import QueueHandler
 
 def local_child_main(location, successor, successor_args,
                     ready_event, start_event, stop_event, close_event,
-                    subprocess_log_queue, logger_name,
-                    stop_timeout, close_timeout):
+                    subprocess_log_queue):
+    # the timeouts are only here for a  consistent interface,
     """Child entrypoint for local (asyncio) processors."""
-    logger = logging.getLogger(logger_name)
-    if subprocess_log_queue:
-        handler = QueueHandler(subprocess_log_queue)
-        logger.addHandler(handler)
-        # when using a queue handler, disable propagation to avoid duplicate logs
-        logger.propagate = False
-    else:
-        # no queue for local processor: enable propagation so logs go to console
-        logger.propagate = True
-    
-    nodes, bridges = successor_args
+    with EventHandshakeChild(*ready_event):
+        log = Logger()
+        logger = log.get_logger()
+        if subprocess_log_queue:
+            handler = QueueHandler(subprocess_log_queue)
+            logger.addHandler(handler)
+            # when using a queue handler, disable propagation to avoid duplicate logs
+            logger.propagate = False
+        else:
+            # no queue for local processor: enable propagation so logs go to console
+            logger.propagate = True
+        log.info(f"[{location}] child_main starting >>>")
 
-    # set up event loop
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    loop.set_exception_handler(lambda l, ctx: logger.error(ctx) or l.default_exception_handler(ctx))
+        
+        nodes, bridges = successor_args
 
-    # schedule ready tasks
-    tasks = [asyncio.ensure_future(
-                  node.ready(input_endpoints=b['recv'], output_endpoints=b['emit']),
-                  loop=loop)
-             for node, b in zip(nodes, bridges)]
-    logger.info('All Nodes ready')
-    ready_event.set()
+        # set up event loop
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.set_exception_handler(lambda l, ctx: log.error(ctx) or l.default_exception_handler(ctx))
+
+        # schedule ready tasks
+        tasks = [asyncio.ensure_future(
+                    node.ready(input_endpoints=b['recv'], output_endpoints=b['emit']),
+                    loop=loop)
+                for node, b in zip(nodes, bridges)]
+        log.info('All Nodes ready')
 
     # wait until start
-    start_event.wait()
-    logger.info('Starting Nodes')
-    for node in nodes:
-        node.start()
+    with EventHandshakeChild(*start_event):
+        log.info('Starting Nodes')
+        for node in nodes:
+            node.start()
         
-    # wait until either all tasks complete or external stop_event
+    stop_request, stop_complete, stop_timeout = stop_event
+    close_request, close_complete, close_timeout = close_event
+    # wait until either all tasks complete or external stop_request
     async def _run_until():
-        stop_future = loop.run_in_executor(None, stop_event.wait)
+        # gather all ready tasks
+        all_done_future = asyncio.gather(*tasks)
+        # run the monitoring coroutine
+        stop_future = loop.run_in_executor(None, stop_request.wait)
         done, pending = await asyncio.wait(
-            tasks + [stop_future], return_when=asyncio.FIRST_COMPLETED
+            [all_done_future, stop_future], return_when=asyncio.FIRST_COMPLETED
         )
-        all_done = all(t in done for t in tasks)
-        if not all_done:
-            # external stop: wait for close_event
-            await loop.run_in_executor(None, close_event.wait)
-            # request nodes to stop gracefully
+        # if stop_event triggered, handle external stop
+        if stop_future in done:
+            log.info('Stopping nodes')
             for node in nodes:
                 try:
                     node.stop()
                 except Exception:
-                    logger.exception(f"Error stopping node {node}")
-            # allow a short time before cancelling tasks
-            await asyncio.sleep(close_timeout)
+                    log.exception(f"Error stopping node {node}")
+            # give the nodes some time to stop gracefully
+            # not sure if we even need a timeout here, as the nodes are not stopped asynchronously
+            # await asyncio.sleep(stop_timeout)
+            # let the loop run once to process stop events
+            await asyncio.sleep(0)
+            # wait for all nodes to finish -> then we might not cancel them if there is an issue with the stop call 
+            # await asyncio.gather(*(node._finished for node in nodes), return_exceptions=True)
+            # wait for close_event
+            # signal to parent that local child has stopped
+            stop_complete.set()
+            await loop.run_in_executor(None, close_request.wait)
         # cancel any still-pending tasks
-        for t in tasks:
-            if not t.done():
-                t.cancel()
+        log.info('Canceling all remaining tasks')
+        for task in tasks:
+            if not task.done():
+                task.cancel()
         await asyncio.gather(*tasks, return_exceptions=True)
-    # run the monitoring coroutine
+        
     loop.run_until_complete(_run_until())
     loop.run_until_complete(loop.shutdown_asyncgens())
     loop.close()
+    close_complete.set()
+    log.info(f"[{location}] child_main exiting <<<")
+
 
 class Processor_local(Processor_base):
     successor = None  # terminal processor
 
-    def __init__(self, nodes, location, bridges) -> None:
-        super().__init__(location, (nodes, bridges))
+    def __init__(self, nodes, location, bridges, **kwargs):
+        super().__init__(location, (nodes, bridges), **kwargs)
          # used for logging identification
         self.location = location
 
         self.nodes = nodes
         self.bridges = bridges
 
-        self.info(f'Creating Local Computer with {len(self.nodes)} nodes.')
+        self.info(f'Creating {self.__class__.__name__} with {len(self.nodes)} nodes ({nodes[:10]}) at location {self.location}')
+
 
     def __str__(self) -> str:
         return f"CMP-LC:{self.location}"
     
     # Base expects group_factory for loc==None
     @classmethod
-    def group_factory(cls, items, bridges):
+    def group_factory(cls, items, bridges, **kwargs):
+        # the stop_timeout and close_timeout are only here for a consistent interface,
         # items: sub_tuples including node as last element
         nodes = [entry[-1] for entry in items]
         node_bridges = [bridges[str(n)] for n in nodes]
-        return [cls(nodes, None, node_bridges)]
-
+        return [cls(nodes, None, node_bridges, **kwargs)]
+    
     # Abstract hooks for Processor_base
-    def _make_events(self):
-        self.ready_event = th.Event()
-        self.start_event = th.Event()
-        self.stop_event = th.Event()
-        self.close_event = th.Event()
+    def _make_events(self, ready_timeout=30, start_timeout=30, stop_timeout=30, close_timeout=30):
+        self.evts_ready = (th.Event(), th.Event(), ready_timeout)
+        self.evts_start = (th.Event(), th.Event(), start_timeout)
+        self.evts_stop = (th.Event(), th.Event(), stop_timeout)
+        self.evts_close = (th.Event(), th.Event(), close_timeout)
 
     def _make_queue(self):
        return None 

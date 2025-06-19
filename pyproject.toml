@@ -12,7 +12,6 @@ dependencies = [
     "matplotlib>=3.5.1",
     "graphviz>=0.19.1",
     "joblib>=1.1.0",
-    "phx-class-registry>=5.0.0",
     "python-dotenv",
     "aioprocessing>=2.0.1",
     "deprecation>=2.1.0",

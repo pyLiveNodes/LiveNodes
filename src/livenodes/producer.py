@@ -72,7 +72,7 @@ class Producer(Node, abstract_class=True):
         while self._running:
             if not fn():
                 # generator empty, thus stopping the production :-)
-                self._onstop()
+                self._onbeforestop()
 
             self._report(node=self)            
             # allow others to chime in
@@ -81,10 +81,10 @@ class Producer(Node, abstract_class=True):
         self._finish()
         self.finished_event.set()
 
-    def _onstop(self):
+    def _onbeforestop(self):
         self._running = False
         if not self.finished_event.is_set():
-            self.finished_event.wait(timeout=1)
+            self.finished_event.wait(timeout=5)
 
     def _onstart(self):
         self._running = True
