@@ -54,8 +54,8 @@ class Entrypoint_Register():
     def _reset_cache(self):
         self.trigger_callback(f'Discovering entrypoints for {self.entrypoints}', None, None, None)
         # reset the cache and merge manually registered classes
-        self.cache = self.manually_registered.copy()
-        self.cache.update({val.name: val for val in entry_points(group=self.entrypoints)})
+        self.cache = {val.name: val for val in entry_points(group=self.entrypoints)}
+        self.cache.update(self.manually_registered.copy())
 
     def reload(self, invalidate_caches=False):
         self._reset_cache()
