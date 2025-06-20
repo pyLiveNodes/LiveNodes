@@ -1,5 +1,3 @@
-import logging
-from logging.handlers import QueueHandler
 from livenodes.components.node_logger import Logger
 from itertools import groupby
 from logging.handlers import QueueHandler, QueueListener

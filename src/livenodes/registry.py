@@ -4,9 +4,9 @@ import logging
 logger = logging.getLogger('livenodes')
 
 class Register():
-    def __init__(self, lazy_load=False):
-        self.nodes = Entrypoint_Register(entrypoints='livenodes.nodes', lazy_load=lazy_load)
-        self.bridges = Entrypoint_Register(entrypoints='livenodes.bridges', lazy_load=lazy_load)
+    def __init__(self):
+        self.nodes = Entrypoint_Register(entrypoints='livenodes.nodes')
+        self.bridges = Entrypoint_Register(entrypoints='livenodes.bridges')
 
     def installed_packages(self):
         packages = []
@@ -14,13 +14,20 @@ class Register():
             packages.append(item.__module__.split('.')[0])
         for item in self.bridges.values():
             packages.append(item.__module__.split('.')[0])
-        return list(dict.fromkeys(packages)) # works because form 3.7 dict insertion order is preserved (as opposed to sets)
+        return list(dict.fromkeys(packages)) # works because from 3.7 dict insertion order is preserved (as opposed to sets)
 
     def reload(self, invalidate_caches=False):
         logger.debug('Reloading modules')            
         self.nodes.reload(invalidate_caches)
         self.bridges.reload(invalidate_caches)
         logger.debug('Reloading complete')
+
+    def prefetch(self):
+        """Prefetch all entrypoints to ensure they are loaded."""
+        logger.debug('Prefetching entrypoints')
+        self.nodes.prefetch()
+        self.bridges.prefetch()
+        logger.debug('Prefetching complete')
 
     def package_enable(self, package_name):
         raise NotImplementedError()
@@ -38,18 +45,13 @@ class Register():
 
 
 class Entrypoint_Register():
-    def __init__(self, entrypoints, lazy_load=True):
+    def __init__(self, entrypoints):
         # create local registry
         self.entrypoints = entrypoints
         self.callbacks = []
         self.manually_registered = {}  # manually registered classes
-        self.lazy_load = lazy_load
         
         self._reset_cache()
-
-        if not self.lazy_load:
-            # collect all installed packages immediately
-            self.collect_installed()
 
     def _reset_cache(self):
         self.trigger_callback(f'Discovering entrypoints for {self.entrypoints}', None, None, None)
@@ -59,10 +61,6 @@ class Entrypoint_Register():
 
     def reload(self, invalidate_caches=False):
         self._reset_cache()
-
-        if not self.lazy_load:
-            # collect all installed packages immediately
-            self.collect_installed()
             
         if invalidate_caches:
             importlib.invalidate_caches()
@@ -84,7 +82,7 @@ class Entrypoint_Register():
             except Exception as e:
                 logger.error(f'Error reloading module {module_name}: {e}')
 
-    def collect_installed(self):
+    def prefetch(self):
         for i, key in enumerate(self.cache.keys()):
             self.trigger_callback('Registering Class', key, i, len(self.cache))
             self.get_class(key)
