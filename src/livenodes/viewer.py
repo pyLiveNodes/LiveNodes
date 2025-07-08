@@ -75,7 +75,6 @@ class View(Node, abstract_class=True):
             _shm = None
         if _shm_lock is not None:
             del _shm_lock
-        return None, None
 
     def _onstop(self, **kwargs):
         # clean up shared memory used for draw state
