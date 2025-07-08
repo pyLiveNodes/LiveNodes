@@ -1,6 +1,7 @@
 import time
 import pickle
 from multiprocessing import shared_memory, Lock
+import weakref
 
 from .node import Node
 from .components.utils.reportable import Reportable
@@ -10,6 +11,17 @@ SHM_SIZE = int(os.getenv('SHM_SIZE', 1_048_576))  # Default to 1MB if not set
 
 class View(Node, abstract_class=True):
     _shm_size = SHM_SIZE
+
+    def __init__(self, name="Name", should_time=False, compute_on="", **kwargs):
+        super().__init__(name, should_time, compute_on, **kwargs)
+
+        self._shm = shared_memory.SharedMemory(create=True, size=self._shm_size)
+        self._shm_lock = Lock()
+        # reserve first 8 bytes for payload length (little-endian)
+        self._shm.buf[0] = 1
+        self._shm.buf[1:9] = (0).to_bytes(8, 'little')
+
+        weakref.finalize(self, self._cleanup, self._shm, self._shm_lock)
 
     def register_reporter(self, reporter_fn):
         if hasattr(self, 'fps'):
@@ -52,26 +64,23 @@ class View(Node, abstract_class=True):
 
         return update
     
-    def _onstart(self, **kwargs):
+    @staticmethod
+    def _cleanup(_shm, _shm_lock):
         """
-        Called when the view is started, initializes the shared memory and draw state
+        Cleanup function to close and unlink shared memory
         """
-        # initialize shared memory for draw state
-        if not hasattr(self, '_shm') or self._shm is None:
-            self._shm = shared_memory.SharedMemory(create=True, size=self._shm_size)
-            self._shm_lock = Lock()
-            # reserve first 8 bytes for payload length (little-endian)
-            self._shm.buf[0] = 1
-            self._shm.buf[1:9] = (0).to_bytes(8, 'little')
-
-        super()._onstart(**kwargs)
+        if _shm is not None:
+            _shm.close()
+            _shm.unlink()
+            _shm = None
+        if _shm_lock is not None:
+            del _shm_lock
+        return None, None
 
     def _onstop(self, **kwargs):
         # clean up shared memory used for draw state
         if hasattr(self, '_shm') and self._shm is not None:
-            self._shm.close()
-            self._shm.unlink()
-            self._shm = None
+            self._shm, self._shm_lock = self._cleanup(self._shm, self._shm_lock)
 
         # sets _running to false
         super()._onstop(**kwargs)
