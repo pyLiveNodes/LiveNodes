@@ -69,17 +69,23 @@ class View(Node, abstract_class=True):
         """
         Cleanup function to close and unlink shared memory
         """
-        if _shm is not None:
-            _shm.close()
-            _shm.unlink()
-            _shm = None
-        if _shm_lock is not None:
-            del _shm_lock
+        try:
+            if _shm is not None:
+                _shm.close()
+                _shm.unlink()
+                _shm = None
+            if _shm_lock is not None:
+                del _shm_lock
+        except FileNotFoundError:
+            # This can happen if the shared memory was already cleaned up
+            pass
+        except Exception as e:
+            print(f"Error during cleanup: {e}", flush=True)
 
     def _onstop(self, **kwargs):
         # clean up shared memory used for draw state
         if hasattr(self, '_shm') and self._shm is not None:
-            self._shm, self._shm_lock = self._cleanup(self._shm, self._shm_lock)
+            self._cleanup(self._shm, self._shm_lock)
 
         # sets _running to false
         super()._onstop(**kwargs)
