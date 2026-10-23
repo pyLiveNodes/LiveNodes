@@ -19,12 +19,12 @@ class Bridge_process(Bridge_thread):
         
 
     def close(self):
+        # Queue.put returns before the feeder serializes and writes the payload. Publish
+        # closure only after every queued byte has reached the receiving pipe, otherwise
+        # closed_and_empty() can terminate the receiver while data is still in flight.
+        self.queue.close()
+        self.queue.join_thread()
         self.closed_event.set()
-        # self.queue.close()
-        # try:
-        #     self.queue.cancel_join_thread()
-        # except Exception:
-        #     pass
 
     @staticmethod
     def can_handle(_from, _to, _data_type=None):
