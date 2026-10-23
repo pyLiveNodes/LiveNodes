@@ -61,6 +61,8 @@ class Bridge_process(Bridge_thread):
                 continue
             if itm_ctr is None and isinstance(item, str) and item == _END_OF_STREAM:
                 self._end_of_stream = True
-                continue   # nothing follows; onclose() sees closed_and_empty() and finishes the node
+                # None tells the node that an input closed: items waiting for this input may be
+                # processable now (it no longer counts as required). Nothing follows on this bridge.
+                return None
             self._read[itm_ctr] = item
             return itm_ctr

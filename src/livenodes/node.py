@@ -235,6 +235,12 @@ class Node(Connectionist, Logger, Serializer):
         while True:
             try:
                 ctr = await queue.update()
+                if ctr is None:
+                    # an input reached its end of stream: retry everything still waiting, since the
+                    # closed input no longer counts as required (see _should_process)
+                    for pending in self.data_storage.pending_ctrs():
+                        self._process(pending)
+                    continue
                 self._process(ctr)
             except asyncio.CancelledError:
                 break
