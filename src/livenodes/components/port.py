@@ -79,13 +79,18 @@ class Port():
         if len(cls.example_values) <= 0:
             raise Exception('Need to provide at least one example value.')
 
-        ids = list(map(id, ALL_VALUES))
+        # a set keeps this linear: ALL_VALUES grows with every port class (the *_Any compounds alone add
+        # ~80k values in ln_ports), and a list lookup per example made importing ln_ports take ~60 s
+        ids = set(map(id, ALL_VALUES))
+        new_values = []
         for val in cls.example_values:
             valid, msg = cls.check_value(val)
             if not valid:
                 raise Exception(f'Example value does not pass check ({str(cls)}). Msg: {msg}. Value: {val}')
             if id(val) not in ids:
-                ALL_VALUES.append(val)
+                ids.add(id(val))
+                new_values.append(val)
+        ALL_VALUES.extend(new_values)
         return super().__init_subclass__()
 
     @classmethod
