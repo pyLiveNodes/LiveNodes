@@ -76,6 +76,11 @@ class Multiprocessing_Data_Storage(Logger):
         return res 
     
     # _to thread
+    def pending_ctrs(self):
+        """Counters received on any input but not processed yet, ascending."""
+        return sorted(set().union(*(b._read.keys() for b in self.in_bridges.values())))
+
+    # _to thread
     def discard_before(self, ctr):
         for bridge in self.in_bridges.values():
             bridge.discard_before(ctr) 
