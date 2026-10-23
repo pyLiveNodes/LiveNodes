@@ -32,14 +32,24 @@ async def receive_all(bridge, timeout=10):
     async def reader():
         while True:
             ctr = await bridge.update()
-            got[ctr] = bridge._read.pop(ctr)
+            if ctr is None:   # end of stream: nothing follows
+                continue
+            found, value = bridge.get(ctr)
+            assert found
+            got[ctr] = value
+            bridge.discard_before(ctr)
 
     task = asyncio.ensure_future(reader())
     deadline = time.monotonic() + timeout
     while not bridge.closed_and_empty():
         assert time.monotonic() < deadline, "receiver never saw the end of stream"
+        assert not task.done(), task.exception()
         await asyncio.sleep(0.005)
     task.cancel()
+    try:
+        await task
+    except asyncio.CancelledError:
+        pass
     return got
 
 
