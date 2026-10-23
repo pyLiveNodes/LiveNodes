@@ -79,7 +79,10 @@ class Port():
         if len(cls.example_values) <= 0:
             raise Exception('Need to provide at least one example value.')
 
-        ids = list(map(id, ALL_VALUES))
+        # Same semantics as before (snapshot of the ids taken once, values appended immediately), but the
+        # snapshot is a set: ALL_VALUES grows with every port class (the *_Any compounds alone add ~80k
+        # values in ln_ports), and a list lookup per example made importing ln_ports take ~60 s.
+        ids = set(map(id, ALL_VALUES))
         for val in cls.example_values:
             valid, msg = cls.check_value(val)
             if not valid:
